@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "singlestop"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "n"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+coffea = "^0.7.21"
+dask = {extras = ["distributed"], version = "^2023.3.2"}
+hist = "^2.6.3"
+uproot = "^4"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
