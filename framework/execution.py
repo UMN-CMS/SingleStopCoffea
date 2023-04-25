@@ -1,7 +1,9 @@
 import importlib
 from pathlib import Path
 from coffea import processor
+from coffea.util import save
 import sys
+import shutil
 
 
 def getLocalExecutor(config):
@@ -28,13 +30,15 @@ def createLocalRunner(config):
 
 
 def getDaskExecutor(config):
+    from dask.distributed import Client
     if "lpc" in config["execution"]["executor"]:
         from lpcjobqueue import LPCCondorCluster
         cluster = LPCCondorCluster(
             ship_env=True,
+            transfer_input_files=[str(Path(x).absolute()) for x in  config["execution"]["transfer_input_files"]],
             log_directory=config["log_directory"],
-            memory="4GB")
-        return  
+            memory="2GB")
+        cluster.adapt(minimum=config["execution"]["worker_min"], maximum=config["execution"]["worker_max"])
     else:
         raise KeyError()
     client = Client(cluster)
@@ -43,19 +47,21 @@ def getDaskExecutor(config):
 def createDaskRunner(config):
     from dask.distributed import Client
     import dask
-    exec_config = config.execution
+    exec_config = config["execution"]
     runner = processor.Runner(
-        executor=getDaskExectutor(config),
+        executor=getDaskExecutor(config),
         schema = config["schema"],
         skipbadfiles=exec_config["skipbadfiles"],
         chunksize=exec_config["chunksize"],
         maxchunks=exec_config["maxchunks"]
     )
-    return run
+    return runner
 
 
 def executeConfiguration(config):
     executor_name = config["execution"]["executor"]
+    log_dir = Path(config["log_directory"])
+    shutil.rmtree(log_dir,ignore_errors=True )
     if 'dask' in executor_name:
         runner = createDaskRunner(config)
     elif 'local' in executor_name:

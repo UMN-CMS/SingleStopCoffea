@@ -2,18 +2,29 @@ from pathlib import Path
 from coffea.nanoevents import NanoAODSchema
 from coffea.analysis_tools import PackedSelection
 from coffea import processor
-import logging 
 import awkward as ak
-from framework.core.execution import executeConfiguration
+from framework.execution import executeConfiguration
+from framework.basic_weights import getFileWeight
+from framework.skimming import uproot_writeable
 from coffea.processor import accumulate
-import framework.tools.fileutils as futil
-from framework.tools.skimming import uproot_writeable
+import framework.fileutils as futil
 import os
 import uproot
 import hist
 import itertools
 
-a_logger = logging.getLogger(__name__)
+import yaml
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+import logging 
+import logging.config
+
+log_conf = yaml.load(open("logconf.yaml",'r'), Loader=Loader)
+logging.config.dictConfig(log_conf)
+a_logger = logging.getLogger('AnalysisLogger')
 
 dataset_axis = hist.axis.StrCategory(
     [], growth=True, name="dataset", label="Primary dataset"
@@ -195,33 +206,22 @@ def run(events):
     ret = createBHistograms(events)
     print(ret)
     
-def save_skim(base_path, events, scratch_dir_name=None):
+def save_skim(output_dir, outname, events, scratch_dir_name=None):
     scratch_dir_name = os.environ.get("ANALYSIS_SCRATCH_DIR", "./scratch")
-
     a_logger.debug( "Starting skimming process") 
-
-    filename = (
-           "__".join(
-               [
-                   events.metadata['dataset'],
-                   events.metadata['fileuuid'],
-                   str(events.metadata['entrystart']),
-                   str(events.metadata['entrystop']),
-               ]
-           )
-           + ".root"
-        )
+    filename=outname
     a_logger.debug( f"Skim filename is {filename}") 
-    path = Path(base_path)
     scratch_path = Path(scratch_dir_name)
     if not scratch_path.is_dir():
         scratch_path.mkdir()
-    outpath = scratch_path / filename
-    a_logger.debug( f"Writing temporary root file to {outpath}") 
-    with uproot.recreate(outpath) as fout:
+    temppath = scratch_path / filename
+    a_logger.debug( f"Writing temporary root file to {temppath}") 
+    with uproot.recreate(temppath) as fout:
+        a_logger.debug( f"Creating events tree within file {temppath}") 
         fout["Events"] = uproot_writeable(events)
-    a_logger.debug( f"Copying root file {outpath} to {base_path}") 
-    futil.copyFile(outpath,  futil.appendToUrl(base_path, events.metadata["dataset"]))
+    outpath = futil.appendToUrl(output_dir, filename)
+    a_logger.debug( f"Copying root file {temppath} to {outpath}") 
+    futil.copyFile(temppath,  outpath)
 
 
 class RPVProcessor(processor.ProcessorABC):
@@ -232,12 +232,29 @@ class RPVProcessor(processor.ProcessorABC):
     def process(self, events):
         a_logger.debug( f"Starting analysis....") 
 
+        w = getFileWeight(events.metadata["filename"],True)
+        print(w)
+        events["EventWeight"] = w * events["genWeight"]
         events, accum = createObjects(events)
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
+        filename = (
+            "__".join(
+                [
+                    events.metadata['dataset'],
+                    events.metadata['fileuuid'],
+                    str(events.metadata['entrystart']),
+                    str(events.metadata['entrystop']),
+                ]
+            )
+            + ".root"
+        )
 
-        save_skim("root://cmseos.fnal.gov//store/user/ckapsiak/SingleStop/Skims/testskim/", events)
-
+        slimmed_events = events[['LHEPdfWeight', 'Tau', 'Flag', 'PSWeight', 'btagWeight', 'genWeight', 'LHEScaleWeight', 'FsrPhoton', 'SV', 'GenDressedLepton', 'GenJet',
+                'Electron', 'LowPtElectron', 'GenMET', 'SubGenJetAK8', 'Pileup', 'MET', 'event', 'SubJet',  'run', 'luminosityBlock',
+                'PuppiMET', 'IsoTrack', 'Jet', 'LHE', 'HLT', 'HLTriggerFinalPath', 'GenPart', 'Generator', 'L1Reco',  'LHEPart', 'PV',
+                 'L1', 'LHEWeight', 'GenJetAK8', 'Muon', 'FatJet']]
+        save_skim(futil.appendToUrl("root://cmseos.fnal.gov//store/user/ckapsiak/SingleStop/Skims/testskim/",events.metadata["dataset"]), filename, slimmed_events)
         jet_hists = createJetHistograms(events)
         b_hists = createBHistograms(events)
 
@@ -249,15 +266,15 @@ class RPVProcessor(processor.ProcessorABC):
 fbase = Path("samples")
 samples = [
     ("QCD2018", "QCDBEnriched2018.txt"),
-    # ("Diboson2018", "Diboson2018.txt"),
-    # ("WQQ2018", "WJetsToQQ2018.txt"),
-    # ("ZQQ2018", "ZJetsToQQ2018.txt"),
-    # ("ZNuNu2018", "ZJetsToNuNu2018.txt"),
+    ("Diboson2018", "Diboson2018.txt"),
+    ("WQQ2018", "WJetsToQQ2018.txt"),
+    ("ZQQ2018", "ZJetsToQQ2018.txt"),
+    ("ZNuNu2018", "ZJetsToNuNu2018.txt"),
 ]
 filesets = {
     sample: [
         f"root://cmsxrootd.fnal.gov//{f.strip()}" for f in open(fbase / fname)
-    ][0:1]
+        ][0:1]
     for sample, fname in samples
 }
 
@@ -266,13 +283,17 @@ config = dict(
     processor=RPVProcessor(),
     schema=NanoAODSchema,
     execution = dict(
+        #executor="dask-condor-lpc",
         executor="local-serial",
-        chunksize=10000,
-        maxchunks=10,
-        skipbadfiles=False,
-        ),
-    log_directory = "logs",
+        chunksize=50000,
+        maxchunks=1,
+        skipbadfiles=True,
+        worker_min=5,
+        worker_max=50,
+        transfer_input_files=["framework"]
+    ),
+    log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/ckapsiak/logs",
     data_out="output"
-    )
+)
 
 executeConfiguration(config)

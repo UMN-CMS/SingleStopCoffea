@@ -5,16 +5,29 @@ from contextlib import contextmanager
 
 
 def copyFile(fr, to):
-    fr_scheme, fr_netloc, fr_path, *rest = urlparse(str(fr))
-    to_scheme, to_netloc, to_path, *rest = urlparse(str(to))
+    fr_scheme, fr_netloc, fr_path, *fr_rest = urlparse(str(fr))
+    to_scheme, to_netloc, to_path, *to_rest = urlparse(str(to))
+    if not fr_scheme:
+        fr_path = str(Path(fr_path).resolve().absolute()) 
+    if not to_scheme:
+        to_path = str(Path(to_path).resolve().absolute()) 
+    fr = urlunparse((fr_scheme, fr_netloc, fr_path, *fr_rest))
+    to = urlunparse((to_scheme, to_netloc, to_path, *to_rest))
     xrootd = any(x == 'root' for x in (fr_scheme , to_scheme))
     if xrootd:
         import XRootD
         import XRootD.client
         copyproc = XRootD.client.CopyProcess()
+        print("FROMTO")
+        print(str(fr), str(to))
         copyproc.add_job(str(fr), str(to))
         copyproc.prepare()
         copyproc.run()
+        client = XRootD.client.FileSystem(to_netloc)
+        status = client.locate(to_path, XRootD.client.flags.OpenFlags.READ)
+        print(status)
+        assert status[0].ok
+        del client
         del copyproc
     else:
         to = Path(to)
