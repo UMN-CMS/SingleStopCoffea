@@ -34,10 +34,12 @@ def getDaskExecutor(config):
     if "lpc" in config["execution"]["executor"]:
         from lpcjobqueue import LPCCondorCluster
         cluster = LPCCondorCluster(
+            silence_logs='debug',
+            scheduler_options={"dashboard_address": "0.0.0.0:8989"},
             ship_env=True,
             transfer_input_files=[str(Path(x).absolute()) for x in  config["execution"]["transfer_input_files"]],
             log_directory=config["log_directory"],
-            memory="2GB")
+            memory="8GB")
         cluster.adapt(minimum=config["execution"]["worker_min"], maximum=config["execution"]["worker_max"])
     else:
         raise KeyError()
@@ -48,13 +50,15 @@ def createDaskRunner(config):
     from dask.distributed import Client
     import dask
     exec_config = config["execution"]
-    runner = processor.Runner(
+    arguments = dict(
         executor=getDaskExecutor(config),
         schema = config["schema"],
         skipbadfiles=exec_config["skipbadfiles"],
         chunksize=exec_config["chunksize"],
-        maxchunks=exec_config["maxchunks"]
-    )
+            )
+    if "maxchunks" in exec_config:
+        arguments["maxchunks"]=exec_config["maxchunks"]
+    runner = processor.Runner(**arguments)
     return runner
 
 

@@ -117,7 +117,7 @@ def createSelection(events):
     selection.add("2bjet", ak.num(loose_b) >= 2)
     selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
     selection.add("jet_dr", (top_two_dr < 4) & (top_two_dr > 2))
-    selection.add("0Top", ak.num(tight_top) == 0)
+    #selection.add("0Top", ak.num(tight_top) == 0)
     return selection
 
 
@@ -207,6 +207,11 @@ def run(events):
     print(ret)
     
 def save_skim(output_dir, outname, events, scratch_dir_name=None):
+    num_events = ak.num(events, axis=0)
+    if not num_events:
+        a_logger.debug("No Events, not saving skimmed file")
+        return
+    a_logger.debug(f"Saving skim with {num_events} events")
     scratch_dir_name = os.environ.get("ANALYSIS_SCRATCH_DIR", "./scratch")
     a_logger.debug( "Starting skimming process") 
     filename=outname
@@ -218,7 +223,10 @@ def save_skim(output_dir, outname, events, scratch_dir_name=None):
     a_logger.debug( f"Writing temporary root file to {temppath}") 
     with uproot.recreate(temppath) as fout:
         a_logger.debug( f"Creating events tree within file {temppath}") 
-        fout["Events"] = uproot_writeable(events)
+        writeable = uproot_writeable(events)
+        a_logger.debug( f"Created writeable dictionary,now saving.") 
+        fout["Events"] = writeable
+        a_logger.debug( f"Saved") 
     outpath = futil.appendToUrl(output_dir, filename)
     a_logger.debug( f"Copying root file {temppath} to {outpath}") 
     futil.copyFile(temppath,  outpath)
@@ -250,10 +258,10 @@ class RPVProcessor(processor.ProcessorABC):
             + ".root"
         )
 
-        slimmed_events = events[['LHEPdfWeight', 'Tau', 'Flag', 'PSWeight', 'btagWeight', 'genWeight', 'LHEScaleWeight', 'FsrPhoton', 'SV', 'GenDressedLepton', 'GenJet',
+        slimmed_events = events[['Tau', 'Flag', 'PSWeight', 'btagWeight', 'genWeight', 'FsrPhoton', 'SV', 'GenDressedLepton', 'GenJet',
                 'Electron', 'LowPtElectron', 'GenMET', 'SubGenJetAK8', 'Pileup', 'MET', 'event', 'SubJet',  'run', 'luminosityBlock',
-                'PuppiMET', 'IsoTrack', 'Jet', 'LHE', 'HLT', 'HLTriggerFinalPath', 'GenPart', 'Generator', 'L1Reco',  'LHEPart', 'PV',
-                 'L1', 'LHEWeight', 'GenJetAK8', 'Muon', 'FatJet']]
+                'PuppiMET', 'IsoTrack', 'Jet', 'HLT', 'HLTriggerFinalPath', 'GenPart', 'Generator', 'L1Reco',  'PV',
+                 'L1', 'GenJetAK8', 'Muon', 'FatJet']]
         save_skim(futil.appendToUrl("root://cmseos.fnal.gov//store/user/ckapsiak/SingleStop/Skims/testskim/",events.metadata["dataset"]), filename, slimmed_events)
         jet_hists = createJetHistograms(events)
         b_hists = createBHistograms(events)
@@ -266,15 +274,15 @@ class RPVProcessor(processor.ProcessorABC):
 fbase = Path("samples")
 samples = [
     ("QCD2018", "QCDBEnriched2018.txt"),
-    ("Diboson2018", "Diboson2018.txt"),
-    ("WQQ2018", "WJetsToQQ2018.txt"),
-    ("ZQQ2018", "ZJetsToQQ2018.txt"),
-    ("ZNuNu2018", "ZJetsToNuNu2018.txt"),
+    #("Diboson2018", "Diboson2018.txt"),
+    #("WQQ2018", "WJetsToQQ2018.txt"),
+    #("ZQQ2018", "ZJetsToQQ2018.txt"),
+    #("ZNuNu2018", "ZJetsToNuNu2018.txt"),
 ]
 filesets = {
     sample: [
         f"root://cmsxrootd.fnal.gov//{f.strip()}" for f in open(fbase / fname)
-        ][0:1]
+        ]
     for sample, fname in samples
 }
 
@@ -283,13 +291,12 @@ config = dict(
     processor=RPVProcessor(),
     schema=NanoAODSchema,
     execution = dict(
-        #executor="dask-condor-lpc",
-        executor="local-serial",
-        chunksize=50000,
-        maxchunks=1,
+        executor="dask-condor-lpc",
+        #executor="local-serial",
+        chunksize=500000,
         skipbadfiles=True,
         worker_min=5,
-        worker_max=50,
+        worker_max=100,
         transfer_input_files=["framework"]
     ),
     log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/ckapsiak/logs",

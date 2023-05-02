@@ -329,6 +329,8 @@ scale_factor_map = {
     "ZJetsToQQ": scaleZQQ,
     "WJetsToQQ": scaleWQQ,
     "WW_TuneCP5": scaleDiboson,
+    "ZZ_TuneCP5": scaleDiboson,
+    "WZ_TuneCP5": scaleDiboson,
     "ST": scaleST,
     "ZJetsToNuNu": scaleZNuNu,
     "signal": scaleSignal,

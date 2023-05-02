@@ -21,14 +21,16 @@ def uproot_writeable(events):
     """Restrict to columns that uproot can write compactly"""
     out = {}
     for bname in events.fields:
+        print(bname)
         if events[bname].fields:
-            out[bname] = ak.zip(
-                {
+            print("Making dict")
+            d = {
                     n: ak.packed(ak.without_parameters(events[bname][n]))
                     for n in events[bname].fields
                     if is_rootcompat(events[bname][n])
                 }
-            )
+            print("Zipping")
+            out[bname] = ak.zip(d)
         else:
             out[bname] = ak.packed(ak.without_parameters(events[bname]))
     return out
