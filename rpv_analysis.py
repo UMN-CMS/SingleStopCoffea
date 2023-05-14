@@ -1,36 +1,22 @@
 from pathlib import Path
+
 from coffea.nanoevents import NanoAODSchema
 from coffea.analysis_tools import PackedSelection
 from coffea import processor
-import coffea as cf
-import pickle
-import awkward as ak
-from framework.execution import executeConfiguration
-from framework.basic_weights import getFileWeight
-from framework.skimming import uproot_writeable
 from coffea.processor import accumulate
-import framework.fileutils as futil
-import os
-import uproot
+import coffea as cf
+
+import awkward as ak
+
 import hist
 import itertools
+
 from collections import namedtuple
 import collections.abc as cabc
 
-
 import yaml
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
-
-import logging
-import logging.config
-
-log_conf = yaml.load(open("logconf.yaml", "r"), Loader=Loader)
-logging.config.dictConfig(log_conf)
-a_logger = logging.getLogger("AnalysisLogger")
+import pickle
 
 dataset_axis = hist.axis.StrCategory(
     [], growth=True, name="dataset", label="Primary dataset"
@@ -460,7 +446,7 @@ def createBHistograms(events):
         ret[f"loose_b_{i}_pt"] = makeHistogram(
             pt_axis,
             dataset,
-            l_bjets[mask][:,i].pt,
+            l_bjets[mask][:, i].pt,
             w[mask],
             name=f"Loose BJet {i} $p_T$",
             description=f"$p_T$ of the rank {i} $p_T$ b jet",
@@ -505,7 +491,6 @@ class RPVProcessor(processor.ProcessorABC):
     def process(self, events):
         a_logger.debug(f"Starting analysis....")
 
-        # w = getFileWeight(events.metadata["filename"],True)
         dataset = events.metadata["dataset"]
         events["EventWeight"] = events["MCScaleWeight"] * ak.where(
             events["genWeight"] > 0, 1, -1
@@ -547,10 +532,11 @@ filesets = {
         f"root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/Skim_2023_05_11/{sample}.root"
     ]
     for sample in samples
-    # if 'Di' in sample
+    if "Di" in sample
 }
 
-executor = processor.FuturesExecutor(workers=8)
-runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
-out = runner(filesets, "Events", processor_instance=RPVProcessor())
-pickle.dump(out, open("output.pkl", "wb"))
+if __name__ == "__main__":
+    executor = processor.FuturesExecutor(workers=8)
+    runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
+    out = runner(filesets, "Events", processor_instance=RPVProcessor())
+    pickle.dump(out, open("output.pkl", "wb"))
