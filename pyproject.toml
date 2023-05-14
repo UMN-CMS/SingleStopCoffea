@@ -12,6 +12,7 @@ coffea = "^0.7.21"
 dask = {extras = ["distributed"], version = "^2023.3.2"}
 hist = "^2.6.3"
 uproot = "^4"
+matplotlib = "^3.7"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
