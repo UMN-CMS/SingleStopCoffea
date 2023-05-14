@@ -18,14 +18,11 @@ def copyFile(fr, to):
         import XRootD
         import XRootD.client
         copyproc = XRootD.client.CopyProcess()
-        print("FROMTO")
-        print(str(fr), str(to))
         copyproc.add_job(str(fr), str(to))
         copyproc.prepare()
         copyproc.run()
         client = XRootD.client.FileSystem(to_netloc)
         status = client.locate(to_path, XRootD.client.flags.OpenFlags.READ)
-        print(status)
         assert status[0].ok
         del client
         del copyproc
@@ -39,9 +36,3 @@ def appendToUrl(url,*args):
     scheme, netloc, path , *rest = urlparse(str(url))
     path = Path(path, *args)
     return urlunparse((scheme, netloc, str(path), *rest))
-    
-
-if __name__ == "__main__" or True:
-    url = "root://cmseos.fnal.gov//store/user/ckapsiak/test/"
-    x = appendToUrl(url , "other", "andmore")
-    print(x)

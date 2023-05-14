@@ -72,22 +72,3 @@ def executeConfiguration(config):
         runner = createLocalRunner(config)
     out = runner(config["datasets"], "Events", processor_instance=config["processor"])
     save(out, config["data_out"])
-
-    
-if __name__ == "__main__":
-    print(sys.argv[1])
-    configuration_file=Path(sys.argv[1])
-    spec = importlib.util.spec_from_file_location("config", configuration_file)
-    configuration = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(configuration)
-    config=configuration.config
-    print(config)
-    executor_name = config["execution"]["executor"]
-    if 'dask' in executor_name:
-        runner = createDaskRunner(config)
-    elif 'local' in executor_name:
-        runner = createLocalRunner(config)
-    out = runner(config["datasets"], "Events", processor_instance=config["processor"])
-    save(out, config["data_out"])
-
-
