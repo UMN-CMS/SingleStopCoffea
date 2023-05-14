@@ -9,7 +9,8 @@ import shutil
 def getLocalExecutor(config):
     executor_name = config["executor"]
     if "serial" in executor_name:
-        return processor.IterativeExecutor()
+        return processor.IterativeExecutor(
+        )
     elif "parallel" in executor_name:
         return processor.FuturesExecutor(workers=config["workers"])
     else:
@@ -18,12 +19,11 @@ def getLocalExecutor(config):
 
 def createLocalRunner(config):
     exec_config = config["execution"]
+    args = exec_config
+    args["executor"] = getLocalExecutor(exec_config)
     runner = processor.Runner(
-        executor=getLocalExecutor(exec_config),
         schema = config["schema"],
-        skipbadfiles=exec_config["skipbadfiles"],
-        chunksize=exec_config["chunksize"],
-        maxchunks=exec_config["maxchunks"]
+        **args
     )
     return runner
     
@@ -44,7 +44,7 @@ def getDaskExecutor(config):
     else:
         raise KeyError()
     client = Client(cluster)
-    return processor.DaskExecutor(client=client)
+    return processor.DaskExecutor(client=client, compression=config["execution"]["compression"])
 
 def createDaskRunner(config):
     from dask.distributed import Client
