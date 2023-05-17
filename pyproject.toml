@@ -13,6 +13,8 @@ dask = {extras = ["distributed"], version = "^2023.3.2"}
 hist = "^2.6.3"
 uproot = "^4"
 matplotlib = "^3.7"
+jupyter = "*"
+rich = "^13.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

@@ -4,6 +4,7 @@ from coffea.nanoevents import NanoAODSchema
 from coffea.analysis_tools import PackedSelection
 from coffea import processor
 from coffea.processor import accumulate
+from common import createSelection
 import coffea as cf
 
 import awkward as ak
@@ -18,103 +19,10 @@ import yaml
 
 import pickle
 
-dataset_axis = hist.axis.StrCategory(
-    [], growth=True, name="dataset", label="Primary dataset"
-)
-
-mass_axis = hist.axis.Regular(150, 0, 3000, name="mass", label=r"$m$ [GeV]")
-pt_axis = hist.axis.Regular(150, 0, 1500, name="pt", label=r"$p_{T}$ [GeV]")
-ht_axis = hist.axis.Regular(300, 0, 3000, name="ht", label=r"$HT$ [GeV]")
-dr_axis = hist.axis.Regular(20, 0, 5, name="dr", label=r"$\Delta R$")
-eta_axis = hist.axis.Regular(20, -5, 5, name="eta", label=r"$\eta$")
-phi_axis = hist.axis.Regular(50, 0, 4, name="phi", label=r"$\phi$")
-nj_axis = hist.axis.Regular(10, 0, 10, name="nj", label=r"$n_{j}$")
-tencountaxis = hist.axis.Regular(10, 0, 10, name="Number", label=r"Number")
-b_axis = hist.axis.Regular(5, 0, 5, name="nb", label=r"$n_{b}$")
-
-
-def makeCutSet(x, s, *args):
-    return [x[s > a] for a in args]
-
-
-MCCampaign = "UL2018"
-if MCCampaign == "UL2016preVFP":
-    b_tag_wps = [0.0508, 0.2598, 0.6502]
-elif MCCampaign == "UL2016postVFP":
-    b_tag_wps = [0.0480, 0.2489, 0.6377]
-elif MCCampaign == "UL2017":
-    b_tag_wps = [0.0532, 0.3040, 0.7476]
-elif MCCampaign == "UL2018":
-    b_tag_wps = [0.0490, 0.2783, 0.7100]
-
-
-def createObjects(events):
-    good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.4)]
-    fat_jets = events.FatJet
-    loose_top, med_top, tight_top = makeCutSet(
-        fat_jets, fat_jets.particleNet_TvsQCD, 0.58, 0.80, 0.97
-    )
-    loose_W, med_W, tight_W = makeCutSet(
-        fat_jets, fat_jets.particleNet_WvsQCD, 0.7, 0.94, 0.98
-    )
-
-    deep_top_wp1, deep_top_wp2, deep_top_wp3, deep_top_wp4 = makeCutSet(
-        fat_jets, fat_jets.deepTag_TvsQCD, 0.436, 0.802, 0.922, 0.989
-    )
-    deep_W_wp1, deep_W_wp2, deep_W_wp3, deep_W_wp4 = makeCutSet(
-        fat_jets, fat_jets.deepTag_WvsQCD, 0.458, 0.762, 0.918, 0.961
-    )
-    loose_b, med_b, tight_b = makeCutSet(
-        good_jets, good_jets.btagDeepFlavB, *(b_tag_wps[x] for x in range(3))
-    )
-
-    el = events.Electron
-    good_electrons = el[
-        (el.cutBased == 4)
-        & (el.miniPFRelIso_all < 0.1)
-        & (el.pt > 30)
-        & (abs(el.eta) < 2.4)
-    ]
-    mu = events.Muon
-    good_muons = mu[
-        (mu.mediumId) & (mu.miniPFRelIso_all < 0.2) & (mu.pt > 30) & (abs(mu.eta) < 2.4)
-    ]
-    events["good_jets"] = good_jets
-    events["good_electrons"] = good_electrons
-    events["good_muons"] = good_muons
-    events["loose_bs"] = loose_b
-
-    events["loose_bs"] = loose_b
-    events["med_bs"] = med_b
-    events["tight_bs"] = tight_b
-
-    events["tight_tops"] = tight_top
-    events["med_tops"] = med_top
-    events["loose_tops"] = loose_top
-
-    events["tight_Ws"] = tight_W
-    events["med_Ws"] = med_W
-    events["loose_Ws"] = loose_W
-
-    events["deep_top_wp1"] = deep_top_wp1
-    events["deep_top_wp2"] = deep_top_wp2
-    events["deep_top_wp3"] = deep_top_wp3
-    events["deep_top_wp4"] = deep_top_wp4
-
-    events["deep_W_wp1"] = deep_W_wp1
-    events["deep_W_wp2"] = deep_W_wp2
-    events["deep_W_wp3"] = deep_W_wp3
-    events["deep_W_wp4"] = deep_W_wp4
-
-    return events, {}
-
-
-def isGoodGenParticle(particle):
-    return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
-        particle.hasFlags("fromHardProcessBeforeFSR")
-        & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
-    )
-
+from histograms import *
+from objects import createObjects
+from datasets import filesets
+from weights import addWeights
 
 ParticleChain = namedtuple("ParticleChain", "name pdgid_list children")
 
@@ -136,6 +44,12 @@ structure = [
         ],
     )
 ]
+
+def isGoodGenParticle(particle):
+    return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
+        particle.hasFlags("fromHardProcessBeforeFSR")
+        & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
+    )
 
 
 def genMatchParticles(children, structure, allow_anti=True):
@@ -159,45 +73,8 @@ def goodGenParticles(events):
     return events
 
 
-def createSelection(events):
-    a_logger.debug(f"Creating Selection")
-    good_jets = events.good_jets
-    fat_jets = events.FatJet
-
-    good_muons = events.good_muons
-    good_electrons = events.good_electrons
-
-    loose_b = events.loose_bs
-    tight_top = events.tight_tops
-
-    selection = PackedSelection()
-
-    filled_jets = ak.pad_none(good_jets, 2, axis=1)
-    # filled_jets = good_jets
-    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
-
-    selection.add("jets", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 5))
-    selection.add("0Lep", (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0))
-    selection.add("2bjet", ak.num(loose_b) >= 2)
-    selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
-    selection.add("jet_dr", (top_two_dr < 4) & (top_two_dr > 2))
-    # selection.add("0Top", ak.num(tight_top) == 0)
-    return selection
 
 
-def makeHistogram(
-    axis, dataset, data, weights, name=None, description=None, drop_none=True
-):
-    if isinstance(axis, list):
-        h = hist.Hist(dataset_axis, *axis, storage="weight", name=name)
-    else:
-        h = hist.Hist(dataset_axis, axis, storage="weight", name=name)
-    setattr(h, "description", description)
-    if isinstance(axis, list):
-        ret = h.fill(dataset, *data, weight=weights)
-    else:
-        ret = h.fill(dataset, ak.to_numpy(data), weight=weights)
-    return ret
 
 
 def createJetHistograms(events):
@@ -223,19 +100,19 @@ def createJetHistograms(events):
             dataset,
             jets.eta,
             w,
-            name=f"Composite Jet {i} to Jet {j} $\eta$",
-            description=f"$\eta$ of the sum of jets {i} to {j}",
+            name=fr"Composite Jet {i} to Jet {j} $\eta$",
+            description=fr"$\eta$ of the sum of jets {i} to {j}",
         )
-        ret[f"m{i}{j}_m"] = makeHistogram(
+        ret[fr"m{i}{j}_m"] = makeHistogram(
             mass_axis,
             dataset,
             jets.mass,
             w,
-            name=f"Composite Jet {i} to Jet {j} mass",
-            description=f"Mass of the sum of jets {i} to {j}",
+            name=fr"Composite Jet {i} to Jet {j} mass",
+            description=fr"Mass of the sum of jets {i} to {j}",
         )
     for i in range(0, 4):
-        ret[f"pt_{i}"] = makeHistogram(
+        ret[fr"pt_{i}"] = makeHistogram(
             pt_axis,
             dataset,
             gj[:, i].pt,
@@ -256,8 +133,8 @@ def createJetHistograms(events):
             dataset,
             gj[:, i].phi,
             w,
-            name=f"$\phi$ of jet {i}",
-            description=f"$\phi$ of jet {i}(indexed from 0)",
+            name=fr"$\phi$ of jet {i}",
+            description=fr"$\phi$ of jet {i}(indexed from 0)",
         )
 
     padded_jets = ak.pad_none(gj, 5, axis=1)
@@ -270,29 +147,29 @@ def createJetHistograms(events):
         d_r = masked_jets[:, i].delta_r(masked_jets[:, j])
         d_phi = masked_jets[:, i].phi - masked_jets[:, j].phi
         masks[(i, j)] = mask
-        ret[f"d_eta_{i}_{j}"] = makeHistogram(
+        ret[fr"d_eta_{i}_{j}"] = makeHistogram(
             eta_axis,
             dataset,
             d_eta,
             w_mask,
-            name=f"$\Delta \eta$ between jets {i} and {j}",
-            description=f"$\Delta \eta$ between jets {i} and {j}, indexed from 0",
+            name=fr"$\Delta \eta$ between jets {i} and {j}",
+            description=fr"$\Delta \eta$ between jets {i} and {j}, indexed from 0",
         )
         ret[f"d_phi_{i}_{j}"] = makeHistogram(
             phi_axis,
             dataset,
             d_phi,
             w_mask,
-            name=f"$\Delta \phi$ between jets {i} and {j}",
-            description=f"$\Delta \phi$ between jets {i} and {j}, indexed from 0",
+            name=fr"$\Delta \phi$ between jets {i} and {j}",
+            description=fr"$\Delta \phi$ between jets {i} and {j}, indexed from 0",
         )
         ret[f"d_r_{i}_{j}"] = makeHistogram(
             dr_axis,
             dataset,
             d_r,
             w_mask,
-            name=f"$\Delta R$ between jets {i} and {j}",
-            description=f"$\Delta R$ between jets {i} and {j}, indexed from 0",
+            name=fr"$\Delta R$ between jets {i} and {j}",
+            description=fr"$\Delta R$ between jets {i} and {j}, indexed from 0",
         )
 
     for i in range(0, 5):
@@ -302,13 +179,13 @@ def createJetHistograms(events):
         htratio = masked_jets[:, i].pt / events.HT[mask]
         ret[f"pt_ht_ratio_{i}"] = makeHistogram(
             hist.axis.Regular(
-                50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{\text{HT}}$"
+                50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"
             ),
             dataset,
             htratio,
             masked_w,
-            name=f"Ratio of jet {i} $p_T$ to event HT",
-            description=f"Ratio of jet {i} $p_T$ to event HT",
+            name=fr"Ratio of jet {i} $p_T$ to event HT",
+            description=fr"Ratio of jet {i} $p_T$ to event HT",
         )
     co = lambda x: itertools.combinations(x, 2)
     for p1, p2 in co(co(range(0, 4))):
@@ -327,7 +204,7 @@ def createJetHistograms(events):
             dataset,
             [p1_vals, p2_vals],
             w[mask],
-            name=f"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
+            name=fr"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
         )
     return ret
 
@@ -438,8 +315,8 @@ def createBHistograms(events):
         dataset,
         l_bjets[:, 0].delta_r(l_bjets[:, 1]),
         w,
-        name="Loose BJet $\Delta R$",
-        description="$\Delta R$ between the top 2 $p_T$ b jets",
+        name=fr"Loose BJet $\Delta R$",
+        description=fr"$\Delta R$ between the top 2 $p_T$ b jets",
     )
     for i in range(0, 4):
         mask = ak.num(l_bjets, axis=1) > i
@@ -462,16 +339,16 @@ def createBHistograms(events):
         dataset,
         lb_eta,
         w[mask],
-        name=f"$\Delta \eta$ BB$",
-        description=f"$\Delta \eta$ between the two highest rank loose b jets",
+        name=fr"$\Delta \eta$ BB$",
+        description=fr"$\Delta \eta$ between the two highest rank loose b jets",
     )
     ret[f"loose_bb_phi"] = makeHistogram(
         phi_axis,
         dataset,
         lb_phi,
         w[mask],
-        name=f"$\Delta \phi$ BB$",
-        description=f"$\Delta \phi$ between the two highest rank loose b jets",
+        name=fr"$\Delta \phi$ BB$",
+        description=fr"$\Delta \phi$ between the two highest rank loose b jets",
     )
     ret[f"loose_bb_deltar"] = makeHistogram(
         dr_axis,
@@ -489,22 +366,15 @@ class RPVProcessor(processor.ProcessorABC):
         pass
 
     def process(self, events):
-        a_logger.debug(f"Starting analysis....")
 
-        dataset = events.metadata["dataset"]
-        events["EventWeight"] = events["MCScaleWeight"] * ak.where(
-            events["genWeight"] > 0, 1, -1
-        )
 
+        events = addWeights(events)
         pre_sel_hists = makePreSelectionHistograms(events)
         events, accum = createObjects(events)
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
 
         events = addEventLevelVars(events)
-
-        if "RPV" in dataset:
-            gg = goodGenParticles(events)
 
         jet_hists = createJetHistograms(events)
         b_hists = createBHistograms(events)
@@ -517,23 +387,7 @@ class RPVProcessor(processor.ProcessorABC):
         pass
 
 
-fbase = Path("samples")
-samples = [
-    "QCD2018",
-    "Diboson2018",
-    "WQQ2018",
-    "ZQQ2018",
-    "ST2018",
-    "ZNuNu2018",
-    "TT2018",
-]
-filesets = {
-    sample: [
-        f"root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/Skim_2023_05_11/{sample}.root"
-    ]
-    for sample in samples
-    if "Di" in sample
-}
+
 
 if __name__ == "__main__":
     executor = processor.FuturesExecutor(workers=8)
