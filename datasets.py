@@ -1,5 +1,7 @@
 from pathlib import Path
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.processor import accumulate
+import concurrent.futures 
 
 
 fbase = Path("samples")
@@ -40,4 +42,13 @@ def getEvents(datasets, samples):
         metadata={"dataset": s},
         ).events() for s in samples}
     return ret
+
+
+def runOverDataSets(func, datasets):
+    return {s : func(e) for s,e in datasets.items()}
+
+def runAndAccum(func,data):
+    return accumulate(func(x) for x in data.values())
+
+
 

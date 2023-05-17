@@ -78,6 +78,20 @@ def makeScatter(ax, hists, samples):
     return ax
 
 
+
+def makeStackPlot(ax, histogram, signal=None, dset_axis = 0):
+    signal = [] if signal is None else signal
+    samples = list(histogram.axes[0])
+    ax = make1DHistogram(ax, histogram, [s for s in samples if s not in signal])
+    ax = makeScatter(ax, histogram, signal)
+    ax.set_yscale('log')
+    xax = next(x for x in histogram.axes if x.name != "dataset")
+    ax.set_xlabel(xax.label)
+    ax.set_title(histogram.name)
+    ax.set_ylabel("Weighted Events")
+    ax.legend()
+    addPrelim(ax)
+
 def makefig(o, vals):
     n,h = vals
     if countHistAxes(h) == 2:
