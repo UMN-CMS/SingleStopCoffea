@@ -84,9 +84,14 @@ def createJetHistograms(events):
     w = events.EventWeight
 
     ret[f"h_njet"] = makeHistogram(nj_axis, dataset, ak.num(gj), w)
+    jet_combos = [(0, 3), (1, 4), (0, 4)]
+    co = lambda x: itertools.combinations(x, 2)
 
-    for i, j in [(0, 3), (1, 4), (0, 4)]:
+    masses = {}
+
+    for i, j in jet_combos:
         jets = gj[:, i:j].sum()
+        masses[(i,j)] = jets.mass
         ret[f"m{i}{j}_pt"] = makeHistogram(
             pt_axis,
             dataset,
@@ -111,6 +116,14 @@ def createJetHistograms(events):
             name=fr"Composite Jet {i} to Jet {j} mass",
             description=fr"Mass of the sum of jets {i} to {j}",
         )
+
+    for p1,p2 in co(jet_combos):
+        p1_1,p1_2 = p1
+        p2_1,p2_2 = p2
+        m1 = hist.axis.Regular(150, 0, 3000, name=f"mass_{p1_1}{p1_2}", label=fr"$m{p1_1}{p1_2}$ [GeV]")
+        m2 = hist.axis.Regular(150, 0, 3000, name=f"mass_{p2_1}{p2_2}", label=fr"$m{p2_1}{p2_2}$ [GeV]")
+        ret[f"m{p1_1}{p1_2}_vs_m{p2_1}{p2_2}"] = makeHistogram([m1,m2], dataset, [masses[p1], masses[p2]], w)
+
     for i in range(0, 4):
         ret[fr"pt_{i}"] = makeHistogram(
             pt_axis,
@@ -187,7 +200,6 @@ def createJetHistograms(events):
             name=fr"Ratio of jet {i} $p_T$ to event HT",
             description=fr"Ratio of jet {i} $p_T$ to event HT",
         )
-    co = lambda x: itertools.combinations(x, 2)
     for p1, p2 in co(co(range(0, 4))):
         mask = masks[p1] & masks[p2]
         p1_vals = gj[mask][:, p1[0]].phi - gj[mask][:, p1[1]].phi
@@ -256,11 +268,9 @@ def addEventLevelVars(events):
 
 
 def createEventLevelHistograms(events):
-    if "LHE" not in events.fields:
-        return {}
-    ret = {}
     dataset = events.metadata["dataset"]
     w = events.EventWeight
+    ret = {}
     ret[f"HT"] = makeHistogram(
         ht_axis,
         dataset,
@@ -269,6 +279,8 @@ def createEventLevelHistograms(events):
         name="Event HT",
         description="Sum of $p_T$ of good AK4 jets.",
     )
+    if "LHE" not in events.fields:
+        return ret
     ret[f"nQLHE"] = makeHistogram(
         tencountaxis,
         dataset,
@@ -370,7 +382,7 @@ class RPVProcessor(processor.ProcessorABC):
 
         events = addWeights(events)
         pre_sel_hists = makePreSelectionHistograms(events)
-        events, accum = createObjects(events)
+        events  = createObjects(events)
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
 

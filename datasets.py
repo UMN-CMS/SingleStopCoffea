@@ -1,7 +1,12 @@
 from pathlib import Path
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
-from coffea.processor import accumulate
+from coffea.processor import accumulate, ProcessorABC
+from coffea.processor import FuturesExecutor
 import concurrent.futures 
+from functools import wraps,partial
+from dataclasses import dataclass
+
+
 
 
 fbase = Path("samples")
@@ -44,11 +49,22 @@ def getEvents(datasets, samples):
     return ret
 
 
-def runOverDataSets(func, datasets):
-    return {s : func(e) for s,e in datasets.items()}
+def makeClass(name, process_func, Base):
+    def __init__(self):
+        Base.__init__(self)
+    newclass = type(name, (Base,),{"__init__": __init__, "process" : process_function})
+    return newclass
 
-def runAndAccum(func,data):
-    return accumulate(func(x) for x in data.values())
 
+def pack(f,i):
+    return f(*i)
 
+def runOverDatasets(func, dataset):
 
+    d = [tuple(x) for x in dataset.items()]
+    ret = {}
+    elems = [x[1] for x in d]
+    fe = FuturesExecutor(workers=4)
+
+    ret = fe(d,partial(pack,func),  accumulate)
+    return ret
