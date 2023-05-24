@@ -35,10 +35,10 @@ def makeOptimized(h_sig, h_bkg, opt_axis = None, disc_axis=None, start=0, stop=0
 
 
 f = uproot.recreate("example.root")
-for n,h in all_hists.items():
-    for d in h.axes[0]:
-        f[f"{d}_{n}"] = h[d,...]
-
+#for n,h in all_hists.items():
+#    for d in h.axes[0]:
+#        f[f"{d}_{n}"] = h[d,...]
+#
 #twodmasses= [x for x in all_hists if "vs" in x and "m" in x]
 #for h in twodmasses:
 #    hi = all_hists[h]
