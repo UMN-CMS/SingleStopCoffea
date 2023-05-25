@@ -45,6 +45,7 @@ structure = [
     )
 ]
 
+
 def isGoodGenParticle(particle):
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
         particle.hasFlags("fromHardProcessBeforeFSR")
@@ -73,17 +74,13 @@ def goodGenParticles(events):
     return events
 
 
-
-
-
-
-def createJetHistograms(events):
+def createJetHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
     gj = events.good_jets
     w = events.EventWeight
 
-    ret[f"h_njet"] = makeHistogram(nj_axis, dataset, ak.num(gj), w)
+    ret[f"h_njet"] = hmaker(nj_axis, dataset, ak.num(gj), w)
     jet_combos = [(0, 3), (1, 4), (0, 4)]
     co = lambda x: itertools.combinations(x, 2)
 
@@ -91,8 +88,8 @@ def createJetHistograms(events):
 
     for i, j in jet_combos:
         jets = gj[:, i:j].sum()
-        masses[(i,j)] = jets.mass
-        ret[f"m{i}{j}_pt"] = makeHistogram(
+        masses[(i, j)] = jets.mass
+        ret[f"m{i}{j}_pt"] = hmaker(
             pt_axis,
             dataset,
             jets.pt,
@@ -100,32 +97,46 @@ def createJetHistograms(events):
             name=f"Composite Jet {i} to Jet {j} $p_T$",
             description=f"$p_T$ of the sum of jets {i} to {j}",
         )
-        ret[f"m{i}{j}_eta"] = makeHistogram(
+        ret[f"m{i}{j}_eta"] = hmaker(
             eta_axis,
             dataset,
             jets.eta,
             w,
-            name=fr"Composite Jet {i} to Jet {j} $\eta$",
-            description=fr"$\eta$ of the sum of jets {i} to {j}",
+            name=rf"Composite Jet {i} to Jet {j} $\eta$",
+            description=rf"$\eta$ of the sum of jets {i} to {j}",
         )
-        ret[fr"m{i}{j}_m"] = makeHistogram(
+        ret[rf"m{i}{j}_m"] = hmaker(
             mass_axis,
             dataset,
             jets.mass,
             w,
-            name=fr"Composite Jet {i} to Jet {j} mass",
-            description=fr"Mass of the sum of jets {i} to {j}",
+            name=rf"Composite Jet {i} to Jet {j} mass",
+            description=rf"Mass of the sum of jets {i} to {j}",
         )
 
-    for p1,p2 in co(jet_combos):
-        p1_1,p1_2 = p1
-        p2_1,p2_2 = p2
-        m1 = hist.axis.Regular(150, 0, 3000, name=f"mass_{p1_1}{p1_2}", label=fr"$m{p1_1}{p1_2}$ [GeV]")
-        m2 = hist.axis.Regular(150, 0, 3000, name=f"mass_{p2_1}{p2_2}", label=fr"$m{p2_1}{p2_2}$ [GeV]")
-        ret[f"m{p1_1}{p1_2}_vs_m{p2_1}{p2_2}"] = makeHistogram([m1,m2], dataset, [masses[p1], masses[p2]], w)
+    for p1, p2 in co(jet_combos):
+        p1_1, p1_2 = p1
+        p2_1, p2_2 = p2
+        m1 = hist.axis.Regular(
+            150,
+            0,
+            3000,
+            name=f"mass_{p1_1}{p1_2}",
+            label=rf"$m_{{{p1_1}{p1_2}}}$ [GeV]",
+        )
+        m2 = hist.axis.Regular(
+            150,
+            0,
+            3000,
+            name=f"mass_{p2_1}{p2_2}",
+            label=rf"$m_{{{p2_1}{p2_2}}}$ [GeV]",
+        )
+        ret[f"m{p1_1}{p1_2}_vs_m{p2_1}{p2_2}"] = hmaker(
+            [m1, m2], dataset, [masses[p1], masses[p2]], w
+        )
 
     for i in range(0, 4):
-        ret[fr"pt_{i}"] = makeHistogram(
+        ret[rf"pt_{i}"] = hmaker(
             pt_axis,
             dataset,
             gj[:, i].pt,
@@ -133,7 +144,7 @@ def createJetHistograms(events):
             name=f"$p_T$ of jet {i}",
             description=f"$p_T$ of jet {i} (indexed from 0)",
         )
-        ret[f"eta_{i}"] = makeHistogram(
+        ret[f"eta_{i}"] = hmaker(
             eta_axis,
             dataset,
             gj[:, i].eta,
@@ -141,13 +152,13 @@ def createJetHistograms(events):
             name=f"$\eta$ of jet {i}",
             description=f"$\eta$ of jet {i}(indexed from 0)",
         )
-        ret[f"phi_{i}"] = makeHistogram(
+        ret[f"phi_{i}"] = hmaker(
             phi_axis,
             dataset,
             gj[:, i].phi,
             w,
-            name=fr"$\phi$ of jet {i}",
-            description=fr"$\phi$ of jet {i}(indexed from 0)",
+            name=rf"$\phi$ of jet {i}",
+            description=rf"$\phi$ of jet {i}(indexed from 0)",
         )
 
     padded_jets = ak.pad_none(gj, 5, axis=1)
@@ -160,29 +171,29 @@ def createJetHistograms(events):
         d_r = masked_jets[:, i].delta_r(masked_jets[:, j])
         d_phi = masked_jets[:, i].phi - masked_jets[:, j].phi
         masks[(i, j)] = mask
-        ret[fr"d_eta_{i}_{j}"] = makeHistogram(
+        ret[rf"d_eta_{i}_{j}"] = hmaker(
             eta_axis,
             dataset,
             d_eta,
             w_mask,
-            name=fr"$\Delta \eta$ between jets {i} and {j}",
-            description=fr"$\Delta \eta$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta \eta$ between jets {i} and {j}",
+            description=rf"$\Delta \eta$ between jets {i} and {j}, indexed from 0",
         )
-        ret[f"d_phi_{i}_{j}"] = makeHistogram(
+        ret[f"d_phi_{i}_{j}"] = hmaker(
             phi_axis,
             dataset,
             d_phi,
             w_mask,
-            name=fr"$\Delta \phi$ between jets {i} and {j}",
-            description=fr"$\Delta \phi$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta \phi$ between jets {i} and {j}",
+            description=rf"$\Delta \phi$ between jets {i} and {j}, indexed from 0",
         )
-        ret[f"d_r_{i}_{j}"] = makeHistogram(
+        ret[f"d_r_{i}_{j}"] = hmaker(
             dr_axis,
             dataset,
             d_r,
             w_mask,
-            name=fr"$\Delta R$ between jets {i} and {j}",
-            description=fr"$\Delta R$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta R$ between jets {i} and {j}",
+            description=rf"$\Delta R$ between jets {i} and {j}, indexed from 0",
         )
 
     for i in range(0, 5):
@@ -190,21 +201,19 @@ def createJetHistograms(events):
         masked_jets = gj[mask]
         masked_w = w[mask]
         htratio = masked_jets[:, i].pt / events.HT[mask]
-        ret[f"pt_ht_ratio_{i}"] = makeHistogram(
-            hist.axis.Regular(
-                50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"
-            ),
+        ret[f"pt_ht_ratio_{i}"] = hmaker(
+            hist.axis.Regular(50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             dataset,
             htratio,
             masked_w,
-            name=fr"Ratio of jet {i} $p_T$ to event HT",
-            description=fr"Ratio of jet {i} $p_T$ to event HT",
+            name=rf"Ratio of jet {i} $p_T$ to event HT",
+            description=rf"Ratio of jet {i} $p_T$ to event HT",
         )
     for p1, p2 in co(co(range(0, 4))):
         mask = masks[p1] & masks[p2]
         p1_vals = gj[mask][:, p1[0]].phi - gj[mask][:, p1[1]].phi
         p2_vals = gj[mask][:, p2[0]].phi - gj[mask][:, p2[1]].phi
-        ret["d_phi_{}{}_vs_{}{}".format(*p1, *p2)] = makeHistogram(
+        ret["d_phi_{}{}_vs_{}{}".format(*p1, *p2)] = hmaker(
             [
                 hist.axis.Regular(
                     50, 0, 5, name="dp1", label=r"$\Delta \phi_{" + f"{p1}" + r"}$"
@@ -216,18 +225,18 @@ def createJetHistograms(events):
             dataset,
             [p1_vals, p2_vals],
             w[mask],
-            name=fr"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
+            name=rf"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
         )
     return ret
 
 
-def createTagHistograms(events):
+def createTagHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
     gj = events.good_jets
     w = events.EventWeight
     for name, wp in itertools.product(("tops", "bs", "Ws"), ("loose", "med", "tight")):
-        ret[f"{name}_{wp}"] = makeHistogram(
+        ret[f"{name}_{wp}"] = hmaker(
             tencountaxis,
             dataset,
             ak.num(events[f"{wp}_{name}"], axis=1),
@@ -235,7 +244,7 @@ def createTagHistograms(events):
             name=f"Number of {wp} {name}",
         )
     for name, wp in itertools.product(("deep_top", "deep_W"), range(1, 5)):
-        ret[f"{name}_{wp}"] = makeHistogram(
+        ret[f"{name}_{wp}"] = hmaker(
             tencountaxis,
             dataset,
             ak.num(events[f"{name}_wp{wp}"], axis=1),
@@ -244,13 +253,13 @@ def createTagHistograms(events):
         )
 
 
-def makePreSelectionHistograms(events):
+def makePreSelectionHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return {}
     ret = {}
     dataset = events.metadata["dataset"]
     w = events.EventWeight
-    ret[f"LHEHT"] = makeHistogram(
+    ret[f"LHEHT"] = hmaker(
         ht_axis,
         dataset,
         events.LHE.HT,
@@ -267,11 +276,11 @@ def addEventLevelVars(events):
     return events
 
 
-def createEventLevelHistograms(events):
+def createEventLevelHistograms(events, hmaker):
     dataset = events.metadata["dataset"]
     w = events.EventWeight
     ret = {}
-    ret[f"HT"] = makeHistogram(
+    ret[f"HT"] = hmaker(
         ht_axis,
         dataset,
         events.HT,
@@ -281,7 +290,7 @@ def createEventLevelHistograms(events):
     )
     if "LHE" not in events.fields:
         return ret
-    ret[f"nQLHE"] = makeHistogram(
+    ret[f"nQLHE"] = hmaker(
         tencountaxis,
         dataset,
         events.LHE.Nuds + events.LHE.Nc + events.LHE.Nb,
@@ -289,7 +298,7 @@ def createEventLevelHistograms(events):
         name="Quark Count LHE",
         description="Number of LHE level Quarks",
     )
-    ret[f"nJLHE"] = makeHistogram(
+    ret[f"nJLHE"] = hmaker(
         tencountaxis,
         dataset,
         events.LHE.Njets,
@@ -297,7 +306,7 @@ def createEventLevelHistograms(events):
         name="Jet Count LHE",
         description="Number of LHE level Jets",
     )
-    ret[f"nGLHE"] = makeHistogram(
+    ret[f"nGLHE"] = hmaker(
         tencountaxis,
         dataset,
         events.LHE.Nglu,
@@ -308,7 +317,7 @@ def createEventLevelHistograms(events):
     return ret
 
 
-def createBHistograms(events):
+def createBHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
     l_bjets = events.loose_bs
@@ -316,23 +325,23 @@ def createBHistograms(events):
 
     w = events.EventWeight
     t = ak.flatten(ak.ones_like(l_bjets.pt) * w)
-    ret[f"loose_bjet_pt"] = makeHistogram(
+    ret[f"loose_bjet_pt"] = hmaker(
         pt_axis, dataset, ak.flatten(l_bjets.pt), t, name="Loose BJet $p_{T}$"
     )
-    ret[f"loose_nb"] = makeHistogram(
+    ret[f"loose_nb"] = hmaker(
         b_axis, dataset, ak.num(l_bjets.pt), w, name="Loose BJet Count"
     )
-    ret[f"loose_bdr"] = makeHistogram(
+    ret[f"loose_bdr"] = hmaker(
         b_axis,
         dataset,
         l_bjets[:, 0].delta_r(l_bjets[:, 1]),
         w,
-        name=fr"Loose BJet $\Delta R$",
-        description=fr"$\Delta R$ between the top 2 $p_T$ b jets",
+        name=rf"Loose BJet $\Delta R$",
+        description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
     )
     for i in range(0, 4):
         mask = ak.num(l_bjets, axis=1) > i
-        ret[f"loose_b_{i}_pt"] = makeHistogram(
+        ret[f"loose_b_{i}_pt"] = hmaker(
             pt_axis,
             dataset,
             l_bjets[mask][:, i].pt,
@@ -346,23 +355,23 @@ def createBHistograms(events):
     lb_phi = top2[:, 0].phi - top2[:, 1].phi
     lb_dr = top2[:, 0].delta_r(top2[:, 1])
 
-    ret[f"loose_bb_eta"] = makeHistogram(
+    ret[f"loose_bb_eta"] = hmaker(
         eta_axis,
         dataset,
         lb_eta,
         w[mask],
-        name=fr"$\Delta \eta$ BB$",
-        description=fr"$\Delta \eta$ between the two highest rank loose b jets",
+        name=rf"$\Delta \eta$ BB$",
+        description=rf"$\Delta \eta$ between the two highest rank loose b jets",
     )
-    ret[f"loose_bb_phi"] = makeHistogram(
+    ret[f"loose_bb_phi"] = hmaker(
         phi_axis,
         dataset,
         lb_phi,
         w[mask],
-        name=fr"$\Delta \phi$ BB$",
-        description=fr"$\Delta \phi$ between the two highest rank loose b jets",
+        name=rf"$\Delta \phi$ BB$",
+        description=rf"$\Delta \phi$ between the two highest rank loose b jets",
     )
-    ret[f"loose_bb_deltar"] = makeHistogram(
+    ret[f"loose_bb_deltar"] = hmaker(
         dr_axis,
         dataset,
         lb_dr,
@@ -373,32 +382,41 @@ def createBHistograms(events):
     return ret
 
 
+def makeCategoryHist(cat_axes, cat_vals):
+    def internal(axis, dataset, data, weights, name=None, description=None):
+        h = hist.Hist(*(cat_axes + list(axis)), storage="weight", name=name)
+        setattr(h, "description", description)
+        ret = h.fill(*(cat_data + list(data)), weight=weights)
+        return ret
+    return internal
+
+
 class RPVProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
 
     def process(self, events):
 
-
         events = addWeights(events)
-        pre_sel_hists = makePreSelectionHistograms(events)
-        events  = createObjects(events)
+        pre_sel_hists = makePreSelectionHistograms(events,makeHistogram)
+
+        events = createObjects(events)
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
 
         events = addEventLevelVars(events)
 
-        jet_hists = createJetHistograms(events)
-        b_hists = createBHistograms(events)
-        event_hists = createEventLevelHistograms(events)
-        tag_hists = createTagHistograms(events)
+        dataset=events.metadata["dataset"]
+        hm = makeCategoryHist([dataset_axis, hist.axis.Regular(4,7,3,name="njets", label="NJets")])
+        jet_hists = createJetHistograms(events,hm)
+        b_hists = createBHistograms(events,hm)
+        event_hists = createEventLevelHistograms(events,hm)
+        tag_hists = createTagHistograms(events,hm)
 
         return accumulate([pre_sel_hists, jet_hists, b_hists, event_hists, tag_hists])
 
     def postprocess(self, accumulator):
         pass
-
-
 
 
 if __name__ == "__main__":

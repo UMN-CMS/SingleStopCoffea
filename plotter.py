@@ -9,10 +9,15 @@ import multiprocessing
 from functools import partial
 from rich.progress import track
 import concurrent.futures
-from typing import List, Iterable, Callable, Union, Dict
+from typing import List, Iterable, Callable, Union, Dict, Any, TypeAlias, Optional
 from dataclasses import dataclass
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import itertools as it
+import os
+
+
+PathLike: TypeAlias = Union[str, bytes, os.PathLike]
+Number: TypeAlias = Union[int, float]
 
 
 font_dirs = ["./fonts"]
@@ -23,7 +28,7 @@ for font in font_files:
 plt.style.use("style.mplstyle")
 
 
-def getHistograms(path: Union[Path, str]) -> Dict[str, hist.Hist]:
+def getHistograms(path: PathLike) -> Dict[str, hist.Hist]:
     with open(path, "rb") as f:
         r = pickle.load(f)
     return r
@@ -60,13 +65,20 @@ def draw1DHistogram(
     ax: mpl.axis.Axis,
     vals: np.ndarray,
     edges: np.ndarray,
-    label: str = None,
+    label: Optional[str] = None,
     orientation: str = "vertical",
+    plot_opts: Optional[Dict[str, Any]] = None,
     **kwargs
 ) -> mpl.axis.Axis:
+    plot_opts = {} if plot_opts is None else plot_opts
     widths = np.diff(edges)
     ret = ax.hist(
-        edges[:-1], bins=edges, weights=vals, label=label, orientation=orientation
+        edges[:-1],
+        bins=edges,
+        weights=vals,
+        label=label,
+        orientation=orientation,
+        **plot_opts
     )
     return ret
 
@@ -75,12 +87,14 @@ def drawScatter(
     ax: mpl.axis.Axis,
     vals: np.ndarray,
     edges: np.ndarray,
-    yerr: np.ndarray = None,
-    label: str = None,
+    yerr: Optional[np.ndarray] = None,
+    label: Optional[str] = None,
+    plot_opts: Optional[Dict[str, Any]] = None,
     **kwargs
 ) -> mpl.axis.Axis:
+    plot_opts = {} if plot_opts is None else plot_opts
     locs = edges[:-1] + np.diff(edges) / 2
-    ret = ax.errorbar(locs, vals, yerr=yerr, label=label, fmt="o")
+    ret = ax.errorbar(locs, vals, yerr=yerr, label=label, fmt="o", **plot_opts)
     return ret
 
 
@@ -109,7 +123,7 @@ def make1DPlot(
 
 
 def makeStackPlot(
-    ax: mpl.axis.Axis, histogram: hist.Hist, signal: Iterable[str] = None
+    ax: mpl.axis.Axis, histogram: hist.Hist, signal: Optional[Iterable[str]] = None
 ) -> mpl.axis.Axis:
     signal = [] if signal is None else signal
     samples = list(s for s in histogram.axes[0] if s not in signal)
@@ -143,7 +157,7 @@ signals = [
 ]
 
 
-def makefig(o: Union[Path, str], vals) -> None:
+def makefig(o: PathLike, vals) -> None:
     n, h = vals
     if countHistAxes(h) == 2:
         f, ax = plt.subplots()
@@ -159,7 +173,7 @@ def makefig(o: Union[Path, str], vals) -> None:
         f.savefig(o / n)
 
 
-def make2DHist(ax: mpl.axis.Axis, histogram: hist.Hist) -> mpl.axis.Axis:
+def make2DHist(ax: mpl.axis.Axis, histogram: hist.Hist, plotopts) -> mpl.axis.Axis:
     vals, e1, e2 = histogram.to_numpy()
     ex = (e1[1:] + e1[:-1]) / 2
     ey = (e2[1:] + e2[:-1]) / 2
@@ -167,7 +181,7 @@ def make2DHist(ax: mpl.axis.Axis, histogram: hist.Hist) -> mpl.axis.Axis:
     x = vx.ravel()
     y = vy.ravel()
     w = vals.T.ravel()
-    ax.hist2d(x, y, bins=np.array([e1, e2]), weights=w)
+    ax.hist2d(x, y, bins=np.array([e1, e2]), weights=w, **plotopts)
     ax.set_xlabel(histogram.axes[0].label)
     ax.set_ylabel(histogram.axes[1].label)
     return ax
@@ -176,12 +190,19 @@ def make2DHist(ax: mpl.axis.Axis, histogram: hist.Hist) -> mpl.axis.Axis:
 def make2DProjection(
     ax: mpl.axis.Axis,
     h: hist.Hist,
-    vlines: Iterable[int] = None,
-    hlines: Iterable[int] = None,
+    vlines: Optional[Iterable[Number]] = None,
+    hlines: Optional[Iterable[Number]] = None,
+    main_opts: Optional[Dict[str, Any]] = None,
+    x_opts: Optional[Dict[str, Any]] = None,
+    y_opts: Optional[Dict[str, Any]] = None,
 ) -> mpl.axis.Axis:
+    main_opts = {} if main_opts is None else main_opts
+    x_opts = {} if x_opts is None else x_opts
+    y_opts = {} if y_opts is None else y_opts
+
     vlines = list(vlines) if vlines is not None else []
     hlines = list(hlines) if hlines is not None else []
-    ax = make2DHist(ax, h)
+    ax = make2DHist(ax, h, main_opts)
     divider = make_axes_locatable(ax)
     ax_histx = divider.append_axes("top", 2, pad=0.4, sharex=ax)
     ax_histy = divider.append_axes("right", 2, pad=0.4, sharey=ax)
@@ -189,9 +210,9 @@ def make2DProjection(
     ax_histy.yaxis.set_tick_params(labelleft=False)
     binwidth = 0.25
     x, y = h[:, sum].to_numpy()
-    draw1DHistogram(ax_histx, x, y)
+    draw1DHistogram(ax_histx, x, y, plot_opts=x_opts)
     x, y = h[sum, :].to_numpy()
-    draw1DHistogram(ax_histy, x, y, orientation="horizontal")
+    draw1DHistogram(ax_histy, x, y, orientation="horizontal", plot_opts=y_opts)
     for a, l in it.product([ax, ax_histx], vlines):
         a.axvline(x=l)
     for a, l in it.product([ax, ax_histy], hlines):
@@ -203,30 +224,48 @@ def make2DSlicedProjection(
     ax: mpl.axis.Axis,
     h: hist.Hist,
     h_cut: hist.Hist,
-    vlines: Iterable[int] = None,
-    hlines: Iterable[int] = None,
+    vlines: Optional[Iterable[Number]] = None,
+    hlines: Optional[Iterable[Number]] = None,
 ) -> mpl.axis.Axis:
-    ax, div = make2DProjection(ax,h,vlines,hlines)
+    ax, div = make2DProjection(ax, h, vlines, hlines)
     ax2 = div.append_axes("right", 2, pad=0.4, sharey=ax)
     x, y = h_cut.to_numpy()
     draw1DHistogram(ax2, x, y, orientation="horizontal")
     ax2.yaxis.set_tick_params(labelleft=False)
+    ax2.text(
+        0.95,
+        0.97,
+        "Post Cut",
+        fontsize=14,
+        transform=ax2.transAxes,
+        horizontalalignment="right",
+        verticalalignment="top",
+    )
     return ax
 
+
+
+def autoPlot(outpath: PathLike, function, *args, **kwargs):
+    fig, ax = plt.subplots()
+    ax = function(ax, *args, **kwargs)
+    fig.savefig(outpath)
+
+
+    
 
 if __name__ == "__main__":
     outdir = Path("plots")
     outdir.mkdir(parents=True, exist_ok=True)
     # makefig(outdir, ("m04_m", all_hists["m04_m"]))
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    #ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
-    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim",...]
-    h = all_hists["m14_vs_m04"]["QCD2018",...]
+    # ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
+    h = all_hists["m14_vs_m04"]["QCD2018", ...]
+    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", ...]
     cutlower = 700
     cutupper = 1200
-    h2 = h[hist.loc(cutlower):hist.loc(cutupper):sum, :] 
+    h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
     print(h2.__repr__())
-    ax = make2DSlicedProjection(ax, h, h2, [cutlower,cutupper])
+    ax = make2DSlicedProjection(ax, h, h2, [cutlower, cutupper])
     fig.savefig(outdir / "test.pdf")
     # with concurrent.futures.ProcessPoolExecutor() as p:
     #    futs = p.map(partial(makefig, outdir), list(all_hists.items())[0:2])
