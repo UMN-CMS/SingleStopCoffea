@@ -9,15 +9,20 @@ import multiprocessing
 from functools import partial
 from rich.progress import track
 import concurrent.futures
-from typing import List, Iterable, Callable, Union, Dict, Any, TypeAlias, Optional
+from typing import List, Iterable, Callable, Union, Dict, Any,  Optional
 from dataclasses import dataclass
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import itertools as it
 import os
 
 
-PathLike: TypeAlias = Union[str, bytes, os.PathLike]
-Number: TypeAlias = Union[int, float]
+try:
+    from typing import  TypeAlias
+    PathLike: TypeAlias = Union[str, bytes, os.PathLike]
+    Number: TypeAlias = Union[int, float]
+except ImportError:
+    PathLike = Union[str, bytes, os.PathLike]
+    Number = Union[int, float]
 
 
 font_dirs = ["./fonts"]
@@ -259,14 +264,17 @@ if __name__ == "__main__":
     # makefig(outdir, ("m04_m", all_hists["m04_m"]))
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
     # ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
-    h = all_hists["m14_vs_m04"]["QCD2018", ...]
-    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", ...]
+    h = all_hists["m14_vs_m04"]["QCD2018",sum, ...]
+    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim",sum, ...]
     cutlower = 700
     cutupper = 1200
+    print("HERE1")
     h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
     print(h2.__repr__())
     ax = make2DSlicedProjection(ax, h, h2, [cutlower, cutupper])
-    fig.savefig(outdir / "test.pdf")
+    print("HERE2")
+    fig.savefig(outdir / "test.pdf", dpi=100)
+    print("HERE3")
     # with concurrent.futures.ProcessPoolExecutor() as p:
     #    futs = p.map(partial(makefig, outdir), list(all_hists.items())[0:2])
     #    for f in track(futs):
