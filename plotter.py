@@ -14,6 +14,9 @@ from dataclasses import dataclass
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import itertools as it
 import os
+from scipy.optimize import curve_fit
+
+
 
 
 PathLike: TypeAlias = Union[str, bytes, os.PathLike]
@@ -68,7 +71,7 @@ def draw1DHistogram(
     label: Optional[str] = None,
     orientation: str = "vertical",
     plot_opts: Optional[Dict[str, Any]] = None,
-    **kwargs
+    **kwargs,
 ) -> mpl.axis.Axis:
     plot_opts = {} if plot_opts is None else plot_opts
     widths = np.diff(edges)
@@ -78,7 +81,7 @@ def draw1DHistogram(
         weights=vals,
         label=label,
         orientation=orientation,
-        **plot_opts
+        **plot_opts,
     )
     return ret
 
@@ -90,7 +93,7 @@ def drawScatter(
     yerr: Optional[np.ndarray] = None,
     label: Optional[str] = None,
     plot_opts: Optional[Dict[str, Any]] = None,
-    **kwargs
+    **kwargs,
 ) -> mpl.axis.Axis:
     plot_opts = {} if plot_opts is None else plot_opts
     locs = edges[:-1] + np.diff(edges) / 2
@@ -217,19 +220,27 @@ def make2DProjection(
         a.axvline(x=l)
     for a, l in it.product([ax, ax_histy], hlines):
         a.axhline(y=l)
-    return ax, divider
+    return ax, ax_histx, ax_histy, divider
 
 
 def make2DSlicedProjection(
     ax: mpl.axis.Axis,
     h: hist.Hist,
     h_cut: hist.Hist,
+    add_fit=None,
     vlines: Optional[Iterable[Number]] = None,
     hlines: Optional[Iterable[Number]] = None,
 ) -> mpl.axis.Axis:
-    ax, div = make2DProjection(ax, h, vlines, hlines)
+    ax, ax_x, _, div = make2DProjection(ax, h, vlines, hlines)
+
     ax2 = div.append_axes("right", 2, pad=0.4, sharey=ax)
     x, y = h_cut.to_numpy()
+
+    if add_fit is not None:
+        lx,ux = ax_x.get_xlim()
+        space = np.linspace(lx,ux,200)
+        ax_x.plot(space, add_fit(space))
+
     draw1DHistogram(ax2, x, y, orientation="horizontal")
     ax2.yaxis.set_tick_params(labelleft=False)
     ax2.text(
@@ -244,14 +255,21 @@ def make2DSlicedProjection(
     return ax
 
 
-
-def autoPlot(outpath: PathLike, function, *args, **kwargs):
-    fig, ax = plt.subplots()
+def autoPlot(
+    outpath: PathLike,
+    function,
+    *args,
+    fig_params=None,
+    **kwargs,
+):
+    fig_params = {} if not fig_params else fig_params
+    p = Path(outpath)
+    p.parent.mkdir(exist_ok=True, parents=True)
+    fig, ax = plt.subplots(**fig_params)
     ax = function(ax, *args, **kwargs)
-    fig.savefig(outpath)
+    fig.savefig(p)
+    plt.close()
 
-
-    
 
 if __name__ == "__main__":
     outdir = Path("plots")
@@ -259,15 +277,23 @@ if __name__ == "__main__":
     # makefig(outdir, ("m04_m", all_hists["m04_m"]))
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
     # ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
-    h = all_hists["m14_vs_m04"]["QCD2018", ...]
-    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", ...]
-    cutlower = 700
-    cutupper = 1200
+    h = all_hists["m14_vs_m04"]["QCD2018", sum, ...]
+    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", sum, ...]
+    hx = h[:,sum]
+    vals,edges = hx.to_numpy()
+    edges = (edges[:-1] + edges[1:])/2
+    p0 = [100, 1000, 200]
+    coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
+    _,mu,sig = coeff
+    cutupper = mu+2.5 * sig
+    cutlower = mu-2.5 * sig
     h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
-    print(h2.__repr__())
-    ax = make2DSlicedProjection(ax, h, h2, [cutlower, cutupper])
-    fig.savefig(outdir / "test.pdf")
-    # with concurrent.futures.ProcessPoolExecutor() as p:
-    #    futs = p.map(partial(makefig, outdir), list(all_hists.items())[0:2])
-    #    for f in track(futs):
-    #        pass
+    autoPlot(
+        outdir / "test.pdf",
+        make2DSlicedProjection,
+        h,
+        h2,
+        add_fit=lambda x: gauss(x, *coeff),
+        vlines=[cutlower, cutupper],
+        fig_params=dict(figsize=(12, 10)),
+    )
