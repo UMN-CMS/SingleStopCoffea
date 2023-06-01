@@ -50,6 +50,8 @@ def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None):
 
 signals = [x for x in all_hists["HT"].axes[0] if "signal" in x]
 outdir = Path("plots")
+mapping = {}
+
 for sig in signals:
     m = re.match(r"signal_(\d+)_(\d+)_Skim", sig)
     m1, m2 = m.group(1, 2)
@@ -100,3 +102,14 @@ for sig in signals:
     root_output = uproot.recreate(outdir / sig / "hists.root")
     root_output[f"{sig}_{target}_opt_{a1}_proj_04"] = bs
     root_output[f"QCD2018_{sig}_{target}_opt_{a1}_proj_04"] = bb
+
+    mapping[sig] = dict(
+        base_dir = str(sig),
+        hists = str("hists.root"),
+        bkg_hist_name = f"QCD2018_{sig}_{target}_opt_{a1}_proj_04",
+        sig_hist_name = f"{sig}_{target}_opt_{a1}_proj_04"
+    )
+
+mfile = outdir/"all_data.json"
+with open(mfile,'w') as f:
+    f.write(json.dumps(mapping))
