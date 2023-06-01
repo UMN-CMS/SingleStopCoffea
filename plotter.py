@@ -9,7 +9,7 @@ import multiprocessing
 from functools import partial
 from rich.progress import track
 import concurrent.futures
-from typing import List, Iterable, Callable, Union, Dict, Any,  Optional
+from typing import List, Iterable, Callable, Union, Dict, Any, Optional
 from dataclasses import dataclass
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import itertools as it
@@ -17,10 +17,9 @@ import os
 from scipy.optimize import curve_fit
 
 
-
-
 try:
-    from typing import  TypeAlias
+    from typing import TypeAlias
+
     PathLike: TypeAlias = Union[str, bytes, os.PathLike]
     Number: TypeAlias = Union[int, float]
 except ImportError:
@@ -242,8 +241,8 @@ def make2DSlicedProjection(
     x, y = h_cut.to_numpy()
 
     if add_fit is not None:
-        lx,ux = ax_x.get_xlim()
-        space = np.linspace(lx,ux,200)
+        lx, ux = ax_x.get_xlim()
+        space = np.linspace(lx, ux, 200)
         ax_x.plot(space, add_fit(space))
 
     draw1DHistogram(ax2, x, y, orientation="horizontal")
@@ -265,6 +264,7 @@ def autoPlot(
     function,
     *args,
     fig_params=None,
+    fig_manip=None,
     **kwargs,
 ):
     fig_params = {} if not fig_params else fig_params
@@ -272,6 +272,9 @@ def autoPlot(
     p.parent.mkdir(exist_ok=True, parents=True)
     fig, ax = plt.subplots(**fig_params)
     ax = function(ax, *args, **kwargs)
+    ax = addPrelim(ax)
+    if fig_manip:
+        fig_manip(fig)
     fig.savefig(p)
     plt.close()
 
@@ -284,14 +287,14 @@ if __name__ == "__main__":
     # ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
     h = all_hists["m14_vs_m04"]["QCD2018", sum, ...]
     h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", sum, ...]
-    hx = h[:,sum]
-    vals,edges = hx.to_numpy()
-    edges = (edges[:-1] + edges[1:])/2
+    hx = h[:, sum]
+    vals, edges = hx.to_numpy()
+    edges = (edges[:-1] + edges[1:]) / 2
     p0 = [100, 1000, 200]
     coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
-    _,mu,sig = coeff
-    cutupper = mu+2.5 * sig
-    cutlower = mu-2.5 * sig
+    _, mu, sig = coeff
+    cutupper = mu + 2.5 * sig
+    cutlower = mu - 2.5 * sig
     h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
     autoPlot(
         outdir / "test.pdf",
