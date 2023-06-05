@@ -21,7 +21,6 @@ def getHistograms(path):
         r = pickle.load(f)
     return r
 
-
 all_hists = getHistograms("output.pkl")
 
 
@@ -102,6 +101,7 @@ outdir = Path("plots")
 mapping = {}
 
 for sig in signals:
+    print(sig)
     m = re.match(r"signal_(\d+)_(\d+)_Skim", sig)
     m1, m2 = m.group(1, 2)
     m1, m2 = int(m1), int(m2)
@@ -181,15 +181,23 @@ for sig in signals:
 
     root_output = uproot.recreate(outdir / sig / "hists.root")
     root_output[f"{sig}_{target}_opt_{a1}_proj_04"] = bs
-    root_output[f"QCD2018_{sig}_{target}_opt_{a1}_proj_04"] = bb
+    root_output[f"bkg_{sig}_{target}_opt_{a1}_proj_04"] = bb
+
+    root_output[f"{sig}_{target}"] = hs
+    root_output[f"bkg_{sig}_{target}"] = hb
+
+    _, ms, mx, _  = sig.split("_")
 
     mapping[sig] = dict(
+        stop_mass = int(ms), 
+        chi_mass = int(mx),
         base_dir=str(sig),
         hists=str("hists.root"),
         bkg_hist_name=f"QCD2018_{sig}_{target}_opt_{a1}_proj_04",
         sig_hist_name=f"{sig}_{target}_opt_{a1}_proj_04",
+        base_bkg_hist_name= f"{sig}_{target}",
+        base_sig_hist_name= f"bkg_{sig}_{target}"
     )
-    break
 
 mfile = outdir / "all_data.json"
 with open(mfile, "w") as f:

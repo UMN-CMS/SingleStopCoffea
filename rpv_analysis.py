@@ -23,12 +23,13 @@ from histograms import *
 from objects import createObjects
 from datasets import filesets
 from weights import addWeights
+from matching import object_matching
 
 import warnings
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 
-ParticleChain = namedtuple("ParticleChain", "name pdgid_list children")
+ParticleChain = namedtuple("ParticleChain", "name pdgid children")
 
 structure = [
     ParticleChain(
@@ -61,13 +62,19 @@ def genMatchParticles(children, structure, allow_anti=True):
     ret = {}
     for s_child in structure:
         found = children[
-            s_child.pdgid == abs(children.pdgid) if allow_anti else children.pdgid
+            s_child.pdgid == abs(children.pdgId) if allow_anti else children.pdgId
         ]
+        print(found)
         if ak.any(ak.num(found, axis=1) != 1):
-            raise ValueError("AAAAAAAAAAAAA")
+            raise ValueError(f"Could not find particle with pdgId {s_child.pdgid}")
         ret[s_child.name] = found
-        if structure.children:
-            ret.update(_genMatchParticles(found, structure.children))
+        if s_child.children:
+            ret.update(genMatchParticles(found, s_child.children))
+    return ret
+
+def deltaRMatch(events):
+    ret = object_matching(events.GenPart, events.good_jets, 0.3,None ,True)
+    print(ret)
     return ret
 
 
@@ -75,6 +82,7 @@ def goodGenParticles(events):
     events["good_gen_particles"] = events.GenPart[isGoodGenParticle(events.GenPart)]
     gg = events.good_gen_particles
     test = genMatchParticles(gg, structure)
+    print(test)
     return events
 
 
@@ -408,6 +416,9 @@ class RPVProcessor(processor.ProcessorABC):
         events = events[selection.all(*selection.names)]
 
         events = addEventLevelVars(events)
+        #goodGenParticles(events)
+        #deltaRMatch(events)
+        #return {}
 
         dataset = events.metadata["dataset"]
         hm = makeCategoryHist(
@@ -433,6 +444,7 @@ if __name__ == "__main__":
     executor = processor.IterativeExecutor()
     executor = processor.FuturesExecutor(workers=8)
     runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
+    #f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
     f = {k: v for k, v in filesets.items()}
     out = runner(f, "Events", processor_instance=RPVProcessor())
     pickle.dump(out, open("output.pkl", "wb"))
