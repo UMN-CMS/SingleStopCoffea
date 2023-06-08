@@ -120,29 +120,30 @@ def make1DPlot(
         print(sample_hist)
         x = sample_hist.hist.to_numpy()
         vals, edges = sample_hist.hist.to_numpy()
+        if bottom is None: bottom = np.zeros_like(vals)
         variance = sample_hist.hist.view().variance if errors else None
-        draw_function(
-            ax, vals, edges, label=sample_hist.name, bottom=bottom, yerr=variance
-        )
-        if stack:
-            bottom = bottom + vals if bottom is not None else vals
+        to_pass = dict(label=sample_hist.name, yerr=variance)
+        if stack: to_pass["plot_opts"]= dict(bottom = bottom)
+        draw_function( ax, vals, edges, **to_pass)
+        if stack: bottom = bottom + vals
     return ax
 
 
 def makeStackPlot(
-    ax: mpl.axis.Axis, histogram: hist.Hist, signal: Optional[Iterable[str]] = None
+    ax: mpl.axis.Axis, histogram: hist.Hist, signal: Optional[Iterable[str]] = None,
+    backgrounds: Optional[Iterable[str]] = None
 ) -> mpl.axis.Axis:
     signal = [] if signal is None else signal
     samples = list(s for s in histogram.axes[0] if s not in signal)
-    samples = ["TT2018"]
     ax = make1DPlot(
-        ax, [SampleHistogram(s, histogram[s, ...]) for s in samples], draw1DHistogram
+        ax, [SampleHistogram(s, histogram[s, ...]) for s in ( backgrounds or (x for x in samples if x not in signals) )], draw1DHistogram
     )
     ax = make1DPlot(
         ax,
         [SampleHistogram(s, histogram[s, ...]) for s in signal],
         drawScatter,
         errors=True,
+        stack=False
     )
     ax.set_yscale("log")
     xax = next(x for x in histogram.axes if x.name != "dataset")
@@ -154,14 +155,6 @@ def makeStackPlot(
     return ax
 
 
-signals = [
-    "signal_2000_600_Skim",
-    "signal_1500_400_Skim",
-    "signal_2000_1900_Skim",
-    "signal_2000_400_Skim",
-    "signal_2000_900_Skim",
-    "signal_1500_600_Skim",
-]
 
 
 def makefig(o: PathLike, vals) -> None:
@@ -279,29 +272,52 @@ def autoPlot(
     plt.close()
 
 
+def makePlot(x):
+    h = x[1]
+    print(x[0])
+    print(f"background {h['QCD2018',...].sum()}")
+    print(f"signal {h['signal_1000_400_Skim',...].sum()}")
+    autoPlot(outdir / f"{x[0]}.pdf", makeStackPlot, x[1][:,sum,...], signal=signals, backgrounds=["QCD2018", "TT2018"], fig_params=dict(figsize=(12,9)))
+
+signals = [
+    "signal_1500_400_Skim",
+    "signal_2000_1900_Skim",
+    "signal_1000_400_Skim",
+]
+
 if __name__ == "__main__":
-    outdir = Path("plots")
+    outdir = Path("basicplots")
     outdir.mkdir(parents=True, exist_ok=True)
-    # makefig(outdir, ("m04_m", all_hists["m04_m"]))
-    fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    # ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
-    h = all_hists["m14_vs_m04"]["QCD2018", sum, ...]
-    h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", sum, ...]
-    hx = h[:, sum]
-    vals, edges = hx.to_numpy()
-    edges = (edges[:-1] + edges[1:]) / 2
-    p0 = [100, 1000, 200]
-    coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
-    _, mu, sig = coeff
-    cutupper = mu + 2.5 * sig
-    cutlower = mu - 2.5 * sig
-    h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
-    autoPlot(
-        outdir / "test.pdf",
-        make2DSlicedProjection,
-        h,
-        h2,
-        add_fit=lambda x: gauss(x, *coeff),
-        vlines=[cutlower, cutupper],
-        fig_params=dict(figsize=(12, 10)),
-    )
+    print(all_hists.keys())
+    hists = {x:y for x,y in all_hists.items() if "m04_m" in x}
+    with concurrent.futures.ProcessPoolExecutor(8) as pool:
+        for x in pool.map(makePlot, [(x,y) for x,y in hists.items() if countHistAxes(y) == 3 and  "signal_1500_400_Skim" in y.axes[0]]):
+            pass
+
+    #for name,h in all_hists.items():
+    #    if countHistAxes(h) == 3:
+    #        autoPlot(outdir / f"{name}.pdf", makeStackPlot, h[:,sum,...], signal=signals, backgrounds=["QCD2018"])
+    #    break
+    ## makefig(outdir, ("m04_m", all_hists["m04_m"]))
+    #fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+    ## ax = make2DProjection(ax, all_hists["m14_vs_m04"]["QCD2018", ...], [1000])
+    #h = all_hists["m14_vs_m04"]["QCD2018", sum, ...]
+    #h = all_hists["m14_vs_m04"]["signal_2000_900_Skim", sum, ...]
+    #hx = h[:, sum]
+    #vals, edges = hx.to_numpy()
+    #edges = (edges[:-1] + edges[1:]) / 2
+    #p0 = [100, 1000, 200]
+    #coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
+    #_, mu, sig = coeff
+    #cutupper = mu + 2.5 * sig
+    #cutlower = mu - 2.5 * sig
+    #h2 = h[hist.loc(cutlower) : hist.loc(cutupper) : sum, :]
+    #autoPlot(
+    #    outdir / "test.pdf",
+    #    make2DSlicedProjection,
+    #    h,
+    #    h2,
+    #    add_fit=lambda x: gauss(x, *coeff),
+    #    vlines=[cutlower, cutupper],
+    #    fig_params=dict(figsize=(12, 10)),
+    #)

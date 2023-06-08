@@ -127,8 +127,14 @@ for sig in signals:
     ]
     hb = hb[sum, sum, ...]
 
-    bs, bb, window = makeOptimized(hs, hb, f"mass_{a1}", "mass_04")
+    s1 = hs.sum().value
+    s2 = hb.sum().value
+    print("#" * 50)
+    print(f"Signal: {sig}")
+    print(f"Signal sum is {s1}")
+    print(f"Bkg sum is {s2}")
 
+    bs, bb, window = makeOptimized(hs, hb, f"mass_{a1}", "mass_04")
     before_sig = hs.sum().value / np.sqrt(hb.sum().value)
     after_sig = bs.sum().value / np.sqrt(bb.sum().value)
 
@@ -183,8 +189,8 @@ for sig in signals:
     root_output[f"{sig}_{target}_opt_{a1}_proj_04"] = bs
     root_output[f"bkg_{sig}_{target}_opt_{a1}_proj_04"] = bb
 
-    root_output[f"{sig}_{target}"] = hs
-    root_output[f"bkg_{sig}_{target}"] = hb
+    root_output[f"{sig}_{target}"] = hs[sum,...]
+    root_output[f"bkg_{sig}_{target}"] = hb[sum,...]
 
     _, ms, mx, _  = sig.split("_")
 
@@ -193,10 +199,10 @@ for sig in signals:
         chi_mass = int(mx),
         base_dir=str(sig),
         hists=str("hists.root"),
-        bkg_hist_name=f"QCD2018_{sig}_{target}_opt_{a1}_proj_04",
+        bkg_hist_name=f"bkg_{sig}_{target}_opt_{a1}_proj_04",
         sig_hist_name=f"{sig}_{target}_opt_{a1}_proj_04",
-        base_bkg_hist_name= f"{sig}_{target}",
-        base_sig_hist_name= f"bkg_{sig}_{target}"
+        base_bkg_hist_name= f"bkg_{sig}_{target}",
+        base_sig_hist_name= f"{sig}_{target}"
     )
 
 mfile = outdir / "all_data.json"
