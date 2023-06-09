@@ -116,12 +116,12 @@ for sig in signals:
     hb = hi[
         [
             "QCD2018",
-            "TT2018",
-            "Diboson2018",
-            "WQQ2018",
-            "ZQQ2018",
-            "ZNuNu2018",
-            "ST2018",
+            #"TT2018",
+            #"Diboson2018",
+            #"WQQ2018",
+            #"ZQQ2018",
+            #"ZNuNu2018",
+            #"ST2018",
         ],
         ...,
     ]
@@ -133,6 +133,8 @@ for sig in signals:
     print(f"Signal: {sig}")
     print(f"Signal sum is {s1}")
     print(f"Bkg sum is {s2}")
+
+    continue
 
     bs, bb, window = makeOptimized(hs, hb, f"mass_{a1}", "mass_04")
     before_sig = hs.sum().value / np.sqrt(hb.sum().value)

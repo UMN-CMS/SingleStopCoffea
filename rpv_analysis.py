@@ -25,11 +25,14 @@ from datasets import filesets
 from weights import addWeights
 from matching import object_matching
 
+import itertools as it
+
 import warnings
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 
-ParticleChain = namedtuple("ParticleChain", "name pdgid children")
+ParticleChain = namedtuple("ParticleChain", "name pdgId children")
+ParticleMatch = namedtuple("ParticleMatch", "name pdgId matched_array")
 
 structure = [
     ParticleChain(
@@ -50,6 +53,8 @@ structure = [
     )
 ]
 
+# order stop b , chi b, chi s, chi d
+
 
 def isGoodGenParticle(particle):
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
@@ -58,31 +63,135 @@ def isGoodGenParticle(particle):
     )
 
 
-def genMatchParticles(children, structure, allow_anti=True):
+def createGoodChildren(gen_particles, children):
+    # x = ak.singletons(gen_particles.children)
+    def get(x):
+        return [y.pdgId for y in x[0]]
+
+    x = children
+    # x = gen_particles.children
+    print(f"{gen_particles[0][0].pdgId} ->  {get(x[0])}")
+    good_child_mask = isGoodGenParticle(x)
+    maybe_good_children = x[~good_child_mask].children
+    maybe_good_children = ak.flatten(maybe_good_children, axis=3)
+    print(maybe_good_children)
+    print(f"{gen_particles[0][0].pdgId} ->  {get(maybe_good_children[0])}")
+    print(x[good_child_mask])
+    print(maybe_good_children)
+    next_round = ak.concatenate([x[good_child_mask], maybe_good_children], axis=2)
+    any_bad = isGoodGenParticle(next_round)
+    if not ak.all(ak.ravel(any_bad)):
+        children = createGoodChildren(gen_particles, next_round)
+    print(children)
+    return children
+    print(f"{gen_particles[0][0].pdgId} ->  {get(next_round[0])}")
+    print(next_round)
+
+    return x
+
+
+def genMatchParticles(children_particles, children_structure, allow_anti=True):
+    # base_particle_array = base_particle.matched_array
+    # genpart_children = base_particle_array.children
     ret = {}
-    for s_child in structure:
-        found = children[
-            s_child.pdgid == abs(children.pdgId) if allow_anti else children.pdgId
-        ]
-        print(found)
-        if ak.any(ak.num(found, axis=1) != 1):
-            raise ValueError(f"Could not find particle with pdgId {s_child.pdgid}")
-        ret[s_child.name] = found
-        if s_child.children:
-            ret.update(genMatchParticles(found, s_child.children))
+    print("#" * 40)
+    print(f"Children particles are: {children_particles}")
+    print(f"Chidlren structure is: {children_structure}")
+    groups = it.groupby(
+        children_structure, key=lambda x: abs(x.pdgId) if allow_anti else x.pdgId
+    )
+    for pid, children in groups:
+        children = list(children)
+        mask = pid == (
+            abs(children_particles.pdgId) if allow_anti else children_particles.pdgId
+        )
+        if ak.any(ak.count(mask[mask], axis=1) != len(children)):
+            raise Exception(
+                f"Did not find expected number of children of type {pid} in event. Expected {len(children)}."
+            )
+        matched = children_particles[mask]
+        print(matched.type)
+        print(matched[0])
+        print(matched[0,0])
+        print(ak.fields(matched[0,0]))
+        print(f"Matched particles are {matched}")
+        for i, c in enumerate([c for c in children]):
+            ret[c.name] = matched[:, i]
+            if c.children:
+                print(
+                    f"Looking for children of particle {c.pdgId} -> {[x.pdgId for x in c.children]} in list : {[x.pdgId for x in matched[:,i].good_children[0]]}"
+                )
+                print(
+                    f"Looking for children of particle {c.pdgId} -> {[x.pdgId for x in c.children]} in list : {[x.pdgId for x in matched[:,i].good_children[0]]}"
+                )
+                ret.update(
+                    genMatchParticles(
+                        matched[:, i].good_children, c.children, allow_anti=allow_anti
+                    )
+                )
+    print(f"Ret is {ret}")
     return ret
 
+    # ret = {}
+    # for s_child in structure:
+    #    found = children[
+    #        s_child.pdgid == abs(children.pdgId)  if allow_anti else children.pdgId
+    #        & children.parent
+    #    ]
+    #    print(found)
+    #    if ak.any(ak.num(found, axis=1) != 1):
+    #        raise ValueError(f"Could not find particle with pdgId {s_child.pdgid}")
+    #    ret[s_child.name] = found
+    #    if s_child.children:
+    #        ret.update(genMatchParticles(found, s_child.children))
+    # return ret
+
+
 def deltaRMatch(events):
-    ret = object_matching(events.GenPart, events.good_jets, 0.3,None ,True)
-    print(ret)
+    ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, True)
     return ret
 
 
 def goodGenParticles(events):
-    events["good_gen_particles"] = events.GenPart[isGoodGenParticle(events.GenPart)]
-    gg = events.good_gen_particles
-    test = genMatchParticles(gg, structure)
+    test = createGoodChildren(events.GenPart, events.GenPart.children)
     print(test)
+    print(test.type)
+    def get(x):
+        return [y.pdgId for y in x[0]]
+    events["GenPart", "good_children"] = test
+    gg = events.GenPart[isGoodGenParticle(events.GenPart)]
+    print(f"{gg[0].pdgId} -> {gg[0].good_children.pdgId} ")
+    bs = gg.good_children[abs(gg.good_children.pdgId) == 5]
+    stop = ak.all(abs(gg[:,0].pdgId) == 1000006)
+    bad = ak.all(abs(gg[:,1].pdgId) == 1000024)
+    print(stop)
+    x = gg[abs(gg.pdgId) == 1000024][:,0]
+    t = gg[abs(gg.pdgId) == 1000006][:,0]
+    print("x ", x)
+    print("t ", t)
+    x_children = gg.good_children[abs(gg.pdgId) == 1000024]
+    s_children = gg.good_children[abs(gg.pdgId) == 1000006]
+    xb = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 5]))
+    xd = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 1]))
+    xs = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 3]))
+    sb = ak.flatten(ak.flatten(s_children[abs(s_children.pdgId) == 5]))
+    print("sb ", sb.pdgId)
+    print("xb ", xb.pdgId)
+    print("xd ", xd.pdgId)
+    print("xs ", xs.pdgId)
+    events["SignalParticles"] = ak.zip(dict(
+        stop = t,
+        chi = x,
+        stop_b = sb,
+        chi_b = xb,
+        chi_d = xd,
+        chi_s = xs,
+    ))
+    events["SignalQuarks"] = ak.concatenate([ak.singletons(val) for val in [sb,xb,xd,xs]],axis=1)
+    print(events["SignalQuarks"])
+    print(events["SignalQuarks"][0].pdgId)
+    #print(gg[0].good_children.good_children)
+    #test = genMatchParticles(gg, structure)
     return events
 
 
@@ -249,13 +358,13 @@ def makePreSelectionHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
     w = events.EventWeight
-    #ret[f"LHEHT"] = hmaker(
+    # ret[f"LHEHT"] = hmaker(
     #    ht_axis,
     #    events.LHE.HT,
     #    w,
     #    name="Event LHE HT Preselection",
     #    description="HT of the LHE level event before any selections are applied",
-    #)
+    # )
     return ret
 
 
@@ -356,8 +465,8 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
         description=None,
         auto_expand=True,
     ):
-        #print("###############################################")
-        #print(f"name: {name}")
+        # print("###############################################")
+        # print(f"name: {name}")
         # print(f"axes: {axis}")
         # print(f"Cat axes: {cat_axes}")
         if not isinstance(data, list):
@@ -393,9 +502,9 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
                     for x in shaped_data_vals
                 ]
         d = shaped_cat_vals + shaped_data_vals
-        #print(f"{name} HIST: {h}")
-        #print(f"{name} DATA: {d}")
-        #print(f"{name} WEIGHTS: {weights}")
+        # print(f"{name} HIST: {h}")
+        # print(f"{name} DATA: {d}")
+        # print(f"{name} WEIGHTS: {weights}")
         ret = h.fill(*d, weight=weights)
         return ret
 
@@ -416,9 +525,9 @@ class RPVProcessor(processor.ProcessorABC):
         events = events[selection.all(*selection.names)]
 
         events = addEventLevelVars(events)
-        #goodGenParticles(events)
-        #deltaRMatch(events)
-        #return {}
+        goodGenParticles(events)
+        deltaRMatch(events)
+        return {}
 
         dataset = events.metadata["dataset"]
         hm = makeCategoryHist(
@@ -441,10 +550,10 @@ class RPVProcessor(processor.ProcessorABC):
 
 
 if __name__ == "__main__":
-    executor = processor.IterativeExecutor()
     executor = processor.FuturesExecutor(workers=8)
+    executor = processor.IterativeExecutor()
     runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
-    #f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
     f = {k: v for k, v in filesets.items()}
+    f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
     out = runner(f, "Events", processor_instance=RPVProcessor())
     pickle.dump(out, open("output.pkl", "wb"))
