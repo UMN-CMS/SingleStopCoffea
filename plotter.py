@@ -2,6 +2,7 @@ import hist
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
+import re
 import pickle
 import numpy as np
 from pathlib import Path
@@ -15,6 +16,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import itertools as it
 import os
 from scipy.optimize import curve_fit
+import argparse
 
 
 try:
@@ -41,7 +43,6 @@ def getHistograms(path: PathLike) -> Dict[str, hist.Hist]:
     return r
 
 
-all_hists = getHistograms("output.pkl")
 
 
 def addPrelim(ax: mpl.axis.Axis) -> mpl.axis.Axis:
@@ -101,7 +102,7 @@ def drawScatter(
 ) -> mpl.axis.Axis:
     plot_opts = {} if plot_opts is None else plot_opts
     locs = edges[:-1] + np.diff(edges) / 2
-    ret = ax.errorbar(locs, vals, yerr=yerr, label=label, fmt="o", **plot_opts)
+    ret = ax.errorbar(locs, vals, yerr=yerr, label=label, fmt="+", **plot_opts)
     return ret
 
 
@@ -117,11 +118,10 @@ def make1DPlot(
     hists = list(sorted(hists, key=lambda x: x.hist.sum().value) if sort else hists)
     bottom = None
     for sample_hist in hists:
-        print(sample_hist)
         x = sample_hist.hist.to_numpy()
         vals, edges = sample_hist.hist.to_numpy()
         if bottom is None: bottom = np.zeros_like(vals)
-        variance = sample_hist.hist.view().variance if errors else None
+        variance = np.sqrt(sample_hist.hist.view().variance) if errors else None
         to_pass = dict(label=sample_hist.name, yerr=variance)
         if stack: to_pass["plot_opts"]= dict(bottom = bottom)
         draw_function( ax, vals, edges, **to_pass)
@@ -131,21 +131,21 @@ def make1DPlot(
 
 def makeStackPlot(
     ax: mpl.axis.Axis, histogram: hist.Hist, signal: Optional[Iterable[str]] = None,
-    backgrounds: Optional[Iterable[str]] = None
+        backgrounds: Optional[Iterable[str]] = None, normalize: bool=False
 ) -> mpl.axis.Axis:
     signal = [] if signal is None else signal
     samples = list(s for s in histogram.axes[0] if s not in signal)
-    ax = make1DPlot(
-        ax, [SampleHistogram(s, histogram[s, ...]) for s in ( backgrounds or (x for x in samples if x not in signals) )], draw1DHistogram
-    )
-    ax = make1DPlot(
-        ax,
-        [SampleHistogram(s, histogram[s, ...]) for s in signal],
-        drawScatter,
-        errors=True,
-        stack=False
-    )
-    ax.set_yscale("log")
+    h_bkg = [SampleHistogram(s, histogram[s, ...]) for s in ( backgrounds or (x for x in samples if x not in signals) )]
+    h_sig = [SampleHistogram(s, histogram[s, ...]) for s in signal]
+    if normalize:
+        for x in h_bkg:
+            x.hist /= x.hist.sum().value
+        for x in h_sig:
+            x.hist /= x.hist.sum().value
+
+    ax = make1DPlot(ax, h_bkg , draw1DHistogram)
+    ax = make1DPlot(ax,h_sig , drawScatter, errors=True, stack=False)
+    #ax.set_yscale("log")
     xax = next(x for x in histogram.axes if x.name != "dataset")
     ax.set_xlabel(xax.label)
     ax.set_title(histogram.name)
@@ -161,7 +161,6 @@ def makefig(o: PathLike, vals) -> None:
     n, h = vals
     if countHistAxes(h) == 2:
         f, ax = plt.subplots()
-        print(signals)
         ax = makeStackPlot(ax, h, signals)
         ax.set_yscale("log")
         xax = next(x for x in h.axes if x.name != "dataset")
@@ -272,26 +271,115 @@ def autoPlot(
     plt.close()
 
 
-def makePlot(x):
-    h = x[1]
-    print(x[0])
-    print(f"background {h['QCD2018',...].sum()}")
-    print(f"signal {h['signal_1000_400_Skim',...].sum()}")
-    autoPlot(outdir / f"{x[0]}.pdf", makeStackPlot, x[1][:,sum,...], signal=signals, backgrounds=["QCD2018", "TT2018"], fig_params=dict(figsize=(12,9)))
-
 signals = [
     "signal_1500_400_Skim",
     "signal_2000_1900_Skim",
     "signal_1000_400_Skim",
 ]
 
+plot_func_map = {
+    "stack" : makeStackPlot,
+    "2D" : make2DHist
+}
+
+plot_all_func_map = {
+    1 : ["stack"],
+    2 : ["2D"]
+}
+default_size = (5,5)
+default_signal_regex = r'signal.*'
+
+
+def makePlots(title, hist, plot_funcs, actions, signal_regex, dset_axis, fig_size, outdir):
+    all_slices = {}
+    categories = []
+    axes=list(x.name for x in hist.axes)
+    for ax, act in actions.items():
+        if act == "sum":
+            all_slices[axes.index(ax)] = sum
+        elif act == "split":
+            a = next(x for x in hist.axes if x.name == ax)
+            categories.append(zip(it.repeat(axes.index(ax)), a))
+
+    datasets = list(next(x for x in hist.axes if x.name == dset_axis))
+    signals = [x for x in datasets if re.match(signal_regex, x)]
+    bkgs = [x for x in datasets if x not in signals]
+
+    def doPlot(t,h):
+        naxes = countHistAxes(h) - 1
+        if naxes > 2:
+            raise Exception("Need to further narrow")
+        if naxes == 1:
+            outfile = outdir / (t + '.pdf')
+            autoPlot(outfile, plot_funcs[naxes], h, signal=signals, backgrounds=bkgs, fig_params=dict(figsize=fig_size))
+        if naxes == 2:
+            for x in datasets:
+                hd = h[{dset_axis : x}]
+                outfile = outdir / f"{x}_{t}.pdf"
+                autoPlot(outfile, plot_funcs[naxes], hd, plotopts= {}, fig_params=dict(figsize=fig_size))
+
+    if categories:
+        for cats in it.product(*categories):
+            cat_slices = dict(cats)
+            to_plot = hist[{**cat_slices, **all_slices}]
+            t = title + "_" + "_".join(f"{axes[x]}eq{y}" for x,y in cats)
+            doPlot(t, to_plot )
+    else:
+        to_plot = hist[all_slices]
+        doPlot(title, to_plot )
+
+
+class ParseKwargs(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, dict())
+        for value in values:
+            key, value = value.split('=')
+            getattr(namespace, self.dest)[key] = value
+
 if __name__ == "__main__":
-    outdir = Path("basicplots")
+    parser = argparse.ArgumentParser(prog="Plotter", description="Tools to make plots")
+    parser.add_argument("input_data", nargs="?", type=argparse.FileType('rb'), help="Input data")
+    parser.add_argument("-l", "--list-axes", help="List axes and exit",  action="store_true")
+    parser.add_argument("-s", "--figure-size",default=default_size, help="Dimensions of output image", nargs=2)
+    parser.add_argument("-o", "--out-dir", type=Path, help="Directory to output images", required=True)
+    parser.add_argument("-1", "--oned-plotter", default="stack", help="Name of function to use for plotting 1-D histograms", choices=plot_all_func_map[1])
+    parser.add_argument("-2", "--twod-plotter", default="2D",  help="Name of function to use for plotting 2-D histograms", choices=plot_all_func_map[2])
+    parser.add_argument("-r", "--name-regex", default=r'.*', help="Regex for selection which histograms to plot")
+    parser.add_argument("-n", "--sig-regex", default=default_signal_regex, help="Regex for which datasets should be considered signal")
+    parser.add_argument("-d", "--dataset-regex", default=".*", help="Regex for which datasets should be considered")
+    parser.add_argument("-k", "--dataset-axis-name", default="dataset", help="Name of the axis holding the dataset")
+    parser.add_argument("-a", "--axis-operations", nargs='*', help="axis_name=action pairs, where axis_name is the name of an axis in the histogram", action=ParseKwargs, default={})
+    parser.add_argument("-t", "--num-threads", default=8, type=int, help="axis_name=action pairs, where axis_name is the name of an axis in the histogram", action=ParseKwargs)
+    args = parser.parse_args()
+
+    all_hists = pickle.load(args.input_data)
+    hists = {x:y for x,y in all_hists.items() if re.match(args.name_regex, x)}
+    if args.list_axes:
+        for name,h in hists.items():
+            print(f"{name:20}: {[x.name for x in h.axes]}")
+        sys.exit(0)
+
+    outdir = args.out_dir
     outdir.mkdir(parents=True, exist_ok=True)
-    print(all_hists.keys())
-    hists = {x:y for x,y in all_hists.items() if "m04_m" in x}
-    with concurrent.futures.ProcessPoolExecutor(8) as pool:
-        for x in pool.map(makePlot, [(x,y) for x,y in hists.items() if countHistAxes(y) == 3 and  "signal_1500_400_Skim" in y.axes[0]]):
+
+    nthreads = args.num_threads
+
+    plotters = {}
+    plotters[1] = plot_func_map[args.oned_plotter]
+    plotters[2] = plot_func_map[args.twod_plotter]
+    actions = args.axis_operations
+    dset_axis = args.dataset_axis_name
+    signal_regex = args.sig_regex
+    fig_size = args.figure_size
+
+    def plotter(inval):
+        title, hist = inval
+        return makePlots(title, hist, plotters, actions, signal_regex, dset_axis, fig_size, outdir)
+        
+    #for x in hists.items():
+    #    plotter(x)
+    with concurrent.futures.ProcessPoolExecutor(nthreads) as pool:
+        for x in pool.map(plotter, hists.items()):
             pass
 
     #for name,h in all_hists.items():

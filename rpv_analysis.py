@@ -65,29 +65,13 @@ def isGoodGenParticle(particle):
 
 def createGoodChildren(gen_particles, children):
     # x = ak.singletons(gen_particles.children)
-    def get(x):
-        return [y.pdgId for y in x[0]]
-
-    x = children
-    # x = gen_particles.children
-    print(f"{gen_particles[0][0].pdgId} ->  {get(x[0])}")
-    good_child_mask = isGoodGenParticle(x)
-    maybe_good_children = x[~good_child_mask].children
-    maybe_good_children = ak.flatten(maybe_good_children, axis=3)
-    print(maybe_good_children)
-    print(f"{gen_particles[0][0].pdgId} ->  {get(maybe_good_children[0])}")
-    print(x[good_child_mask])
-    print(maybe_good_children)
-    next_round = ak.concatenate([x[good_child_mask], maybe_good_children], axis=2)
-    any_bad = isGoodGenParticle(next_round)
-    if not ak.all(ak.ravel(any_bad)):
-        children = createGoodChildren(gen_particles, next_round)
-    print(children)
+    good_child_mask = isGoodGenParticle(children)
+    while not ak.all(ak.ravel(good_child_mask)):
+        good_child_mask = isGoodGenParticle(children)
+        maybe_good_children = children[~good_child_mask].children
+        maybe_good_children = ak.flatten(maybe_good_children, axis=3)
+        children = ak.concatenate([children[good_child_mask], maybe_good_children], axis=2)
     return children
-    print(f"{gen_particles[0][0].pdgId} ->  {get(next_round[0])}")
-    print(next_round)
-
-    return x
 
 
 def genMatchParticles(children_particles, children_structure, allow_anti=True):
@@ -148,37 +132,32 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
 
 
 def deltaRMatch(events):
-    ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, True)
-    return ret
+    #ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
+    matched_jets, matched_quarks, dr  = object_matching(events.good_jets,events.SignalQuarks,  0.3, None, False)
+
+    events["matched_quarks"] = matched_quarks
+    events["matched_jets"] = matched_jets
+    events["matched_dr"] = dr
+    return events
 
 
 def goodGenParticles(events):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
-    print(test)
-    print(test.type)
     def get(x):
         return [y.pdgId for y in x[0]]
     events["GenPart", "good_children"] = test
     gg = events.GenPart[isGoodGenParticle(events.GenPart)]
-    print(f"{gg[0].pdgId} -> {gg[0].good_children.pdgId} ")
     bs = gg.good_children[abs(gg.good_children.pdgId) == 5]
     stop = ak.all(abs(gg[:,0].pdgId) == 1000006)
     bad = ak.all(abs(gg[:,1].pdgId) == 1000024)
-    print(stop)
     x = gg[abs(gg.pdgId) == 1000024][:,0]
     t = gg[abs(gg.pdgId) == 1000006][:,0]
-    print("x ", x)
-    print("t ", t)
     x_children = gg.good_children[abs(gg.pdgId) == 1000024]
     s_children = gg.good_children[abs(gg.pdgId) == 1000006]
     xb = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 5]))
     xd = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 1]))
     xs = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 3]))
     sb = ak.flatten(ak.flatten(s_children[abs(s_children.pdgId) == 5]))
-    print("sb ", sb.pdgId)
-    print("xb ", xb.pdgId)
-    print("xd ", xd.pdgId)
-    print("xs ", xs.pdgId)
     events["SignalParticles"] = ak.zip(dict(
         stop = t,
         chi = x,
@@ -188,10 +167,6 @@ def goodGenParticles(events):
         chi_s = xs,
     ))
     events["SignalQuarks"] = ak.concatenate([ak.singletons(val) for val in [sb,xb,xd,xs]],axis=1)
-    print(events["SignalQuarks"])
-    print(events["SignalQuarks"][0].pdgId)
-    #print(gg[0].good_children.good_children)
-    #test = genMatchParticles(gg, structure)
     return events
 
 
@@ -502,9 +477,9 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
                     for x in shaped_data_vals
                 ]
         d = shaped_cat_vals + shaped_data_vals
-        # print(f"{name} HIST: {h}")
-        # print(f"{name} DATA: {d}")
-        # print(f"{name} WEIGHTS: {weights}")
+        #print(f"{name} HIST: {h}")
+        #print(f"{name} DATA: {d}")
+        #print(f"{name} WEIGHTS: {weights}")
         ret = h.fill(*d, weight=weights)
         return ret
 
@@ -520,22 +495,31 @@ class RPVProcessor(processor.ProcessorABC):
         events = addWeights(events)
         pre_sel_hists = makePreSelectionHistograms(events, makeHistogram)
 
+        print("HERE1")
         events = createObjects(events)
+        print("HERE2")
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
 
+        print("HERE3")
         events = addEventLevelVars(events)
-        goodGenParticles(events)
-        deltaRMatch(events)
-        return {}
-
+        print("HERE4")
+        events = goodGenParticles(events)
+        print("HERE5")
+        events = deltaRMatch(events)
         dataset = events.metadata["dataset"]
+        print(ak.num(events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)], axis=1))
+        matched_cat = ak.num(events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)], axis=1)
+
         hm = makeCategoryHist(
+
             [
                 dataset_axis,
-                hist.axis.IntCategory([4, 5, 6], name="njets", label="NJets"),
+                hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
+                hist.axis.IntCategory([0,1,2,3,4], name="num_matched", label="Num Matched"),
+                #hist.axis.StrCategory(["AllMatched", "NotAllMatched"], name="allmatched", label="All Matched"),
             ],
-            [dataset, ak.num(events.good_jets, axis=1)],
+            [dataset, ak.num(events.good_jets, axis=1), matched_cat],
             events.EventWeight,
         )
         jet_hists = createJetHistograms(events, hm)
@@ -550,10 +534,10 @@ class RPVProcessor(processor.ProcessorABC):
 
 
 if __name__ == "__main__":
-    executor = processor.FuturesExecutor(workers=8)
     executor = processor.IterativeExecutor()
+    executor = processor.FuturesExecutor(workers=8)
     runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
     f = {k: v for k, v in filesets.items()}
-    f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
+    f = {k: v for k, v in filesets.items() if "signal" in k}
     out = runner(f, "Events", processor_instance=RPVProcessor())
     pickle.dump(out, open("output.pkl", "wb"))

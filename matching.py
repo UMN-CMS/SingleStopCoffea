@@ -69,7 +69,7 @@ def get_matching_objects_indices_padnone(
 
 
 def metric_pt(obj, obj2):
-    return abs(obj.pt - obj2.pt)
+    return abs(obj.pt - obj2.pt) / (obj.pt + obj2.pt)
 
 
 def object_matching(obj, obj2, dr_min, dpt_max=None, return_indices=False):
