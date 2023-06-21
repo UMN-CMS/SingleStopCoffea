@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import sys
 from coffea.nanoevents import NanoAODSchema
 from coffea.analysis_tools import PackedSelection
 from coffea import processor
@@ -70,7 +71,9 @@ def createGoodChildren(gen_particles, children):
         good_child_mask = isGoodGenParticle(children)
         maybe_good_children = children[~good_child_mask].children
         maybe_good_children = ak.flatten(maybe_good_children, axis=3)
-        children = ak.concatenate([children[good_child_mask], maybe_good_children], axis=2)
+        children = ak.concatenate(
+            [children[good_child_mask], maybe_good_children], axis=2
+        )
     return children
 
 
@@ -96,8 +99,8 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
         matched = children_particles[mask]
         print(matched.type)
         print(matched[0])
-        print(matched[0,0])
-        print(ak.fields(matched[0,0]))
+        print(matched[0, 0])
+        print(ak.fields(matched[0, 0]))
         print(f"Matched particles are {matched}")
         for i, c in enumerate([c for c in children]):
             ret[c.name] = matched[:, i]
@@ -132,42 +135,83 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
 
 
 def deltaRMatch(events):
-    #ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
-    matched_jets, matched_quarks, dr  = object_matching(events.good_jets,events.SignalQuarks,  0.3, None, False)
-
+    # ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
+    matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
+        events.good_jets, events.SignalQuarks, 0.3, 0.5, True
+    )
+    print(idx_q)
+    print(idx_j)
     events["matched_quarks"] = matched_quarks
     events["matched_jets"] = matched_jets
     events["matched_dr"] = dr
+    events["matched_jet_idx"] = idx_j
+    print("\n".join([str(x) for x in events.matched_jet_idx[:10]]))
     return events
 
 
 def goodGenParticles(events):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
+
     def get(x):
         return [y.pdgId for y in x[0]]
+
     events["GenPart", "good_children"] = test
     gg = events.GenPart[isGoodGenParticle(events.GenPart)]
     bs = gg.good_children[abs(gg.good_children.pdgId) == 5]
-    stop = ak.all(abs(gg[:,0].pdgId) == 1000006)
-    bad = ak.all(abs(gg[:,1].pdgId) == 1000024)
-    x = gg[abs(gg.pdgId) == 1000024][:,0]
-    t = gg[abs(gg.pdgId) == 1000006][:,0]
+    stop = ak.all(abs(gg[:, 0].pdgId) == 1000006)
+    bad = ak.all(abs(gg[:, 1].pdgId) == 1000024)
+    x = gg[abs(gg.pdgId) == 1000024][:, 0]
+    t = gg[abs(gg.pdgId) == 1000006][:, 0]
     x_children = gg.good_children[abs(gg.pdgId) == 1000024]
     s_children = gg.good_children[abs(gg.pdgId) == 1000006]
     xb = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 5]))
     xd = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 1]))
     xs = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 3]))
     sb = ak.flatten(ak.flatten(s_children[abs(s_children.pdgId) == 5]))
-    events["SignalParticles"] = ak.zip(dict(
-        stop = t,
-        chi = x,
-        stop_b = sb,
-        chi_b = xb,
-        chi_d = xd,
-        chi_s = xs,
-    ))
-    events["SignalQuarks"] = ak.concatenate([ak.singletons(val) for val in [sb,xb,xd,xs]],axis=1)
+    events["SignalParticles"] = ak.zip(
+        dict(
+            stop=t,
+            chi=x,
+            stop_b=sb,
+            chi_b=xb,
+            chi_d=xd,
+            chi_s=xs,
+        )
+    )
+    events["SignalQuarks"] = ak.concatenate(
+        [ak.singletons(val) for val in [sb, xb, xd, xs]], axis=1
+    )
     return events
+
+
+def createSignalHistograms(events, hmaker):
+    ret = {}
+    chi_match_axis = hist.axis.IntCategory(
+        [0, 1, 2, 3], name="num_matched_chi", label=r"Number of reco chi jets correct"
+    )
+    num_top_3_are_chi = ak.num(
+        events.matched_jet_idx[:, 1:][events.matched_jet_idx[:, 1:] < 3], axis=1
+    )
+    num_sub_3_are_chi = ak.num(
+        events.matched_jet_idx[:, 1:][
+            (events.matched_jet_idx[:, 1:] < 4) & (events.matched_jet_idx[:, 1:] > 0)
+        ],
+        axis=1,
+    )
+    print([x for x in events.matched_jet_idx[:10]])
+    print(num_top_3_are_chi)
+    print(num_sub_3_are_chi)
+    ret[f"num_top_3_jets_matched_chi_children"] = hmaker(
+        chi_match_axis, num_top_3_are_chi, name="num_top_3_are_chi"
+    )
+    ret[f"num_sub_3_jets_matched_chi_children"] = hmaker(
+        chi_match_axis, num_sub_3_are_chi, name="num_sub_3_are_chi"
+    )
+
+    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"Jet idx")
+    e = events.matched_jet_idx[:, 1]
+    ret[f"chi_b_jet_idx"] = hmaker(idx_axis, ak.fill_none(e, 7), name="chi_b_jet_idx")
+    return ret
 
 
 def createJetHistograms(events, hmaker):
@@ -177,7 +221,7 @@ def createJetHistograms(events, hmaker):
     w = events.EventWeight
 
     ret[f"h_njet"] = hmaker(nj_axis, ak.num(gj), name="njets")
-    jet_combos = [(0, 3), (1, 4), (0, 4)]
+    jet_combos = [(0, 4), (0, 3), (1, 4)]
     co = lambda x: itertools.combinations(x, 2)
 
     masses = {}
@@ -211,18 +255,29 @@ def createJetHistograms(events, hmaker):
             150,
             0,
             3000,
-            name=f"mass_{p1_1}{p1_2}",
-            label=rf"$m_{{{p1_1}{p1_2}}}$ [GeV]",
+            name=f"mass_{p1_1+1}{p1_2}",
+            label=rf"$m_{{{p1_1 + 1}{p1_2}}}$ [GeV]",
         )
         m2 = hist.axis.Regular(
             150,
             0,
             3000,
-            name=f"mass_{p2_1}{p2_2}",
-            label=rf"$m_{{{p2_1}{p2_2}}}$ [GeV]",
+            name=f"mass_{p2_1+1}{p2_2}",
+            label=rf"$m_{{{p2_1 + 1}{p2_2}}}$ [GeV]",
         )
-        ret[f"m{p1_1}{p1_2}_vs_m{p2_1}{p2_2}"] = hmaker(
+        ratio = hist.axis.Regular(
+            50,
+            0,
+            1,
+            name=f"ratio",
+            label=rf"$\frac{{m_{{ \sum {p2_1+1}{p2_2} }} }}{{ m_{{ \sum {p1_1+1}{p1_2} }} }}$ [GeV]",
+        )
+        ret[f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
             [m1, m2], [masses[p1], masses[p2]], name="Comp mass"
+        )
+
+        ret[f"ratio_comp_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
+            [m1, ratio], [masses[p1], masses[p2] / masses[p1]], name="mass2dratio"
         )
 
     for i in range(0, 4):
@@ -477,9 +532,9 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
                     for x in shaped_data_vals
                 ]
         d = shaped_cat_vals + shaped_data_vals
-        #print(f"{name} HIST: {h}")
-        #print(f"{name} DATA: {d}")
-        #print(f"{name} WEIGHTS: {weights}")
+        # print(f"{name} HIST: {h}")
+        # print(f"{name} DATA: {d}")
+        # print(f"{name} WEIGHTS: {weights}")
         ret = h.fill(*d, weight=weights)
         return ret
 
@@ -494,40 +549,50 @@ class RPVProcessor(processor.ProcessorABC):
 
         events = addWeights(events)
         pre_sel_hists = makePreSelectionHistograms(events, makeHistogram)
-
-        print("HERE1")
         events = createObjects(events)
-        print("HERE2")
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
-
-        print("HERE3")
         events = addEventLevelVars(events)
-        print("HERE4")
-        events = goodGenParticles(events)
-        print("HERE5")
-        events = deltaRMatch(events)
+
         dataset = events.metadata["dataset"]
-        print(ak.num(events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)], axis=1))
-        matched_cat = ak.num(events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)], axis=1)
 
-        hm = makeCategoryHist(
+        to_accumulate = []
 
-            [
-                dataset_axis,
-                hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
-                hist.axis.IntCategory([0,1,2,3,4], name="num_matched", label="Num Matched"),
-                #hist.axis.StrCategory(["AllMatched", "NotAllMatched"], name="allmatched", label="All Matched"),
-            ],
-            [dataset, ak.num(events.good_jets, axis=1), matched_cat],
-            events.EventWeight,
-        )
+        if "signal" in dataset and False:
+            events = goodGenParticles(events)
+            events = deltaRMatch(events)
+            matched_cat = ak.num(
+                events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)],
+                axis=1,
+            )
+            hm = makeCategoryHist(
+                [
+                    dataset_axis,
+                    hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
+                    hist.axis.IntCategory(
+                        [0, 1, 2, 3, 4], name="num_matched", label="Num Matched"
+                    ),
+                ],
+                [dataset, ak.num(events.good_jets, axis=1), matched_cat],
+                events.EventWeight,
+            )
+            sig_hists = createSignalHistograms(events, hm)
+            to_accumulate.append(sig_hists)
+        else:
+            hm = makeCategoryHist(
+                [
+                    dataset_axis,
+                    hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
+                ],
+                [dataset, ak.num(events.good_jets, axis=1)],
+                events.EventWeight,
+            )
         jet_hists = createJetHistograms(events, hm)
         b_hists = createBHistograms(events, hm)
         event_hists = createEventLevelHistograms(events, hm)
         tag_hists = createTagHistograms(events, hm)
-
-        return accumulate([pre_sel_hists, jet_hists, b_hists, event_hists, tag_hists])
+        to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
+        return accumulate(to_accumulate)
 
     def postprocess(self, accumulator):
         pass
@@ -538,6 +603,7 @@ if __name__ == "__main__":
     executor = processor.FuturesExecutor(workers=8)
     runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
     f = {k: v for k, v in filesets.items()}
-    f = {k: v for k, v in filesets.items() if "signal" in k}
+    #f = {k: v for k, v in filesets.items() if "signal" in k}
+    # f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
     out = runner(f, "Events", processor_instance=RPVProcessor())
-    pickle.dump(out, open("output.pkl", "wb"))
+    pickle.dump(out, open("signal_hists.pkl", "wb"))

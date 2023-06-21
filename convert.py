@@ -21,62 +21,41 @@ def getHistograms(path):
         r = pickle.load(f)
     return r
 
-all_hists = getHistograms("output.pkl")
+all_hists = getHistograms("all_samples.pkl")
 
-
-def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None):
+def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, width_count=10,start_count=10, width_min=0.1, width_max=0.4, start_min=0.1, start_max=0.8):
     cur_max = None
     opt_axis = next(x for x in h_sig.axes if x.name == opt_axis)
     disc_axis = next(x for x in h_sig.axes if x.name == disc_axis)
     cur_best = 0
-
-    hx = h_sig[{disc_axis.name: sum}]
-    vals, edges = hx.to_numpy()
-    edges = (edges[:-1] + edges[1:]) / 2
-    p0 = [50, 1000, 50]
-    coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
-    _, mu, sig = coeff
-    cutupper = mu + 2.5 * sig
-    cutlower = mu - 2.5 * sig
-    s = hist.tag.Slicer()
-
-    return (
-        h_sig[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
-        h_bkg[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
-        coeff,
-    )
-
-
-def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None):
-    cur_max = None
-    opt_axis = next(x for x in h_sig.axes if x.name == opt_axis)
-    disc_axis = next(x for x in h_sig.axes if x.name == disc_axis)
-    cur_best = 0
-
-    width_start, width_stop, width_step = 200, 600, 100
-    start, stop, step = 100, 2000, 50
+    low,high = opt_axis[0], opt_axis[-1]
+    min_bin_edge, max_bin_edge = low[0], high[1]
+    diff = max_bin_edge-min_bin_edge
+    widths = np.linspace(diff * width_min, diff*width_max, width_count)
+    starts =  np.linspace(min_bin_edge + start_min * diff, min_bin_edge + start_max * diff, start_count)
     cur_max = 0
     best_start, best_width = 0, 0
     s = hist.tag.Slicer()
-    for start, width in it.product(
-        range(start, stop, step), range(width_start, width_stop, width_step)
-    ):
-        sum_sig = h_sig[
-            {
-                opt_axis.name: s[hist.loc(start) : hist.loc(start + width) : sum],
-                disc_axis.name: sum,
-            }
-        ]
-        sum_bkg = h_bkg[
-            {
-                opt_axis.name: s[hist.loc(start) : hist.loc(start + width) : sum],
-                disc_axis.name: sum,
-            }
-        ]
-        sig = sum_sig.value / np.sqrt(sum_bkg.value)
-        if cur_max < sig:
-            cur_max = sig
-            best_start, best_width = start, width
+    for width in widths:
+        these_starts = starts[(starts-width) > 0]
+        for start in these_starts:
+            sum_sig = h_sig[
+                {
+                    opt_axis.name: s[hist.loc(start) : hist.loc(start + width) : sum],
+                    disc_axis.name: sum,
+                }
+            ]
+            sum_bkg = h_bkg[
+                {
+                    opt_axis.name: s[hist.loc(start) : hist.loc(start + width) : sum],
+                    disc_axis.name: sum,
+                }
+            ]
+            sig = sum_sig.value / np.sqrt(sum_bkg.value)
+            if cur_max < sig:
+                cur_max = sig
+                best_start, best_width = start, width
+
     return (
         h_sig[
             {
@@ -96,8 +75,33 @@ def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None):
     )
 
 
+#def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None):
+#    cur_max = None
+#    opt_axis = next(x for x in h_sig.axes if x.name == opt_axis)
+#    disc_axis = next(x for x in h_sig.axes if x.name == disc_axis)
+#    cur_best = 0
+#
+#    hx = h_sig[{disc_axis.name: sum}]
+#    vals, edges = hx.to_numpy()
+#    edges = (edges[:-1] + edges[1:]) / 2
+#    p0 = [50, 1000, 50]
+#    coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0)
+#    _, mu, sig = coeff
+#    cutupper = mu + 2.5 * sig
+#    cutlower = mu - 2.5 * sig
+#    s = hist.tag.Slicer()
+#
+#    return (
+#        h_sig[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
+#        h_bkg[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
+#        coeff,
+#    )
+
+
+
+
 signals = [x for x in all_hists["HT"].axes[0] if "signal" in x]
-outdir = Path("plots")
+outdir = Path("ratio_out")
 mapping = {}
 
 for sig in signals:
@@ -106,11 +110,14 @@ for sig in signals:
     m1, m2 = m.group(1, 2)
     m1, m2 = int(m1), int(m2)
     if abs(m1 - m2) <= 200:
-        target = "m03_vs_m04"
-        a1 = "03"
+        target = "m14_vs_m13"
+        target = "ratio_comp_m14_vs_m13"
+        a1 = "13"
+        a1 = "ratio"
     else:
-        target = "m14_vs_m04"
-        a1 = "14"
+        target = "m14_vs_m24"
+        target = "ratio_comp_m14_vs_m24"
+        a1 = "ratio"
     hi = all_hists[target]
     hs = hi[sig, sum, ...]
     hb = hi[
@@ -126,6 +133,8 @@ for sig in signals:
         ...,
     ]
     hb = hb[sum, sum, ...]
+    print(hb.axes[0][0])
+    print(hb.axes[0][-1])
 
     s1 = hs.sum().value
     s2 = hb.sum().value
@@ -134,9 +143,8 @@ for sig in signals:
     print(f"Signal sum is {s1}")
     print(f"Bkg sum is {s2}")
 
-    continue
 
-    bs, bb, window = makeOptimized(hs, hb, f"mass_{a1}", "mass_04")
+    bs, bb, window = makeOptimized(hs, hb, a1, "mass_14")
     before_sig = hs.sum().value / np.sqrt(hb.sum().value)
     after_sig = bs.sum().value / np.sqrt(bb.sum().value)
 
@@ -153,15 +161,16 @@ for sig in signals:
         hs,
         bs,
         add_fit=None,  # lambda x: gauss(x, *fit),
-        vlines=[cutlower, cutupper],
+        hlines=[cutlower, cutupper],
         fig_params=dict(figsize=(12, 10)),
-        fig_manip=lambda f: f.text(
-            0.9,
-            0.9,
-            f"{sig}",
-            horizontalalignment="right",
-            verticalalignment="top",
-        )
+        fig_title=sig,
+        #fig_manip=lambda f: f.text(
+        #    0.9,
+        #    0.9,
+        #    f"{sig}",
+        #    horizontalalignment="right",
+        #    verticalalignment="top",
+        #)
     )
     autoPlot(
         outdir / sig / "bkg.pdf",
@@ -169,15 +178,16 @@ for sig in signals:
         hb,
         bb,
         add_fit=None,
-        vlines=[cutlower, cutupper],
+        hlines=[cutlower, cutupper],
         fig_params=dict(figsize=(12, 10)),
-        fig_manip=lambda f: f.text(
-            0.9,
-            0.9,
-            "Backgrounds",
-            horizontalalignment="right",
-            verticalalignment="top",
-        )
+        fig_title="QCD",
+        #fig_manip=lambda f: f.text(
+        #    0.9,
+        #    0.9,
+        #    "Backgrounds",
+        #    horizontalalignment="right",
+        #    verticalalignment="top",
+        #)
     )
     data = dict(
         before_sig=before_sig,
@@ -207,6 +217,7 @@ for sig in signals:
         base_sig_hist_name= f"{sig}_{target}"
     )
 
+outdir.mkdir(exist_ok=True)
 mfile = outdir / "all_data.json"
 with open(mfile, "w") as f:
     f.write(json.dumps(mapping))
