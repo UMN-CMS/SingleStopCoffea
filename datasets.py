@@ -22,22 +22,22 @@ samples = [
         "ST2018",
         "ZNuNu2018",
         "TT2018",
-        "signal_1000_400_Skim",
-        "signal_1000_600_Skim",
-        "signal_1000_900_Skim",
-        "signal_1500_1400_Skim",
-        "signal_1500_400_Skim",
-        "signal_1500_600_Skim",
-        "signal_1500_900_Skim",
-        "signal_2000_1400_Skim",
-        "signal_2000_1900_Skim",
-        "signal_2000_400_Skim",
-        "signal_2000_600_Skim",
-        "signal_2000_900_Skim"]
+        "signal_1000_400",
+        "signal_1000_600",
+        "signal_1000_900",
+        "signal_1500_1400",
+        "signal_1500_400",
+        "signal_1500_600",
+        "signal_1500_900",
+        "signal_2000_1400",
+        "signal_2000_1900",
+        "signal_2000_400",
+        "signal_2000_600",
+        "signal_2000_900"]
 
 filesets = {
         sample: [
-            f"root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/Skim_2023_05_11/{sample}.root"
+            f"root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/Skim_2023_06_20/{sample}.root"
             ]
         for sample in samples
         #if "Di" in sample

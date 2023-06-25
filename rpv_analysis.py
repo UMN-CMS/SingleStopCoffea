@@ -21,7 +21,7 @@ import yaml
 import pickle
 
 from histograms import *
-from objects import createObjects
+from objects import createObjects, b_tag_wps
 from datasets import filesets
 from weights import addWeights
 from matching import object_matching
@@ -81,9 +81,6 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
     # base_particle_array = base_particle.matched_array
     # genpart_children = base_particle_array.children
     ret = {}
-    print("#" * 40)
-    print(f"Children particles are: {children_particles}")
-    print(f"Chidlren structure is: {children_structure}")
     groups = it.groupby(
         children_structure, key=lambda x: abs(x.pdgId) if allow_anti else x.pdgId
     )
@@ -97,11 +94,6 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
                 f"Did not find expected number of children of type {pid} in event. Expected {len(children)}."
             )
         matched = children_particles[mask]
-        print(matched.type)
-        print(matched[0])
-        print(matched[0, 0])
-        print(ak.fields(matched[0, 0]))
-        print(f"Matched particles are {matched}")
         for i, c in enumerate([c for c in children]):
             ret[c.name] = matched[:, i]
             if c.children:
@@ -139,13 +131,10 @@ def deltaRMatch(events):
     matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
         events.good_jets, events.SignalQuarks, 0.3, 0.5, True
     )
-    print(idx_q)
-    print(idx_j)
     events["matched_quarks"] = matched_quarks
     events["matched_jets"] = matched_jets
     events["matched_dr"] = dr
     events["matched_jet_idx"] = idx_j
-    print("\n".join([str(x) for x in events.matched_jet_idx[:10]]))
     return events
 
 
@@ -198,9 +187,6 @@ def createSignalHistograms(events, hmaker):
         ],
         axis=1,
     )
-    print([x for x in events.matched_jet_idx[:10]])
-    print(num_top_3_are_chi)
-    print(num_sub_3_are_chi)
     ret[f"num_top_3_jets_matched_chi_children"] = hmaker(
         chi_match_axis, num_top_3_are_chi, name="num_top_3_are_chi"
     )
@@ -211,6 +197,54 @@ def createSignalHistograms(events, hmaker):
     idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"Jet idx")
     e = events.matched_jet_idx[:, 1]
     ret[f"chi_b_jet_idx"] = hmaker(idx_axis, ak.fill_none(e, 7), name="chi_b_jet_idx")
+    return ret
+
+
+def charginoRecoHistograms(events, hmaker):
+    ret = {}
+    gj = events.good_jets
+    w = events.EventWeight
+    idx = ak.local_index(gj, axis=1)
+    med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
+
+    t_lead_b_idx = idx[med_bjet_mask]
+    lead_b_idx = t_lead_b_idx[:, 0]
+    sublead_b_idx = idx[med_bjet_mask][:, 1]
+    no_lead_idxs = idx[idx != lead_b_idx]
+    no_sublead_idxs = idx[idx != sublead_b_idx]
+    no_lead_or_sublead_idxs = idx[(idx != sublead_b_idx) & (idx != lead_b_idx)]
+    no_lead_jets = gj[no_lead_idxs]
+    print(no_lead_idxs)
+    print(lead_b_idx)
+    print(gj[ak.singletons(lead_b_idx)][:,0])
+    no_sublead_jets = gj[no_sublead_idxs]
+    first, second = ak.unzip(ak.combinations(no_lead_jets[:, 0:3], 2))
+    max_dr_no_lead = ak.max(first.delta_r(second), axis=1)
+    first, second = ak.unzip(ak.combinations(no_sublead_jets[:, 0:3], 2))
+    max_dr_no_sublead = ak.max(first.delta_r(second), axis=1)
+    max_no_lead_over_max_sublead = max_dr_no_lead / max_dr_no_sublead
+
+    ret[f"m3_top_3_no_lead_b"] = hmaker(
+        mass_axis,
+        (no_lead_jets[:, 0:3].sum()).mass,
+        name="m3_top_3_no_lead_b",
+    )
+
+    ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
+        mass_axis,
+        ak.where(max_no_lead_over_max_sublead > 2,
+                (no_lead_jets[:, 0:3].sum()).mass,
+                (gj[no_lead_or_sublead_idxs][:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:,0]).mass
+            
+        ),
+        name="m3_top3_no_b_unless_dR_charg_gt_2",
+    )
+
+    ret[f"m3_top_2_plus_lead_b"] = hmaker(
+        mass_axis,
+        (no_lead_jets[:, 0:2].sum() +gj[ak.singletons(lead_b_idx)][:,0]).mass,
+        name="m3_top_2_plus_lead_b",
+    )
     return ret
 
 
@@ -229,23 +263,23 @@ def createJetHistograms(events, hmaker):
     for i, j in jet_combos:
         jets = gj[:, i:j].sum()
         masses[(i, j)] = jets.mass
-        ret[f"m{i}{j}_pt"] = hmaker(
+        ret[f"m{i+1}{j}_pt"] = hmaker(
             pt_axis,
             jets.pt,
-            name=f"Composite Jet {i} to Jet {j} $p_T$",
-            description=f"$p_T$ of the sum of jets {i} to {j}",
+            name=f"Composite Jet {i+1} to Jet {j} $p_T$",
+            description=f"$p_T$ of the sum of jets {i+1} to {j}",
         )
-        ret[f"m{i}{j}_eta"] = hmaker(
+        ret[f"m{i+1}{j}_eta"] = hmaker(
             eta_axis,
             jets.eta,
-            name=rf"Composite Jet {i} to Jet {j} $\eta$",
-            description=rf"$\eta$ of the sum of jets {i} to {j}",
+            name=rf"Composite Jet {i+1} to Jet {j} $\eta$",
+            description=rf"$\eta$ of the sum of jets {i+1} to {j}",
         )
-        ret[rf"m{i}{j}_m"] = hmaker(
+        ret[rf"m{i+1}{j}_m"] = hmaker(
             mass_axis,
             jets.mass,
-            name=rf"Composite Jet {i} to Jet {j} mass",
-            description=rf"Mass of the sum of jets {i} to {j}",
+            name=rf"Composite Jet {i+1} to Jet {j} mass",
+            description=rf"Mass of the sum of jets {i+1} to {j}",
         )
 
     for p1, p2 in co(jet_combos):
@@ -284,20 +318,20 @@ def createJetHistograms(events, hmaker):
         ret[rf"pt_{i}"] = hmaker(
             pt_axis,
             gj[:, i].pt,
-            name=f"$p_T$ of jet {i}",
-            description=f"$p_T$ of jet {i} (indexed from 0)",
+            name=f"$p_T$ of jet {i+1}",
+            description=f"$p_T$ of jet {i+1} ",
         )
         ret[f"eta_{i}"] = hmaker(
             eta_axis,
             gj[:, i].eta,
-            name=f"$\eta$ of jet {i}",
-            description=f"$\eta$ of jet {i}(indexed from 0)",
+            name=f"$\eta$ of jet {i+1}",
+            description=f"$\eta$ of jet {i+1}",
         )
         ret[f"phi_{i}"] = hmaker(
             phi_axis,
             gj[:, i].phi,
-            name=rf"$\phi$ of jet {i}",
-            description=rf"$\phi$ of jet {i}(indexed from 0)",
+            name=rf"$\phi$ of jet {i+1}",
+            description=rf"$\phi$ of jet {i+1}",
         )
 
     padded_jets = ak.pad_none(gj, 5, axis=1)
@@ -310,33 +344,33 @@ def createJetHistograms(events, hmaker):
         d_r = masked_jets[:, i].delta_r(masked_jets[:, j])
         d_phi = masked_jets[:, i].phi - masked_jets[:, j].phi
         masks[(i, j)] = mask
-        ret[rf"d_eta_{i}_{j}"] = hmaker(
+        ret[rf"d_eta_{i+1}_{j}"] = hmaker(
             eta_axis,
             d_eta,
             mask=mask,
-            name=rf"$\Delta \eta$ between jets {i} and {j}",
-            description=rf"$\Delta \eta$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta \eta$ between jets {i+1} and {j}",
+            description=rf"$\Delta \eta$ between jets {i+1} and {j}",
         )
-        ret[f"d_phi_{i}_{j}"] = hmaker(
+        ret[f"d_phi_{i+1}_{j}"] = hmaker(
             phi_axis,
             d_phi,
             mask=mask,
-            name=rf"$\Delta \phi$ between jets {i} and {j}",
-            description=rf"$\Delta \phi$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta \phi$ between jets {i+1} and {j}",
+            description=rf"$\Delta \phi$ between jets {i+1} and {j}",
         )
-        ret[f"d_r_{i}_{j}"] = hmaker(
+        ret[f"d_r_{i+1}_{j}"] = hmaker(
             dr_axis,
             d_r,
             mask=mask,
-            name=rf"$\Delta R$ between jets {i} and {j}",
-            description=rf"$\Delta R$ between jets {i} and {j}, indexed from 0",
+            name=rf"$\Delta R$ between jets {i+1} and {j}",
+            description=rf"$\Delta R$ between jets {i+1} and {j}",
         )
 
     for i in range(0, 5):
         mask = ak.num(gj, axis=1) > i
         masked_jets = gj[mask]
         htratio = masked_jets[:, i].pt / events.HT[mask]
-        ret[f"pt_ht_ratio_{i}"] = hmaker(
+        ret[f"pt_ht_ratio_{i+1}"] = hmaker(
             hist.axis.Regular(50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
             mask=mask,
@@ -558,7 +592,7 @@ class RPVProcessor(processor.ProcessorABC):
 
         to_accumulate = []
 
-        if "signal" in dataset and False:
+        if "signal" in dataset and True:
             events = goodGenParticles(events)
             events = deltaRMatch(events)
             matched_cat = ak.num(
@@ -577,7 +611,9 @@ class RPVProcessor(processor.ProcessorABC):
                 events.EventWeight,
             )
             sig_hists = createSignalHistograms(events, hm)
+            charg_hists = charginoRecoHistograms(events, hm)
             to_accumulate.append(sig_hists)
+            to_accumulate.append(charg_hists)
         else:
             hm = makeCategoryHist(
                 [
@@ -600,10 +636,10 @@ class RPVProcessor(processor.ProcessorABC):
 
 if __name__ == "__main__":
     executor = processor.IterativeExecutor()
-    executor = processor.FuturesExecutor(workers=8)
+    executor = processor.FuturesExecutor(workers=4)
     runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
-    f = {k: v for k, v in filesets.items()}
-    #f = {k: v for k, v in filesets.items() if "signal" in k}
-    # f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}
+    # f = {k: v for k, v in filesets.items()}
+    f = {k: v for k, v in filesets.items() if "signal" in k}
+    # f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}  
     out = runner(f, "Events", processor_instance=RPVProcessor())
     pickle.dump(out, open("signal_hists.pkl", "wb"))
