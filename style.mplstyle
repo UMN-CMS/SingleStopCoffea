@@ -557,7 +557,7 @@ legend.borderpad:     0.5  # border whitespace
 #figure.titleweight: normal    # weight of the figure title
 #figure.labelsize:   large     # size of the figure label (``Figure.sup[x|y]label()``)
 #figure.labelweight: normal    # weight of the figure label
-figure.figsize:     10, 10
+figure.figsize:     5, 5
 figure.dpi:         100       # figure dots per inch
 #figure.facecolor:   white     # figure face color
 #figure.edgecolor:   white     # figure edge color

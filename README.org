@@ -1,0 +1,108 @@
+* Introduction
+
+Coffea is a columnar analysis framework, has a similar interface to common python packages like numpy or pandas.
+
+This repository is an implementation of the single stop analysis written in Coffea. 
+
+* Getting started
+
+Begin by cloning the repository.
+From within the repository, you can install the python dependencies using a method of your choice. It is recommended to use a virtual environment.
+
+** With venv and pip
+
+```
+python3 -m venv env
+source env/bin/activate
+pip3 install .
+```
+
+** With poetry 
+
+```
+poetry init
+poetry update
+```
+
+** Fermilab Notes
+Depending on the location you are running things, it may be necessary to acquire a more recent python version. For example, at fermilab, this can be done by running 
+#+begin_src bash
+source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
+#+end_src
+
+* Running the analyzer
+To get help running the analyzer, run the command
+#+begin_src bash
+python3 rpv_analysis.py --help
+#+end_src
+
+Under normal operation this should return 
+#+begin_src bash
+usage: Run the RPV Analysis [-h] [-s  [...]] [--signal-re SIGNAL_RE] [--list-signals] [--list-modules] [-o OUTPUT] [-e] [-m [...]] [-p PARALLELISM] [-c CHUNK_SIZE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s  [ ...], --samples  [ ...]
+                        Sample names to run over
+  --signal-re SIGNAL_RE
+                        Regex to determine if running over signals only
+  --list-signals        List available signals and exit
+  --list-modules        List available modules and exit
+  -o OUTPUT, --output OUTPUT
+                        Output file for data
+  -e , --executor       Exectuor to use
+  -m [ ...], --module-chain [ ...]
+                        Modules to execture
+  -p PARALLELISM, --parallelism PARALLELISM
+                        Level of paralleism to use if running a compatible exectutor
+  -c CHUNK_SIZE, --chunk-size CHUNK_SIZE
+                        Chunk size to use
+#+end_src
+
+* Running the plotter
+
+The plotter is still in development and has a rather complex interface. To get help run
+#+begin_src bash
+python3 plotter.py --help
+#+end_src
+
+Which should show under normal operation 
+#+begin_example 
+Usage: plotter.py [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
+
+Options:
+  -v, --verbose
+  --help         Show this message and exit.
+
+Commands:
+  hists
+  list
+  ratio
+  scatter
+  scatterhist
+  twod
+#+end_example
+
+The plotter accepts a series of commands. The hist command loads histograms from a file an performs operations to make them compatible with the different plot tools, and the different plotters (=ratio=, =scatter=, =twod=, etc) perform operations on these loaded histograms.
+
+To get details on a command run
+#+begin_src 
+python plotter.py CMD --help
+#+end_src
+
+** Examples
+For all examples, suppose we have a file =all_hists.pkl= containing the output of the analyzer. We assume that there are /categorical/ axes "dataset" and "number_jet".
+
+*** To plot several 2D Histograms
+The below loads the file =all_hists.pkl=, then creates plots inputs for all histograms whose name contains the string "vs," and directs the inputs to "compress" along the number jets axes and create different files for each of the listed signals.
+#+begin_src bash
+python3 plotter.py -v  hists -n -i all_hists.pkl  -f "vs"  -a "number_jets" "sum" "" -a dataset splitfile "QCD|2000_1900|1500_900|1000_400" twod -o twod
+#+end_src
+
+*** Simple Scatter 
+The below loads the file =all_hists.pkl=, then creates scatter plots inputs for all histograms whose name contains the string "plus_lead" and directs the inputs to "compress" along the number jets axes and treat each sample name a separate dataset.
+
+#+begin_src  bash
+python3 plotter.py -v  hists -i signal_hists.pkl  -f "plus_lead" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" scatter -o testplots -e hists -i signal_hists.pkl  -f "m13_m" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" ratio -o testplots/ratioplots
+#+end_src
+

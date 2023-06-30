@@ -15,6 +15,7 @@ import itertools as it
 
 import concurrent.futures
 
+from collections import OrderedDict
 import sys
 import click
 import logging
@@ -182,13 +183,15 @@ def autoPlot(
     outpath: PathLike,
     function,
     *args,
+        add_legend=True,
     **kwargs,
 ):
     p = Path(outpath)
     p.parent.mkdir(exist_ok=True, parents=True)
     fig, ax = plt.subplots()
     ax = function(ax, *args, **kwargs)
-    ax.legend()
+    if add_legend:
+        ax.legend()
     fig.tight_layout()
     print(f"Saving to {p}")
     fig.savefig(p)
@@ -196,7 +199,7 @@ def autoPlot(
 
 
 def collapseHistogram(hist, actions, base_title=""):
-    ret = {}
+    ret = OrderedDict()
     all_slices = {}
     axes = list(x.name for x in hist.axes)
     categories = []
@@ -232,7 +235,10 @@ class HistogramSet:
         actions,
     ):
         self.set_title = title
-        self.histograms = collapseHistogram(histogram, actions)
+        if isinstance(histogram, hist.Hist):
+            self.histograms = collapseHistogram(histogram, actions)
+        else:
+            self.histograms = histogram
         ranks = {histRank(x) for discard, x in self.histograms.items()}
         if len(ranks) == 1:
             self.rank = ranks.pop()
@@ -253,7 +259,7 @@ class HistogramSet:
             if action == "splitfile":
                 vals = next(x for x in hist.axes if x.name == ax)
                 if data:
-                    vals = [x for x in vals if re.search(x, data)]
+                    vals = [x for x in vals if re.search(data, x)]
                 cats.append(zip(it.repeat(axes.index(ax)), vals))
         remaining_actions = {x: y for x, y in actions.items() if y[0] != "splitfile"}
         if cats:
@@ -281,7 +287,15 @@ class HistogramSet:
         return self.histograms.items()
 
     def normalize(self, individual=True):
-        pass
+        new = {name: h / h.sum().value for name, h in self.histograms.items()}
+        return HistogramSet(self.set_title, new, None)
+
+    def rebin(self, axis, val):
+        new = {
+            name: h[{axis: slice(None, None, hist.rebin(val))}]
+            for name, h in self.histograms.items()
+        }
+        return HistogramSet(self.set_title, new, None)
 
 
 def iterAxis(h, axis):
@@ -318,7 +332,8 @@ def drawScatter(ax, hist_set, yerr=False):
             ax.scatter(x, y, label=title, marker="+")
     ax.set_ylabel("Events")
     ax.set_xlabel(axes[0].label)
-
+    ax.set_title(hist_set.set_title)
+    ax.set_title(hist_set.set_title)
     return ax
 
 
@@ -326,11 +341,57 @@ def drawScatter(ax, hist_set, yerr=False):
 def drawHist(ax, hist_set, yerr=False):
     plot_logger.info(f"Drawing histogram with hist set {hist_set}")
     for title, hist in hist_set.hists():
-        edges = hist.axes[0].edges
+        edges = hist.axes[0].edges[:-1]
         widths = hist.axes[0].widths
         vals = hist.values()
-        var = np.sqrt(hist.variance())
+        var = np.sqrt(hist.variances())
         ax.bar(edges, vals, width=widths)
+    ax.set_title(hist_set.set_title)
+    return ax
+
+
+@requiresDim(1, 1)
+def drawScatterHist(ax, sig, bkg, yerr=False):
+    drawHist(ax, sig, yerr)
+    drawScatter(ax, sig, yerr)
+    ax.set_title(sig.set_title)
+    return ax
+
+@requiresDim(2)
+def draw2DHist(ax, hist_set):
+    if len(hist_set) != 1:
+        raise ValueError(f"While plotting {hist_set.set_title}, must have only one histogram in set, found {len(hist_set)}.")
+    title,hist = list(hist_set.hists())[0]
+    vals, e1, e2 = hist.to_numpy()
+    ex = (e1[1:] + e1[:-1]) / 2
+    ey = (e2[1:] + e2[:-1]) / 2
+    vx, vy = np.meshgrid(ex, ey)
+    x = vx.ravel()
+    y = vy.ravel()
+    w = vals.T.ravel()
+    ax.hist2d(x, y, bins=[e1, e2], weights=w)
+    ax.set_xlabel(hist.axes[0].label)
+    ax.set_ylabel(hist.axes[1].label)
+    ax.set_title(f"{hist_set.set_title}")
+    return ax
+
+
+@requiresDim(1, 1)
+def drawRatio(ax, sig, bkg, yerr=False):
+    if len(sig) != len(bkg):
+        raise ValueError()
+    for (tsig, hsig), (tbkg, hbkg) in zip(sig.hists(), bkg.hists()):
+        x = hsig.axes.centers[0]
+        hv = hbkg.values()
+        hs = hsig.values()
+        mask = hv > 0
+        values = hs[mask] / hv[mask]
+        x = x[mask]
+        ax.scatter(x, values, label=f"{tsig}", marker="+")
+    print(sig.set_title)
+    ax.set_ylabel("Ratio")
+    ax.set_xlabel(sig.setAxes()[0].label)
+    ax.set_title(f"{sig.set_title} / {bkg.set_title}")
     return ax
 
 
@@ -349,26 +410,6 @@ def cli(ctx, verbose):
     ch = logging.StreamHandler().setLevel(ll)
     plot_logger.setLevel(ll)
     plot_logger.addHandler(ll)
-
-
-def processor(f):
-    @wraps(f)
-    def new_func(*args, **kwargs):
-        def processor(stream):
-            return f(stream, *args, **kwargs)
-
-        return processor
-
-    return new_func
-
-
-def generator(f):
-    @wraps(f)
-    @processor
-    def new_func(stream, *args, **kwargs):
-        yield from zip(stream, f(*args, **kwargs))
-
-    return new_func
 
 
 @cli.command("hists")
@@ -395,8 +436,9 @@ def generator(f):
     type=str,
     help="Filter histograms",
 )
+@click.option("-n", "--normalize", default=False, is_flag=True)
 @click.pass_context
-def createSet(ctx, histogram_file, actions, filter_re):
+def createSet(ctx, histogram_file, actions, filter_re, normalize):
     all_hists = pickle.load(open(histogram_file, "rb"))
     hists = {
         x: y
@@ -409,6 +451,8 @@ def createSet(ctx, histogram_file, actions, filter_re):
             HistogramSet.createSets(x, y, actions) for x, y in hists.items()
         )
     )
+    if normalize:
+        z = [x.normalize() for x in z]
     p = ctx.parent
     ctx.ensure_object(dict)
     p.ensure_object(dict)
@@ -423,15 +467,66 @@ def createSet(ctx, histogram_file, actions, filter_re):
 
 @cli.command("scatter")
 @click.option("-o", "--outdir", type=click.Path(), required=True)
+@click.option("-e", "--error", default=False, is_flag=True)
 @click.pass_context
-def commandScatter(ctx, outdir):
+def commandScatter(ctx, outdir, error):
     hist_sets = ctx.parent.obj["histogram_sets"]
     print(hist_sets)
     outdir = Path(outdir)
     for hist_set in hist_sets:
         outpath = outdir / f"{hist_set[0].set_title}.pdf"
         print(outpath)
-        autoPlot(outpath, drawScatter, *hist_set)
+        autoPlot(outpath, drawScatter, *hist_set, yerr=error)
+
+@cli.command("twod")
+@click.option("-o", "--outdir", type=click.Path(), required=True)
+@click.pass_context
+def commandScatter(ctx, outdir):
+    hist_sets = ctx.parent.obj["histogram_sets"]
+    outdir = Path(outdir)
+    for hist_set in hist_sets:
+        outpath = outdir / f"{hist_set[0].set_title}.pdf"
+        autoPlot(outpath, draw2DHist, *hist_set, add_legend=False)
+
+@cli.command("scatterhist")
+@click.option("-o", "--outdir", type=click.Path(), required=True)
+@click.option("-e", "--error", default=False, is_flag=True)
+@click.pass_context
+def commandScatter(ctx, outdir, error):
+    hist_sets = ctx.parent.obj["histogram_sets"]
+    outdir = Path(outdir)
+    for hist_set in hist_sets:
+        outpath = outdir / f"{hist_set[0].set_title}.pdf"
+        print(outpath)
+        autoPlot(outpath, drawScatterHist, *hist_set, err=error)
+
+
+@cli.command("ratio")
+@click.option("-o", "--outdir", type=click.Path(), required=True)
+@click.pass_context
+def commandRatio(ctx, outdir):
+    hist_sets = ctx.parent.obj["histogram_sets"]
+    outdir = Path(outdir)
+    for hist_set in hist_sets:
+        outpath = outdir / f"{hist_set[0].set_title}.pdf"
+        print(outpath)
+        autoPlot(outpath, drawRatio, *hist_set)
+
+
+@cli.command("list")
+@click.option(
+    "-i",
+    "--input",
+    "histogram_file",
+    required=True,
+    type=click.Path(),
+    help="The image file to open.",
+)
+@click.pass_context
+def listHistograms(ctx, histogram_file):
+    all_hists = pickle.load(open(histogram_file, "rb"))
+    for name, hist in all_hists.items():
+        click.echo(f"{name}:{hist}")
 
 
 if __name__ == "__main__":

@@ -27,8 +27,33 @@ from weights import addWeights
 from matching import object_matching
 
 import itertools as it
+import re
 
 import warnings
+
+import argparse
+from functools import wraps
+import enum
+
+
+class ModuleType(enum.IntEnum):
+    PreSelectionProducer = 1
+    PreSelectionHist = 2
+    MainProducer = 3
+    MainHist = 4
+
+
+Module = namedtuple("Module", "name type func deps signal_only")
+modules = {}
+
+
+def analyzer_module(name, mod_type, dependencies=None, signal_only=False):
+    def decorator(func):
+        modules[name] = Module(name, mod_type, func, dependencies, signal_only)
+        return func
+
+    return decorator
+
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 
@@ -126,6 +151,7 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
     # return ret
 
 
+@analyzer_module("delta_r", ModuleType.MainProducer,signal_only=True)
 def deltaRMatch(events):
     # ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
     matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
@@ -173,6 +199,7 @@ def goodGenParticles(events):
     return events
 
 
+@analyzer_module("signal_hists", ModuleType.MainHist, signal_only=True)
 def createSignalHistograms(events, hmaker):
     ret = {}
     chi_match_axis = hist.axis.IntCategory(
@@ -200,6 +227,7 @@ def createSignalHistograms(events, hmaker):
     return ret
 
 
+@analyzer_module("chargino_hists", ModuleType.MainHist)
 def charginoRecoHistograms(events, hmaker):
     ret = {}
     gj = events.good_jets
@@ -214,9 +242,6 @@ def charginoRecoHistograms(events, hmaker):
     no_sublead_idxs = idx[idx != sublead_b_idx]
     no_lead_or_sublead_idxs = idx[(idx != sublead_b_idx) & (idx != lead_b_idx)]
     no_lead_jets = gj[no_lead_idxs]
-    print(no_lead_idxs)
-    print(lead_b_idx)
-    print(gj[ak.singletons(lead_b_idx)][:,0])
     no_sublead_jets = gj[no_sublead_idxs]
     first, second = ak.unzip(ak.combinations(no_lead_jets[:, 0:3], 2))
     max_dr_no_lead = ak.max(first.delta_r(second), axis=1)
@@ -232,22 +257,26 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
         mass_axis,
-        ak.where(max_no_lead_over_max_sublead > 2,
-                (no_lead_jets[:, 0:3].sum()).mass,
-                (gj[no_lead_or_sublead_idxs][:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:,0]).mass
-            
+        ak.where(
+            max_no_lead_over_max_sublead > 2,
+            (no_lead_jets[:, 0:3].sum()).mass,
+            (
+                gj[no_lead_or_sublead_idxs][:, 0:2].sum()
+                + gj[ak.singletons(lead_b_idx)][:, 0]
+            ).mass,
         ),
         name="m3_top3_no_b_unless_dR_charg_gt_2",
     )
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
         mass_axis,
-        (no_lead_jets[:, 0:2].sum() +gj[ak.singletons(lead_b_idx)][:,0]).mass,
+        (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass,
         name="m3_top_2_plus_lead_b",
     )
     return ret
 
 
+@analyzer_module("jet_hists", ModuleType.MainHist)
 def createJetHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -310,8 +339,39 @@ def createJetHistograms(events, hmaker):
             [m1, m2], [masses[p1], masses[p2]], name="Comp mass"
         )
 
-        ret[f"ratio_comp_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
+        ret[f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
             [m1, ratio], [masses[p1], masses[p2] / masses[p1]], name="mass2dratio"
+        )
+
+    for i, j in jet_combos:
+        m1 = hist.axis.Regular(
+            150,
+            0,
+            3000,
+            name=f"mass_{i}{j}",
+            label=rf"$m_{{{i}{j}}}$ [GeV]",
+        )
+        ret[f"m{i}{j}_vs_pt4"] = hmaker(
+            [m1, pt_axis], [masses[(i, j)], gj[:, 3].pt], name=f"m{i}{j}_vs_pt4"
+        )
+        ret[f"m{i}{j}_vs_pt1"] = hmaker(
+            [m1, pt_axis], [masses[(i, j)], gj[:, 0].pt], name=f"m{i}{j}_vs_pt1"
+        )
+
+        ret[f"m{i}{j}_vs_HT"] = hmaker(
+            [m1, pt_axis], [masses[(i, j)], events.HT], name=f"m{i}{j}_vs_HT"
+        )
+
+        ret[f"m{i}{j}_vs_lead_b"] = hmaker(
+            [m1, pt_axis],
+            [masses[(i, j)], events.med_bs[:, 0].pt],
+            name=f"m{i}{j}_vs_lead_b_pt",
+        )
+
+        ret[f"m{i}{j}_vs_sublead_b"] = hmaker(
+            [m1, pt_axis],
+            [masses[(i, j)], events.med_bs[:, 1].pt],
+            name=f"m{i}{j}_vs_sublead_b_pt",
         )
 
     for i in range(0, 4):
@@ -397,6 +457,7 @@ def createJetHistograms(events, hmaker):
     return ret
 
 
+@analyzer_module("tag_hists", ModuleType.MainHist)
 def createTagHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -416,6 +477,7 @@ def createTagHistograms(events, hmaker):
         )
 
 
+@analyzer_module("pre_sel_hists", ModuleType.PreSelectionHist)
 def makePreSelectionHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return {}
@@ -432,12 +494,14 @@ def makePreSelectionHistograms(events, hmaker):
     return ret
 
 
+@analyzer_module("event_level", ModuleType.MainProducer)
 def addEventLevelVars(events):
     ht = ak.sum(events.Jet.pt, axis=1)
     events["HT"] = ht
     return events
 
 
+@analyzer_module("event_level_hists", ModuleType.MainHist)
 def createEventLevelHistograms(events, hmaker):
     dataset = events.metadata["dataset"]
     ret = {}
@@ -470,6 +534,7 @@ def createEventLevelHistograms(events, hmaker):
     return ret
 
 
+@analyzer_module("b_hists", ModuleType.MainHist)
 def createBHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -575,24 +640,48 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
     return internal
 
 
+def splitChain(chain):
+    kfunc = lambda k: k.type
+    selected = [modules[x] for x in chain]
+    selected = sorted(selected, key=lambda x: int(x.type))
+    grouped = it.groupby(selected, key=kfunc)
+    return grouped
+
+
 class RPVProcessor(processor.ProcessorABC):
-    def __init__(self):
-        pass
+    def __init__(self, signal_only, chain):
+        self.signal_only = signal_only
+        print(f"Is signal only: {self.signal_only}")
+        self.modules = {x: list(y) for x, y in splitChain(chain)}
+        if not signal_only:
+            self.modules = {
+                x: [z for z in y if not z.signal_only]
+                for x, y in self.modules.items()
+            }
+        for cat, it in self.modules.items():
+            print(f"{str(cat)} -- {[x.name for x in it]}")
 
     def process(self, events):
 
         events = addWeights(events)
-        pre_sel_hists = makePreSelectionHistograms(events, makeHistogram)
+        for module in self.modules.get(ModuleType.PreSelectionProducer, []):
+            print(f"Running {module.name}")
+            events = module.func(events)
+
+        for module in self.modules.get(ModuleType.PreSelectionHist,[]):
+            print(f"Running {module.name}")
+            module.func(events, makeHistogram)
+        # pre_sel_hists = makePreSelectionHistograms(events, makeHistogram)
+
         events = createObjects(events)
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
         events = addEventLevelVars(events)
-
         dataset = events.metadata["dataset"]
 
         to_accumulate = []
 
-        if "signal" in dataset and True:
+        if self.signal_only:
             events = goodGenParticles(events)
             events = deltaRMatch(events)
             matched_cat = ak.num(
@@ -610,10 +699,10 @@ class RPVProcessor(processor.ProcessorABC):
                 [dataset, ak.num(events.good_jets, axis=1), matched_cat],
                 events.EventWeight,
             )
-            sig_hists = createSignalHistograms(events, hm)
-            charg_hists = charginoRecoHistograms(events, hm)
-            to_accumulate.append(sig_hists)
-            to_accumulate.append(charg_hists)
+            # sig_hists = createSignalHistograms(events, hm)
+            # charg_hists = charginoRecoHistograms(events, hm)
+            # to_accumulate.append(sig_hists)
+            # to_accumulate.append(charg_hists)
         else:
             hm = makeCategoryHist(
                 [
@@ -623,11 +712,20 @@ class RPVProcessor(processor.ProcessorABC):
                 [dataset, ak.num(events.good_jets, axis=1)],
                 events.EventWeight,
             )
-        jet_hists = createJetHistograms(events, hm)
-        b_hists = createBHistograms(events, hm)
-        event_hists = createEventLevelHistograms(events, hm)
-        tag_hists = createTagHistograms(events, hm)
-        to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
+
+        for module in self.modules.get(ModuleType.MainProducer,[]):
+            print(f"Running {module.name}")
+            events = module.func(events)
+
+        for module in self.modules.get(ModuleType.MainHist,[]):
+            print(f"Running {module.name}")
+            to_accumulate.append(module.func(events, hm))
+
+        # jet_hists = createJetHistograms(events, hm)
+        # b_hists = createBHistograms(events, hm)
+        # event_hists = createEventLevelHistograms(events, hm)
+        # tag_hists = createTagHistograms(events, hm)
+        # to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
         return accumulate(to_accumulate)
 
     def postprocess(self, accumulator):
@@ -635,11 +733,99 @@ class RPVProcessor(processor.ProcessorABC):
 
 
 if __name__ == "__main__":
-    executor = processor.IterativeExecutor()
-    executor = processor.FuturesExecutor(workers=4)
-    runner = processor.Runner(executor=executor, schema=NanoAODSchema, chunksize=400000)
-    # f = {k: v for k, v in filesets.items()}
-    f = {k: v for k, v in filesets.items() if "signal" in k}
-    # f = {k: v for k, v in filesets.items() if "signal_2000_1900" in k}  
-    out = runner(f, "Events", processor_instance=RPVProcessor())
-    pickle.dump(out, open("signal_hists.pkl", "wb"))
+
+    executor_map = dict(
+        iterative=lambda w: processor.IterativeExecutor(),
+        futures=lambda w: processor.FuturesExecutor(workers=w),
+    )
+    parser = argparse.ArgumentParser("Run the RPV Analysis")
+    parser.add_argument(
+        "-s",
+        "--samples",
+        nargs="+",
+        help="Sample names to run over",
+        choices=list(filesets),
+        metavar='',
+    )
+    parser.add_argument(
+        "--signal-re",
+        type=str,
+        help="Regex to determine if running over signals only",
+        default="signal.*",
+    )
+    parser.add_argument(
+        "--list-signals",
+        action="store_true",
+        help="List available signals and exit",
+    )
+    parser.add_argument(
+        "--list-modules",
+        action="store_true",
+        help="List available modules and exit",
+    )
+    parser.add_argument(
+        "-o", "--output", type=Path, help="Output file for data" 
+    )
+    parser.add_argument(
+        "-e",
+        "--executor",
+        type=str,
+        help="Exectuor to use",
+        choices=list(executor_map),
+        metavar='',
+        default="futures",
+    )
+    parser.add_argument(
+        "-m",
+        "--module-chain",
+        type=str,
+        nargs="*",
+        help="Modules to execture",
+        metavar='',
+        choices=list(modules),
+        default=list(modules),
+    )
+    parser.add_argument(
+        "-p",
+        "--parallelism",
+        type=int,
+        help="Level of paralleism to use if running a compatible exectutor",
+        default=4,
+    )
+    parser.add_argument(
+        "-c", "--chunk-size", type=int, help="Chunk size to use", default=400000
+    )
+    args = parser.parse_args()
+
+    list_mode = False
+    if args.list_signals:
+        list_mode = True
+        for x in filesets:
+            print(x)
+    if args.list_modules:
+        list_mode = True
+        for x in modules:
+            print(x)
+    if list_mode:
+        sys.exit(0)
+
+    if not (args.samples and args.output):
+        print("Error: When not in list mode you must provide both samples and and output path")
+        sys.exit(1)
+
+    executor = executor_map[args.executor](args.parallelism)
+    runner = processor.Runner(
+        executor=executor, schema=NanoAODSchema, chunksize=args.chunk_size
+    )
+    f = {k: v for k, v in filesets.items() if re.search(args.signal_re, k)}
+    f = {sample: filesets[sample] for sample in args.samples}
+    signal_only = all(re.search(args.signal_re, s) for s in f)
+
+    out = runner(
+        f, "Events", processor_instance=RPVProcessor(signal_only, args.module_chain)
+    )
+
+    outdir = args.output.parent
+    outdir.mkdir(exist_ok=True, parents=True)
+
+    pickle.dump(out, open(args.output, "wb"))
