@@ -4,7 +4,6 @@ from coffea.processor import accumulate, ProcessorABC
 from coffea.processor import FuturesExecutor
 import concurrent.futures
 from functools import wraps, partial
-from dataclasses import dataclass
 
 
 fbase = Path("samples")
