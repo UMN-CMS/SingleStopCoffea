@@ -11,18 +11,17 @@ From within the repository, you can install the python dependencies using a meth
 
 ** With venv and pip
 
-```
+#+begin_src  bash
 python3 -m venv env
 source env/bin/activate
 pip3 install .
-```
+#+end_src
 
 ** With poetry 
-
-```
+#+begin_src  bash
 poetry init
 poetry update
-```
+#+end_src
 
 ** Fermilab Notes
 Depending on the location you are running things, it may be necessary to acquire a more recent python version. For example, at fermilab, this can be done by running 
