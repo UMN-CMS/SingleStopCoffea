@@ -5,7 +5,6 @@ from coffea.nanoevents import NanoAODSchema
 from coffea.analysis_tools import PackedSelection
 from coffea import processor
 from coffea.processor import accumulate
-from common import createSelection
 import coffea as cf
 
 import awkward as ak
@@ -20,11 +19,9 @@ import yaml
 
 import pickle
 
-from histograms import *
-from objects import createObjects, b_tag_wps
-from datasets import filesets
-from weights import addWeights
-from matching import object_matching
+from analysis.objects import createObjects, b_tag_wps
+from analysis.datasets import loadSampleSetsFromDirectory
+from analysis.matching import object_matching
 
 import itertools as it
 import re
@@ -34,6 +31,35 @@ import warnings
 import argparse
 from functools import wraps
 import enum
+
+dataset_axis = hist.axis.StrCategory(
+    [], growth=True, name="dataset", label="Primary dataset"
+)
+
+mass_axis = hist.axis.Regular(100, 0, 3000, name="mass", label=r"$m$ [GeV]")
+pt_axis = hist.axis.Regular(100, 0, 1500, name="pt", label=r"$p_{T}$ [GeV]")
+ht_axis = hist.axis.Regular(100, 0, 3000, name="ht", label=r"$HT$ [GeV]")
+dr_axis = hist.axis.Regular(20, 0, 5, name="dr", label=r"$\Delta R$")
+eta_axis = hist.axis.Regular(20, -5, 5, name="eta", label=r"$\eta$")
+phi_axis = hist.axis.Regular(50, 0, 4, name="phi", label=r"$\phi$")
+nj_axis = hist.axis.Regular(10, 0, 10, name="nj", label=r"$n_{j}$")
+tencountaxis = hist.axis.Regular(10, 0, 10, name="Number", label=r"Number")
+b_axis = hist.axis.Regular(5, 0, 5, name="nb", label=r"$n_{b}$")
+bool_axis = hist.axis.IntCategory([0,1], name="truefalse", label=r"$n_{b}$")
+
+def makeHistogram(
+    axis, dataset, data, weights, name=None, description=None, drop_none=True
+):
+    if isinstance(axis, list):
+        h = hist.Hist(dataset_axis, *axis, storage="weight", name=name)
+    else:
+        h = hist.Hist(dataset_axis, axis, storage="weight", name=name)
+    setattr(h, "description", description)
+    if isinstance(axis, list):
+        ret = h.fill(dataset, *data, weight=weights)
+    else:
+        ret = h.fill(dataset, ak.to_numpy(data), weight=weights)
+    return ret
 
 
 class ModuleType(enum.IntEnum):
@@ -45,6 +71,31 @@ class ModuleType(enum.IntEnum):
 
 Module = namedtuple("Module", "name type func deps signal_only")
 modules = {}
+
+def addWeights(events):
+    dataset = events.metadata["dataset"]
+    events["EventWeight"] = events["MCScaleWeight"] * ak.where(
+            events["genWeight"] > 0, 1, -1
+        )
+    return events
+
+def createSelection(events):
+    good_jets = events.good_jets
+    fat_jets = events.FatJet
+    good_muons = events.good_muons
+    good_electrons = events.good_electrons
+    loose_b = events.loose_bs
+    med_b = events.med_bs
+    tight_top = events.tight_tops
+    selection = PackedSelection()
+    filled_jets = ak.pad_none(good_jets, 2, axis=1)
+    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+    selection.add("jets", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
+    selection.add("0Lep", (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0))
+    selection.add("2bjet", ak.num(med_b) >= 2)
+    selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
+    selection.add("jet_dr", (top_two_dr < 4) & (top_two_dr > 2))
+    return selection
 
 
 def analyzer_module(name, mod_type, dependencies=None, signal_only=False):
@@ -738,13 +789,16 @@ if __name__ == "__main__":
         iterative=lambda w: processor.IterativeExecutor(),
         futures=lambda w: processor.FuturesExecutor(workers=w),
     )
+
+    ss = loadSampleSetsFromDirectory("datasets")
+
     parser = argparse.ArgumentParser("Run the RPV Analysis")
     parser.add_argument(
         "-s",
         "--samples",
         nargs="+",
         help="Sample names to run over",
-        choices=list(filesets),
+        choices=list(ss),
         metavar='',
     )
     parser.add_argument(
@@ -817,9 +871,10 @@ if __name__ == "__main__":
     runner = processor.Runner(
         executor=executor, schema=NanoAODSchema, chunksize=args.chunk_size
     )
-    f = {k: v for k, v in filesets.items() if re.search(args.signal_re, k)}
-    f = {sample: filesets[sample] for sample in args.samples}
-    signal_only = all(re.search(args.signal_re, s) for s in f)
+
+
+    f = {sample: ss[sample].getFiles() for sample in args.samples}
+    signal_only = all(re.search(args.signal_re, s.name) for s in f.values())
 
     out = runner(
         f, "Events", processor_instance=RPVProcessor(signal_only, args.module_chain)

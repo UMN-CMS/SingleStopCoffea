@@ -531,24 +531,3 @@ def listHistograms(ctx, histogram_file):
 
 if __name__ == "__main__":
     cli()
-    sys.exit(0)
-
-    all_hists = pickle.load(args.input_data)
-    hists = {x: y for x, y in all_hists.items() if re.search(args.name_regex, x)}
-    if args.list_axes:
-        for name, h in hists.items():
-            print(f"{name:20}: {[x.name for x in h.axes]}")
-            sys.exit(0)
-
-    h = all_hists["m13_m"]
-
-    hs = HistogramSet.createSets(
-        "m13_m",
-        h,
-        {
-            "num_matched": ("sum", None),
-            "number_jets": ("sum", None),
-            "dataset": ("split", "2000_.*900"),
-        },
-    )
-    hs = hs[0]

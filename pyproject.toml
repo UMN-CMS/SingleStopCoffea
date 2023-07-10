@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "singlestop"
+name = "analyzer"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
-license = "n"
+authors = ["UMN Stealth Stop Group"]
+license = "MIT"
 readme = "README.org"
 
 [tool.poetry.dependencies]
