@@ -1,168 +1,168 @@
 - name: signal_312_1000_400 
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_400.root
 
 - name: signal_312_1000_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_600.root
 
 - name: signal_312_1000_900
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_900.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_900.root
 
 - name: signal_312_1200_400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
 
 - name: signal_312_1200_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_600.root
 
 - name: signal_312_1200_1100
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
 
 - name: signal_312_1300_400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_400.root
 
 - name: signal_312_1300_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_600.root
 
 - name: signal_312_1300_1200
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_1200.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_1200.root
 
 - name: signal_312_1400_400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_400.root
 
 - name: signal_312_1400_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_600.root
 
 - name: signal_312_1400_1300
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_1300.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_1300.root
 
 - name: signal_312_1500_400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_400.root
 
 - name: signal_312_1500_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_600.root
 
 - name: signal_312_1500_900
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
 
 - name: signal_312_1500_1400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
 
 - name: signal_312_2000_400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_400.root
 
 - name: signal_312_2000_600
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_600.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_600.root
 
 - name: signal_312_2000_900
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_900.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_900.root
 
 - name: signal_312_2000_1400
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
 
 - name: signal_312_2000_1900
-    derived_from: ""
-    produced_on: ""
-    tags: 
-        - signal
-    files:
-        - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
+  derived_from: ""
+  produced_on: ""
+  tags: 
+    - signal
+  files: 
+    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
 
