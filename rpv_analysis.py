@@ -20,7 +20,7 @@ import yaml
 import pickle
 
 from analyzer.objects import createObjects, b_tag_wps
-from analyzer.datasets import loadSampleSetsFromDirectory
+from analyzer.datasets import loadSamplesFromDirectory
 from analyzer.matching import object_matching
 
 from analyzer.core import analyzerModule, ModuleType
@@ -682,13 +682,10 @@ class RPVProcessor(processor.ProcessorABC):
         self.tags = tags
         self.signal_only = "signal" in self.tags
         self.modules = {x: list(y) for x, y in splitChain(chain)}
-        print(self.modules)
         self.modules = {
-                x: [z for z in y if z.require_tags.intersection(self.tags) == z]
+                x: [z for z in y if z.require_tags.intersection(self.tags) == z.require_tags]
                 for x, y in self.modules.items()
             }
-
-        
         for cat, it in self.modules.items():
             print(f"{str(cat)} -- {[x.name for x in it]}")
 
@@ -764,13 +761,29 @@ class RPVProcessor(processor.ProcessorABC):
 
 
 if __name__ == "__main__":
+    def createDaskCondor(w):
+        from distributed import Client
+        from lpcjobqueue import LPCCondorCluster
+        cluster = LPCCondorCluster()
+        cluster.adapt(minimum=0, maximum=w)
+        client = Client(cluster)
+        return processor.DaskExecutor(client=client)
+    def createDaskLocal(w):
+        from distributed import Client
+        client = Client()
+        return processor.DaskExecutor(client=client)
 
+    
     executor_map = dict(
         iterative=lambda w: processor.IterativeExecutor(),
         futures=lambda w: processor.FuturesExecutor(workers=w),
+        dask_local=createDaskLocal,
+        dask_condor=createDaskCondor,
     )
 
-    ss = loadSampleSetsFromDirectory("datasets")
+    sample_manager = loadSamplesFromDirectory("datasets")
+    collections = sample_manager.collections
+
 
     parser = argparse.ArgumentParser("Run the RPV Analysis")
     parser.add_argument(
@@ -778,7 +791,7 @@ if __name__ == "__main__":
         "--samples",
         nargs="+",
         help="Sample names to run over",
-        choices=list(ss),
+        choices=list(collections),
         metavar='',
     )
     parser.add_argument(
@@ -853,14 +866,12 @@ if __name__ == "__main__":
     )
 
 
-    f = {sample: ss[sample] for sample in args.samples}
+    f = {sample: collections[sample] for sample in args.samples}
     tag_sets = iter([s.tags for s in f.values()])
     common_tags = next(tag_sets).intersection(*tag_sets)
     files = {sample: ss[sample].getFiles() for sample in args.samples}
 
-
     print(f"Using tag set:\n {common_tags}")
-
 
     out = runner(
         files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain)

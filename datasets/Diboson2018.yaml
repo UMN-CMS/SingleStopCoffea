@@ -1,6 +1,19 @@
 - name: Diboson2018
+  type: collection
+  sets:
+    - WW2018
+    - WZ2018
+    - ZZ2018
+
+- name: WW2018
+  type: set
   derived_from: ""
   produced_on: ""
+  n_events: 15679000
+  lumi: 59.8
+  x_sec: 118700
+  tags: 
+    - background
   files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/130000/A8E505B7-EEFF-5F41-BF3E-8D9C4EF39EDC.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/42F22656-6D2B-804B-9208-294237DF9422.root
@@ -33,6 +46,17 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/E86C2949-2943-3C44-B649-C6C41C03A053.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/70000/460F09E3-8923-974A-B52C-9550C617CD32.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/130000/6E4C3735-6B6E-0E44-B097-859178F3BB53.root
+
+- name: WZ2018
+  derived_from: ""
+  produced_on: ""
+  type: set
+  n_events: 7940000
+  lumi: 59.8
+  x_sec: 47130
+  tags: 
+    - background
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/E21431E1-5A66-4244-B47D-899569CBA45A.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/70000/034356D0-103E-0A46-817B-5C7A1EBDBF7E.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/70000/1DC6A62A-974D-4648-BB46-313F663DA995.root
@@ -49,6 +73,17 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/E6CEADC9-864E-7A46-969C-30BEBEE86D1C.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/81350672-48E5-5E4E-971B-AE4B84B9A0F8.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/27808410-EEBD-AA4F-94B4-175891A61B97.root
+
+- name: WZ2018
+  derived_from: ""
+  produced_on: ""
+  type: set
+  n_events: 3526000
+  lumi: 59.8
+  x_sec: 16523
+  tags: 
+    - background
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/40000/29E7B7EF-D0FD-7343-9437-5C4F253A7B49.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/40000/96839BBA-5815-6849-9CCB-0FCFBFDFD1A4.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/40000/8478B786-8A17-2D46-BE83-4D644D297723.root

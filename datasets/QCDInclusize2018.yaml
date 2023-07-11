@@ -1,6 +1,22 @@
 - name: QCDInclusive2018
+  type: collection
+  sets:
+    - QCDInclusive2018_HT50to100
+    - QCDInclusive2018_HT100to200
+    - QCDInclusive2018_HT200to300
+    - QCDInclusive2018_HT300to500
+    - QCDInclusive2018_HT500to700
+    - QCDInclusive2018_HT700to1000
+    - QCDInclusive2018_HT1000to1500
+    - QCDInclusive2018_HT1500to2000
+    - QCDInclusive2018_HT2000toInf
+
+- name: QCDInclusive2018_HT1000to1500
   derived_from: ""
   produced_on: ""
+  lumi: 59.8
+  n_events: 12254238
+  x_sec: 1118000
   files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/3AD21532-1E4C-F74F-AE29-358C64FD924E.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/01DD74F9-9B15-3148-BFF1-6A952E34770D.root
@@ -53,6 +69,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/5D9019D1-8475-F341-935F-C666FEBF5956.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/E35811E6-668C-FF4E-B505-96541F83EEA7.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/0EDDE9DD-CF86-4D4B-B597-CEB735F5BBC9.root
+
+- name: QCDInclusive2018_HT100to200
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 73506112
+  x_sec: 23630000000
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2520000/9374A959-B58A-114E-A57C-C4EEA57A8E69.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2520000/6E424473-E323-4541-9CC9-BC0EF6A9010B.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2520000/2288154A-0AEC-B845-B2F7-BEA237B98070.root
@@ -135,6 +159,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/639F430E-1561-114C-9C51-736A0EF88D30.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/F1647D3C-6B82-1E4C-9450-57D9D0212ED2.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/8B74AF15-EE1A-6345-89E0-B215A3EEC5F3.root
+
+- name: QCDInclusive2018_HT1500to2000
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 9376965
+  x_sec: 108900
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/E5AD9C66-069F-ED41-B02A-DE2D48E9A937.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/A2FF38ED-3082-5D4A-B64E-EBD1A9072091.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/CE0D32C1-1D02-F743-A6D1-C6A5C17CD75C.root
@@ -150,6 +182,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/1BB3717F-E007-784A-B8D2-342EAE095295.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/D1D129B5-BDB0-2B4D-8BE8-9797557C7D97.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/845224F1-6619-F447-95B2-BDD821877466.root
+
+- name: QCDInclusive2018_HT2000toInf
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 4867995
+  x_sec: 21930
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2540000/AB1DD1C2-9E5A-2D47-BC3A-16027B51DBED.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2540000/B590B067-21C9-2947-ACE8-B2721005465F.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/8855BCEA-AC4D-5E4A-BAC8-28DA7848431E.root
@@ -158,6 +198,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/D740AF3A-5771-BA43-81B7-6CF95000F657.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/FFEEDBD9-D19C-D241-AABE-9A25025E7449.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/D333B9C9-ADB0-F144-A543-C6D3B615B53F.root
+
+- name: QCDInclusive2018_HT200to300
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 43280518
+  x_sec: 1554000000
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/9072FB34-9A52-0A40-8234-EA18C6C7FC48.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/EB1F0731-1F7D-F040-8789-9AB84AA8D295.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/B1F54F04-E207-194B-BBE0-54F4E6C50422.root
@@ -204,6 +252,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/6C1D8AFF-BF0B-2845-88C3-D793F4E99739.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/0D9A599A-236A-6846-9C01-FB19A81D29EE.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/1018B24D-FE29-D04A-9151-67332EFFD9A2.root
+
+- name: QCDInclusive2018_HT300to500
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 46335846
+  x_sec: 323800
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/838ABEF8-7B04-004C-BEF2-94E4CB783C69.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/0D6A4A01-EDCA-4B4E-9024-DFEF1ED1485A.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/A0BB48F6-AB57-DC48-BD41-0E98ED25F6AE.root
@@ -358,6 +414,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/CE0A10AF-3701-5F41-B468-B71B4D394668.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/0C3F6963-D823-8540-A597-ECE643D31A58.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/7BE0EA6B-2FE4-5045-894B-F0666306B79F.root
+
+- name: QCDInclusive2018_HT500to700
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 52661606
+  x_sec: 30280000
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/4956027E-F14E-F448-A177-251061F76A9A.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/8FB6FF35-C861-E04F-9E4C-385960A8568D.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/CD7FCAFB-5B52-C44F-B4A0-368E76A0F5DA.root
@@ -406,6 +470,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/2F909B0A-E9CC-B74C-9C3C-BBC9FA867BE2.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/9F47ABBC-BE1E-4D42-9607-BF64E58E2E23.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/98E8E342-5045-CF48-9A73-30AF29590E8C.root
+
+- name: QCDInclusive2018_HT50to100
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 35474117
+  x_sec: 186100000000
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/30000/3F8A5799-6D93-9F41-B8AD-20F73CE460CB.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/2B4E0917-50D4-F843-87D5-95AD81283931.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/7A2EC71E-2B11-1C46-82D5-63EB9D726108.root
@@ -465,6 +537,14 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/31C3AF19-10A3-9E46-859C-4D5E2EC29315.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/2FC09BD0-23B5-FA4B-8C53-5D11AF64DCA0.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/122DFDDB-78D3-6E49-B229-599C1D0A258C.root
+
+- name: QCDInclusive2018_HT700to1000
+  derived_from: ""
+  produced_on: ""
+  lumi: 59.8
+  n_events: 41664730
+  x_sec: 6392000
+  files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/230000/6C519F96-A120-0149-BB24-D27852E61214.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/230000/85649FE2-9D6C-7D4C-B18E-E69D37A41670.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/230000/64866713-F1A9-6C4F-839C-2C869F964A27.root
