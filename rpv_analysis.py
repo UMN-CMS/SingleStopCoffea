@@ -19,9 +19,12 @@ import yaml
 
 import pickle
 
-from analysis.objects import createObjects, b_tag_wps
-from analysis.datasets import loadSampleSetsFromDirectory
-from analysis.matching import object_matching
+from analyzer.objects import createObjects, b_tag_wps
+from analyzer.datasets import loadSampleSetsFromDirectory
+from analyzer.matching import object_matching
+
+from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import modules as all_modules
 
 import itertools as it
 import re
@@ -29,8 +32,6 @@ import re
 import warnings
 
 import argparse
-from functools import wraps
-import enum
 
 dataset_axis = hist.axis.StrCategory(
     [], growth=True, name="dataset", label="Primary dataset"
@@ -62,22 +63,6 @@ def makeHistogram(
     return ret
 
 
-class ModuleType(enum.IntEnum):
-    PreSelectionProducer = 1
-    PreSelectionHist = 2
-    MainProducer = 3
-    MainHist = 4
-
-
-Module = namedtuple("Module", "name type func deps signal_only")
-modules = {}
-
-def addWeights(events):
-    dataset = events.metadata["dataset"]
-    events["EventWeight"] = events["MCScaleWeight"] * ak.where(
-            events["genWeight"] > 0, 1, -1
-        )
-    return events
 
 def createSelection(events):
     good_jets = events.good_jets
@@ -97,13 +82,6 @@ def createSelection(events):
     selection.add("jet_dr", (top_two_dr < 4) & (top_two_dr > 2))
     return selection
 
-
-def analyzer_module(name, mod_type, dependencies=None, signal_only=False):
-    def decorator(func):
-        modules[name] = Module(name, mod_type, func, dependencies, signal_only)
-        return func
-
-    return decorator
 
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
@@ -202,7 +180,7 @@ def genMatchParticles(children_particles, children_structure, allow_anti=True):
     # return ret
 
 
-@analyzer_module("delta_r", ModuleType.MainProducer,signal_only=True)
+@analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"])
 def deltaRMatch(events):
     # ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
     matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
@@ -250,7 +228,7 @@ def goodGenParticles(events):
     return events
 
 
-@analyzer_module("signal_hists", ModuleType.MainHist, signal_only=True)
+@analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
 def createSignalHistograms(events, hmaker):
     ret = {}
     chi_match_axis = hist.axis.IntCategory(
@@ -278,7 +256,7 @@ def createSignalHistograms(events, hmaker):
     return ret
 
 
-@analyzer_module("chargino_hists", ModuleType.MainHist)
+@analyzerModule("chargino_hists", ModuleType.MainHist)
 def charginoRecoHistograms(events, hmaker):
     ret = {}
     gj = events.good_jets
@@ -327,7 +305,7 @@ def charginoRecoHistograms(events, hmaker):
     return ret
 
 
-@analyzer_module("jet_hists", ModuleType.MainHist)
+@analyzerModule("jet_hists", ModuleType.MainHist)
 def createJetHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -508,7 +486,7 @@ def createJetHistograms(events, hmaker):
     return ret
 
 
-@analyzer_module("tag_hists", ModuleType.MainHist)
+@analyzerModule("tag_hists", ModuleType.MainHist)
 def createTagHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -528,7 +506,7 @@ def createTagHistograms(events, hmaker):
         )
 
 
-@analyzer_module("pre_sel_hists", ModuleType.PreSelectionHist)
+@analyzerModule("pre_sel_hists", ModuleType.PreSelectionHist)
 def makePreSelectionHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return {}
@@ -545,14 +523,14 @@ def makePreSelectionHistograms(events, hmaker):
     return ret
 
 
-@analyzer_module("event_level", ModuleType.MainProducer)
+@analyzerModule("event_level", ModuleType.MainProducer)
 def addEventLevelVars(events):
     ht = ak.sum(events.Jet.pt, axis=1)
     events["HT"] = ht
     return events
 
 
-@analyzer_module("event_level_hists", ModuleType.MainHist)
+@analyzerModule("event_level_hists", ModuleType.MainHist)
 def createEventLevelHistograms(events, hmaker):
     dataset = events.metadata["dataset"]
     ret = {}
@@ -585,7 +563,7 @@ def createEventLevelHistograms(events, hmaker):
     return ret
 
 
-@analyzer_module("b_hists", ModuleType.MainHist)
+@analyzerModule("b_hists", ModuleType.MainHist)
 def createBHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
@@ -693,22 +671,24 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
 
 def splitChain(chain):
     kfunc = lambda k: k.type
-    selected = [modules[x] for x in chain]
+    selected = [all_modules[x] for x in chain]
     selected = sorted(selected, key=lambda x: int(x.type))
     grouped = it.groupby(selected, key=kfunc)
     return grouped
 
 
 class RPVProcessor(processor.ProcessorABC):
-    def __init__(self, signal_only, chain):
-        self.signal_only = signal_only
-        print(f"Is signal only: {self.signal_only}")
+    def __init__(self, tags, chain):
+        self.tags = tags
+        self.signal_only = "signal" in self.tags
         self.modules = {x: list(y) for x, y in splitChain(chain)}
-        if not signal_only:
-            self.modules = {
-                x: [z for z in y if not z.signal_only]
+        print(self.modules)
+        self.modules = {
+                x: [z for z in y if z.require_tags.intersection(self.tags) == z]
                 for x, y in self.modules.items()
             }
+
+        
         for cat, it in self.modules.items():
             print(f"{str(cat)} -- {[x.name for x in it]}")
 
@@ -836,8 +816,8 @@ if __name__ == "__main__":
         nargs="*",
         help="Modules to execture",
         metavar='',
-        choices=list(modules),
-        default=list(modules),
+        choices=list(all_modules),
+        default=list(all_modules),
     )
     parser.add_argument(
         "-p",
@@ -873,11 +853,17 @@ if __name__ == "__main__":
     )
 
 
-    f = {sample: ss[sample].getFiles() for sample in args.samples}
-    signal_only = all(re.search(args.signal_re, s.name) for s in f.values())
+    f = {sample: ss[sample] for sample in args.samples}
+    tag_sets = iter([s.tags for s in f.values()])
+    common_tags = next(tag_sets).intersection(*tag_sets)
+    files = {sample: ss[sample].getFiles() for sample in args.samples}
+
+
+    print(f"Using tag set:\n {common_tags}")
+
 
     out = runner(
-        f, "Events", processor_instance=RPVProcessor(signal_only, args.module_chain)
+        files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain)
     )
 
     outdir = args.output.parent
