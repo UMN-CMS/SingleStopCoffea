@@ -21,8 +21,8 @@ class SampleFile:
         else:
             return SampleFile([data])
 
-    def getFiles(self):
-        return [self.paths[0]]
+    def getFile(self):
+        return self.paths[0]
 
 
 
@@ -44,7 +44,7 @@ class SampleSet:
         derived_from = data["derived_from"]
         produced_on = data["produced_on"]
         lumi = data["lumi"]
-        x_sec = data["xsec"]
+        x_sec = data["x_sec"]
         n_events = data["n_events"]
         tags = set(data.get("tags", []))
         files = [SampleFile.fromDict(x) for x in data["files"]]
@@ -54,16 +54,16 @@ class SampleSet:
         
 
     def getFiles(self):
-        return it.chain(f.getFiles() for f in self.files)
+        return {self.name: [f.getFile() for f in self.files]}
 
     def getWeight(self):
-        return lumi * x_sec / n_events
+        return self.lumi * self.x_sec / self.n_events
 
     def getWeightMap(self):
         return {self.name : self.getWeight()}
 
     def getTags(self):
-        return tags
+        return self.tags
 
 @dataclass
 class SampleCollection:
@@ -79,13 +79,24 @@ class SampleCollection:
         sc = SampleCollection(name, real_sets)
         return sc
 
+
+    def getFiles(self):
+        everything = {}
+        for s in self.sets:
+            everything.update(s.getFiles())
+        everything = {f"{self.name}:{s.name}":files for name,files in everything }
+        return everything
+
+        
+
     def getWeightMap(self):
         merged = {}
-        for s in sets:
+        for s in self.sets:
             merged.update(s.getWeightMap())
+        return merged
 
     def getTags(self):
-        tags = iter(it.chain(s.tags for s in sets))
+        tags = iter(it.chain(s.tags for s in self.sets))
         ret = next(tags)
         for t in tags:
             ret = t.intersection(ret)
@@ -96,22 +107,32 @@ class SampleManager:
     sets: Dict[str, SampleSet] = field(default_factory=dict)
     collections: Dict[str, SampleCollection] = field(default_factory=dict)
 
+    def possibleInputs(self):
+        return [*self.sets, *self.collections]
+
+    def __getitem__(self, key):
+        if key in self.collections:
+            return self.collections[key]
+        else:
+            return self.sets[key]
+
 def loadSamplesFromDirectory(directory):
     directory = Path(directory)
-    files = directory.glob("*.yaml")
+    files = list(directory.glob("*.yaml"))
     ret = {}
     manager = SampleManager()
     for f in files:
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)
-            for d in [x for x in data if x["type"] == "set"]:
+            for d in [x for x in data if x.get("type", "") == "set"]:
                 s = SampleSet.fromDict(d)
                 manager.sets[s.name] = s
     for f in files:
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)
-            for d in [x for x in data if x["type"] == "collection"]:
+            for d in [x for x in data if x.get("type", "") == "collection"]:
                 s = SampleCollection.fromDict(d, manager)
+                print(s)
                 manager.collections[s.name] = s
     return manager
 

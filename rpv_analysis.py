@@ -7,6 +7,8 @@ from coffea import processor
 from coffea.processor import accumulate
 import coffea as cf
 
+import shutil
+
 import awkward as ak
 
 import hist
@@ -678,9 +680,10 @@ def splitChain(chain):
 
 
 class RPVProcessor(processor.ProcessorABC):
-    def __init__(self, tags, chain):
+    def __init__(self, tags, chain, weight_map):
         self.tags = tags
         self.signal_only = "signal" in self.tags
+        self.weight_map = weight_map
         self.modules = {x: list(y) for x, y in splitChain(chain)}
         self.modules = {
                 x: [z for z in y if z.require_tags.intersection(self.tags) == z.require_tags]
@@ -691,7 +694,12 @@ class RPVProcessor(processor.ProcessorABC):
 
     def process(self, events):
 
-        events = addWeights(events)
+
+        dataset = events.metadata["dataset"]
+        if ":" in dataset:
+            dataset,set_name = dataset.split(":")
+        events["EventWeight"] = events.genWeight * self.weight_map[set_name]
+
         for module in self.modules.get(ModuleType.PreSelectionProducer, []):
             print(f"Running {module.name}")
             events = module.func(events)
@@ -705,7 +713,6 @@ class RPVProcessor(processor.ProcessorABC):
         selection = createSelection(events)
         events = events[selection.all(*selection.names)]
         events = addEventLevelVars(events)
-        dataset = events.metadata["dataset"]
 
         to_accumulate = []
 
@@ -765,9 +772,12 @@ if __name__ == "__main__":
         from distributed import Client
         from lpcjobqueue import LPCCondorCluster
         cluster = LPCCondorCluster()
-        cluster.adapt(minimum=0, maximum=w)
+        cluster.adapt(minimum=10, maximum=w)
         client = Client(cluster)
+        shutil.make_archive("analyzer", "zip", base_dir="analyzer")
+        client.upload_file("analyzer.zip")
         return processor.DaskExecutor(client=client)
+
     def createDaskLocal(w):
         from distributed import Client
         client = Client()
@@ -782,7 +792,7 @@ if __name__ == "__main__":
     )
 
     sample_manager = loadSamplesFromDirectory("datasets")
-    collections = sample_manager.collections
+    all_samples = sample_manager.possibleInputs()
 
 
     parser = argparse.ArgumentParser("Run the RPV Analysis")
@@ -791,7 +801,7 @@ if __name__ == "__main__":
         "--samples",
         nargs="+",
         help="Sample names to run over",
-        choices=list(collections),
+        choices=list(all_samples),
         metavar='',
     )
     parser.add_argument(
@@ -840,7 +850,7 @@ if __name__ == "__main__":
         default=4,
     )
     parser.add_argument(
-        "-c", "--chunk-size", type=int, help="Chunk size to use", default=400000
+        "-c", "--chunk-size", type=int, help="Chunk size to use", default=100000
     )
     args = parser.parse_args()
 
@@ -866,15 +876,24 @@ if __name__ == "__main__":
     )
 
 
-    f = {sample: collections[sample] for sample in args.samples}
-    tag_sets = iter([s.tags for s in f.values()])
+    samples = [sample_manager[sample] for sample in args.samples]
+    print(f"Using samples {samples}")
+    tag_sets = iter([s.getTags() for s in samples])
     common_tags = next(tag_sets).intersection(*tag_sets)
-    files = {sample: ss[sample].getFiles() for sample in args.samples}
+    files = {}
+    for samp in samples:
+        files.update(samp.getFiles())
+    wmap = {}
+    for samp in samples:
+        wmap.update(samp.getWeightMap())
+
 
     print(f"Using tag set:\n {common_tags}")
 
+    print(wmap)
+
     out = runner(
-        files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain)
+        files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain, wmap)
     )
 
     outdir = args.output.parent
