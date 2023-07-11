@@ -84,7 +84,7 @@ class SampleCollection:
         everything = {}
         for s in self.sets:
             everything.update(s.getFiles())
-        everything = {f"{self.name}:{s.name}":files for name,files in everything }
+        everything = {f"{self.name}:{name}":files for name,files in everything.items() }
         return everything
 
         
@@ -132,7 +132,6 @@ def loadSamplesFromDirectory(directory):
             data = load(fo, Loader=Loader)
             for d in [x for x in data if x.get("type", "") == "collection"]:
                 s = SampleCollection.fromDict(d, manager)
-                print(s)
                 manager.collections[s.name] = s
     return manager
 

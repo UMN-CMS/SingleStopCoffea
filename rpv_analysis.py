@@ -850,7 +850,7 @@ if __name__ == "__main__":
         default=4,
     )
     parser.add_argument(
-        "-c", "--chunk-size", type=int, help="Chunk size to use", default=100000
+        "-c", "--chunk-size", type=int, help="Chunk size to use", default=250000
     )
     args = parser.parse_args()
 
@@ -877,7 +877,6 @@ if __name__ == "__main__":
 
 
     samples = [sample_manager[sample] for sample in args.samples]
-    print(f"Using samples {samples}")
     tag_sets = iter([s.getTags() for s in samples])
     common_tags = next(tag_sets).intersection(*tag_sets)
     files = {}
@@ -889,9 +888,8 @@ if __name__ == "__main__":
 
 
     print(f"Using tag set:\n {common_tags}")
-
     print(wmap)
-
+    print(files)
     out = runner(
         files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain, wmap)
     )
