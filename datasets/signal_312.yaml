@@ -1,3 +1,26 @@
+- name: signal
+  type: collection
+  treat_separate: true
+  sets:
+    - signal_312_1000_400
+    - signal_312_1000_600
+    - signal_312_1000_900
+    - signal_312_1200_400
+    - signal_312_1200_600
+    - signal_312_1200_1100
+    - signal_312_1400_400
+    - signal_312_1400_600
+    - signal_312_1400_1300
+    - signal_312_1500_400
+    - signal_312_1500_600
+    - signal_312_1500_900
+    - signal_312_1500_1400
+    - signal_312_2000_400
+    - signal_312_2000_600
+    - signal_312_2000_900
+    - signal_312_2000_1400
+    - signal_312_2000_1900
+    
 - name: signal_312_1000_400 
   type: set
   derived_from: ""

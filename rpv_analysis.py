@@ -280,9 +280,21 @@ def charginoRecoHistograms(events, hmaker):
     max_dr_no_sublead = ak.max(first.delta_r(second), axis=1)
     max_no_lead_over_max_sublead = max_dr_no_lead / max_dr_no_sublead
 
+    jets = gj[:, 0:4].sum()
+    m14= jets.mass
+
+    comp_charg =  (no_lead_jets[:, 0:3].sum()).mass
+
+    mass_axis_2 = hist.axis.Regular(100, 0, 3000, name="mass2", label=r"$m$ [GeV]")
+
     ret[f"m3_top_3_no_lead_b"] = hmaker(
         mass_axis,
-        (no_lead_jets[:, 0:3].sum()).mass,
+        comp_charg,
+        name="m3_top_3_no_lead_b",
+    )
+    ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
+        [mass_axis,mass_axis_2],
+        [m14, comp_charg],
         name="m3_top_3_no_lead_b",
     )
 
@@ -299,11 +311,20 @@ def charginoRecoHistograms(events, hmaker):
         name="m3_top3_no_b_unless_dR_charg_gt_2",
     )
 
+    uncomp_charg= (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
+
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
         mass_axis,
-        (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass,
+        uncomp_charg,
         name="m3_top_2_plus_lead_b",
     )
+
+    ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
+        [mass_axis,mass_axis_2],
+        [m14, uncomp_charg],
+        name="m14_vs_m3_top_2_plus_lead_b",
+    )
+
     return ret
 
 
@@ -697,7 +718,9 @@ class RPVProcessor(processor.ProcessorABC):
 
         dataset = events.metadata["dataset"]
         if ":" in dataset:
-            dataset,set_name = dataset.split(":")
+            dataset, set_name = dataset.split(":")
+        else:
+            set_name = dataset
         events["EventWeight"] = events.genWeight * self.weight_map[set_name]
 
         for module in self.modules.get(ModuleType.PreSelectionProducer, []):
@@ -761,7 +784,8 @@ class RPVProcessor(processor.ProcessorABC):
         # event_hists = createEventLevelHistograms(events, hm)
         # tag_hists = createTagHistograms(events, hm)
         # to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
-        return accumulate(to_accumulate)
+        return {"histograms" : accumulate(to_accumulate),
+                    dataset : dict()}
 
     def postprocess(self, accumulator):
         pass
@@ -850,7 +874,7 @@ if __name__ == "__main__":
         default=4,
     )
     parser.add_argument(
-        "-c", "--chunk-size", type=int, help="Chunk size to use", default=250000
+        "-c", "--chunk-size", type=int, help="Chunk size to use", default=400000
     )
     args = parser.parse_args()
 
@@ -872,7 +896,7 @@ if __name__ == "__main__":
 
     executor = executor_map[args.executor](args.parallelism)
     runner = processor.Runner(
-        executor=executor, schema=NanoAODSchema, chunksize=args.chunk_size
+        executor=executor, schema=NanoAODSchema, chunksize=args.chunk_size, skipbadfiles=True
     )
 
 
@@ -885,6 +909,7 @@ if __name__ == "__main__":
     wmap = {}
     for samp in samples:
         wmap.update(samp.getWeightMap())
+
 
 
     print(f"Using tag set:\n {common_tags}")

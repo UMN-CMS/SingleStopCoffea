@@ -69,6 +69,7 @@ class SampleSet:
 class SampleCollection:
     name: str
     sets: List[SampleSet] = field(default_factory=list)
+    treat_separate: bool = False
 
     @staticmethod
     def fromDict(data, manager):
@@ -76,7 +77,7 @@ class SampleCollection:
         sets = data["sets"]
         real_sets = [manager.sets[s] for s in sets]
 
-        sc = SampleCollection(name, real_sets)
+        sc = SampleCollection(name, real_sets, data.get("treat_separate", False))
         return sc
 
 
@@ -84,7 +85,8 @@ class SampleCollection:
         everything = {}
         for s in self.sets:
             everything.update(s.getFiles())
-        everything = {f"{self.name}:{name}":files for name,files in everything.items() }
+        if not self.treat_separate:
+            everything = {f"{self.name}:{name}":files for name,files in everything.items() }
         return everything
 
         

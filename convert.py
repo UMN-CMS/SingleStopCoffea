@@ -21,7 +21,7 @@ def getHistograms(path):
         r = pickle.load(f)
     return r
 
-all_hists = getHistograms("all_samples.pkl")
+all_hists = getHistograms("test.pkl")
 
 def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, width_count=10,start_count=10, width_min=0.1, width_max=0.4, start_min=0.1, start_max=0.8):
     cur_max = None
