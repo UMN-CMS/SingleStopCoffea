@@ -8,6 +8,7 @@ class ModuleType(enum.IntEnum):
     PreSelectionHist = 2
     MainProducer = 3
     MainHist = 4
+    Output = 5
 
 
 Module = namedtuple("Module", "name type func deps require_tags")

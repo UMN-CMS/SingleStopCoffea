@@ -1,4 +1,5 @@
 from pathlib import Path
+import uproot
 
 import sys
 from coffea.nanoevents import NanoAODSchema
@@ -6,6 +7,7 @@ from coffea.analysis_tools import PackedSelection
 from coffea import processor
 from coffea.processor import accumulate
 import coffea as cf
+import os
 
 import shutil
 
@@ -24,6 +26,8 @@ import pickle
 from analyzer.objects import createObjects, b_tag_wps
 from analyzer.datasets import loadSamplesFromDirectory
 from analyzer.matching import object_matching
+import analyzer.file_utils as futil
+from analyzer.skim import uprootWriteable
 
 from analyzer.core import analyzerModule, ModuleType
 from analyzer.core import modules as all_modules
@@ -75,12 +79,15 @@ def createSelection(events):
     med_b = events.med_bs
     tight_top = events.tight_tops
     selection = PackedSelection()
-    filled_jets = ak.pad_none(good_jets, 2, axis=1)
+    filled_jets = ak.pad_none(good_jets, 4, axis=1)
     top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+    #selection.add("trigger", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
+    selection.add("hlt", events.HLT.PFHT1050 & events.HLT.AK8PFJet360_TrimMass30)
+    selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
+    selection.add("jet4_pt", ak.fill_none(filled_jets[:, 3].pt > 30, False))
     selection.add("jets", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
     selection.add("0Lep", (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0))
     selection.add("2bjet", ak.num(med_b) >= 2)
-    selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
     selection.add("jet_dr", (top_two_dr < 4) & (top_two_dr > 2))
     return selection
 
@@ -88,37 +95,11 @@ def createSelection(events):
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 
-ParticleChain = namedtuple("ParticleChain", "name pdgId children")
-ParticleMatch = namedtuple("ParticleMatch", "name pdgId matched_array")
-
-structure = [
-    ParticleChain(
-        "Stop",
-        1000006,
-        [
-            ParticleChain("BStop", 5, None),
-            ParticleChain(
-                "Chi",
-                1000024,
-                [
-                    ParticleChain("BChi", 5, None),
-                    ParticleChain("SChi", 3, None),
-                    ParticleChain("DChi", 1, None),
-                ],
-            ),
-        ],
-    )
-]
-
-# order stop b , chi b, chi s, chi d
-
-
 def isGoodGenParticle(particle):
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
         particle.hasFlags("fromHardProcessBeforeFSR")
         & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
     )
-
 
 def createGoodChildren(gen_particles, children):
     # x = ak.singletons(gen_particles.children)
@@ -131,55 +112,6 @@ def createGoodChildren(gen_particles, children):
             [children[good_child_mask], maybe_good_children], axis=2
         )
     return children
-
-
-def genMatchParticles(children_particles, children_structure, allow_anti=True):
-    # base_particle_array = base_particle.matched_array
-    # genpart_children = base_particle_array.children
-    ret = {}
-    groups = it.groupby(
-        children_structure, key=lambda x: abs(x.pdgId) if allow_anti else x.pdgId
-    )
-    for pid, children in groups:
-        children = list(children)
-        mask = pid == (
-            abs(children_particles.pdgId) if allow_anti else children_particles.pdgId
-        )
-        if ak.any(ak.count(mask[mask], axis=1) != len(children)):
-            raise Exception(
-                f"Did not find expected number of children of type {pid} in event. Expected {len(children)}."
-            )
-        matched = children_particles[mask]
-        for i, c in enumerate([c for c in children]):
-            ret[c.name] = matched[:, i]
-            if c.children:
-                print(
-                    f"Looking for children of particle {c.pdgId} -> {[x.pdgId for x in c.children]} in list : {[x.pdgId for x in matched[:,i].good_children[0]]}"
-                )
-                print(
-                    f"Looking for children of particle {c.pdgId} -> {[x.pdgId for x in c.children]} in list : {[x.pdgId for x in matched[:,i].good_children[0]]}"
-                )
-                ret.update(
-                    genMatchParticles(
-                        matched[:, i].good_children, c.children, allow_anti=allow_anti
-                    )
-                )
-    print(f"Ret is {ret}")
-    return ret
-
-    # ret = {}
-    # for s_child in structure:
-    #    found = children[
-    #        s_child.pdgid == abs(children.pdgId)  if allow_anti else children.pdgId
-    #        & children.parent
-    #    ]
-    #    print(found)
-    #    if ak.any(ak.num(found, axis=1) != 1):
-    #        raise ValueError(f"Could not find particle with pdgId {s_child.pdgid}")
-    #    ret[s_child.name] = found
-    #    if s_child.children:
-    #        ret.update(genMatchParticles(found, s_child.children))
-    # return ret
 
 
 @analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"])
@@ -283,23 +215,24 @@ def charginoRecoHistograms(events, hmaker):
     jets = gj[:, 0:4].sum()
     m14= jets.mass
 
-    comp_charg =  (no_lead_jets[:, 0:3].sum()).mass
+    uncomp_charg =  (no_lead_jets[:, 0:3].sum()).mass
 
-    mass_axis_2 = hist.axis.Regular(100, 0, 3000, name="mass2", label=r"$m$ [GeV]")
+    m14_axis = hist.axis.Regular(100, 0, 3000, name="m14", label=r"$m_{14}$ [GeV]")
+    mchi_axis = hist.axis.Regular(100, 0, 3000, name="mchi", label=r"$m_{\chi}$ [GeV]")
 
     ret[f"m3_top_3_no_lead_b"] = hmaker(
-        mass_axis,
-        comp_charg,
+        mchi_axis,
+        uncomp_charg,
         name="m3_top_3_no_lead_b",
     )
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
-        [mass_axis,mass_axis_2],
-        [m14, comp_charg],
+        [m14_axis,mchi_axis],
+        [m14, uncomp_charg],
         name="m3_top_3_no_lead_b",
     )
 
     ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
-        mass_axis,
+        mchi_axis,
         ak.where(
             max_no_lead_over_max_sublead > 2,
             (no_lead_jets[:, 0:3].sum()).mass,
@@ -311,18 +244,37 @@ def charginoRecoHistograms(events, hmaker):
         name="m3_top3_no_b_unless_dR_charg_gt_2",
     )
 
-    uncomp_charg= (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
+    comp_charg= (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
-        mass_axis,
+        mchi_axis,
         uncomp_charg,
         name="m3_top_2_plus_lead_b",
     )
 
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
-        [mass_axis,mass_axis_2],
-        [m14, uncomp_charg],
+        [m14_axis,mchi_axis],
+        [m14, comp_charg],
         name="m14_vs_m3_top_2_plus_lead_b",
+    )
+    ratio_axis = hist.axis.Regular(
+            50,
+            0,
+            1,
+            name=f"ratio",
+            label=rf"$\frac{{m_{{ \chi }} }}{{ m_{{ 14 }} }}$ [GeV]",
+        )
+
+    ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
+        [m14_axis, ratio_axis],
+        [m14, comp_charg/m14],
+        name="ratio_m14_vs_m3_top_2_plus_lead_b",
+    )
+
+    ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
+        [m14_axis,ratio_axis],
+        [m14, uncomp_charg / m14],
+        name="ratio_m3_top_3_no_lead_b",
     )
 
     return ret
@@ -699,10 +651,33 @@ def splitChain(chain):
     grouped = it.groupby(selected, key=kfunc)
     return grouped
 
+@analyzerModule("save_skim", ModuleType.Output)
+def saveSkim(events, path):
+    print(events.metadata)
+    num_events = ak.size(events, axis=0)
+    print(num_events)
+    if not num_events:
+        print("No Events, not saving skimmed file")
+        return
+    scratch_dir_name = os.environ.get("ANALYSIS_SCRATCH_DIR", "./scratch")
+    filename=futil.getStem(events.metadata["fileuuid"]) + ".root"
+    scratch_path = Path(scratch_dir_name)
+    if not scratch_path.is_dir():
+        scratch_path.mkdir()
+    temppath = scratch_path / filename
+    with uproot.recreate(temppath) as fout:
+        writeable = uprootWriteable(events,fields=["Jet", "FatJet", "EventWeight", "Electron", "Muon", "MET", "GenPart"])
+        fout["Events"] = writeable
+    outpath = futil.appendToUrl(path, events.metadata["dataset"], filename)
+    futil.copyFile(temppath,  outpath)
+    return outpath
+    
+
 
 class RPVProcessor(processor.ProcessorABC):
-    def __init__(self, tags, chain, weight_map):
+    def __init__(self, tags, chain, weight_map, outpath=None):
         self.tags = tags
+        self.output_path = outpath
         self.signal_only = "signal" in self.tags
         self.weight_map = weight_map
         self.modules = {x: list(y) for x, y in splitChain(chain)}
@@ -712,11 +687,12 @@ class RPVProcessor(processor.ProcessorABC):
             }
         for cat, it in self.modules.items():
             print(f"{str(cat)} -- {[x.name for x in it]}")
+        if ModuleType.Output in self.modules and self.output_path is None:
+            raise Exception("If using an output, must specify a path")
 
     def process(self, events):
-
-
         dataset = events.metadata["dataset"]
+        print(events.fields)
         if ":" in dataset:
             dataset, set_name = dataset.split(":")
         else:
@@ -738,38 +714,38 @@ class RPVProcessor(processor.ProcessorABC):
         events = addEventLevelVars(events)
 
         to_accumulate = []
-
-        if self.signal_only:
-            events = goodGenParticles(events)
-            events = deltaRMatch(events)
-            matched_cat = ak.num(
-                events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)],
-                axis=1,
-            )
-            hm = makeCategoryHist(
-                [
-                    dataset_axis,
-                    hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
-                    hist.axis.IntCategory(
-                        [0, 1, 2, 3, 4], name="num_matched", label="Num Matched"
-                    ),
-                ],
-                [dataset, ak.num(events.good_jets, axis=1), matched_cat],
-                events.EventWeight,
-            )
-            # sig_hists = createSignalHistograms(events, hm)
-            # charg_hists = charginoRecoHistograms(events, hm)
-            # to_accumulate.append(sig_hists)
-            # to_accumulate.append(charg_hists)
-        else:
-            hm = makeCategoryHist(
-                [
-                    dataset_axis,
-                    hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
-                ],
-                [dataset, ak.num(events.good_jets, axis=1)],
-                events.EventWeight,
-            )
+        if ModuleType.MainHist in self.modules:
+            if self.signal_only:
+                events = goodGenParticles(events)
+                events = deltaRMatch(events)
+                matched_cat = ak.num(
+                    events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)],
+                    axis=1,
+                )
+                hm = makeCategoryHist(
+                    [
+                        dataset_axis,
+                        hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
+                        hist.axis.IntCategory(
+                            [0, 1, 2, 3, 4], name="num_matched", label="Num Matched"
+                        ),
+                    ],
+                    [dataset, ak.num(events.good_jets, axis=1), matched_cat],
+                    events.EventWeight,
+                )
+                # sig_hists = createSignalHistograms(events, hm)
+                # charg_hists = charginoRecoHistograms(events, hm)
+                # to_accumulate.append(sig_hists)
+                # to_accumulate.append(charg_hists)
+            else:
+                hm = makeCategoryHist(
+                    [
+                        dataset_axis,
+                        hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
+                    ],
+                    [dataset, ak.num(events.good_jets, axis=1)],
+                    events.EventWeight,
+                )
 
         for module in self.modules.get(ModuleType.MainProducer,[]):
             print(f"Running {module.name}")
@@ -778,14 +754,26 @@ class RPVProcessor(processor.ProcessorABC):
         for module in self.modules.get(ModuleType.MainHist,[]):
             print(f"Running {module.name}")
             to_accumulate.append(module.func(events, hm))
+        
+        produced = []
+        for module in self.modules.get(ModuleType.Output,[]):
+            print(f"Running {module.name}")
+            produced.append(module.func(events, self.output_path))
 
         # jet_hists = createJetHistograms(events, hm)
         # b_hists = createBHistograms(events, hm)
         # event_hists = createEventLevelHistograms(events, hm)
         # tag_hists = createTagHistograms(events, hm)
         # to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
-        return {"histograms" : accumulate(to_accumulate),
-                    dataset : dict()}
+        ret = {}
+        if to_accumulate:
+            ret["histograms"] = accumulate(to_accumulate)
+        ret[dataset] =  dict(
+            files = [events.metadata["filename"]] ,
+            num_events = ak.size(events, axis=0))
+        if produced:
+            ret[dataset]["produced"] = produced
+        return ret
 
     def postprocess(self, accumulator):
         pass
@@ -835,9 +823,9 @@ if __name__ == "__main__":
         default="signal.*",
     )
     parser.add_argument(
-        "--list-signals",
+        "--list-samples",
         action="store_true",
-        help="List available signals and exit",
+        help="List available samples and exit",
     )
     parser.add_argument(
         "--list-modules",
@@ -846,6 +834,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o", "--output", type=Path, help="Output file for data" 
+    )
+    parser.add_argument(
+        "--skimpath", default=None, type=str, help="Output file for skims" 
     )
     parser.add_argument(
         "-e",
@@ -874,24 +865,24 @@ if __name__ == "__main__":
         default=4,
     )
     parser.add_argument(
-        "-c", "--chunk-size", type=int, help="Chunk size to use", default=400000
+        "-c", "--chunk-size", type=int, help="Chunk size to use", default=250000
     )
     args = parser.parse_args()
 
     list_mode = False
-    if args.list_signals:
+    if args.list_samples:
         list_mode = True
-        for x in filesets:
+        for x in all_samples:
             print(x)
     if args.list_modules:
         list_mode = True
-        for x in modules:
+        for x in all_modules:
             print(x)
     if list_mode:
         sys.exit(0)
 
-    if not (args.samples and args.output):
-        print("Error: When not in list mode you must provide both samples and and output path")
+    if not (args.samples):
+        print("Error: When not in list mode you must provide samples")
         sys.exit(1)
 
     executor = executor_map[args.executor](args.parallelism)
@@ -910,16 +901,11 @@ if __name__ == "__main__":
     for samp in samples:
         wmap.update(samp.getWeightMap())
 
-
-
     print(f"Using tag set:\n {common_tags}")
-    print(wmap)
-    print(files)
     out = runner(
-        files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain, wmap)
+        files, "Events", processor_instance=RPVProcessor(common_tags, args.module_chain, wmap, outpath=args.skimpath)
     )
-
-    outdir = args.output.parent
-    outdir.mkdir(exist_ok=True, parents=True)
-
-    pickle.dump(out, open(args.output, "wb"))
+    if args.output:
+        outdir = args.output.parent
+        outdir.mkdir(exist_ok=True, parents=True)
+        pickle.dump(out, open(args.output, "wb"))

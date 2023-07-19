@@ -20,24 +20,19 @@ import sys
 import click
 import logging
 
-
-PathLike = Union[str, Path]
-Number = Union[float, int]
-
-
 plot_logger = logging.getLogger("PlotLogger")
-font_dirs = ["./fonts"]
-font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-for font in font_files:
-    font_manager.fontManager.addfont(font)
+def loadStyles():
+    font_dirs = ["./fonts"]
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for font in font_files:
+        font_manager.fontManager.addfont(font)
+    plt.style.use("style.mplstyle")
 
-plt.style.use("style.mplstyle")
 
-
-def getHistograms(path: PathLike) -> Dict[str, hist.Hist]:
+def loadHistograms(path): 
     with open(path, "rb") as f:
         r = pickle.load(f)
-    return r
+    return r["histograms"]
 
 
 def addPrelim(ax: mpl.axis.Axis) -> mpl.axis.Axis:
@@ -52,6 +47,10 @@ def addPrelim(ax: mpl.axis.Axis) -> mpl.axis.Axis:
         transform=ax.transAxes,
     )
     return ax
+
+
+
+
 
 
 def histRank(hist):
@@ -111,11 +110,11 @@ def make2DHist(ax: mpl.axis.Axis, histogram: hist.Hist, plotopts) -> mpl.axis.Ax
 def make2DProjection(
     ax: mpl.axis.Axis,
     h: hist.Hist,
-    vlines: Optional[Iterable[Number]] = None,
-    hlines: Optional[Iterable[Number]] = None,
-    plotopts: Optional[Dict[str, Any]] = None,
-    x_opts: Optional[Dict[str, Any]] = None,
-    y_opts: Optional[Dict[str, Any]] = None,
+    vlines= None,
+    hlines= None,
+    plotopts= None,
+    x_opts= None,
+    y_opts= None,
 ) -> mpl.axis.Axis:
     plotopts = {} if plotopts is None else plotopts
     x_opts = {} if x_opts is None else x_opts
@@ -147,8 +146,8 @@ def make2DSlicedProjection(
     h: hist.Hist,
     h_cut: hist.Hist,
     add_fit=None,
-    vlines: Optional[Iterable[Number]] = None,
-    hlines: Optional[Iterable[Number]] = None,
+    vlines= None,
+    hlines= None,
     location="vertical",
 ) -> mpl.axis.Axis:
     ax, ax_x, _, div = make2DProjection(ax, h, vlines, hlines)
@@ -180,10 +179,10 @@ def make2DSlicedProjection(
 
 
 def autoPlot(
-    outpath: PathLike,
+    outpath,
     function,
     *args,
-        add_legend=True,
+    add_legend=True,
     **kwargs,
 ):
     p = Path(outpath)
@@ -199,7 +198,7 @@ def autoPlot(
 
 
 def collapseHistogram(hist, actions, base_title=""):
-    ret = OrderedDict()
+    ret = []
     all_slices = {}
     axes = list(x.name for x in hist.axes)
     categories = []
@@ -220,87 +219,37 @@ def collapseHistogram(hist, actions, base_title=""):
         for cats in it.product(*categories):
             cat_slices = dict(cats)
             t = "_".join(str(y) for x, y in cats)
-            ret[t] = hist[{**cat_slices, **all_slices}]
+            new_hist = hist[{**cat_slices, **all_slices}]
+            new_hist.title = t
+            ret.append(new_hist)
     else:
-        ret[base_title] = hist[all_slices]
+        new_hist = hist[all_slices]
+        new_hist.title=base_title
+        ret.append(new_hist)
 
     return ret
 
 
-class HistogramSet:
-    def __init__(
-        self,
-        title,
-        histogram,
-        actions,
-    ):
-        self.set_title = title
-        if isinstance(histogram, hist.Hist):
-            self.histograms = collapseHistogram(histogram, actions)
-        else:
-            self.histograms = histogram
-        ranks = {histRank(x) for discard, x in self.histograms.items()}
-        if len(ranks) == 1:
-            self.rank = ranks.pop()
-        else:
-            raise ValueError(
-                f"All histograms in the set must have the same rank. Found ranks {ranks}"
-            )
 
-    def setRank(self):
-        return self.rank
-
-    @staticmethod
-    def createSets(title, hist, actions):
-        cats = []
-        axes = list(x.name for x in hist.axes)
-        ret = []
-        for ax, (action, data) in actions.items():
-            if action == "splitfile":
-                vals = next(x for x in hist.axes if x.name == ax)
-                if data:
-                    vals = [x for x in vals if re.search(data, x)]
-                cats.append(zip(it.repeat(axes.index(ax)), vals))
-        remaining_actions = {x: y for x, y in actions.items() if y[0] != "splitfile"}
-        if cats:
-            for cats in it.product(*cats):
-                cat_slices = dict(cats)
-                t = "__".join([title, *(f"{axes[x]}_eq_{y}" for x, y in cats)])
-                ret.append(HistogramSet(t, hist[cat_slices], remaining_actions))
-        else:
-            ret.append(HistogramSet(title, hist, remaining_actions))
-        return ret
-
-    def setAxes(self):
-        return next(x for x in self.histograms.values()).axes
-
-    def __repr__(self):
-        return f"HistogramSet(title='{self.set_title}', rank={self.rank}, count={len(self.histograms)})"
-
-    def __iter__(self):
-        return iter(histograms)
-
-    def __len__(self):
-        return len(self.histograms)
-
-    def hists(self):
-        return self.histograms.items()
-
-    def normalize(self, individual=True):
-        new = {name: h / h.sum().value for name, h in self.histograms.items()}
-        return HistogramSet(self.set_title, new, None)
-
-    def rebin(self, axis, val):
-        new = {
-            name: h[{axis: slice(None, None, hist.rebin(val))}]
-            for name, h in self.histograms.items()
-        }
-        return HistogramSet(self.set_title, new, None)
-
-
-def iterAxis(h, axis):
-    for value in axis:
-        yield value, h[{axis: value}]
+def createSets(title, hist, actions):
+    axes = list(x.name for x in hist.axes)
+    cats = []
+    ret = {}
+    for ax, (action, data) in actions.items():
+        if action == "splitfile":
+            vals = next(x for x in hist.axes if x.name == ax)
+            if data:
+                vals = [x for x in vals if re.search(data, x)]
+            cats.append(zip(it.repeat(axes.index(ax)), vals))
+    remaining_actions = {x: y for x, y in actions.items() if y[0] != "splitfile"}
+    if cats:
+        for cats in it.product(*cats):
+            cat_slices = dict(cats)
+            t = "__".join([title, *(f"{axes[x]}_eq_{y}" for x, y in cats)])
+            ret[t] = collapseHistogram(hist[cat_slices], remaining_actions,title)
+    else:
+        ret[t] = collapseHistogram(hist, remaining_actions,title)
+    return ret
 
 
 def requiresDim(*dimensions):
@@ -318,8 +267,9 @@ def requiresDim(*dimensions):
     return decorator
 
 
+
 @requiresDim(1)
-def drawScatter(ax, hist_set, yerr=False):
+def drawScatter(ax, hist_set, yerr=False, title=""):
     plot_logger.info(f"Drawing scatter with hist set {hist_set}")
     axes = hist_set.setAxes()
     for title, hist in hist_set.hists():
@@ -439,7 +389,7 @@ def cli(ctx, verbose):
 @click.option("-n", "--normalize", default=False, is_flag=True)
 @click.pass_context
 def createSet(ctx, histogram_file, actions, filter_re, normalize):
-    all_hists = pickle.load(open(histogram_file, "rb"))
+    all_hists = pickle.load(open(histogram_file, "rb"))["histograms"]
     hists = {
         x: y
         for x, y in all_hists.items()

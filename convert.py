@@ -8,20 +8,60 @@ import numpy as np
 from pathlib import Path
 import json
 from scipy.optimize import curve_fit
-from plotter import make2DSlicedProjection, autoPlot
+from scipy.stats import crystalball
+from analyzer.plotter import make2DSlicedProjection, autoPlot
+
+
+
+
+
+def getHistograms(path):
+    with open(path, "rb") as f:
+        r = pickle.load(f)
+    return r["histograms"]
+
+all_hists = getHistograms("analyzer_output.pkl")
+
 
 
 def gauss(x, *p):
     A, mu, sigma = p
     return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma**2))
 
+def cball(x, *p):
+    m,b,loc,scale = p
+    return crystalball.pdf(x,*p)
 
-def getHistograms(path):
-    with open(path, "rb") as f:
-        r = pickle.load(f)
-    return r
 
-all_hists = getHistograms("test.pkl")
+def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, spread=1):
+    cur_max = None
+    opt_axis = next(x for x in h_sig.axes if x.name == opt_axis)
+    disc_axis = next(x for x in h_sig.axes if x.name == disc_axis)
+    cur_best = 0
+
+    hx = h_sig[{disc_axis.name: sum}]
+    vals, edges = hx.to_numpy()
+    edges = (edges[:-1] + edges[1:]) / 2
+    p0 = [1000, 0.9, 0.05]
+    coeff, var_matrix = curve_fit(gauss, edges, vals, p0=p0, bounds=[(0,0,0), (1e10,1e10,0.15)])
+    _, mu, sig = coeff
+    cutupper = mu + spread * sig
+    cutlower = mu - spread * sig
+    print(coeff)
+
+    #coeff, var_matrix = curve_fit(cball, edges, vals, p0=p0, bounds=[(0,0,0), (1e10,1e10,1e10)])
+    #m,b,loc,scale = coeff
+    #cutupper = 
+    #cutlower = mu - spread * sig
+    #print(coeff)
+
+    s = hist.tag.Slicer()
+
+    return (
+        h_sig[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
+        h_bkg[{opt_axis.name: s[hist.loc(cutlower) : hist.loc(cutupper) : sum]}],
+        coeff,
+    )
 
 def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, width_count=10,start_count=10, width_min=0.1, width_max=0.4, start_min=0.1, start_max=0.8):
     cur_max = None
@@ -51,7 +91,7 @@ def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, width_count=10,st
                     disc_axis.name: sum,
                 }
             ]
-            sig = sum_sig.value / np.sqrt(sum_bkg.value)
+            sig = sum_sig.value / np.sqrt(sum_bkg.value) * np.sqrt(sum_sig.value)
             if cur_max < sig:
                 cur_max = sig
                 best_start, best_width = start, width
@@ -71,7 +111,7 @@ def makeOptimized(h_sig, h_bkg, opt_axis=None, disc_axis=None, width_count=10,st
                 ]
             }
         ],
-        (best_start, best_width),
+        (best_start, best_start + best_width),
     )
 
 
@@ -106,32 +146,23 @@ mapping = {}
 
 for sig in signals:
     print(sig)
-    m = re.match(r"signal_(\d+)_(\d+)_Skim", sig)
+    m = re.match(r"signal_312_(\d+)_(\d+)", sig)
     m1, m2 = m.group(1, 2)
     m1, m2 = int(m1), int(m2)
-    if abs(m1 - m2) <= 200:
+    if abs(m1 - m2) > 200:
         target = "m14_vs_m13"
-        target = "ratio_comp_m14_vs_m13"
+        target = "ratio_m14_vs_m3_top_3_no_lead_b"
         a1 = "13"
         a1 = "ratio"
     else:
         target = "m14_vs_m24"
         target = "ratio_comp_m14_vs_m24"
+        target = "ratio_m14_vs_m3_top_2_plus_lead_b"
+        a1 = "ratio"
         a1 = "ratio"
     hi = all_hists[target]
     hs = hi[sig, sum, ...]
-    hb = hi[
-        [
-            "QCD2018",
-            #"TT2018",
-            #"Diboson2018",
-            #"WQQ2018",
-            #"ZQQ2018",
-            #"ZNuNu2018",
-            #"ST2018",
-        ],
-        ...,
-    ]
+    hb = hi[["QCDInclusive2018"], ...,]
     hb = hb[sum, sum, ...]
     print(hb.axes[0][0])
     print(hb.axes[0][-1])
@@ -144,7 +175,13 @@ for sig in signals:
     print(f"Bkg sum is {s2}")
 
 
-    bs, bb, window = makeOptimized(hs, hb, a1, "mass_14")
+    print(hs)
+    spread = 1
+    #bs, bb, (A,mu,sigma) = makeOptimized(hs, hb, a1, "m14", spread)
+    bs, bb, window = makeOptimized(hs, hb, a1, "m14")
+    #print(f"Coefficients are sigma = {sigma} mu = {mu}")
+    #window = (mu - spread * sigma , mu + spread*sigma)
+    print(f"Window is  ")
     before_sig = hs.sum().value / np.sqrt(hb.sum().value)
     after_sig = bs.sum().value / np.sqrt(bb.sum().value)
 
@@ -153,17 +190,16 @@ for sig in signals:
     # cutupper = mu + 2.5 * sigma
     # cutlower = mu - 2.5 * sigma
     cutlower = window[0]
-    cutupper = window[0] + window[1]
+    cutupper = window[1]
     print(f"Found window {cutlower} -  {cutupper} ")
     autoPlot(
         outdir / sig / "sig.pdf",
         make2DSlicedProjection,
         hs,
         bs,
-        add_fit=None,  # lambda x: gauss(x, *fit),
+        #add_fit=lambda x: gauss(x, A, mu , sigma),
         hlines=[cutlower, cutupper],
-        fig_params=dict(figsize=(12, 10)),
-        fig_title=sig,
+        #fig_title=sig,
         #fig_manip=lambda f: f.text(
         #    0.9,
         #    0.9,
@@ -179,8 +215,8 @@ for sig in signals:
         bb,
         add_fit=None,
         hlines=[cutlower, cutupper],
-        fig_params=dict(figsize=(12, 10)),
-        fig_title="QCD",
+        #fig_params=dict(figsize=(12, 10)),
+        #fig_title="QCD",
         #fig_manip=lambda f: f.text(
         #    0.9,
         #    0.9,
@@ -192,7 +228,7 @@ for sig in signals:
     data = dict(
         before_sig=before_sig,
         after_sig=after_sig,
-        # coeffs=dict(mu=mu, sigma=sigma)
+        #coeffs=dict(mu=mu, sigma=sigma)
     )
     with open(outdir / sig / "data.json", "w") as f:
         f.write(json.dumps(data, indent=4))
@@ -204,12 +240,12 @@ for sig in signals:
     root_output[f"{sig}_{target}"] = hs[sum,...]
     root_output[f"bkg_{sig}_{target}"] = hb[sum,...]
 
-    _, ms, mx, _  = sig.split("_")
+    ms,mx=int(m1), int(m2)
 
     mapping[sig] = dict(
         stop_mass = int(ms), 
         chi_mass = int(mx),
-        base_dir=str(sig),
+        base_dir=f"signal_312_{ms}_{mx}",
         hists=str("hists.root"),
         bkg_hist_name=f"bkg_{sig}_{target}_opt_{a1}_proj_04",
         sig_hist_name=f"{sig}_{target}_opt_{a1}_proj_04",
