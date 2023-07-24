@@ -82,7 +82,7 @@ def createSelection(events):
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
     top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     #selection.add("trigger", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
-    selection.add("hlt", events.HLT.PFHT1050 & events.HLT.AK8PFJet360_TrimMass30)
+    selection.add("hlt", events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30)
     selection.add("highptjet", ak.fill_none(filled_jets[:, 0].pt > 300, False))
     selection.add("jet4_pt", ak.fill_none(filled_jets[:, 3].pt > 30, False))
     selection.add("jets", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
@@ -651,16 +651,17 @@ def splitChain(chain):
     grouped = it.groupby(selected, key=kfunc)
     return grouped
 
-@analyzerModule("save_skim", ModuleType.Output)
+#@analyzerModule("save_skim", ModuleType.Output)
 def saveSkim(events, path):
     print(events.metadata)
     num_events = ak.size(events, axis=0)
     print(num_events)
     if not num_events:
         print("No Events, not saving skimmed file")
-        return
+        return ""
     scratch_dir_name = os.environ.get("ANALYSIS_SCRATCH_DIR", "./scratch")
-    filename=futil.getStem(events.metadata["fileuuid"]) + ".root"
+    estart, estop = events.metadata["entrystart"], events.metadata["entrystop"]
+    filename=f"{futil.getStem(events.metadata['filename'])}_{estart}_{estop}.root"
     scratch_path = Path(scratch_dir_name)
     if not scratch_path.is_dir():
         scratch_path.mkdir()
@@ -768,9 +769,9 @@ class RPVProcessor(processor.ProcessorABC):
         ret = {}
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
-        ret[dataset] =  dict(
+        ret[dataset] = dict(
             files = [events.metadata["filename"]] ,
-            num_events = ak.size(events, axis=0))
+            num_events = [ak.size(events, axis=0)])
         if produced:
             ret[dataset]["produced"] = produced
         return ret
@@ -831,6 +832,11 @@ if __name__ == "__main__":
         "--list-modules",
         action="store_true",
         help="List available modules and exit",
+    )
+    parser.add_argument(
+        "--force-separate",
+        action="store_true",
+        help="Treat sample sets within a collection as separate always.",
     )
     parser.add_argument(
         "-o", "--output", type=Path, help="Output file for data" 

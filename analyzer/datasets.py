@@ -72,12 +72,12 @@ class SampleCollection:
     treat_separate: bool = False
 
     @staticmethod
-    def fromDict(data, manager):
+    def fromDict(data, manager, force_separate=False):
         name = data["name"]
         sets = data["sets"]
         real_sets = [manager.sets[s] for s in sets]
 
-        sc = SampleCollection(name, real_sets, data.get("treat_separate", False))
+        sc = SampleCollection(name, real_sets, data.get("treat_separate", False or force_separate))
         return sc
 
 
@@ -118,7 +118,7 @@ class SampleManager:
         else:
             return self.sets[key]
 
-def loadSamplesFromDirectory(directory):
+def loadSamplesFromDirectory(directory, force_separate=False):
     directory = Path(directory)
     files = list(directory.glob("*.yaml"))
     ret = {}
@@ -133,7 +133,7 @@ def loadSamplesFromDirectory(directory):
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)
             for d in [x for x in data if x.get("type", "") == "collection"]:
-                s = SampleCollection.fromDict(d, manager)
+                s = SampleCollection.fromDict(d, manager, force_separate)
                 manager.collections[s.name] = s
     return manager
 
