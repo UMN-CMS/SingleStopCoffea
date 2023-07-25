@@ -12,30 +12,30 @@ import pickle
 
 from pathlib import Path
 
-if __name__ == "__main__":
-    def createDaskCondor(w):
-        from distributed import Client
-        from lpcjobqueue import LPCCondorCluster
-        cluster = LPCCondorCluster()
-        cluster.adapt(minimum=10, maximum=w)
-        client = Client(cluster)
-        shutil.make_archive("analyzer", "zip", base_dir="analyzer")
-        client.upload_file("analyzer.zip")
-        return processor.DaskExecutor(client=client)
+def createDaskCondor(w):
+    from distributed import Client
+    from lpcjobqueue import LPCCondorCluster
+    cluster = LPCCondorCluster()
+    cluster.adapt(minimum=10, maximum=w)
+    client = Client(cluster)
+    shutil.make_archive("analyzer", "zip", base_dir="analyzer")
+    client.upload_file("analyzer.zip")
+    return processor.DaskExecutor(client=client)
 
-    def createDaskLocal(w):
-        from distributed import Client
-        client = Client()
-        return processor.DaskExecutor(client=client)
+def createDaskLocal(w):
+    from distributed import Client
+    client = Client()
+    return processor.DaskExecutor(client=client)
 
-    
-    executor_map = dict(
-        iterative=lambda w: processor.IterativeExecutor(),
-        futures=lambda w: processor.FuturesExecutor(workers=w),
-        dask_local=createDaskLocal,
-        dask_condor=createDaskCondor,
-    )
 
+executor_map = dict(
+    iterative=lambda w: processor.IterativeExecutor(),
+    futures=lambda w: processor.FuturesExecutor(workers=w),
+    dask_local=createDaskLocal,
+    dask_condor=createDaskCondor,
+)
+
+def runAnalysis():
     sample_manager = loadSamplesFromDirectory("datasets")
     all_samples = sample_manager.possibleInputs()
 

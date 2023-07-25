@@ -45,7 +45,7 @@ source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
 * Running the analyzer
 To get help running the analyzer, run the command
 #+begin_src bash
-python3 rpv_analysis.py --help
+python3 -m analyzer.py --help
 #+end_src
 
 Under normal operation this should return 
@@ -75,7 +75,7 @@ optional arguments:
 
 The plotter is still in development and has a rather complex interface. To get help run
 #+begin_src bash
-python3 plotter.py --help
+python3 -m analyzer.plotter --help
 #+end_src
 
 Which should show under normal operation 
@@ -99,7 +99,7 @@ The plotter accepts a series of commands. The hist command loads histograms from
 
 To get details on a command run
 #+begin_src 
-python plotter.py CMD --help
+python -m analyzer.plotter CMD --help
 #+end_src
 
 ** Examples
@@ -108,13 +108,13 @@ For all examples, suppose we have a file =all_hists.pkl= containing the output o
 *** To plot several 2D Histograms
 The below loads the file =all_hists.pkl=, then creates plots inputs for all histograms whose name contains the string "vs," and directs the inputs to "compress" along the number jets axes and create different files for each of the listed signals.
 #+begin_src bash
-python3 plotter.py -v  hists -n -i all_hists.pkl  -f "vs"  -a "number_jets" "sum" "" -a dataset splitfile "QCD|2000_1900|1500_900|1000_400" twod -o twod
+python3 -m analyzer.plotter -v  hists -n -i all_hists.pkl  -f "vs"  -a "number_jets" "sum" "" -a dataset splitfile "QCD|2000_1900|1500_900|1000_400" twod -o twod
 #+end_src
 
 *** Simple Scatter 
 The below loads the file =all_hists.pkl=, then creates scatter plots inputs for all histograms whose name contains the string "plus_lead" and directs the inputs to "compress" along the number jets axes and treat each sample name a separate dataset.
 
 #+begin_src  bash
-python3 plotter.py -v  hists -i signal_hists.pkl  -f "plus_lead" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" scatter -o testplots -e hists -i signal_hists.pkl  -f "m13_m" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" ratio -o testplots/ratioplots
+python3 -m analyzer.plotter -v  hists -i signal_hists.pkl  -f "plus_lead" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" scatter -o testplots -e hists -i signal_hists.pkl  -f "m13_m" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" ratio -o testplots/ratioplots
 #+end_src
 
