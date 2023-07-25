@@ -7,8 +7,6 @@
 
 - name: WW2018
   type: set
-  derived_from: ""
-  produced_on: ""
   n_events: 15679000
   lumi: 59.8
   x_sec: 118700
@@ -48,8 +46,6 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WW_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/130000/6E4C3735-6B6E-0E44-B097-859178F3BB53.root
 
 - name: WZ2018
-  derived_from: ""
-  produced_on: ""
   type: set
   n_events: 7940000
   lumi: 59.8
@@ -75,8 +71,6 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/WZ_TuneCP5_13TeV-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/27808410-EEBD-AA4F-94B4-175891A61B97.root
 
 - name: ZZ2018
-  derived_from: ""
-  produced_on: ""
   type: set
   n_events: 3526000
   lumi: 59.8

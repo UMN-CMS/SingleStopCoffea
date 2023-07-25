@@ -32,7 +32,7 @@ class SampleFile:
 class SampleSet:
     name: str
     derived_from: Optional[Union[str,"SampleSet"]]
-    produced_on: str
+    produced_on: Optional[str]
     lumi: Optional[float]
     x_sec: Optional[float]
     n_events: Optional[int]
@@ -43,13 +43,13 @@ class SampleSet:
     def fromDict(data):
         name = data["name"]
         derived_from = data.get("derived_from",None)
-        produced_on = data["produced_on"]
+        produced_on = data.get("produced_on", None)
         lumi = data.get("lumi",None)
         x_sec = data.get("x_sec", None)
         n_events = data.get("n_events",None)
         tags = set(data.get("tags", []))
         if not (x_sec and n_events and lumi) and not derived_from:
-            raise Exception("Every sample must either have a complete weight description, or a derivation")
+            raise Exception(f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}")
         files = [SampleFile.fromDict(x) for x in data["files"]]
         ss = SampleSet(name,derived_from,produced_on, lumi, x_sec, n_events, files, tags)
         return ss
@@ -131,7 +131,7 @@ def loadSamplesFromDirectory(directory, force_separate=False):
     for f in files:
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)
-            for d in [x for x in data if x.get("type", "") == "set"]:
+            for d in [x for x in data if x.get("type", "") == "set" or "files" in x]:
                 s = SampleSet.fromDict(d)
                 manager.sets[s.name] = s
     for s_name in manager.sets:
@@ -141,7 +141,7 @@ def loadSamplesFromDirectory(directory, force_separate=False):
     for f in files:
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)
-            for d in [x for x in data if x.get("type", "") == "collection"]:
+            for d in [x for x in data if x.get("type", "") == "collection" or "sets" in x]:
                 s = SampleCollection.fromDict(d, manager, force_separate)
                 manager.collections[s.name] = s
     return manager
