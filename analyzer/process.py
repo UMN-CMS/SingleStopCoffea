@@ -23,7 +23,10 @@ def makeHistogram(
         ret = h.fill(dataset, ak.to_numpy(data), weight=weights)
     return ret
 
-def makeCategoryHist(cat_axes, cat_vals, event_weights):
+
+def makeCategoryHist(_cat_axes, _cat_vals, event_weights):
+    cat_axes = list(_cat_axes)
+    cat_vals = list(_cat_vals)
     def internal(
         axis,
         data,
@@ -41,7 +44,7 @@ def makeCategoryHist(cat_axes, cat_vals, event_weights):
         if not data:
             raise Exception("No data")
         if isinstance(axis, list):
-            all_axes = cat_axes + axis
+            all_axes = cat_axes + list(axis)
         else:
             all_axes = cat_axes + [axis]
         h = hist.Hist(*all_axes, storage="weight", name=name)
@@ -85,30 +88,40 @@ def splitChain(chain):
     grouped = it.groupby(selected, key=kfunc)
     return grouped
 
+
 def topologicalSort(source):
     """perform topo sort on elements.
     :arg source: list of ``(name, [list of dependancies])`` pairs
     :returns: list of names, with dependancies listed first
     """
-    pending = [(name, set(deps)) for name, deps in source] # copy deps so we can modify set in-place       
-    emitted = []        
+    pending = [
+        (name, set(deps)) for name, deps in source
+    ]  # copy deps so we can modify set in-place
+    emitted = []
     while pending:
         next_pending = []
         next_emitted = []
         for entry in pending:
             name, deps = entry
-            deps.difference_update(emitted) # remove deps we emitted last pass
-            if deps: # still has deps? recheck during next pass
-                next_pending.append(entry) 
-            else: # no more deps? time to emit
-                yield name 
-                emitted.append(name) # <-- not required, but helps preserve original ordering
-                next_emitted.append(name) # remember what we emitted for difference_update() in next pass
-        if not next_emitted: # all entries have unmet deps, one of two things is wrong...
-            raise ValueError("cyclic or missing dependancy detected: %r" % (next_pending,))
+            deps.difference_update(emitted)  # remove deps we emitted last pass
+            if deps:  # still has deps? recheck during next pass
+                next_pending.append(entry)
+            else:  # no more deps? time to emit
+                yield name
+                emitted.append(
+                    name
+                )  # <-- not required, but helps preserve original ordering
+                next_emitted.append(
+                    name
+                )  # remember what we emitted for difference_update() in next pass
+        if (
+            not next_emitted
+        ):  # all entries have unmet deps, one of two things is wrong...
+            raise ValueError(
+                "cyclic or missing dependancy detected: %r" % (next_pending,)
+            )
         pending = next_pending
         emitted = next_emitted
-    
 
 
 class AnalysisProcessor(processor.ProcessorABC):
@@ -119,13 +132,15 @@ class AnalysisProcessor(processor.ProcessorABC):
         self.weight_map = weight_map
         self.modules = {x: list(y) for x, y in splitChain(chain)}
         self.modules = {
-                x: [z for z in y if z.require_tags.intersection(self.tags) == z.require_tags]
-                for x, y in self.modules.items()
-            }
+            x: [
+                z for z in y if z.require_tags.intersection(self.tags) == z.require_tags
+            ]
+            for x, y in self.modules.items()
+        }
         for cat in self.modules:
             it = self.modules[cat]
             print(it)
-            order = [(m.name,m.after) for m in it]
+            order = [(m.name, m.after) for m in it]
             order = list(topologicalSort(order))
             self.modules[cat] = sorted(it, key=lambda x: order.index(x.name))
 
@@ -136,12 +151,12 @@ class AnalysisProcessor(processor.ProcessorABC):
 
     def process(self, events):
         dataset = events.metadata["dataset"]
-        print(events.fields)
         if ":" in dataset:
             dataset, set_name = dataset.split(":")
         else:
             set_name = dataset
         events["EventWeight"] = events.genWeight * self.weight_map[set_name]
+        
 
         for module in self.modules.get(ModuleType.BaseObjectDef, []):
             events = module.func(events)
@@ -150,20 +165,25 @@ class AnalysisProcessor(processor.ProcessorABC):
             print(f"Running {module.name}")
             events = module.func(events)
 
-        for module in self.modules.get(ModuleType.PreSelectionHist,[]):
+        for module in self.modules.get(ModuleType.PreSelectionHist, []):
             print(f"Running {module.name}")
             module.func(events, makeHistogram)
 
         selection = processor.PackedSelection()
-        for module in self.modules.get(ModuleType.Selection,[]):
+        for module in self.modules.get(ModuleType.Selection, []):
             print(f"Running {module.name}")
             selection = module.func(events, selection)
 
         events = events[selection.all(*selection.names)]
 
         to_accumulate = []
-        hm = makeCategoryHist([dataset_axis], [dataset], events.EventWeight)
-        #if ModuleType.MainHist in self.modules:
+
+        cat_data = {"CatDataset" : dataset}
+
+        x = zip(*(x.func(events, cat_data) for x in self.modules[ModuleType.Categories]))
+        hm = makeCategoryHist(*x, events.EventWeight)
+
+        # if ModuleType.MainHist in self.modules:
         #    if self.signal_only:
         #        events = goodGenParticles(events)
         #        events = deltaRMatch(events)
@@ -196,16 +216,16 @@ class AnalysisProcessor(processor.ProcessorABC):
         #            events.EventWeight,
         #        )
 
-        for module in self.modules.get(ModuleType.MainProducer,[]):
+        for module in self.modules.get(ModuleType.MainProducer, []):
             print(f"Running {module.name}")
             events = module.func(events)
 
-        for module in self.modules.get(ModuleType.MainHist,[]):
+        for module in self.modules.get(ModuleType.MainHist, []):
             print(f"Running {module.name}")
             to_accumulate.append(module.func(events, hm))
-        
+
         produced = []
-        for module in self.modules.get(ModuleType.Output,[]):
+        for module in self.modules.get(ModuleType.Output, []):
             print(f"Running {module.name}")
             produced.append(module.func(events, self.output_path))
 
@@ -218,8 +238,8 @@ class AnalysisProcessor(processor.ProcessorABC):
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
         ret[dataset] = dict(
-            files = [events.metadata["filename"]] ,
-            num_events = [ak.size(events, axis=0)])
+            files=[events.metadata["filename"]], num_events=[ak.size(events, axis=0)]
+        )
         if produced:
             ret[dataset]["produced"] = produced
         return ret

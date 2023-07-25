@@ -1,6 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Set, Union
+from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
 try:
@@ -27,28 +27,30 @@ class SampleFile:
 
 
 
+
 @dataclass
 class SampleSet:
     name: str
-    derived_from: str
+    derived_from: Optional[Union[str,"SampleSet"]]
     produced_on: str
-    lumi: float
-    x_sec: float
-    n_events: int
+    lumi: Optional[float]
+    x_sec: Optional[float]
+    n_events: Optional[int]
     files: List[SampleFile] = field(default_factory=list)
     tags: Set[str] = field(default_factory=set)
 
     @staticmethod
     def fromDict(data):
         name = data["name"]
-        derived_from = data["derived_from"]
+        derived_from = data.get("derived_from",None)
         produced_on = data["produced_on"]
-        lumi = data["lumi"]
-        x_sec = data["x_sec"]
-        n_events = data["n_events"]
+        lumi = data.get("lumi",None)
+        x_sec = data.get("x_sec", None)
+        n_events = data.get("n_events",None)
         tags = set(data.get("tags", []))
+        if not (x_sec and n_events and lumi) and not derived_from:
+            raise Exception("Every sample must either have a complete weight description, or a derivation")
         files = [SampleFile.fromDict(x) for x in data["files"]]
-
         ss = SampleSet(name,derived_from,produced_on, lumi, x_sec, n_events, files, tags)
         return ss
         
@@ -57,7 +59,10 @@ class SampleSet:
         return {self.name: [f.getFile() for f in self.files]}
 
     def getWeight(self):
-        return self.lumi * self.x_sec / self.n_events
+        if self.derived_from:
+            return self.derived_from.getWeight()
+        else:
+            return self.lumi * self.x_sec / self.n_events
 
     def getWeightMap(self):
         return {self.name : self.getWeight()}
@@ -129,6 +134,10 @@ def loadSamplesFromDirectory(directory, force_separate=False):
             for d in [x for x in data if x.get("type", "") == "set"]:
                 s = SampleSet.fromDict(d)
                 manager.sets[s.name] = s
+    for s_name in manager.sets:
+        derived = manager[s_name].derived_from
+        if derived:
+            manager.sets[s_name].derived_from = manager.sets[derived]
     for f in files:
         with open(f, 'r') as fo:
             data = load(fo, Loader=Loader)

@@ -20,7 +20,7 @@ def createGoodChildren(gen_particles, children):
         )
     return children
 
-@analyzerModule("good_gen", ModuleType.MainProducer)
+@analyzerModule("good_gen", ModuleType.MainProducer, require_tags=["signal"])
 def goodGenParticles(events):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
 

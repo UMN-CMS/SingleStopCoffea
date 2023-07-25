@@ -11,6 +11,7 @@ class ModuleType(enum.IntEnum):
     MainProducer = 5
     MainHist = 6
     Output = 7
+    Categories = 8
 
 
 Module = namedtuple("Module", "name type func deps require_tags after")

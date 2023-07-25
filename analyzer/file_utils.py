@@ -45,10 +45,3 @@ def getStem(url):
     scheme, netloc, path, *fr_rest = urlparse(str(url))
     return str(Path(path).stem)
     
-    
-    
-
-if __name__ == "__main__" or True:
-    url = "root://cmseos.fnal.gov//store/user/ckapsiak/test/"
-    x = appendToUrl(url , "other", "andmore")
-    print(x)
