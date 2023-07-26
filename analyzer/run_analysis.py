@@ -25,10 +25,14 @@ def createDaskCondor(w):
     return processor.DaskExecutor(client=client)
 
 
+local_cluster = None
 def createDaskLocal(w):
-    from distributed import Client
-
-    client = Client()
+    from distributed import Client,TimeoutError, LocalCluster
+    global local_cluster
+    if local_cluster is None:
+        local_cluster = LocalCluster('tcp://localhost:8787', timeout='2s')
+    client = Client(local_cluster)
+    print(client)
     return processor.DaskExecutor(client=client)
 
 

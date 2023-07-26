@@ -7,7 +7,10 @@ import pickle
 import itertools as it
 from analyzer.modules.axes import *
 import awkward as ak
+import warnings
 
+warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
+warnings.filterwarnings("ignore", message=r".*In coffea version 0.8")
 
 def makeHistogram(
     axis, dataset, data, weights, name=None, description=None, drop_none=True
@@ -139,7 +142,6 @@ class AnalysisProcessor(processor.ProcessorABC):
         }
         for cat in self.modules:
             it = self.modules[cat]
-            print(it)
             order = [(m.name, m.after) for m in it]
             order = list(topologicalSort(order))
             self.modules[cat] = sorted(it, key=lambda x: order.index(x.name))
@@ -162,16 +164,13 @@ class AnalysisProcessor(processor.ProcessorABC):
             events = module.func(events)
 
         for module in self.modules.get(ModuleType.PreSelectionProducer, []):
-            print(f"Running {module.name}")
             events = module.func(events)
 
         for module in self.modules.get(ModuleType.PreSelectionHist, []):
-            print(f"Running {module.name}")
             module.func(events, makeHistogram)
 
         selection = processor.PackedSelection()
         for module in self.modules.get(ModuleType.Selection, []):
-            print(f"Running {module.name}")
             selection = module.func(events, selection)
 
         events = events[selection.all(*selection.names)]
@@ -217,16 +216,13 @@ class AnalysisProcessor(processor.ProcessorABC):
         #        )
 
         for module in self.modules.get(ModuleType.MainProducer, []):
-            print(f"Running {module.name}")
             events = module.func(events)
 
         for module in self.modules.get(ModuleType.MainHist, []):
-            print(f"Running {module.name}")
             to_accumulate.append(module.func(events, hm))
 
         produced = []
         for module in self.modules.get(ModuleType.Output, []):
-            print(f"Running {module.name}")
             produced.append(module.func(events, self.output_path))
 
         # jet_hists = createJetHistograms(events, hm)

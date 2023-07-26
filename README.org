@@ -71,50 +71,19 @@ optional arguments:
                         Chunk size to use
 #+end_src
 
-* Running the plotter
-
-The plotter is still in development and has a rather complex interface. To get help run
+* Using Notebooks
+Coffea works very nicely when used with jupyter notebooks. Chances are you want to run the notebook on a remote node, but view it in your local browser.
+This is accomplished by forwarding a port from your local machine to the remote machine using the below ssh command
 #+begin_src bash
-python3 -m analyzer.plotter --help
+ssh -N -L 5000:localhost:8999 username@remotehost
 #+end_src
-
-Which should show under normal operation 
-#+begin_example 
-Usage: plotter.py [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
-
-Options:
-  -v, --verbose
-  --help         Show this message and exit.
-
-Commands:
-  hists
-  list
-  ratio
-  scatter
-  scatterhist
-  twod
-#+end_example
-
-The plotter accepts a series of commands. The hist command loads histograms from a file an performs operations to make them compatible with the different plot tools, and the different plotters (=ratio=, =scatter=, =twod=, etc) perform operations on these loaded histograms.
-
-To get details on a command run
-#+begin_src 
-python -m analyzer.plotter CMD --help
-#+end_src
-
-** Examples
-For all examples, suppose we have a file =all_hists.pkl= containing the output of the analyzer. We assume that there are /categorical/ axes "dataset" and "number_jet".
-
-*** To plot several 2D Histograms
-The below loads the file =all_hists.pkl=, then creates plots inputs for all histograms whose name contains the string "vs," and directs the inputs to "compress" along the number jets axes and create different files for each of the listed signals.
+On the remote host, start the notebook by running from within the python environment,
 #+begin_src bash
-python3 -m analyzer.plotter -v  hists -n -i all_hists.pkl  -f "vs"  -a "number_jets" "sum" "" -a dataset splitfile "QCD|2000_1900|1500_900|1000_400" twod -o twod
+jupyter notebook --no-browser --port 8999
 #+end_src
+You can pick any port, for the remote machine, and you may need to if someone else is using that port.
 
-*** Simple Scatter 
-The below loads the file =all_hists.pkl=, then creates scatter plots inputs for all histograms whose name contains the string "plus_lead" and directs the inputs to "compress" along the number jets axes and treat each sample name a separate dataset.
+The notebook [[file:notebooks/example.ipynb]] shows an example of doing basic analysis within a notebook.
 
-#+begin_src  bash
-python3 -m analyzer.plotter -v  hists -i signal_hists.pkl  -f "plus_lead" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" scatter -o testplots -e hists -i signal_hists.pkl  -f "m13_m" -a "num_matched" "sum" "" -a "number_jets" "sum" "" -a dataset split "2000_1900|1500_1400|1000_900" ratio -o testplots/ratioplots
-#+end_src
+
 
