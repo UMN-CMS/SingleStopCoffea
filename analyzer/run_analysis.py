@@ -43,7 +43,12 @@ executor_map = dict(
     dask_condor=createDaskCondor,
 )
 
-sample_manager = loadSamplesFromDirectory("datasets")
+sample_manager = None
+
+
+def loadSamples(d):
+    global sample_manager
+    sample_manager = loadSamplesFromDirectory(d)
 
 
 def runModulesOnSamples(
@@ -71,16 +76,20 @@ def runModulesOnSamples(
 
 
 def runAnalysis():
-    all_samples = sample_manager.possibleInputs()
-
     parser = argparse.ArgumentParser("Run the RPV Analysis")
     parser.add_argument(
         "-s",
         "--samples",
         nargs="+",
         help="Sample names to run over",
-        choices=list(all_samples),
         metavar="",
+    )
+    parser.add_argument(
+        "-d",
+        "--dataset-dir",
+        help="Directory containing data sets",
+        type=str,
+        default="datasets"
     )
     parser.add_argument(
         "--signal-re",
@@ -137,6 +146,13 @@ def runAnalysis():
         "-c", "--chunk-size", type=int, help="Chunk size to use", default=250000
     )
     args = parser.parse_args()
+
+    loadSamples(args.dataset_dir)
+    all_samples = sample_manager.possibleInputs()
+    for sample in args.samples:
+        if sample not in all_samples:
+            print(f"Sample {sample} is not known, please use --list-samples to show available samples.")
+            sys.exit(1)
 
     list_mode = False
     if args.list_samples:
