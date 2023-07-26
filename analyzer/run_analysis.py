@@ -12,9 +12,11 @@ import pickle
 
 from pathlib import Path
 
+
 def createDaskCondor(w):
     from distributed import Client
     from lpcjobqueue import LPCCondorCluster
+
     cluster = LPCCondorCluster()
     cluster.adapt(minimum=10, maximum=w)
     client = Client(cluster)
@@ -22,8 +24,10 @@ def createDaskCondor(w):
     client.upload_file("analyzer.zip")
     return processor.DaskExecutor(client=client)
 
+
 def createDaskLocal(w):
     from distributed import Client
+
     client = Client()
     return processor.DaskExecutor(client=client)
 
@@ -35,10 +39,35 @@ executor_map = dict(
     dask_condor=createDaskCondor,
 )
 
-def runAnalysis():
-    sample_manager = loadSamplesFromDirectory("datasets")
-    all_samples = sample_manager.possibleInputs()
+sample_manager = loadSamplesFromDirectory("datasets")
 
+
+def runModulesOnSamples(
+    modules, samples, executor="iterative", parallelism=8, chunk_size=250000
+):
+    executor = executor_map[executor](parallelism)
+    runner = processor.Runner(
+        executor=executor, schema=NanoAODSchema, chunksize=chunk_size, skipbadfiles=True
+    )
+    samples = [sample_manager[sample] for sample in samples]
+    tag_sets = iter([s.getTags() for s in samples])
+    common_tags = next(tag_sets).intersection(*tag_sets)
+    files = {}
+    for samp in samples:
+        files.update(samp.getFiles())
+    wmap = {}
+    for samp in samples:
+        wmap.update(samp.getWeightMap())
+
+    return runner(
+        files,
+        "Events",
+        processor_instance=AnalysisProcessor(common_tags, modules, wmap),
+    )
+
+
+def runAnalysis():
+    all_samples = sample_manager.possibleInputs()
 
     parser = argparse.ArgumentParser("Run the RPV Analysis")
     parser.add_argument(
@@ -47,7 +76,7 @@ def runAnalysis():
         nargs="+",
         help="Sample names to run over",
         choices=list(all_samples),
-        metavar='',
+        metavar="",
     )
     parser.add_argument(
         "--signal-re",
@@ -70,11 +99,9 @@ def runAnalysis():
         action="store_true",
         help="Treat sample sets within a collection as separate always.",
     )
+    parser.add_argument("-o", "--output", type=Path, help="Output file for data")
     parser.add_argument(
-        "-o", "--output", type=Path, help="Output file for data" 
-    )
-    parser.add_argument(
-        "--skimpath", default=None, type=str, help="Output file for skims" 
+        "--skimpath", default=None, type=str, help="Output file for skims"
     )
     parser.add_argument(
         "-e",
@@ -82,7 +109,7 @@ def runAnalysis():
         type=str,
         help="Exectuor to use",
         choices=list(executor_map),
-        metavar='',
+        metavar="",
         default="futures",
     )
     parser.add_argument(
@@ -91,7 +118,7 @@ def runAnalysis():
         type=str,
         nargs="*",
         help="Modules to execture",
-        metavar='',
+        metavar="",
         choices=list(all_modules),
         default=list(all_modules),
     )
@@ -123,25 +150,12 @@ def runAnalysis():
         print("Error: When not in list mode you must provide samples")
         sys.exit(1)
 
-    executor = executor_map[args.executor](args.parallelism)
-    runner = processor.Runner(
-        executor=executor, schema=NanoAODSchema, chunksize=args.chunk_size, skipbadfiles=True
-    )
-
-
-    samples = [sample_manager[sample] for sample in args.samples]
-    tag_sets = iter([s.getTags() for s in samples])
-    common_tags = next(tag_sets).intersection(*tag_sets)
-    files = {}
-    for samp in samples:
-        files.update(samp.getFiles())
-    wmap = {}
-    for samp in samples:
-        wmap.update(samp.getWeightMap())
-
-    print(f"Using tag set:\n {common_tags}")
-    out = runner(
-        files, "Events", processor_instance=AnalysisProcessor(common_tags, args.module_chain, wmap, outpath=args.skimpath)
+    out = runModulesOnSamples(
+        args.module_chain,
+        args.samples,
+        executor=args.executor,
+        parallelism=args.parallelism,
+        chunk_size=args.chunk_size,
     )
     if args.output:
         outdir = args.output.parent
