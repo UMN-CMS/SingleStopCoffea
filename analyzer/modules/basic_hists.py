@@ -82,8 +82,8 @@ def charginoRecoHistograms(events, hmaker):
 
     uncomp_charg =  (no_lead_jets[:, 0:3].sum()).mass
 
-    m14_axis = hist.axis.Regular(100, 0, 3000, name="m14", label=r"$m_{14}$ [GeV]")
-    mchi_axis = hist.axis.Regular(100, 0, 3000, name="mchi", label=r"$m_{\chi}$ [GeV]")
+    m14_axis = hist.axis.Regular(60, 0, 3000, name="m14", label=r"$m_{14}$ [GeV]")
+    mchi_axis = hist.axis.Regular(60, 0, 3000, name="mchi", label=r"$m_{\chi}$ [GeV]")
 
     ret[f"m3_top_3_no_lead_b"] = hmaker(
         mchi_axis,
@@ -184,14 +184,14 @@ def createJetHistograms(events, hmaker):
         p1_1, p1_2 = p1
         p2_1, p2_2 = p2
         m1 = hist.axis.Regular(
-            150,
+            60,
             0,
             3000,
             name=f"mass_{p1_1+1}{p1_2}",
             label=rf"$m_{{{p1_1 + 1}{p1_2}}}$ [GeV]",
         )
         m2 = hist.axis.Regular(
-            150,
+            60,
             0,
             3000,
             name=f"mass_{p2_1+1}{p2_2}",
@@ -214,7 +214,7 @@ def createJetHistograms(events, hmaker):
 
     for i, j in jet_combos:
         m1 = hist.axis.Regular(
-            150,
+            60,
             0,
             3000,
             name=f"mass_{i}{j}",

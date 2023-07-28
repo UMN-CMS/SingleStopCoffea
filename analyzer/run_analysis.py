@@ -4,6 +4,7 @@ from analyzer.datasets import loadSamplesFromDirectory
 from analyzer.core import modules as all_modules
 from analyzer.process import AnalysisProcessor
 import sys
+import shutil
 
 from coffea import processor
 from coffea.nanoevents import NanoAODSchema
@@ -149,10 +150,6 @@ def runAnalysis():
 
     loadSamples(args.dataset_dir)
     all_samples = sample_manager.possibleInputs()
-    for sample in args.samples:
-        if sample not in all_samples:
-            print(f"Sample {sample} is not known, please use --list-samples to show available samples.")
-            sys.exit(1)
 
     list_mode = False
     if args.list_samples:
@@ -165,6 +162,11 @@ def runAnalysis():
             print(x)
     if list_mode:
         sys.exit(0)
+
+    for sample in args.samples:
+        if sample not in all_samples:
+            print(f"Sample {sample} is not known, please use --list-samples to show available samples.")
+            sys.exit(1)
 
     if not (args.samples):
         print("Error: When not in list mode you must provide samples")

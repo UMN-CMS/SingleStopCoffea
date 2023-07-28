@@ -45,7 +45,7 @@ source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
 * Running the analyzer
 To get help running the analyzer, run the command
 #+begin_src bash
-python3 -m analyzer.py --help
+python3 -m analyzer --help
 #+end_src
 
 Under normal operation this should return 

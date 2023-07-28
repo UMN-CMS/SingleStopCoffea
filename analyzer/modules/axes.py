@@ -4,7 +4,7 @@ dataset_axis = hist.axis.StrCategory(
     [], growth=True, name="dataset", label="Primary dataset"
 )
 
-mass_axis = hist.axis.Regular(100, 0, 3000, name="mass", label=r"$m$ [GeV]")
+mass_axis = hist.axis.Regular(60, 0, 3000, name="mass", label=r"$m$ [GeV]")
 pt_axis = hist.axis.Regular(100, 0, 1500, name="pt", label=r"$p_{T}$ [GeV]")
 ht_axis = hist.axis.Regular(60, 0, 3000, name="ht", label=r"$HT$ [GeV]")
 dr_axis = hist.axis.Regular(20, 0, 5, name="dr", label=r"$\Delta R$")
