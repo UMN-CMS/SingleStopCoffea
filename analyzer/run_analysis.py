@@ -191,7 +191,7 @@ def runAnalysis():
         sys.exit(1)
 
     
-    modules = list(all_modules)
+    modules = args.module_chain
     if args.exclude_modules:
         modules = [x for x in all_modules if x not in args.exclude_modules]
 
