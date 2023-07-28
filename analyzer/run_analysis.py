@@ -53,11 +53,11 @@ def loadSamples(d):
 
 
 def runModulesOnSamples(
-    modules, samples, executor="iterative", parallelism=8, chunk_size=250000
+        modules, samples, executor="iterative", parallelism=8, chunk_size=250000, max_chunks=None
 ):
     executor = executor_map[executor](parallelism)
     runner = processor.Runner(
-        executor=executor, schema=NanoAODSchema, chunksize=chunk_size, skipbadfiles=True
+        executor=executor, schema=NanoAODSchema, chunksize=chunk_size, skipbadfiles=True, maxchunks=max_chunks
     )
     samples = [sample_manager[sample] for sample in samples]
     tag_sets = iter([s.getTags() for s in samples])
@@ -97,6 +97,13 @@ def runAnalysis():
         type=str,
         help="Regex to determine if running over signals only",
         default="signal.*",
+    )
+    parser.add_argument(
+        "-k",
+        "--max-chunks",
+        type=int,
+        help="Maximum number of chunks",
+        default=None,
     )
     parser.add_argument(
         "--list-samples",
@@ -178,6 +185,7 @@ def runAnalysis():
         executor=args.executor,
         parallelism=args.parallelism,
         chunk_size=args.chunk_size,
+        max_chunks=args.max_chunks
     )
     if args.output:
         outdir = args.output.parent
