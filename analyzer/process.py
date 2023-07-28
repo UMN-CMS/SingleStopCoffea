@@ -129,6 +129,7 @@ def topologicalSort(source):
 
 class AnalysisProcessor(processor.ProcessorABC):
     def __init__(self, tags, chain, weight_map, outpath=None):
+        print(chain)
         self.tags = tags
         self.output_path = outpath
         self.signal_only = "signal" in self.tags

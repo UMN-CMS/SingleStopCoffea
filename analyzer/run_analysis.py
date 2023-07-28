@@ -55,6 +55,7 @@ def loadSamples(d):
 def runModulesOnSamples(
         modules, samples, executor="iterative", parallelism=8, chunk_size=250000, max_chunks=None
 ):
+
     executor = executor_map[executor](parallelism)
     runner = processor.Runner(
         executor=executor, schema=NanoAODSchema, chunksize=chunk_size, skipbadfiles=True, maxchunks=max_chunks
@@ -144,6 +145,16 @@ def runAnalysis():
         default=list(all_modules),
     )
     parser.add_argument(
+        "-x",
+        "--exclude-modules",
+        type=str,
+        nargs="*",
+        help="Modules to exclude",
+        metavar="",
+        choices=list(all_modules),
+        default=None
+    )
+    parser.add_argument(
         "-p",
         "--parallelism",
         type=int,
@@ -179,8 +190,14 @@ def runAnalysis():
         print("Error: When not in list mode you must provide samples")
         sys.exit(1)
 
+    
+    modules = list(all_modules)
+    if args.exclude_modules:
+        modules = [x for x in all_modules if x not in args.exclude_modules]
+
+        
     out = runModulesOnSamples(
-        args.module_chain,
+        modules,
         args.samples,
         executor=args.executor,
         parallelism=args.parallelism,
