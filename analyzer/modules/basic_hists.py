@@ -213,6 +213,23 @@ def createJetHistograms(events, hmaker):
         )
 
     for i, j in jet_combos:
+        mask = ak.num(gj, axis=1) > 3
+        gj_mask = gj[mask]
+        masses_mask = masses[(i, j)][mask]
+
+        mask1 = ak.num(gj, axis=1) > 1
+        gj_mask1 = gj[mask1]
+        masses_mask1 = masses[(i, j)][mask1]
+        events_mask1 = events[mask1]
+
+        b_mask = ak.num(events.med_bs, axis=1) > 0
+        masses_bmask = masses[(i, j)][b_mask]
+        events_bmask = events[b_mask]
+
+        b_mask2 = ak.num(events.med_bs, axis=1) > 1
+        masses_bmask2 = masses[(i, j)][b_mask2]
+        events_bmask2 = events[b_mask2]
+
         m1 = hist.axis.Regular(
             60,
             0,
@@ -221,44 +238,54 @@ def createJetHistograms(events, hmaker):
             label=rf"$m_{{{i}{j}}}$ [GeV]",
         )
         ret[f"m{i}{j}_vs_pt4"] = hmaker(
-            [m1, pt_axis], [masses[(i, j)], gj[:, 3].pt], name=f"m{i}{j}_vs_pt4"
+            [m1, pt_axis], [masses_mask, gj_mask[:, 3].pt], mask = mask, name=f"m{i}{j}_vs_pt4"
         )
         ret[f"m{i}{j}_vs_pt1"] = hmaker(
-            [m1, pt_axis], [masses[(i, j)], gj[:, 0].pt], name=f"m{i}{j}_vs_pt1"
+            [m1, pt_axis], [masses_mask1, gj_mask1[:, 0].pt], mask = mask1, name=f"m{i}{j}_vs_pt1"
         )
 
         ret[f"m{i}{j}_vs_HT"] = hmaker(
-            [m1, pt_axis], [masses[(i, j)], events.HT], name=f"m{i}{j}_vs_HT"
+            [m1, pt_axis], [masses_mask1, events_mask1.HT], mask = mask1, name=f"m{i}{j}_vs_HT"
         )
 
         ret[f"m{i}{j}_vs_lead_b"] = hmaker(
             [m1, pt_axis],
-            [masses[(i, j)], events.med_bs[:, 0].pt],
+            [masses_bmask, events_bmask.med_bs[:, 0].pt],
+					  mask = b_mask,
             name=f"m{i}{j}_vs_lead_b_pt",
         )
 
         ret[f"m{i}{j}_vs_sublead_b"] = hmaker(
             [m1, pt_axis],
-            [masses[(i, j)], events.med_bs[:, 1].pt],
+            [masses_bmask2, events_bmask2.med_bs[:, 1].pt],
+						mask = b_mask2,
             name=f"m{i}{j}_vs_sublead_b_pt",
         )
 
     for i in range(0, 4):
+        mask = ak.num(gj, axis=1) > i
+        gj_mask = gj[mask]
+        eta = gj_mask[:, i].eta
+        phi = gj_mask[:, i].phi
+
         ret[rf"pt_{i}"] = hmaker(
             pt_axis,
-            gj[:, i].pt,
+            gj_mask[:, i].pt,
+						mask = mask,
             name=f"$p_T$ of jet {i+1}",
             description=f"$p_T$ of jet {i+1} ",
         )
         ret[f"eta_{i}"] = hmaker(
             eta_axis,
-            gj[:, i].eta,
+            eta,
+						mask = mask,
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
         ret[f"phi_{i}"] = hmaker(
             phi_axis,
-            gj[:, i].phi,
+            phi,
+						mask = mask,
             name=rf"$\phi$ of jet {i+1}",
             description=rf"$\phi$ of jet {i+1}",
         )
