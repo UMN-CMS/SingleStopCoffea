@@ -278,21 +278,29 @@ def createJetHistograms(events, hmaker):
         )
 
     for i in range(0, 4):
+        mask = ak.num(gj, axis=1) > i
+        gj_mask = gj[mask]
+        eta = gj_mask[:, i].eta
+        phi = gj_mask[:, i].phi
+
         ret[rf"pt_{i}"] = hmaker(
             pt_axis,
-            gj[:, i].pt,
+            gj_mask[:, i].pt,
+						mask = mask,
             name=f"$p_T$ of jet {i+1}",
             description=f"$p_T$ of jet {i+1} ",
         )
         ret[f"eta_{i}"] = hmaker(
             eta_axis,
-            gj[:, i].eta,
+            eta,
+						mask = mask,
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
         ret[f"phi_{i}"] = hmaker(
             phi_axis,
-            gj[:, i].phi,
+            phi,
+						mask = mask,
             name=rf"$\phi$ of jet {i+1}",
             description=rf"$\phi$ of jet {i+1}",
         )
