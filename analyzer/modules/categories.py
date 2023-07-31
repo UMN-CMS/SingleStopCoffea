@@ -43,4 +43,10 @@ def dRJetsCategory(events, data):
 	a = hist.axis.IntCategory([0, 1], name = 'dRJets', label = 'dRJets')
 	return (a, (top_two_dr < 4) & (top_two_dr > 2))
 
-
+@analyzerModule("bSelection", ModuleType.Selection)
+def bSelection(events, selection):
+	mediumBs = events.med_bs
+	tightBs = events.tight_bs
+	selection.add("3bjet", ((ak.num(tight_b) >= 3).to_numpy()))
+	dRbb12 = ak.fill_none(tightBs[:, 0].delta_r(tightBs[:, 1]), False)
+	selection.add('dRbb12', (dRbb12 < 1).to_numpy())
