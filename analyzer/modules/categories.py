@@ -48,5 +48,6 @@ def bSelection(events, selection):
 	mediumBs = events.med_bs
 	tightBs = events.tight_bs
 	selection.add("3bjet", ((ak.num(tight_b) >= 3).to_numpy()))
+	tightBs = ak.pad_none(tightBs, 2, axis = 1)
 	dRbb12 = ak.fill_none(tightBs[:, 0].delta_r(tightBs[:, 1]), False)
 	selection.add('dRbb12', (dRbb12 < 1).to_numpy())
