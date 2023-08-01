@@ -170,11 +170,12 @@ class AnalysisProcessor(processor.ProcessorABC):
         for module in self.modules.get(ModuleType.PreSelectionHist, []):
             module.func(events, makeHistogram)
 
-        #selection = processor.PackedSelection()
-        #for module in self.modules.get(ModuleType.Selection, []):
-        #    selection = module.func(events, selection)
+        selection = processor.PackedSelection()
+        for module in self.modules.get(ModuleType.Selection, []):
+            selection = module.func(events, selection)
+            print(module)
 
-        #events = events[selection.all(*selection.names)]
+        events = events[selection.all(*selection.names)]
 
         to_accumulate = []
 
