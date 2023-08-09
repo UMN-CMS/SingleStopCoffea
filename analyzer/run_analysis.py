@@ -32,9 +32,10 @@ def createDaskCondor(w):
     from distributed import Client
     from lpcjobqueue import LPCCondorCluster
 
-    cluster = LPCCondorCluster(memory="2.5G")
+    cluster = LPCCondorCluster(memory="2.0G")
     cluster.adapt(minimum=10, maximum=w)
     client = Client(cluster)
+    print(client.get_versions())
     shutil.make_archive("analyzer", "zip", base_dir="analyzer")
     client.upload_file("analyzer.zip")
     return processor.DaskExecutor(client=client)
@@ -69,13 +70,15 @@ def loadSamples(d):
     sample_manager = loadSamplesFromDirectory(d)
 
 
-def check(existing_list):
-    samples = [sample_manager[sample] for sample in samples]
-
+def check(existing_samples, existing_list):
+    samples = [sample_manager[sample] for sample in existing_samples]
+    print(samples)
     total_missing = 0
+    existing_list = set(existing_list)
     for samp in samples:
-        existing_list = set(existing_list)
+        print(f"Checking sample {samp}")
         missing = samp.getMissing(existing_list)
+        missing = [x for y in missing.values() for x in y]
         total_missing += len(missing)
         if missing:
             print(f"Sample {samp} appears to be missing the following files:")
@@ -83,7 +86,7 @@ def check(existing_list):
 
     if total_missing > 0:
         print(
-            f"Found a total of {total_missing} missing files. You likely want to rerun the analyzer with the --update-output option to reprocess the failed files"
+            f"Found a total of {total_missing} missing files. You likely want to rerun the analyzer with the --update-existing option to reprocess the failed files"
         )
         return False
     return True
@@ -223,9 +226,9 @@ def runAnalysis():
 
     parser.add_argument(
         "-u",
-        "--update-output",
+        "--update-existing",
         type=str,
-        help="Update an existing output with files that were skipped. ",
+        help="Update an existing output by running over skipped files.",
     )
 
     parser.add_argument(
@@ -235,8 +238,9 @@ def runAnalysis():
     args = parser.parse_args()
 
     existing_file_set = None
+    existing_samples = None
 
-    exist_path = args.update_output or args.check_file
+    exist_path = args.update_existing or args.check_file
     if exist_path:
         update_file_path = Path(exist_path)
         with open(update_file_path, 'rb') as f:
@@ -244,15 +248,18 @@ def runAnalysis():
         existing_file_set = set(
             x for y in data_to_update["dataset_info"].values() for x in y["files"]
         )
-        if data_to_update["git-revision"] != current_git_rev:
-            print(
-                "WARNING: current git revision does not match what is contained in the update file, this may cause unexpected behaviour."
-            )
-    if args.check_file:
-        check(exsting_file_set)
-        sys.exit(0)
+        existing_samples = list(data_to_update["dataset_info"].keys())
+        #if data_to_update["git-revision"] != current_git_rev:
+        #    print(
+        #        "WARNING: current git revision does not match what is contained in the update file, this may cause unexpected behaviour."
+        #    )
 
     loadSamples(args.dataset_dir)
+
+    if args.check_file:
+        check(existing_samples, existing_file_set)
+        sys.exit(0)
+
     all_samples = sample_manager.possibleInputs()
 
     list_mode = False
@@ -292,13 +299,17 @@ def runAnalysis():
         existing_list=existing_file_set,
     )
 
-    out["git-revision"] = current_git_rev
 
-    if args.update_output:
-        del data_to_update["git-revision"]
-        out = accumulate(data_to_update, out)
+    if args.update_existing:
+        print(f"Updating existing data")
+        print(data_to_update.keys())
+        print(out.keys())
+        data_to_update.pop("git-revision",None)
+        out["git-revision"] = current_git_rev
+        out = accumulate([data_to_update, out])
 
     if args.output:
+        print(f"Saving output {args.output}")
         outdir = args.output.parent
         outdir.mkdir(exist_ok=True, parents=True)
         pickle.dump(out, open(args.output, "wb"))

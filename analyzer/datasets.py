@@ -74,9 +74,13 @@ class SampleSet:
         all_files = self.getFiles()
         return {
             name: [f for f in flist if f not in other_files]
-            for name, flist in all_files
+            for name, flist in all_files.items()
         }
+    def __str__(self):
+        return self.name
 
+    def __repr__(self):
+        return str(self)
 
 @dataclass
 class SampleCollection:
@@ -122,8 +126,14 @@ class SampleCollection:
         all_files = self.getFiles()
         return {
             name: [f for f in flist if f not in other_files]
-            for name, flist in all_files
+            for name, flist in all_files.items()
         }
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return str(self)
 
 
 @dataclass

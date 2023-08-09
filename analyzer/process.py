@@ -198,7 +198,7 @@ class AnalysisProcessor(processor.ProcessorABC):
         ret = {"dataset_info": {}}
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
-        ret[dataset] = dict(
+        ret["dataset_info"][dataset] = dict(
             files=[events.metadata["filename"]], num_events=[ak.size(events, axis=0)]
         )
         if produced:
