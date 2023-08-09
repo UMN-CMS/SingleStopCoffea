@@ -1,7 +1,6 @@
 - name: QCDInclusive2018
   type: collection
   sets:
-    - QCDInclusive2018_HT300to500
     - QCDInclusive2018_HT500to700
     - QCDInclusive2018_HT700to1000
     - QCDInclusive2018_HT1000to1500
