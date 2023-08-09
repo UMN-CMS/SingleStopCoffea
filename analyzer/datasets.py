@@ -3,11 +3,11 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
+
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
 
 
 @dataclass
@@ -25,13 +25,10 @@ class SampleFile:
         return self.paths[0]
 
 
-
-
-
 @dataclass
 class SampleSet:
     name: str
-    derived_from: Optional[Union[str,"SampleSet"]]
+    derived_from: Optional[Union[str, "SampleSet"]]
     produced_on: Optional[str]
     lumi: Optional[float]
     x_sec: Optional[float]
@@ -42,18 +39,21 @@ class SampleSet:
     @staticmethod
     def fromDict(data):
         name = data["name"]
-        derived_from = data.get("derived_from",None)
+        derived_from = data.get("derived_from", None)
         produced_on = data.get("produced_on", None)
-        lumi = data.get("lumi",None)
+        lumi = data.get("lumi", None)
         x_sec = data.get("x_sec", None)
-        n_events = data.get("n_events",None)
+        n_events = data.get("n_events", None)
         tags = set(data.get("tags", []))
         if not (x_sec and n_events and lumi) and not derived_from:
-            raise Exception(f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}")
+            raise Exception(
+                f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}"
+            )
         files = [SampleFile.fromDict(x) for x in data["files"]]
-        ss = SampleSet(name,derived_from,produced_on, lumi, x_sec, n_events, files, tags)
+        ss = SampleSet(
+            name, derived_from, produced_on, lumi, x_sec, n_events, files, tags
+        )
         return ss
-        
 
     def getFiles(self):
         return {self.name: [f.getFile() for f in self.files]}
@@ -65,10 +65,18 @@ class SampleSet:
             return self.lumi * self.x_sec / self.n_events
 
     def getWeightMap(self):
-        return {self.name : self.getWeight()}
+        return {self.name: self.getWeight()}
 
     def getTags(self):
         return self.tags
+
+    def getMissing(self, other_files):
+        all_files = self.getFiles()
+        return {
+            name: [f for f in flist if f not in other_files]
+            for name, flist in all_files
+        }
+
 
 @dataclass
 class SampleCollection:
@@ -82,19 +90,20 @@ class SampleCollection:
         sets = data["sets"]
         real_sets = [manager.sets[s] for s in sets]
 
-        sc = SampleCollection(name, real_sets, data.get("treat_separate", False or force_separate))
+        sc = SampleCollection(
+            name, real_sets, data.get("treat_separate", False or force_separate)
+        )
         return sc
-
 
     def getFiles(self):
         everything = {}
         for s in self.sets:
             everything.update(s.getFiles())
         if not self.treat_separate:
-            everything = {f"{self.name}:{name}":files for name,files in everything.items() }
+            everything = {
+                f"{self.name}:{name}": files for name, files in everything.items()
+            }
         return everything
-
-        
 
     def getWeightMap(self):
         merged = {}
@@ -109,8 +118,14 @@ class SampleCollection:
             ret = t.intersection(ret)
         return ret
 
-        
-        
+    def getMissing(self, other_files):
+        all_files = self.getFiles()
+        return {
+            name: [f for f in flist if f not in other_files]
+            for name, flist in all_files
+        }
+
+
 @dataclass
 class SampleManager:
     sets: Dict[str, SampleSet] = field(default_factory=dict)
@@ -125,13 +140,14 @@ class SampleManager:
         else:
             return self.sets[key]
 
+
 def loadSamplesFromDirectory(directory, force_separate=False):
     directory = Path(directory)
     files = list(directory.glob("*.yaml"))
     ret = {}
     manager = SampleManager()
     for f in files:
-        with open(f, 'r') as fo:
+        with open(f, "r") as fo:
             data = load(fo, Loader=Loader)
             for d in [x for x in data if x.get("type", "") == "set" or "files" in x]:
                 s = SampleSet.fromDict(d)
@@ -141,10 +157,11 @@ def loadSamplesFromDirectory(directory, force_separate=False):
         if derived:
             manager.sets[s_name].derived_from = manager.sets[derived]
     for f in files:
-        with open(f, 'r') as fo:
+        with open(f, "r") as fo:
             data = load(fo, Loader=Loader)
-            for d in [x for x in data if x.get("type", "") == "collection" or "sets" in x]:
+            for d in [
+                x for x in data if x.get("type", "") == "collection" or "sets" in x
+            ]:
                 s = SampleCollection.fromDict(d, manager, force_separate)
                 manager.collections[s.name] = s
     return manager
-

@@ -12,6 +12,7 @@ import warnings
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 warnings.filterwarnings("ignore", message=r".*In coffea version 0.8")
 
+
 def makeHistogram(
     axis, dataset, data, weights, name=None, description=None, drop_none=True
 ):
@@ -30,6 +31,7 @@ def makeHistogram(
 def makeCategoryHist(_cat_axes, _cat_vals, event_weights):
     cat_axes = list(_cat_axes)
     cat_vals = list(_cat_vals)
+
     def internal(
         axis,
         data,
@@ -129,7 +131,6 @@ def topologicalSort(source):
 
 class AnalysisProcessor(processor.ProcessorABC):
     def __init__(self, tags, chain, weight_map, outpath=None):
-        print(chain)
         self.tags = tags
         self.output_path = outpath
         self.signal_only = "signal" in self.tags
@@ -159,7 +160,6 @@ class AnalysisProcessor(processor.ProcessorABC):
         else:
             set_name = dataset
         events["EventWeight"] = events.genWeight * self.weight_map[set_name]
-        
 
         for module in self.modules.get(ModuleType.BaseObjectDef, []):
             events = module.func(events)
@@ -170,51 +170,20 @@ class AnalysisProcessor(processor.ProcessorABC):
         for module in self.modules.get(ModuleType.PreSelectionHist, []):
             module.func(events, makeHistogram)
 
-        selection = processor.PackedSelection()
-        for module in self.modules.get(ModuleType.Selection, []):
-            selection = module.func(events, selection)
-
-        events = events[selection.all(*selection.names)]
+        if self.modules.get(ModuleType.Selection, False):
+            selection = processor.PackedSelection()
+            for module in self.modules.get(ModuleType.Selection, []):
+                selection = module.func(events, selection)
+                events = events[selection.all(*selection.names)]
 
         to_accumulate = []
 
-        cat_data = {"CatDataset" : dataset}
+        cat_data = {"CatDataset": dataset}
 
-        x = zip(*(x.func(events, cat_data) for x in self.modules[ModuleType.Categories]))
+        x = zip(
+            *(x.func(events, cat_data) for x in self.modules[ModuleType.Categories])
+        )
         hm = makeCategoryHist(*x, events.EventWeight)
-
-        # if ModuleType.MainHist in self.modules:
-        #    if self.signal_only:
-        #        events = goodGenParticles(events)
-        #        events = deltaRMatch(events)
-        #        matched_cat = ak.num(
-        #            events.matched_quarks[~ak.is_none(events.matched_quarks, axis=1)],
-        #            axis=1,
-        #        )
-        #        hm = makeCategoryHist(
-        #            [
-        #                dataset_axis,
-        #                hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
-        #                hist.axis.IntCategory(
-        #                    [0, 1, 2, 3, 4], name="num_matched", label="Num Matched"
-        #                ),
-        #            ],
-        #            [dataset, ak.num(events.good_jets, axis=1), matched_cat],
-        #            events.EventWeight,
-        #        )
-        #        # sig_hists = createSignalHistograms(events, hm)
-        #        # charg_hists = charginoRecoHistograms(events, hm)
-        #        # to_accumulate.append(sig_hists)
-        #        # to_accumulate.append(charg_hists)
-        #    else:
-        #        hm = makeCategoryHist(
-        #            [
-        #                dataset_axis,
-        #                hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets"),
-        #            ],
-        #            [dataset, ak.num(events.good_jets, axis=1)],
-        #            events.EventWeight,
-        #        )
 
         for module in self.modules.get(ModuleType.MainProducer, []):
             events = module.func(events)
@@ -226,19 +195,14 @@ class AnalysisProcessor(processor.ProcessorABC):
         for module in self.modules.get(ModuleType.Output, []):
             produced.append(module.func(events, self.output_path))
 
-        # jet_hists = createJetHistograms(events, hm)
-        # b_hists = createBHistograms(events, hm)
-        # event_hists = createEventLevelHistograms(events, hm)
-        # tag_hists = createTagHistograms(events, hm)
-        # to_accumulate.extend([jet_hists, b_hists, event_hists, tag_hists])
-        ret = {}
+        ret = {"dataset_info": {}}
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
         ret[dataset] = dict(
             files=[events.metadata["filename"]], num_events=[ak.size(events, axis=0)]
         )
         if produced:
-            ret[dataset]["produced"] = produced
+            ret["dataset_info"][dataset]["produced"] = produced
         return ret
 
     def postprocess(self, accumulator):
