@@ -62,7 +62,7 @@ def dRbb312(events, data):
 	mediumBs = ak.pad_none(mediumBs, 2, axis = 1)
 	dRbb12 = ak.fill_none(mediumBs[:, 0].delta_r(mediumBs[:, 1]), 0)
 	a = hist.axis.IntCategory([0, 1], name = 'dRbb_312', label = 'dRbb_312')
-	return (a, (dRbb12 < 1))
+	return (a, (dRbb12 >= 1))
 
 @analyzerModule("dRbb12_313", ModuleType.Categories)
 def dRbb313(events, data):
@@ -70,9 +70,47 @@ def dRbb313(events, data):
 	tightBs = ak.pad_none(tightBs, 2, axis = 1)
 	dRbb12 = ak.fill_none(tightBs[:, 0].delta_r(tightBs[:, 1]), 0)
 	a = hist.axis.IntCategory([0, 1], name = 'dRbb_313', label = 'dRbb_313')
-	return (a, (dRbb12 < 1))
+	return (a, (dRbb12 >= 1))
 
 @analyzerModule("triggers", ModuleType.Selection)
 def triggers(events, selection):
 	selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet400_TrimMass30).to_numpy())
 	return selection
+
+@analyzerModule("nMinusOnePlots", ModuleType.MainHist)
+def nMinusOnePlots(events, hmaker):
+	gj = events.good_jets
+	ret = {}
+
+	mask = ak.num(gj, axis=1) > 0
+	gj_mask = gj[mask]
+	ret[rf"pT1"] = hmaker(
+		pt_axis,
+		gj_mask[:, 0].pt,
+		mask = mask,
+		name = f'p_T of jet 1',
+		description = f'p_T of jet 1',
+	)
+
+	mask = ak.num(gj, axis=1) > 1
+	gj_mask = gj[mask]
+	d_r = gj_mask[:, 0].delta_r(gj_mask[:, 1])
+	ret[rf"dR12"] = hmaker(
+		dr_axis,
+		d_r,
+		mask = mask,
+		name = rf'$\Delta R$ between jets 1 and 2',
+		description = rf'$\Delta R$ between jets 1 and 2',
+	)
+
+	ret[rf'nJets'] = hmaker(
+		tencountaxis,
+		ak.num(gj, axis=1),
+		name = rf'Number of jets',
+		description = rf'Number of jets',
+	)
+
+	print(tencountaxis)
+	print(ret[rf'nJets'].to_numpy())
+
+	return ret
