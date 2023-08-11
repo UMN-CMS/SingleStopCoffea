@@ -8,12 +8,58 @@ import shutil
 
 from coffea import processor
 from coffea.processor import accumulate
+from coffea.processor.executor import WorkItem
 from coffea.nanoevents import NanoAODSchema
 
 import pickle
 
 from pathlib import Path
 import subprocess
+
+
+orig_autoretries = processor.Runner.automatic_retries
+
+
+def _exception_chain(exc):
+    """Retrieves the entire exception chain as a list."""
+    ret = []
+    while isinstance(exc, BaseException):
+        ret.append(exc)
+        exc = exc.__cause__
+    return ret
+
+
+def recoverableAutoRetries(retries: int, skipbadfiles: bool, func, *args, **kwargs):
+    try:
+        return orig_autoretries(retries, skipbadfiles, func, *args, **kwargs)
+    except Exception as e:
+        chain = _exception_chain(e)
+        if any(
+            e in str(c)
+            for c in chain
+            for e in [
+                "Invalid redirect URL",
+                "Operation expired",
+                "Socket timeout",
+            ]
+        ):
+            for arg in args:
+                if isinstance(arg, WorkItem):
+                    it = arg
+                    return {
+                        "failures": [
+                            {
+                                "dataset": it.dataset,
+                                "filename": it.filename,
+                                "entrystart": it.entrystart,
+                                "entrystop": it.entrystop,
+                            }
+                        ]
+                    }
+        raise
+
+
+processor.Runner.automatic_retries = staticmethod(recoverableAutoRetries)
 
 
 def get_git_revision_hash() -> str:
@@ -31,8 +77,11 @@ def get_git_revision_short_hash() -> str:
 def createDaskCondor(w):
     from distributed import Client
     from lpcjobqueue import LPCCondorCluster
+    import os
 
-    cluster = LPCCondorCluster(memory="2.0G")
+    logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / Os.getlogin() / "dask_logs"
+    logpath.mkdir(exist_ok=True, parents=True)
+    cluster = LPCCondorCluster(memory="2.0G", log_directory=logpath)
     cluster.adapt(minimum=10, maximum=w)
     client = Client(cluster)
     print(client.get_versions())
@@ -85,9 +134,13 @@ def check(dataset_info):
             print(f"Sample {samp} appears to be missing the following files:")
             print("\n".join(f"\t- {x}" for x in missing))
         expected_events = samp.totalEvents()
-        found_events = sum(x["num_raw_events"] for x in dataset_info[samp.name].values())
+        found_events = sum(
+            x["num_raw_events"] for x in dataset_info[samp.name].values()
+        )
         if expected_events != found_events:
-            print(f"Sample {samp} does not have the correct number of events, expected {expected_events}, found {found_events}:")
+            print(
+                f"Sample {samp} does not have the correct number of events, expected {expected_events}, found {found_events}:"
+            )
 
     if total_missing > 0:
         print(
@@ -105,7 +158,7 @@ def runModulesOnSamples(
     chunk_size=250000,
     max_chunks=None,
     existing_list=None,
-    metadata_cache=None
+    metadata_cache=None,
 ):
 
     executor = executor_map[executor](parallelism)
@@ -206,7 +259,7 @@ def runAnalysis():
         "--metadata-cache",
         type=Path,
         help="File to store and load metadatafrom",
-        default=None
+        default=None,
     )
     parser.add_argument(
         "-m",
@@ -251,7 +304,6 @@ def runAnalysis():
     )
 
     args = parser.parse_args()
-
 
     loadSamples(args.dataset_dir)
 
@@ -304,10 +356,9 @@ def runAnalysis():
         md_path = Path(args.metadata_cache)
         if md_path.is_file():
             print(f"Loading metadata from {md_path}")
-            md = pickle.load(open(md_path,'rb'))
+            md = pickle.load(open(md_path, "rb"))
 
-
-    out,metrics = runModulesOnSamples(
+    out, metrics = runModulesOnSamples(
         modules,
         args.samples,
         executor=args.executor,
@@ -317,10 +368,16 @@ def runAnalysis():
         metadata_cache=md,
         existing_list=existing_file_set,
     )
-    
+
     if args.metadata_cache:
         md_path = Path(args.metadata_cache)
-        pickle.dump(md, open(md_path,'wb'))
+        pickle.dump(md, open(md_path, "wb"))
+
+    failures = out.get("failures", None)
+    if failures:
+        print(
+            f"WARNING: Detected {len(failures)} during execution, you may wish to rerun these jobs"
+        )
 
     out["metrics"] = metrics
     print(metrics)
