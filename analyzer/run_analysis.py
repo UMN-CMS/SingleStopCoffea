@@ -70,12 +70,13 @@ def loadSamples(d):
     sample_manager = loadSamplesFromDirectory(d)
 
 
-def check(existing_samples, existing_list):
+def check(dataset_info):
+    existing_samples = list(dataset_info.keys())
     samples = [sample_manager[sample] for sample in existing_samples]
     print(samples)
     total_missing = 0
-    existing_list = set(existing_list)
     for samp in samples:
+        existing_list = set(x for x in dataset_info[samp.name].keys())
         print(f"Checking sample {samp}")
         missing = samp.getMissing(existing_list)
         missing = [x for y in missing.values() for x in y]
@@ -83,6 +84,10 @@ def check(existing_samples, existing_list):
         if missing:
             print(f"Sample {samp} appears to be missing the following files:")
             print("\n".join(f"\t- {x}" for x in missing))
+        expected_events = samp.totalEvents()
+        found_events = sum(x["num_raw_events"] for x in dataset_info[samp.name].values())
+        if expected_events != found_events:
+            print(f"Sample {samp} does not have the correct number of events, expected {expected_events}, found {found_events}:")
 
     if total_missing > 0:
         print(
@@ -100,6 +105,7 @@ def runModulesOnSamples(
     chunk_size=250000,
     max_chunks=None,
     existing_list=None,
+    metadata_cache=None
 ):
 
     executor = executor_map[executor](parallelism)
@@ -107,8 +113,10 @@ def runModulesOnSamples(
         executor=executor,
         schema=NanoAODSchema,
         chunksize=chunk_size,
-        skipbadfiles=True,
+        skipbadfiles=False,
         maxchunks=max_chunks,
+        metadata_cache=metadata_cache,
+        savemetrics=True,
     )
 
     samples = [sample_manager[sample] for sample in samples]
@@ -194,6 +202,13 @@ def runAnalysis():
         default="futures",
     )
     parser.add_argument(
+        "-t",
+        "--metadata-cache",
+        type=Path,
+        help="File to store and load metadatafrom",
+        default=None
+    )
+    parser.add_argument(
         "-m",
         "--module-chain",
         type=str,
@@ -237,27 +252,22 @@ def runAnalysis():
 
     args = parser.parse_args()
 
-    existing_file_set = None
-    existing_samples = None
-
-    exist_path = args.update_existing or args.check_file
-    if exist_path:
-        update_file_path = Path(exist_path)
-        with open(update_file_path, 'rb') as f:
-            data_to_update = pickle.load(f)
-        existing_file_set = set(
-            x for y in data_to_update["dataset_info"].values() for x in y["files"]
-        )
-        existing_samples = list(data_to_update["dataset_info"].keys())
-        #if data_to_update["git-revision"] != current_git_rev:
-        #    print(
-        #        "WARNING: current git revision does not match what is contained in the update file, this may cause unexpected behaviour."
-        #    )
 
     loadSamples(args.dataset_dir)
 
+    exist_path = args.update_existing or args.check_file
+    dataset_info = None
+    existing_file_set = None
+
+    if exist_path:
+        update_file_path = Path(exist_path)
+        with open(update_file_path, "rb") as f:
+            data_to_update = pickle.load(f)
+            dataset_info = data_to_update["dataset_info"]
+            existing_file_set = set(x for y in dataset_info.values() for x in y.keys())
+
     if args.check_file:
-        check(existing_samples, existing_file_set)
+        check(dataset_info)
         sys.exit(0)
 
     all_samples = sample_manager.possibleInputs()
@@ -289,22 +299,39 @@ def runAnalysis():
     if args.exclude_modules:
         modules = [x for x in all_modules if x not in args.exclude_modules]
 
-    out = runModulesOnSamples(
+    md = {}
+    if args.metadata_cache:
+        md_path = Path(args.metadata_cache)
+        if md_path.is_file():
+            print(f"Loading metadata from {md_path}")
+            md = pickle.load(open(md_path,'rb'))
+
+
+    out,metrics = runModulesOnSamples(
         modules,
         args.samples,
         executor=args.executor,
         parallelism=args.parallelism,
         chunk_size=args.chunk_size,
         max_chunks=args.max_chunks,
+        metadata_cache=md,
         existing_list=existing_file_set,
     )
+    
+    if args.metadata_cache:
+        md_path = Path(args.metadata_cache)
+        pickle.dump(md, open(md_path,'wb'))
 
+    out["metrics"] = metrics
+    print(metrics)
+    print(md)
+    print(list(md.keys())[0])
 
     if args.update_existing:
         print(f"Updating existing data")
         print(data_to_update.keys())
         print(out.keys())
-        data_to_update.pop("git-revision",None)
+        data_to_update.pop("git-revision", None)
         out["git-revision"] = current_git_rev
         out = accumulate([data_to_update, out])
 

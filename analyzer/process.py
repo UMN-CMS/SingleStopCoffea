@@ -95,10 +95,6 @@ def splitChain(chain):
 
 
 def topologicalSort(source):
-    """perform topo sort on elements.
-    :arg source: list of ``(name, [list of dependancies])`` pairs
-    :returns: list of names, with dependancies listed first
-    """
     pending = [
         (name, set(deps)) for name, deps in source
     ]  # copy deps so we can modify set in-place
@@ -154,6 +150,7 @@ class AnalysisProcessor(processor.ProcessorABC):
             raise Exception("If using an output, must specify a path")
 
     def process(self, events):
+        raw_event_count = ak.size(events, axis=0)
         dataset = events.metadata["dataset"]
         if ":" in dataset:
             dataset, set_name = dataset.split(":")
@@ -198,9 +195,12 @@ class AnalysisProcessor(processor.ProcessorABC):
         ret = {"dataset_info": {}}
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
-        ret["dataset_info"][dataset] = dict(
-            files=[events.metadata["filename"]], num_events=[ak.size(events, axis=0)]
-        )
+        ret["dataset_info"][dataset] = {
+            events.metadata["filename"]: {
+                "num_post_selection_events": ak.size(events, axis=0),
+                "num_raw_events": raw_event_count,
+            }
+        }
         if produced:
             ret["dataset_info"][dataset]["produced"] = produced
         return ret
