@@ -45,7 +45,7 @@ def recoverableAutoRetries(retries: int, skipbadfiles: bool, func, *args, **kwar
         ):
             for arg in args:
                 if isinstance(arg, WorkItem):
-                    it = arg
+                    it =arg
                     return {
                         "failures": [
                             {
@@ -79,7 +79,7 @@ def createDaskCondor(w):
     from lpcjobqueue import LPCCondorCluster
     import os
 
-    logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / Os.getlogin() / "dask_logs"
+    logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / os.getlogin() / "dask_logs"
     logpath.mkdir(exist_ok=True, parents=True)
     cluster = LPCCondorCluster(memory="2.0G", log_directory=logpath)
     cluster.adapt(minimum=10, maximum=w)
