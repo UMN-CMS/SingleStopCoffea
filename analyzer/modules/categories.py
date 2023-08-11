@@ -19,7 +19,7 @@ def jetpTCategory(events, data):
 	good_jets = events.good_jets
 	filled_jets = ak.pad_none(good_jets, 4, axis=1)
 	a = hist.axis.IntCategory([0, 1], name = 'jetpT300', label = 'jetpT300')
-	return (a, ak.fill_none(filled_jets[:, 0].pt > 300, False))
+	return (a, ak.fill_none(filled_jets[:, 0].pt >= 300, False))
 
 @analyzerModule("nJets_456", ModuleType.Categories)
 def nJetReqCategory(events, data):
@@ -110,7 +110,12 @@ def nMinusOnePlots(events, hmaker):
 		description = rf'Number of jets',
 	)
 
-	print(tencountaxis)
-	print(ret[rf'nJets'].to_numpy())
+	ret[rf'HT'] = hmaker(
+		ht_axis,
+		events.HT,
+		name = 'HT',
+		description = 'HT',
+	)
+
 
 	return ret
