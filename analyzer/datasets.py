@@ -76,6 +76,9 @@ class SampleSet:
             name: [f for f in flist if f not in other_files]
             for name, flist in all_files.items()
         }
+    def totalEvents(self):
+        return self.n_events
+
     def __str__(self):
         return self.name
 
@@ -128,6 +131,9 @@ class SampleCollection:
             name: [f for f in flist if f not in other_files]
             for name, flist in all_files.items()
         }
+
+    def totalEvents(self):
+        return sum(s.totalEvents() for s in self.sets)
 
     def __str__(self):
         return self.name

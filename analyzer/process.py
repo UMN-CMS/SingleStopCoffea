@@ -6,8 +6,11 @@ import pickle
 
 import itertools as it
 from analyzer.modules.axes import *
+
+from coffea.processor.executor import WorkItem
 import awkward as ak
 import warnings
+import uuid
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 warnings.filterwarnings("ignore", message=r".*In coffea version 0.8")
@@ -40,10 +43,6 @@ def makeCategoryHist(_cat_axes, _cat_vals, event_weights):
         description=None,
         auto_expand=True,
     ):
-        # print("###############################################")
-        # print(f"name: {name}")
-        # print(f"axes: {axis}")
-        # print(f"Cat axes: {cat_axes}")
         if not isinstance(data, list):
             data = [data]
         if not data:
@@ -77,9 +76,6 @@ def makeCategoryHist(_cat_axes, _cat_vals, event_weights):
                     for x in shaped_data_vals
                 ]
         d = shaped_cat_vals + shaped_data_vals
-        # print(f"{name} HIST: {h}")
-        # print(f"{name} DATA: {d}")
-        # print(f"{name} WEIGHTS: {weights}")
         ret = h.fill(*d, weight=weights)
         return ret
 
@@ -95,10 +91,6 @@ def splitChain(chain):
 
 
 def topologicalSort(source):
-    """perform topo sort on elements.
-    :arg source: list of ``(name, [list of dependancies])`` pairs
-    :returns: list of names, with dependancies listed first
-    """
     pending = [
         (name, set(deps)) for name, deps in source
     ]  # copy deps so we can modify set in-place
@@ -154,6 +146,7 @@ class AnalysisProcessor(processor.ProcessorABC):
             raise Exception("If using an output, must specify a path")
 
     def process(self, events):
+        raw_event_count = ak.size(events, axis=0)
         dataset = events.metadata["dataset"]
         if ":" in dataset:
             dataset, set_name = dataset.split(":")
@@ -198,9 +191,26 @@ class AnalysisProcessor(processor.ProcessorABC):
         ret = {"dataset_info": {}}
         if to_accumulate:
             ret["histograms"] = accumulate(to_accumulate)
-        ret["dataset_info"][dataset] = dict(
-            files=[events.metadata["filename"]], num_events=[ak.size(events, axis=0)]
-        )
+        em = events.metadata
+        fuuid = uuid.UUID(em["fileuuid"]).bytes
+        ret["dataset_info"][dataset] = {
+            "work_items": [
+                WorkItem(
+                    em["dataset"],
+                    em["filename"],
+                    em["treename"],
+                    em["entrystart"],
+                    em["entrystop"],
+                    fuuid,
+                )
+            ],
+            "file_data": {
+                events.metadata["filename"]: {
+                    "num_post_selection_events": ak.size(events, axis=0),
+                    "num_raw_events": raw_event_count,
+                }
+            },
+        }
         if produced:
             ret["dataset_info"][dataset]["produced"] = produced
         return ret

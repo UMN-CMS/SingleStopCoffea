@@ -27,9 +27,7 @@ def addPrelim(ax: mpl.axis.Axis) -> mpl.axis.Axis:
     ax.text(
         0.02,
         0.98,
-        "CMS Preliminary",
-        style="italic",
-        fontweight="bold",
+        r"$\bf{CMS}\ \it{Preliminary}$",
         horizontalalignment="left",
         verticalalignment="top",
         transform=ax.transAxes,
@@ -122,8 +120,20 @@ def drawAs1DHist(ax, plot_object, yerr=True):
         label=plot_object.name,
         align="edge",
     )
-    # print(h)
-    # if yerr is not None:
-    #    centers = (edges[:-1] + edges[1:])/2
-    #    ret = ax.errorbar(centers, vals, yerr=yerr, color=h.color,  fmt="none")
     return ax
+
+
+def addTitles(ax, hist):
+    axes = hist.axes
+    ax.set_xlabel(axes[0].label)
+    has_var = hist.variances()
+    if has_var is None:
+        ax.set_ylabel("Events")
+    else:
+        ax.set_ylabel("Weighted Events")
+    ax.set_title(hist.name)
+    return ax
+
+    
+
+

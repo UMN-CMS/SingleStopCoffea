@@ -3,12 +3,17 @@ import analyzer.modules
 from analyzer.datasets import loadSamplesFromDirectory
 from analyzer.core import modules as all_modules
 from analyzer.process import AnalysisProcessor
+import analyzer.chunk_runner
 import sys
 import shutil
 
 from coffea import processor
 from coffea.processor import accumulate
+from coffea.processor.executor import WorkItem
+import uuid
+
 from coffea.nanoevents import NanoAODSchema
+
 
 import pickle
 
@@ -31,8 +36,11 @@ def get_git_revision_short_hash() -> str:
 def createDaskCondor(w):
     from distributed import Client
     from lpcjobqueue import LPCCondorCluster
+    import os
 
-    cluster = LPCCondorCluster(memory="2.0G")
+    logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / os.getlogin() / "dask_logs"
+    logpath.mkdir(exist_ok=True, parents=True)
+    cluster = LPCCondorCluster(memory="2.0G", log_directory=logpath)
     cluster.adapt(minimum=10, maximum=w)
     client = Client(cluster)
     print(client.get_versions())
@@ -62,44 +70,21 @@ executor_map = dict(
     dask_condor=createDaskCondor,
 )
 
-sample_manager = None
 
-
-def loadSamples(d):
-    global sample_manager
-    sample_manager = loadSamplesFromDirectory(d)
-
-
-def check(existing_samples, existing_list):
-    samples = [sample_manager[sample] for sample in existing_samples]
-    print(samples)
-    total_missing = 0
-    existing_list = set(existing_list)
+def sampleToFileList(samples):
+    # samples = [sample_manager[sample] for sample in samples]
+    files = {}
     for samp in samples:
-        print(f"Checking sample {samp}")
-        missing = samp.getMissing(existing_list)
-        missing = [x for y in missing.values() for x in y]
-        total_missing += len(missing)
-        if missing:
-            print(f"Sample {samp} appears to be missing the following files:")
-            print("\n".join(f"\t- {x}" for x in missing))
-
-    if total_missing > 0:
-        print(
-            f"Found a total of {total_missing} missing files. You likely want to rerun the analyzer with the --update-existing option to reprocess the failed files"
-        )
-        return False
-    return True
+        files.update(samp.getFiles())
+    return files
 
 
-def runModulesOnSamples(
-    modules,
-    samples,
+def createRunner(
     executor="iterative",
     parallelism=8,
     chunk_size=250000,
     max_chunks=None,
-    existing_list=None,
+    metadata_cache=None,
 ):
 
     executor = executor_map[executor](parallelism)
@@ -109,34 +94,49 @@ def runModulesOnSamples(
         chunksize=chunk_size,
         skipbadfiles=True,
         maxchunks=max_chunks,
+        metadata_cache=metadata_cache,
+        savemetrics=True,
+        xrootdtimeout=60,
     )
+    return runner
 
-    samples = [sample_manager[sample] for sample in samples]
-    tag_sets = iter([s.getTags() for s in samples])
 
-    common_tags = next(tag_sets).intersection(*tag_sets)
-    files = {}
+def normalizeChunks(chunks):
+    normalized_chunks = [
+        WorkItem(
+            x.dataset,
+            x.filename,
+            x.treename,
+            x.entrystart,
+            x.entrystop,
+            str(uuid.UUID(bytes=x.fileuuid)),
+        )
+        for x in chunks
+    ]
+    return normalized_chunks
+
+
+def getChunksFromFiles(flist, runner, retries=3):
+    chunks = runner.preprocess(flist, "Events")
+    chunks = list(chunks)
+    return chunks
+
+
+def runModulesOnSamples(modules, samples, chunks, runner):
     wmap = {}
-
-    for samp in samples:
-        if existing_list is None:
-            files.update(samp.getFiles())
-        else:
-            existing_list = set(existing_list)
-            files.update(samp.getMissing(existing_list))
-
+    tag_sets = iter([s.getTags() for s in samples])
+    common_tags = next(tag_sets).intersection(*tag_sets)
     for samp in samples:
         wmap.update(samp.getWeightMap())
 
-    return runner(
-        files,
+    return runner.runChunks(
+        chunks,
+        AnalysisProcessor(common_tags, modules, wmap),
         "Events",
-        processor_instance=AnalysisProcessor(common_tags, modules, wmap),
     )
 
 
-def runAnalysis():
-    current_git_rev = get_git_revision_hash()
+def getArguments():
     parser = argparse.ArgumentParser("Run the RPV Analysis")
     parser.add_argument(
         "-s",
@@ -166,6 +166,13 @@ def runAnalysis():
         default=None,
     )
     parser.add_argument(
+        "-r",
+        "--max-retries",
+        type=int,
+        help="Maximum number of retries",
+        default=5,
+    )
+    parser.add_argument(
         "--list-samples",
         action="store_true",
         help="List available samples and exit",
@@ -191,7 +198,14 @@ def runAnalysis():
         help="Exectuor to use",
         choices=list(executor_map),
         metavar="",
-        default="futures",
+        default="dask_local",
+    )
+    parser.add_argument(
+        "-t",
+        "--metadata-cache",
+        type=Path,
+        help="File to store and load metadatafrom",
+        default=None,
     )
     parser.add_argument(
         "-m",
@@ -236,31 +250,156 @@ def runAnalysis():
     )
 
     args = parser.parse_args()
+    return args
 
-    existing_file_set = None
-    existing_samples = None
+
+def produceChunks(existing_chunks, dataset_info, samples, runner):
+    all_files = [x.filename for x in existing_chunks]
+    all_wanted_chunks = set(existing_chunks)
+
+    all_missing = {}
+    for samp in samples:
+        missing = samp.getMissing(all_files)
+        all_missing.update(missing)
+
+    any_missing = any(bool(x) for x in all_missing.values())
+    if any_missing:
+        print(
+            "Existing chunk set is not complete, missing chunks for the following files:"
+        )
+        for k, v in all_missing.items():
+            print(f"{k}: ")
+            print("\n".join(f"\t- {f}" for f in v))
+
+        missing_chunks = getChunksFromFiles(all_missing, runner)
+        all_wanted_chunks += missing_chunks
+    already_processed_chunks = set(
+        x for y in dataset_info.values() for x in y["work_items"]
+    )
+    still_needed_chunks = set(all_wanted_chunks).difference(
+        set(already_processed_chunks)
+    )
+    if still_needed_chunks:
+        print(
+            f"Detected that not all chunks were successfully processed."
+            f"Expected {len(all_wanted_chunks)} found that {len(already_processed_chunks)} were succesfully processed"
+        )
+        print("Must run over the following missing chunks:")
+        print("\n".join(f"\t- {f}" for f in still_needed_chunks))
+        chunks = still_needed_chunks
+    else:
+        print(
+            "This file appears to be complete, all samples have generated chunks, and all expected chunks have been processed. Nothing left to do."
+        )
+        return None
+    return list(chunks)
+
+
+def check(data, sample_manager, runner):
+    dataset_info = data["dataset_info"]
+    existing_chunks = data["all_work_items"]
+    existing_samples = list(dataset_info.keys())
+    samples = [sample_manager[sample] for sample in existing_samples]
+    total_missing = 0
+    for samp in samples:
+        existing_list = set(x for x in dataset_info[samp.name]["file_data"].keys())
+        missing = samp.getMissing(existing_list)
+        missing = [x for y in missing.values() for x in y]
+        total_missing += len(missing)
+        expected_events = samp.totalEvents()
+        found_events = sum(
+            x["num_raw_events"] for x in dataset_info[samp.name]["file_data"].values()
+        )
+        if expected_events != found_events:
+            print(
+                f"Sample {samp} does not have the correct number of events, expected {expected_events}, found {found_events}: missing {expected_events-found_events}"
+            )
+        else:
+            print(
+                f"Sample {samp} seems complete, expected {expected_events} events, found {found_events} events"
+            )
+        if missing:
+            print(f"Sample {samp} is missing files:")
+            print("\n".join(f"\t-{f}" for f in missing))
+
+    if total_missing > 0:
+        print(
+            f"Found a total of {total_missing} missing files. You likely want to rerun the analyzer with the --update-existing option to reprocess the failed files"
+        )
+        return False
+
+    chunks = produceChunks(existing_chunks, dataset_info, samples, runner)
+    return not chunks
+
+
+def workFunction(runner, samples, modules, existing_data=None):
+    if existing_data is not None:
+        existing_chunks = existing_data["all_work_items"]
+        chunks = produceChunks(
+            existing_chunks, existing_data["dataset_info"], samples, runner
+        )
+        chunk_info = {"all_work_items": chunks}
+    else:
+        flist = sampleToFileList(samples)
+        chunks = getChunksFromFiles(flist, runner)
+        chunk_info = {"all_work_items": chunks}
+
+    if not chunks:
+        print(
+            f"Could not produce chunks, this likely means that a file is not accessible through xrd"
+        )
+        return existing_data
+
+    print(f"Running analyzer over {len(chunks)} chunks")
+
+    try:
+        out, metrics = runModulesOnSamples(modules, samples, chunks, runner)
+        out["metrics"] = metrics
+        out = accumulate([out, chunk_info])
+        out["all_work_items"] = list(set(out["all_work_items"]))
+        existing_data = existing_data if existing_data is not None else {}
+        out = accumulate([existing_data, out])
+        return out
+    except ValueError as e:
+        print(e)
+        return existing_data
+    return None
+
+
+
+def runAnalysis():
+    current_git_rev = get_git_revision_hash()
+    args = getArguments()
+
+    md = {}
+    if args.metadata_cache:
+        md_path = Path(args.metadata_cache)
+        if md_path.is_file():
+            print(f"Loading metadata from {md_path}")
+            md = pickle.load(open(md_path, "rb"))
+
+    runner = createRunner(
+        executor=args.executor,
+        parallelism=args.parallelism,
+        chunk_size=args.chunk_size,
+        max_chunks=args.max_chunks,
+        metadata_cache=md,
+    )
+
+    sample_manager = loadSamplesFromDirectory(args.dataset_dir)
+    all_samples = sample_manager.possibleInputs()
 
     exist_path = args.update_existing or args.check_file
+
+    existing_data = None
     if exist_path:
         update_file_path = Path(exist_path)
-        with open(update_file_path, 'rb') as f:
-            data_to_update = pickle.load(f)
-        existing_file_set = set(
-            x for y in data_to_update["dataset_info"].values() for x in y["files"]
-        )
-        existing_samples = list(data_to_update["dataset_info"].keys())
-        #if data_to_update["git-revision"] != current_git_rev:
-        #    print(
-        #        "WARNING: current git revision does not match what is contained in the update file, this may cause unexpected behaviour."
-        #    )
-
-    loadSamples(args.dataset_dir)
+        with open(update_file_path, "rb") as f:
+            existing_data = pickle.load(f)
 
     if args.check_file:
-        check(existing_samples, existing_file_set)
+        check(existing_data, sample_manager, runner)
         sys.exit(0)
-
-    all_samples = sample_manager.possibleInputs()
 
     list_mode = False
     if args.list_samples:
@@ -289,24 +428,27 @@ def runAnalysis():
     if args.exclude_modules:
         modules = [x for x in all_modules if x not in args.exclude_modules]
 
-    out = runModulesOnSamples(
-        modules,
-        args.samples,
-        executor=args.executor,
-        parallelism=args.parallelism,
-        chunk_size=args.chunk_size,
-        max_chunks=args.max_chunks,
-        existing_list=existing_file_set,
-    )
+    max_retries = args.max_retries
+    retry_count = 0
+    while retry_count < max_retries:
+        samples = [sample_manager[sample] for sample in args.samples]
+        out = workFunction(runner, samples, modules, existing_data)
+        existing_data = out
+        check_res = check(out, sample_manager, runner)
+        if check_res:
+            print("All checks passed")
+            break
+        else:
+            print("Not all checks passed, attempting retry")
+            retry_count += 1
+            if retry_count == max_retries:
+                print(
+                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer"
+                )
 
-
-    if args.update_existing:
-        print(f"Updating existing data")
-        print(data_to_update.keys())
-        print(out.keys())
-        data_to_update.pop("git-revision",None)
-        out["git-revision"] = current_git_rev
-        out = accumulate([data_to_update, out])
+    if args.metadata_cache:
+        md_path = Path(args.metadata_cache)
+        pickle.dump(md, open(md_path, "wb"))
 
     if args.output:
         print(f"Saving output {args.output}")
