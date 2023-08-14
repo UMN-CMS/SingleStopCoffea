@@ -152,7 +152,7 @@ class AnalysisProcessor(processor.ProcessorABC):
             dataset, set_name = dataset.split(":")
         else:
             set_name = dataset
-        events["EventWeight"] = events.genWeight * self.weight_map[set_name]
+        events["EventWeight"] = ak.where(events.genWeight > 0 , 1 , -1) * self.weight_map[set_name]
 
         for module in self.modules.get(ModuleType.BaseObjectDef, []):
             events = module.func(events)

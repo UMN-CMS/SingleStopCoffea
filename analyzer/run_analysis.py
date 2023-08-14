@@ -71,8 +71,8 @@ executor_map = dict(
 )
 
 
-def sampleToFileList(samples, sample_manager):
-    samples = [sample_manager[sample] for sample in samples]
+def sampleToFileList(samples):
+    # samples = [sample_manager[sample] for sample in samples]
     files = {}
     for samp in samples:
         files.update(samp.getFiles())
@@ -96,13 +96,13 @@ def createRunner(
         maxchunks=max_chunks,
         metadata_cache=metadata_cache,
         savemetrics=True,
-        xrootdtimeout=2,
+        xrootdtimeout=60,
     )
     return runner
 
 
 def normalizeChunks(chunks):
-    normalized_chunks = set(
+    normalized_chunks = [
         WorkItem(
             x.dataset,
             x.filename,
@@ -112,7 +112,7 @@ def normalizeChunks(chunks):
             str(uuid.UUID(bytes=x.fileuuid)),
         )
         for x in chunks
-    )
+    ]
     return normalized_chunks
 
 
@@ -122,9 +122,8 @@ def getChunksFromFiles(flist, runner, retries=3):
     return chunks
 
 
-def runModulesOnSamples(modules, samples, chunks, runner, sample_manager):
+def runModulesOnSamples(modules, samples, chunks, runner):
     wmap = {}
-    samples = [sample_manager[sample] for sample in samples]
     tag_sets = iter([s.getTags() for s in samples])
     common_tags = next(tag_sets).intersection(*tag_sets)
     for samp in samples:
@@ -167,6 +166,13 @@ def getArguments():
         default=None,
     )
     parser.add_argument(
+        "-r",
+        "--max-retries",
+        type=int,
+        help="Maximum number of retries",
+        default=5,
+    )
+    parser.add_argument(
         "--list-samples",
         action="store_true",
         help="List available samples and exit",
@@ -192,7 +198,7 @@ def getArguments():
         help="Exectuor to use",
         choices=list(executor_map),
         metavar="",
-        default="futures",
+        default="dask_local",
     )
     parser.add_argument(
         "-t",
@@ -249,7 +255,7 @@ def getArguments():
 
 def produceChunks(existing_chunks, dataset_info, samples, runner):
     all_files = [x.filename for x in existing_chunks]
-    all_wanted_chunks = existing_chunks
+    all_wanted_chunks = set(existing_chunks)
 
     all_missing = {}
     for samp in samples:
@@ -286,10 +292,12 @@ def produceChunks(existing_chunks, dataset_info, samples, runner):
             "This file appears to be complete, all samples have generated chunks, and all expected chunks have been processed. Nothing left to do."
         )
         return None
-    return chunks
+    return list(chunks)
 
 
-def check(dataset_info, existing_chunks, sample_manager, runner):
+def check(data, sample_manager, runner):
+    dataset_info = data["dataset_info"]
+    existing_chunks = data["all_work_items"]
     existing_samples = list(dataset_info.keys())
     samples = [sample_manager[sample] for sample in existing_samples]
     total_missing = 0
@@ -324,6 +332,41 @@ def check(dataset_info, existing_chunks, sample_manager, runner):
     return not chunks
 
 
+def workFunction(runner, samples, modules, existing_data=None):
+    if existing_data is not None:
+        existing_chunks = existing_data["all_work_items"]
+        chunks = produceChunks(
+            existing_chunks, existing_data["dataset_info"], samples, runner
+        )
+        chunk_info = {"all_work_items": chunks}
+    else:
+        flist = sampleToFileList(samples)
+        chunks = getChunksFromFiles(flist, runner)
+        chunk_info = {"all_work_items": chunks}
+
+    if not chunks:
+        print(
+            f"Could not produce chunks, this likely means that a file is not accessible through xrd"
+        )
+        return existing_data
+
+    print(f"Running analyzer over {len(chunks)} chunks")
+
+    try:
+        out, metrics = runModulesOnSamples(modules, samples, chunks, runner)
+        out["metrics"] = metrics
+        out = accumulate([out, chunk_info])
+        out["all_work_items"] = list(set(out["all_work_items"]))
+        existing_data = existing_data if existing_data is not None else {}
+        out = accumulate([existing_data, out])
+        return out
+    except ValueError as e:
+        print(e)
+        return existing_data
+    return None
+
+
+
 def runAnalysis():
     current_git_rev = get_git_revision_hash()
     args = getArguments()
@@ -334,7 +377,7 @@ def runAnalysis():
         if md_path.is_file():
             print(f"Loading metadata from {md_path}")
             md = pickle.load(open(md_path, "rb"))
-    
+
     runner = createRunner(
         executor=args.executor,
         parallelism=args.parallelism,
@@ -344,26 +387,19 @@ def runAnalysis():
     )
 
     sample_manager = loadSamplesFromDirectory(args.dataset_dir)
+    all_samples = sample_manager.possibleInputs()
 
     exist_path = args.update_existing or args.check_file
-    dataset_info = None
-    existing_file_set = None
-    existing_chunks = None
 
+    existing_data = None
     if exist_path:
         update_file_path = Path(exist_path)
         with open(update_file_path, "rb") as f:
-            data_to_update = pickle.load(f)
-            dataset_info = data_to_update["dataset_info"]
-            existing_chunks = data_to_update["all_work_items"]
-            existing_file_set = set(x for y in dataset_info.values() for x in y.keys())
-
+            existing_data = pickle.load(f)
 
     if args.check_file:
-        check(dataset_info, existing_chunks, sample_manager, runner)
+        check(existing_data, sample_manager, runner)
         sys.exit(0)
-
-    all_samples = sample_manager.possibleInputs()
 
     list_mode = False
     if args.list_samples:
@@ -392,47 +428,27 @@ def runAnalysis():
     if args.exclude_modules:
         modules = [x for x in all_modules if x not in args.exclude_modules]
 
-
-    samples = [sample_manager[sample] for sample in args.samples]
-    if existing_chunks:
-        chunks = produceChunks(
-            existing_chunks, data_to_update["dataset_info"], samples, runner
-        )
-    else:
-        flist = sampleToFileList(args.samples, sample_manager)
-        chunks = getChunksFromFiles(flist, runner, sample_manager)
-    if not chunks:
-        print(f"Could not produce chunks, this likely means that a file is not accessible through xrd")
-        sys.exit(1)
-
-    out, metrics = runModulesOnSamples(
-        modules, args.samples, chunks, runner, sample_manager
-    )
-
-    if not existing_chunks:
-        out["all_work_items"] = chunks
-
-    if args.update_existing:
-        data_to_update.pop("git-revision", None)
-        out["git-revision"] = current_git_rev
-        out = accumulate([data_to_update, out])
-
-    already_processed_chunks = set(
-        x for y in out["dataset_info"].values() for x in y["work_items"]
-    )
-    expected_chunks = set(out["all_work_items"])
-    diff = expected_chunks.difference(already_processed_chunks)
-    if diff:
-        print("Did not run over all chunks, missing:")
-        print("\n".join(str(x) for x in diff))
-    else:
-        print("Not missing any chunks")
+    max_retries = args.max_retries
+    retry_count = 0
+    while retry_count < max_retries:
+        samples = [sample_manager[sample] for sample in args.samples]
+        out = workFunction(runner, samples, modules, existing_data)
+        existing_data = out
+        check_res = check(out, sample_manager, runner)
+        if check_res:
+            print("All checks passed")
+            break
+        else:
+            print("Not all checks passed, attempting retry")
+            retry_count += 1
+            if retry_count == max_retries:
+                print(
+                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer"
+                )
 
     if args.metadata_cache:
         md_path = Path(args.metadata_cache)
         pickle.dump(md, open(md_path, "wb"))
-
-    out["metrics"] = metrics
 
     if args.output:
         print(f"Saving output {args.output}")
