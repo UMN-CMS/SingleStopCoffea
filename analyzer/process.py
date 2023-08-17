@@ -176,7 +176,7 @@ class AnalysisProcessor(processor.ProcessorABC):
         x = zip(
             *(x.func(events, cat_data) for x in self.modules[ModuleType.Categories])
         )
-        hm = makeCategoryHist(*x, events.EventWeight**0)
+        hm = makeCategoryHist(*x, events.EventWeight)
 
         for module in self.modules.get(ModuleType.MainProducer, []):
             events = module.func(events)
