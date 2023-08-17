@@ -284,6 +284,7 @@ def produceChunks(existing_chunks, dataset_info, samples, runner):
             print("\n".join(f"\t- {f}" for f in v))
 
         missing_chunks = getChunksFromFiles(all_missing, runner)
+        all_wanted_chunks = list(all_wanted_chunks)				
         all_wanted_chunks += missing_chunks
     already_processed_chunks = set(
         x for y in dataset_info.values() for x in y["work_items"]
