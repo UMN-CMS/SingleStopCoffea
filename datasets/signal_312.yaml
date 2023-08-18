@@ -23,6 +23,7 @@
     
 - name: signal_312_1000_400 
   type: set
+  title: "$m_{\\tilde{t}} = 1\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   derived_from: ""
   produced_on: ""
   lumi: 59.8
@@ -30,11 +31,14 @@
   x_sec: 480
   tags: 
     - signal
+  style:
+    color: "#FF0C00"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_400.root
 
 - name: signal_312_1000_600
   type: set
+  title: "$m_{\\tilde{t}} = 1\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 600\\ \\mathrm{GeV}$"
   derived_from: ""
   produced_on: ""
   lumi: 59.8
@@ -42,10 +46,13 @@
   x_sec: 480
   tags: 
     - signal
+  style:
+    color: "#FF5500"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_600.root
 
 - name: signal_312_1000_900
+  title: "$m_{\\tilde{t}} = 1\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -54,10 +61,13 @@
   x_sec: 480
   tags: 
     - signal
+  style:
+    color: "#FFA900"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_900.root
 
 - name: signal_312_1200_400
+  title: "$m_{\\tilde{t}} = 1.2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -66,10 +76,13 @@
   x_sec: 210
   tags: 
     - signal
+  style:
+    color: "#FFDF01"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
 
 - name: signal_312_1200_600
+  title: "$m_{\\tilde{t}} = 1.2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -78,10 +91,13 @@
   x_sec: 210
   tags: 
     - signal
+  style:
+    color: "#C4FF01"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_600.root
 
 - name: signal_312_1200_1100
+  title: "$m_{\\tilde{t}} = 1.2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.1\\ \\mathrm{TeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -90,10 +106,13 @@
   x_sec: 210
   tags: 
     - signal
+  style:
+    color: "#76FF00"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
 
 - name: signal_312_1300_400
+  title: "$m_{\\tilde{t}} = 1.3\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -102,10 +121,13 @@
   x_sec: 150
   tags: 
     - signal
+  style:
+    color: "#00FF8B"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_400.root
 
 - name: signal_312_1300_600
+  title: "$m_{\\tilde{t}} = 1.3\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -114,10 +136,13 @@
   x_sec: 150
   tags: 
     - signal
+  style:
+    color: "#00FFE9"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_600.root
 
 - name: signal_312_1300_1200
+  title: "$m_{\\tilde{t}} = 1.4\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.2\\ \\mathrm{TeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -126,10 +151,13 @@
   x_sec: 150
   tags: 
     - signal
+  style:
+    color: "#00A4FF"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_1200.root
 
 - name: signal_312_1400_400
+  title: "$m_{\\tilde{t}} = 1.4\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -138,10 +166,13 @@
   x_sec: 100
   tags: 
     - signal
+  style:
+    color: "#004AFF"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_400.root
 
 - name: signal_312_1400_600
+  title: "$m_{\\tilde{t}} = 1.4\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
   n_events: 10000
@@ -150,10 +181,13 @@
   produced_on: ""
   tags: 
     - signal
+  style:
+    color: "#3F00FF"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_600.root
 
 - name: signal_312_1400_1300
+  title: "$m_{\\tilde{t}} = 1.4\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.3\\ \\mathrm{TeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -162,10 +196,13 @@
   x_sec: 100
   tags: 
     - signal
+  style:
+    color: "#8500FF"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_1300.root
 
 - name: signal_312_1500_400
+  title: "$m_{\\tilde{t}} = 1.5\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -174,10 +211,13 @@
   x_sec: 73
   tags: 
     - signal
+  style:
+    color: "#DF00FF"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_400.root
 
 - name: signal_312_1500_600
+  title: "$m_{\\tilde{t}} = 1.5\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -186,10 +226,13 @@
   x_sec: 73
   tags: 
     - signal
+  style:
+    color: "#FF00CA"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_600.root
 
 - name: signal_312_1500_900
+  title: "$m_{\\tilde{t}} = 1.5\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -198,11 +241,14 @@
   x_sec: 73
   tags: 
     - signal
+  style:
+    color: "#2A758E"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
 
 - name: signal_312_1500_1400
   type: set
+  title: "$m_{\\tilde{t}} = 1.5\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.4\\ \\mathrm{TeV}$"
   derived_from: ""
   produced_on: ""
   lumi: 59.8
@@ -210,10 +256,13 @@
   x_sec: 73
   tags: 
     - signal
+  style:
+    color: "#1F958B"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
 
 - name: signal_312_2000_400
+  title: "$m_{\\tilde{t}} = 2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -222,6 +271,8 @@
   x_sec: 16
   tags: 
     - signal
+  style:
+    color: "#21A785"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_400.root
 
@@ -234,10 +285,13 @@
   x_sec: 16
   tags: 
     - signal
+  style:
+    color: "#48C06D"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_600.root
 
 - name: signal_312_2000_900
+  title: "$m_{\\tilde{t}} = 2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -246,10 +300,13 @@
   x_sec: 16
   tags: 
     - signal
+  style:
+    color: "#83D34B"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_900.root
 
 - name: signal_312_2000_1400
+  title: "$m_{\\tilde{t}} = 2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.4\\ \\mathrm{TeV}$"
   type: set
   derived_from: ""
   produced_on: ""
@@ -258,11 +315,14 @@
   x_sec: 16
   tags: 
     - signal
+  style:
+    color: "#BFDF24"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
 
 - name: signal_312_2000_1900
   type: set
+  title: "$m_{\\tilde{t}} = 2\\ \\mathrm{TeV}, m_{\\chi^{\\pm}} = 1.9\\ \\mathrm{TeV}$"
   derived_from: ""
   produced_on: ""
   lumi: 59.8
@@ -270,6 +330,8 @@
   x_sec: 16
   tags: 
     - signal
+  style:
+    color: "#471163"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
 

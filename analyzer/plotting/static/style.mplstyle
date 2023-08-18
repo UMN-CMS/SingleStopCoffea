@@ -113,14 +113,14 @@
 ## ***************************************************************************
 ## See https://matplotlib.org/stable/api/artist_api.html#module-matplotlib.lines
 ## for more information on line properties.
-#lines.linewidth: 1.5               # line width in points
+lines.linewidth: 2               # line width in points
 #lines.linestyle: -                 # solid line
 #lines.color:     C0                # has no affect on plot(); see axes.prop_cycle
 #lines.marker:          None        # the default marker
 #lines.markerfacecolor: auto        # the default marker face color
 #lines.markeredgecolor: auto        # the default marker edge color
 #lines.markeredgewidth: 1.0         # the line width around the marker symbol
-#lines.markersize:      6           # marker size, in points
+lines.markersize:      10           # marker size, in points
 #lines.dash_joinstyle:  round       # {miter, round, bevel}
 #lines.dash_capstyle:   butt        # {butt, round, projecting}
 #lines.solid_joinstyle: round       # {miter, round, bevel}
@@ -419,7 +419,7 @@ axes.unicode_minus: False  # use Unicode for the minus symbol rather than hyphen
                   # See also https://matplotlib.org/stable/tutorials/intermediate/color_cycle.html
                   # for more details on prop_cycle usage.
 #axes.xmargin:   .05  # x margin.  See `axes.Axes.margins`
-#axes.ymargin:   .05  # y margin.  See `axes.Axes.margins`
+axes.ymargin:   .3  # y margin.  See `axes.Axes.margins`
 #axes.zmargin:   .05  # z margin.  See `axes.Axes.margins`
 #axes.autolimit_mode: data  # If "data", use axes.xmargin and axes.ymargin as is.
                             # If "round_numbers", after application of margins, axis
@@ -525,7 +525,7 @@ grid.alpha:     0.8       # transparency, between 0.0 and 1.0
 ## * LEGEND                                                                  *
 ## ***************************************************************************
 #legend.loc:           best
-#legend.frameon:       True     # if True, draw the legend on a background patch
+legend.frameon:       False     # if True, draw the legend on a background patch
 legend.framealpha:    1      # legend patch transparency
 #legend.facecolor:     inherit  # inherit from axes.facecolor; or color spec
 legend.edgecolor:     0      # background patch boundary color
@@ -535,7 +535,7 @@ legend.fancybox:      False     # if True, use a rounded box for the
 #legend.numpoints:     1        # the number of marker points in the legend line
 #legend.scatterpoints: 1        # number of scatter points
 #legend.markerscale:   1.0      # the relative size of legend markers vs. original
-legend.fontsize:      small
+legend.fontsize:      12
 #legend.labelcolor:    None
 #legend.title_fontsize: None    # None sets to the same as the default axes.
 
@@ -578,7 +578,7 @@ figure.frameon:     False      # enable figure frame
                                # expressed as a fraction of the average axis height
 
 ## Figure layout
-figure.autolayout: True  # When True, automatically adjust subplot
+#figure.autolayout: True  # When True, automatically adjust subplot
                            # parameters to make the plot fit the figure
                            # using `tight_layout`
 #figure.constrained_layout.use: False  # When True, automatically make plot

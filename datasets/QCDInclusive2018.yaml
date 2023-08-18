@@ -7,6 +7,8 @@
     - QCDInclusive2018_HT1000to1500
     - QCDInclusive2018_HT1500to2000
     - QCDInclusive2018_HT2000toInf
+  style:
+    color: "#84C1A3"
 
 - name: QCDInclusive2018_HT1000to1500
   type: set

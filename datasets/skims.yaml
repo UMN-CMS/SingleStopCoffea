@@ -1,10 +1,12 @@
 - name: Skim_QCDInclusive2018
+  title: "QCD"
   sets:
     - Skim_QCDInclusive2018_HT500to700
     - Skim_QCDInclusive2018_HT700to1000
     - Skim_QCDInclusive2018_HT1000to1500
     - Skim_QCDInclusive2018_HT1500to2000
     - Skim_QCDInclusive2018_HT2000toInf
+  style: QCDInclusive2018
 
 - name: Skim_QCDInclusive2018_HT300to500
   derived_from: "QCDInclusive2018_HT300to500"

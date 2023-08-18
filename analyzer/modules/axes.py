@@ -14,3 +14,8 @@ nj_axis = hist.axis.Regular(10, 0, 10, name="nj", label=r"$n_{j}$")
 tencountaxis = hist.axis.Regular(10, 0, 10, name="Number", label=r"Number")
 b_axis = hist.axis.Regular(5, 0, 5, name="nb", label=r"$n_{b}$")
 bool_axis = hist.axis.IntCategory([0,1], name="truefalse", label=r"$n_{b}$")
+
+def makeAxis(bins, start, stop, label):
+    return hist.axis.Regular(bins, start, stop, name=label, label=label)
+    
+    
