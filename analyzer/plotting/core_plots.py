@@ -44,6 +44,10 @@ class PlotObject:
     name: str
     hist: hist.Hist
 
+    @staticmethod
+    def create(h):
+        return PlotObject(h.name, h)
+
 
 def autoSplit(func):
     @wraps(func)
@@ -122,8 +126,25 @@ def drawAs1DHist(ax, plot_object, yerr=True):
     )
     return ax
 
+@magicPlot
+def drawAs2DHist(ax, plot_object):
+    h = plot_object.hist
+    a1 = h.axes[0]
+    a2 = h.axes[1]
+    vals, e1, e2 = h.to_numpy()
+    ex = a1.centers
+    ey = a2.centers
+    vx, vy = np.meshgrid(ex, ey)
+    x = vx.ravel()
+    y = vy.ravel()
+    w = vals.T.ravel()
+    ax.hist2d(x, y, bins=[e1, e2], weights=w)
+    ax.set_xlabel(a1.label)
+    ax.set_ylabel(a2.label)
+    return ax
 
-def addTitles(ax, hist):
+
+def addTitles1D(ax, hist):
     axes = hist.axes
     ax.set_xlabel(axes[0].label)
     has_var = hist.variances()
@@ -136,4 +157,10 @@ def addTitles(ax, hist):
 
     
 
+def addTitles2D(ax, hist):
+    axes = hist.axes
+    ax.set_xlabel(axes[0].label)
+    ax.set_ylabel(axes[1].label)
+    ax.set_title(hist.name)
+    return ax
 

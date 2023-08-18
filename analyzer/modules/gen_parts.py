@@ -1,12 +1,14 @@
 import itertools as it
 from analyzer.core import analyzerModule, ModuleType
 import awkward as ak
+import gc
 
 def isGoodGenParticle(particle):
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
         particle.hasFlags("fromHardProcessBeforeFSR")
         & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
     )
+
 
 def createGoodChildren(gen_particles, children):
     # x = ak.singletons(gen_particles.children)
@@ -18,6 +20,7 @@ def createGoodChildren(gen_particles, children):
         children = ak.concatenate(
             [children[good_child_mask], maybe_good_children], axis=2
         )
+        print(children)
     return children
 
 @analyzerModule("good_gen", ModuleType.MainProducer, require_tags=["signal"])

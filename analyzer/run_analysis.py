@@ -126,12 +126,13 @@ def runModulesOnSamples(modules, samples, chunks, runner):
     wmap = {}
     tag_sets = iter([s.getTags() for s in samples])
     common_tags = next(tag_sets).intersection(*tag_sets)
+    tag_map = {s.name : s.getTags() for s in samples}
     for samp in samples:
         wmap.update(samp.getWeightMap())
 
     return runner.runChunks(
         chunks,
-        AnalysisProcessor(common_tags, modules, wmap),
+        AnalysisProcessor(tag_map, modules, wmap),
         "Events",
     )
 

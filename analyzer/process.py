@@ -124,24 +124,21 @@ def topologicalSort(source):
 class AnalysisProcessor(processor.ProcessorABC):
     def __init__(self, tags, chain, weight_map, outpath=None):
         self.tags = tags
+        self.tag_map = tags
         self.output_path = outpath
         self.signal_only = "signal" in self.tags
         self.weight_map = weight_map
         self.modules = {x: list(y) for x, y in splitChain(chain)}
-        self.modules = {
-            x: [
-                z for z in y if z.require_tags.intersection(self.tags) == z.require_tags
-            ]
-            for x, y in self.modules.items()
-        }
+        #self.modules = {
+        #    x: [z for z in y if z.require_tags.intersection(self.tag) == z.require_tags]
+        #    for x, y in self.modules.items()
+        #}
         for cat in self.modules:
             it = self.modules[cat]
             order = [(m.name, m.after) for m in it]
             order = list(topologicalSort(order))
             self.modules[cat] = sorted(it, key=lambda x: order.index(x.name))
 
-        for cat, it in self.modules.items():
-            print(f"{str(cat)} -- {[x.name for x in it]}")
         if ModuleType.Output in self.modules and self.output_path is None:
             raise Exception("If using an output, must specify a path")
 
@@ -152,20 +149,33 @@ class AnalysisProcessor(processor.ProcessorABC):
             dataset, set_name = dataset.split(":")
         else:
             set_name = dataset
-        events["EventWeight"] = ak.where(events.genWeight > 0 , 1 , -1) * self.weight_map[set_name]
+        modules_to_run = {
+            x: [
+                z
+                for z in y
+                if z.require_tags.intersection(self.tag_map[dataset]) == z.require_tags
+            ]
+            for x, y in self.modules.items()
+        }
+        for cat, it in modules_to_run.items():
+            print(f"{str(cat)} -- {[x.name for x in it]}")
 
-        for module in self.modules.get(ModuleType.BaseObjectDef, []):
+        events["EventWeight"] = (
+            ak.where(events.genWeight > 0, 1, -1) * self.weight_map[set_name]
+        )
+
+        for module in modules_to_run.get(ModuleType.BaseObjectDef, []):
             events = module.func(events)
 
-        for module in self.modules.get(ModuleType.PreSelectionProducer, []):
+        for module in modules_to_run.get(ModuleType.PreSelectionProducer, []):
             events = module.func(events)
 
-        for module in self.modules.get(ModuleType.PreSelectionHist, []):
+        for module in modules_to_run.get(ModuleType.PreSelectionHist, []):
             module.func(events, makeHistogram)
 
-        if self.modules.get(ModuleType.Selection, False):
+        if modules_to_run.get(ModuleType.Selection, False):
             selection = processor.PackedSelection()
-            for module in self.modules.get(ModuleType.Selection, []):
+            for module in modules_to_run.get(ModuleType.Selection, []):
                 selection = module.func(events, selection)
                 events = events[selection.all(*selection.names)]
 
@@ -174,18 +184,18 @@ class AnalysisProcessor(processor.ProcessorABC):
         cat_data = {"CatDataset": dataset}
 
         x = zip(
-            *(x.func(events, cat_data) for x in self.modules[ModuleType.Categories])
+            *(x.func(events, cat_data) for x in modules_to_run[ModuleType.Categories])
         )
         hm = makeCategoryHist(*x, events.EventWeight)
 
-        for module in self.modules.get(ModuleType.MainProducer, []):
+        for module in modules_to_run.get(ModuleType.MainProducer, []):
             events = module.func(events)
 
-        for module in self.modules.get(ModuleType.MainHist, []):
+        for module in modules_to_run.get(ModuleType.MainHist, []):
             to_accumulate.append(module.func(events, hm))
 
         produced = []
-        for module in self.modules.get(ModuleType.Output, []):
+        for module in modules_to_run.get(ModuleType.Output, []):
             produced.append(module.func(events, self.output_path))
 
         ret = {"dataset_info": {}}

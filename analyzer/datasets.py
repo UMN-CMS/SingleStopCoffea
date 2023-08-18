@@ -32,7 +32,7 @@ class SampleSet:
     produced_on: Optional[str]
     lumi: Optional[float]
     x_sec: Optional[float]
-    n_events: Optional[int]
+    n_events: int
     files: List[SampleFile] = field(default_factory=list)
     tags: Set[str] = field(default_factory=set)
 
