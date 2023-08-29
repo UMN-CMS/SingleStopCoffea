@@ -2,6 +2,7 @@ from analyzer.core import analyzerModule, ModuleType
 from .axes import *
 import awkward as ak
 
+
 @analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
 def createSignalHistograms(events, hmaker):
     ret = {}
@@ -27,4 +28,23 @@ def createSignalHistograms(events, hmaker):
     idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"Jet idx")
     e = events.matched_jet_idx[:, 1]
     ret[f"chi_b_jet_idx"] = hmaker(idx_axis, ak.fill_none(e, 7), name="chi_b_jet_idx")
+
+    ret[f"chi_b_dr"] = hmaker(
+        makeAxis(20, 0, 5, "$\\Delta R$ between $\\chi$ and b from $\\tilde{t}$"),
+        events.SignalParticles.chi.delta_r(events.SignalParticles.stop_b),
+        name="chi_b_dr",
+    )
+
+    ret[f"chi_b_phi"] = hmaker(
+        makeAxis(50, -4, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
+        events.SignalParticles.chi.phi - events.SignalParticles.stop_b.phi,
+        name="chi_b_phi",
+    )
+
+    ret[f"chi_b_eta"] = hmaker(
+        makeAxis(50, -4, 4, "$\\Delta \\eta$ between $\\chi$ and b from $\\tilde{t}$"),
+        events.SignalParticles.chi.eta - events.SignalParticles.stop_b.eta,
+        name="chi_b_phi",
+    )
+
     return ret

@@ -122,13 +122,16 @@ def getChunksFromFiles(flist, runner, retries=3):
     return chunks
 
 
-def runModulesOnSamples(modules, samples, chunks, runner):
+def runModulesOnSamples(modules, samples, chunks, runner, target_lumi):
     wmap = {}
     tag_sets = iter([s.getTags() for s in samples])
     common_tags = next(tag_sets).intersection(*tag_sets)
-    tag_map = {s.name : s.getTags() for s in samples}
+    tag_map = {s.name: s.getTags() for s in samples}
     for samp in samples:
-        wmap.update(samp.getWeightMap())
+        wmap.update(samp.getWeightMap(target_lumi))
+
+    for name in wmap:
+        w = wmap[name]
 
     return runner.runChunks(
         chunks,
@@ -240,6 +243,14 @@ def getArguments():
     )
 
     parser.add_argument(
+        "-l",
+        "--target-lumi",
+        type=float,
+        help="Target luminosity, all samples will have their luminosity scaled to match the target",
+        default=None,
+    )
+
+    parser.add_argument(
         "-u",
         "--update-existing",
         type=str,
@@ -333,7 +344,7 @@ def check(data, sample_manager, runner):
     return not chunks
 
 
-def workFunction(runner, samples, modules, existing_data=None):
+def workFunction(runner, samples, modules, existing_data=None, target_lumi=None):
     if existing_data is not None:
         existing_chunks = existing_data["all_work_items"]
         chunks = produceChunks(
@@ -354,8 +365,13 @@ def workFunction(runner, samples, modules, existing_data=None):
     print(f"Running analyzer over {len(chunks)} chunks")
 
     try:
-        out, metrics = runModulesOnSamples(modules, samples, chunks, runner)
+        out, metrics = runModulesOnSamples(
+            modules, samples, chunks, runner, target_lumi
+        )
         out["metrics"] = metrics
+        out["target_lumi"] = target_lumi
+        if existing_data:
+            existing_data.pop("target_lumi", None)
         out = accumulate([out, chunk_info])
         out["all_work_items"] = list(set(out["all_work_items"]))
         existing_data = existing_data if existing_data is not None else {}
@@ -365,7 +381,6 @@ def workFunction(runner, samples, modules, existing_data=None):
         print(e)
         return existing_data
     return None
-
 
 
 def runAnalysis():
@@ -433,7 +448,7 @@ def runAnalysis():
     retry_count = 0
     while retry_count < max_retries:
         samples = [sample_manager[sample] for sample in args.samples]
-        out = workFunction(runner, samples, modules, existing_data)
+        out = workFunction(runner, samples, modules, existing_data, args.target_lumi)
         existing_data = out
         check_res = check(out, sample_manager, runner)
         if check_res:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
@@ -14,11 +14,20 @@ except ImportError:
 @dataclass
 class Style:
     color: Optional[str]
+    alpha: Optional[float]
 
     @staticmethod
     def fromDict(data):
         color = data.get("color")
-        return Style(color)
+        op = data.get("alpha")
+        return Style(color, op)
+
+    def toDict(self):
+        return dict(
+            (field.name, getattr(self, field.name))
+            for field in fields(self)
+            if getattr(self, field.name) is not None
+        )
 
 
 @dataclass
@@ -86,20 +95,29 @@ class SampleSet:
     def getStyle(self):
         return self.style
 
+    def getLumi(self):
+        if self.derived_from:
+            return self.derived_from.lumi
+        else:
+            return self.lumi
+
     def getTitle(self):
         return self.title
 
     def getFiles(self):
         return {self.name: [f.getFile() for f in self.files]}
 
-    def getWeight(self):
+    def getWeight(self, target_lumi=None):
         if self.derived_from:
-            return self.derived_from.getWeight()
+            w= self.derived_from.getWeight()
         else:
-            return self.lumi * self.x_sec / self.n_events
+            w= self.lumi * self.x_sec / self.n_events
+        if target_lumi:
+            w = w * target_lumi / self.getLumi()
+        return w
 
-    def getWeightMap(self):
-        return {self.name: self.getWeight()}
+    def getWeightMap(self, target_lumi=None):
+        return {self.name: self.getWeight(target_lumi)}
 
     def getTags(self):
         return self.tags
@@ -162,10 +180,10 @@ class SampleCollection:
             }
         return everything
 
-    def getWeightMap(self):
+    def getWeightMap(self, target_lumi=None):
         merged = {}
         for s in self.sets:
-            merged.update(s.getWeightMap())
+            merged.update(s.getWeightMap(target_lumi))
         return merged
 
     def getTags(self):
@@ -244,5 +262,6 @@ def loadSamplesFromDirectory(directory, force_separate=False):
             manager[s].style = manager[style].getStyle()
 
     return manager
+
 
 Dataset = Union[SampleSet, SampleCollection]

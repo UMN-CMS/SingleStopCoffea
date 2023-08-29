@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 
 from analyzer.plotting.styles import *
 from analyzer.plotting.core_plots import *
-from analyzer.datasets import loadSamplesFromDirectory 
+from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 
 import warnings
+
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
 loadStyles()
@@ -21,43 +22,79 @@ backgrounds = ["Skim_QCDInclusive2018"]
 compressed = [f"signal_312_{p}" for p in ("2000_1900", "1200_1100", "1500_1400")]
 uncompressed = [f"signal_312_{p}" for p in ("2000_1400", "1200_400", "1500_900")]
 both = compressed + uncompressed
+representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900")]
 
 manager = loadSamplesFromDirectory("datasets")
 
 file_name = "all_hists.pkl"
 data = pkl.load(open(file_name, "rb"))
 histos = data["histograms"]
+lumi =  data["target_lumi"]
 
 
-def simplePlot(hist, sig_set, scale="log", title=""):
+def simplePlot(
+    hist,
+    sig_set,
+    bkg_set=backgrounds,
+    scale="log",
+    title="",
+    add_name="",
+    normalize=False,
+    sig_style="scatter",
+):
+    print(f"Now plotting {hist}")
+    add_name = add_name + "_" if add_name else ""
     h = histos[hist]
     with open(savedir / "descriptions.txt", "a") as f:
         f.write(f"{hist}: {h.description}\n")
-    hc = h[{"dataset": backgrounds + sig_set}]
+    hc = h[{"dataset": bkg_set + sig_set}]
+    if normalize:
+        hc = getNormalized(hc, "dataset")
     if len(h.axes) == 2:
         fig, ax = drawAs1DHist(
-            hc, cat_axis="dataset", manager=manager, cat_filter="^(?!signal)", yerr=False
+            hc,
+            cat_axis="dataset",
+            manager=manager,
+            cat_filter="^(?!signal)",
+            yerr=False,
         )
-        drawAsScatter(
-            ax, hc, cat_axis="dataset", cat_filter="signal", manager=manager, yerr=True
-        )
-        print(hc)
+        if sig_style == "scatter":
+            drawAsScatter(
+                ax,
+                hc,
+                cat_axis="dataset",
+                cat_filter="signal",
+                manager=manager,
+                yerr=True,
+            )
+        elif sig_style == "hist":
+            drawAs1DHist(
+                ax,
+                hc,
+                cat_axis="dataset",
+                cat_filter="signal",
+                manager=manager,
+                yerr=True,
+                fill=False,
+            )
+
+        ax.set_yscale(scale)
+        addEra(ax, lumi or 59.8)
         addTitles1D(ax, hc)
         addPrelim(ax)
-        addEra(ax, 59.8)
-        ax.set_yscale(scale)
         name = h.name
         fig.tight_layout()
-        fig.savefig(savedir / f"{hist}.pdf")
+        fig.savefig(savedir / f"{add_name}{hist}.pdf")
         plt.close(fig)
     elif len(h.axes) == 3:
         for x in hc.axes[0]:
             realh = hc[{"dataset": x}]
             fig, ax = drawAs2DHist(PlotObject(realh, x, manager[x]))
             addTitles2D(ax, realh)
-            addPrelim(ax)
+            addPrelim(ax, "out")
+            addEra(ax, lumi or 59.8)
             name = h.name
-            fig.savefig(savedir / f"{hist}_{x}.pdf")
+            fig.savefig(savedir / f"{add_name}{hist}_{x}.pdf")
             plt.close(fig)
 
 
@@ -66,24 +103,101 @@ savedir.mkdir(exist_ok=True, parents=True)
 open(savedir / "descriptions.txt", "wt")
 
 
-simplePlot("HT", compressed)
-simplePlot("m14_m", both)
+simplePlot("h_njet", compressed, add_name="compressed")
+simplePlot("h_njet", uncompressed, add_name="uncompressed")
+
+simplePlot("m14_vs_m3_top_3_no_lead_b", uncompressed)
+simplePlot("m14_vs_m3_top_2_plus_lead_b", compressed)
+
+simplePlot("medium_bdr", compressed, add_name="compressed")
+simplePlot("medium_bdr", uncompressed, add_name="uncompressed")
+
+simplePlot("medium_bb_eta", compressed, add_name="compressed")
+simplePlot("medium_bb_eta", uncompressed, add_name="uncompressed")
+
+simplePlot("medium_bb_phi", compressed, add_name="compressed")
+simplePlot("medium_bb_phi", uncompressed, add_name="uncompressed")
+
+
+simplePlot(
+    "chi_b_dr",
+    compressed,
+    [],
+    add_name="compressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+simplePlot(
+    "chi_b_eta",
+    compressed,
+    [],
+    add_name="compressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+simplePlot(
+    "chi_b_phi",
+    compressed,
+    [],
+    add_name="compressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+
+simplePlot(
+    "chi_b_dr",
+    uncompressed,
+    [],
+    add_name="uncompressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+simplePlot(
+    "chi_b_eta",
+    uncompressed,
+    [],
+    add_name="uncompressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+simplePlot(
+    "chi_b_phi",
+    uncompressed,
+    [],
+    add_name="uncompressed",
+    normalize=True,
+    scale="linear",
+    sig_style="hist",
+)
+
+simplePlot("HT", representative)
+
+simplePlot("m14_m", representative)
 simplePlot("m13_m", compressed)
 simplePlot("m24_m", uncompressed)
 
-simplePlot("m3_top_3_no_lead_b", uncompressed)
+simplePlot(
+    "m3_top_3_no_lead_b",
+    uncompressed,
+)
 simplePlot("m3_top_2_plus_lead_b", compressed)
-#
-#simplePlot("m14_vs_m3_top_3_no_lead_b", uncompressed)
-#simplePlot("m14_vs_m3_top_2_plus_lead_b", compressed)
-#
-#simplePlot("ratio_m14_vs_m3_top_3_no_lead_b", uncompressed)
-#simplePlot("ratio_m14_vs_m3_top_2_plus_lead_b", compressed)
-#
-#simplePlot("lead_medium_bjet_ordinality", both)
-#simplePlot("sublead_medium_bjet_ordinality", both)
-#
-#simplePlot("m14_vs_m24", uncompressed)
-#simplePlot("m14_vs_m13", compressed)
-#simplePlot("ratio_m14_vs_m24", uncompressed)
-#simplePlot("ratio_m14_vs_m13", compressed)
+
+
+simplePlot("ratio_m14_vs_m3_top_3_no_lead_b", uncompressed)
+simplePlot("ratio_m14_vs_m3_top_2_plus_lead_b", compressed)
+
+simplePlot("lead_medium_bjet_ordinality", compressed, add_name="compressed")
+simplePlot("lead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
+
+simplePlot("sublead_medium_bjet_ordinality", compressed, add_name="compressed")
+simplePlot("sublead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
+
+simplePlot("m14_vs_m24", uncompressed)
+simplePlot("m14_vs_m13", compressed)
+simplePlot("ratio_m14_vs_m24", uncompressed)
+simplePlot("ratio_m14_vs_m13", compressed)

@@ -310,7 +310,7 @@ font.sans-serif:  TeX Gyre Heros, Arial
 ## ***************************************************************************
 ## For more information on LaTeX properties, see
 ## https://matplotlib.org/stable/tutorials/text/usetex.html
-#text.usetex: True  # use latex for all text handling. The following fonts
+text.usetex: False  # use latex for all text handling. The following fonts
                      # are supported through the usual rc parameter settings:
                      # new century schoolbook, bookman, times, palatino,
                      # zapf chancery, charter, serif, sans-serif, helvetica,
@@ -419,7 +419,7 @@ axes.unicode_minus: False  # use Unicode for the minus symbol rather than hyphen
                   # See also https://matplotlib.org/stable/tutorials/intermediate/color_cycle.html
                   # for more details on prop_cycle usage.
 #axes.xmargin:   .05  # x margin.  See `axes.Axes.margins`
-axes.ymargin:   .3  # y margin.  See `axes.Axes.margins`
+#axes.ymargin:   .05  # y margin.  See `axes.Axes.margins`
 #axes.zmargin:   .05  # z margin.  See `axes.Axes.margins`
 #axes.autolimit_mode: data  # If "data", use axes.xmargin and axes.ymargin as is.
                             # If "round_numbers", after application of margins, axis
@@ -492,16 +492,16 @@ xtick.minor.bottom:  True    # draw x axis bottom minor ticks
 
 ytick.left:          True    # draw ticks on the left side
 ytick.right:         True   # draw ticks on the right side
-#ytick.labelleft:     True    # draw tick labels on the left side
-#ytick.labelright:    False   # draw tick labels on the right side
+ytick.labelleft:     True    # draw tick labels on the left side
+ytick.labelright:    False   # draw tick labels on the right side
 ytick.major.size:     12    # major tick size in points
 ytick.minor.size:     6.0       # minor tick size in points
-#ytick.major.width:   0.8     # major tick width in points
-#ytick.minor.width:   0.6     # minor tick width in points
-#ytick.major.pad:     3.5     # distance to major tick label in points
-#ytick.minor.pad:     3.4     # distance to the minor tick label in points
-#ytick.color:         black   # color of the ticks
-#ytick.labelcolor:    inherit # color of the tick labels or inherit from ytick.color
+ytick.major.width:   0.8     # major tick width in points
+ytick.minor.width:   0.6     # minor tick width in points
+ytick.major.pad:     3.5     # distance to major tick label in points
+ytick.minor.pad:     3.4     # distance to the minor tick label in points
+ytick.color:         black   # color of the ticks
+ytick.labelcolor:    inherit # color of the tick labels or inherit from ytick.color
 ytick.labelsize:     small  # font size of the tick labels
 ytick.direction:      in     # direction: {in, out, inout}
 ytick.minor.visible: True   # visibility of minor ticks on y-axis
@@ -509,7 +509,7 @@ ytick.major.left:    True    # draw y axis left major ticks
 ytick.major.right:   True    # draw y axis right major ticks
 ytick.minor.left:    True    # draw y axis left minor ticks
 ytick.minor.right:   True    # draw y axis right minor ticks
-#ytick.alignment:     center_baseline  # alignment of yticks
+ytick.alignment:     center_baseline  # alignment of yticks
 
 
 ## ***************************************************************************
@@ -535,7 +535,7 @@ legend.fancybox:      False     # if True, use a rounded box for the
 #legend.numpoints:     1        # the number of marker points in the legend line
 #legend.scatterpoints: 1        # number of scatter points
 #legend.markerscale:   1.0      # the relative size of legend markers vs. original
-legend.fontsize:      12
+legend.fontsize:      20
 #legend.labelcolor:    None
 #legend.title_fontsize: None    # None sets to the same as the default axes.
 
