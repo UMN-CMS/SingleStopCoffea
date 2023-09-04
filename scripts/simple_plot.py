@@ -29,7 +29,7 @@ manager = loadSamplesFromDirectory("datasets")
 file_name = "all_hists.pkl"
 data = pkl.load(open(file_name, "rb"))
 histos = data["histograms"]
-lumi =  data["target_lumi"]
+lumi = data["target_lumi"]
 
 
 def simplePlot(
@@ -40,8 +40,11 @@ def simplePlot(
     title="",
     add_name="",
     normalize=False,
-    sig_style="scatter",
+    sig_style="hist",
+    add_label=None,
 ):
+    if add_label is None and add_name:
+        add_label = add_name.title()
     print(f"Now plotting {hist}")
     add_name = add_name + "_" if add_name else ""
     h = histos[hist]
@@ -80,9 +83,10 @@ def simplePlot(
 
         ax.set_yscale(scale)
         addEra(ax, lumi or 59.8)
-        addTitles1D(ax, hc)
-        addPrelim(ax)
-        name = h.name
+        addPrelim(ax, additional_text="$\\lambda_{312}$ " + (add_label or ""))
+
+        addTitles1D(ax, hc, top_pad=0.4)
+
         fig.tight_layout()
         fig.savefig(savedir / f"{add_name}{hist}.pdf")
         plt.close(fig)
@@ -178,8 +182,8 @@ simplePlot(
 simplePlot("HT", representative)
 
 simplePlot("m14_m", representative)
-simplePlot("m13_m", compressed)
-simplePlot("m24_m", uncompressed)
+simplePlot("m13_m", compressed, add_label="Compressed")
+simplePlot("m24_m", uncompressed, add_label="Uncompressed")
 
 simplePlot(
     "m3_top_3_no_lead_b",
@@ -197,7 +201,19 @@ simplePlot("lead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
 simplePlot("sublead_medium_bjet_ordinality", compressed, add_name="compressed")
 simplePlot("sublead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
 
+simplePlot(
+    "num_top_3_jets_matched_chi_children", compressed, [], add_label="Compressed"
+)
+simplePlot(
+    "num_top_4_jets_matched_stop_children", representative, []
+)
+simplePlot(
+    "num_sub_3_jets_matched_chi_children", uncompressed, [], add_label="Uncompressed"
+)
+
 simplePlot("m14_vs_m24", uncompressed)
 simplePlot("m14_vs_m13", compressed)
 simplePlot("ratio_m14_vs_m24", uncompressed)
 simplePlot("ratio_m14_vs_m13", compressed)
+
+simplePlot("pt_1", representative)

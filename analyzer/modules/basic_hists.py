@@ -1,4 +1,5 @@
 from analyzer.core import analyzerModule, ModuleType
+from analyzer.utilities import angleToNPiToPi
 from .axes import *
 import awkward as ak
 from .objects import b_tag_wps
@@ -115,7 +116,9 @@ def charginoRecoHistograms(events, hmaker):
     comp_charg = (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
-        makeAxis(60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"),
+        makeAxis(
+            60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"
+        ),
         comp_charg,
         name="m3_top_2_plus_lead_b",
     )
@@ -123,7 +126,13 @@ def charginoRecoHistograms(events, hmaker):
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"Mass of leading 2 $p_{T}$ Jets + leading b Jet",
+                unit="GeV",
+            ),
         ],
         [m14, comp_charg],
         name="Mass of Top 2 $p_T$ Jets Plus Leading b Jet",
@@ -227,7 +236,7 @@ def createJetHistograms(events, hmaker):
                     50,
                     0,
                     1,
-                    rf"$\frac{{m_{{ {p2_1+1}{p2_2} }} }}{{ m_{{  {p1_1+1}{p1_2} }} }}$", unit="GeV"
+                    rf"$\frac{{m_{{ {p2_1+1}{p2_2} }} }}{{ m_{{  {p1_1+1}{p1_2} }} }}$",
                 ),
             ],
             [masses[p1], masses[p2] / masses[p1]],
@@ -357,7 +366,7 @@ def createBHistograms(events, hmaker):
     mask = ak.num(l_bjets, axis=1) > 1
     top2 = l_bjets[mask]
     lb_eta = abs(top2[:, 0].eta - top2[:, 1].eta)
-    lb_phi = abs(top2[:, 0].phi - top2[:, 1].phi)
+    lb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
     lb_dr = top2[:, 0].delta_r(top2[:, 1])
 
     ret[f"loose_bb_eta"] = hmaker(
@@ -367,7 +376,7 @@ def createBHistograms(events, hmaker):
         description=rf"$\Delta \eta$ between the two highest rank loose b jets",
     )
     ret[f"loose_bb_phi"] = hmaker(
-        makeAxis(50, -4, 4, "$\\Delta \\phi$ between leading loose b jets"),
+        makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading loose b jets"),
         lb_phi,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank loose b jets",
@@ -394,7 +403,7 @@ def createBHistograms(events, hmaker):
     mask = ak.num(l_bjets, axis=1) > 1
     top2 = l_bjets[mask]
     lb_eta = abs(top2[:, 0].eta - top2[:, 1].eta)
-    lb_phi = abs(top2[:, 0].phi - top2[:, 1].phi)
+    lb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
     lb_dr = top2[:, 0].delta_r(top2[:, 1])
 
     ret[f"medium_bb_eta"] = hmaker(

@@ -9,8 +9,16 @@ def createSignalHistograms(events, hmaker):
     chi_match_axis = hist.axis.IntCategory(
         [0, 1, 2, 3], name="num_matched_chi", label=r"Number of reco chi jets correct"
     )
+    stop_match_axis = hist.axis.IntCategory(
+        [0, 1, 2, 3, 4],
+        name="num_matched_stop",
+        label=r"Number of reco jets matched to stop child",
+    )
     num_top_3_are_chi = ak.num(
         events.matched_jet_idx[:, 1:][events.matched_jet_idx[:, 1:] < 3], axis=1
+    )
+    num_top_4_are_stop = ak.num(
+        events.matched_jet_idx[events.matched_jet_idx < 4], axis=1
     )
     num_sub_3_are_chi = ak.num(
         events.matched_jet_idx[:, 1:][
@@ -23,6 +31,9 @@ def createSignalHistograms(events, hmaker):
     )
     ret[f"num_sub_3_jets_matched_chi_children"] = hmaker(
         chi_match_axis, num_sub_3_are_chi, name="num_sub_3_are_chi"
+    )
+    ret[f"num_top_4_jets_matched_stop_children"] = hmaker(
+        stop_match_axis, num_top_4_are_stop, name="num_top_4_are_stop"
     )
 
     idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"Jet idx")

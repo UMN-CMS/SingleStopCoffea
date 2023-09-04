@@ -77,7 +77,7 @@
   tags: 
     - signal
   style:
-    color: "#310496"
+    color: "#0079C2"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
 
@@ -107,7 +107,7 @@
   tags: 
     - signal
   style:
-    color: "#9D2963"
+    color: "#FF1D00"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
 
@@ -242,7 +242,7 @@
   tags: 
     - signal
   style:
-    color: "#2A758E"
+    color: "#00AAA9"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
 
@@ -257,7 +257,7 @@
   tags: 
     - signal
   style:
-    color: "#ee7621"
+    color: "#FFD201"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
 
@@ -316,7 +316,7 @@
   tags: 
     - signal
   style:
-    color: "#7B02A7"
+    color: "#00C69C"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
 
@@ -331,7 +331,7 @@
   tags: 
     - signal
   style:
-    color: "#471163"
+    color: "#FF7C00"
   files: 
     - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
 

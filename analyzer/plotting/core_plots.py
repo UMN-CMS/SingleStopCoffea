@@ -28,12 +28,15 @@ def loadStyles():
     plt.style.use(style)
 
 
-def addPrelim(ax, pos="in") -> mpl.axis.Axis:
+def addPrelim(ax, pos="in", additional_text=None) -> mpl.axis.Axis:
+    text = r"$\bf{CMS}\ \it{Preliminary}$"
+    if additional_text:
+        text += "\n" + additional_text
     if pos == "in":
         ax.text(
             0.02,
             0.98,
-            r"$\bf{CMS}\ \it{Preliminary}$",
+            text,
             horizontalalignment="left",
             verticalalignment="top",
             transform=ax.transAxes,
@@ -43,7 +46,7 @@ def addPrelim(ax, pos="in") -> mpl.axis.Axis:
         ax.text(
             0.02,
             1.0,
-            r"$\bf{CMS}\ \it{Preliminary}$",
+            text,
             horizontalalignment="left",
             verticalalignment="bottom",
             transform=ax.transAxes,
