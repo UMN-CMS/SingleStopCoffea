@@ -18,12 +18,6 @@ def deltaRMatch(events):
     _, _, _, ridx_q, ridx_j, _ = object_matching(
         events.SignalQuarks, events.good_jets, 0.3, 0.5, True
     )
-    print("-----------------------------------------------")
-    print(f"INDEX JETS: {idx_j}")
-    print(f"INDEX QUA: {idx_q}")
-    print(f"RINDEX JETS: {ridx_j}")
-    print(f"RINDEX QUA: {ridx_q}")
-    print("-----------------------------------------------")
     events["matched_quarks"] = matched_quarks
     events["matched_jets"] = matched_jets
     events["matched_dr"] = dr

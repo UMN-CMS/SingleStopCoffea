@@ -9,6 +9,7 @@ def createSelection(events, selection):
     good_electrons = events.good_electrons
     loose_b = events.loose_bs
     med_b = events.med_bs
+    tight_b = events.tight_bs
     tight_top = events.tight_tops
     #selection = PackedSelection()
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
@@ -23,6 +24,7 @@ def createSelection(events, selection):
     selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)).to_numpy())
     selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)).to_numpy())
     selection.add("2bjet", (ak.num(med_b) >= 2).to_numpy())
+    selection.add("1tightbjet", (ak.num(tight_b) >= 1).to_numpy())
     selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
     selection.add("b_dr", (med_dr > 1).to_numpy())
     return selection
