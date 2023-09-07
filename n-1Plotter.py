@@ -36,7 +36,7 @@ if plot == 'nJets':
 	xLabel = r'$N_{j}$'
 
 elif plot == 'dR12':
-	selection = { 'dataset': sum, 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': 1, 'dRbb_312': sum, 'dRbb_313': 1 }
+	selection = { 'dataset': sum, 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': 1, 'dRbb_312': sum, 'dRbb_313': sum }
 	xLabel = r'$\Delta R_{1, 2}$'	
 
 elif plot == 'pT1':
@@ -73,7 +73,8 @@ if isTT:
 if isSignal:
 	### Adding signal
 	colors = ['red', 'green', 'blue']
-	for i, m in enumerate(['1000_400', '1500_900', '2000_1900']):
+	signals = ['1200_400', '1500_900', '2000_1900'] if coupling == '312' else ['1000_400', '1500_900', '2000_1900']
+	for i, m in enumerate(signals):
 		s = pickle.load(open('output/signal313/signal_{}.pkl'.format(m), 'rb')) if coupling == '313' else pickle.load(open('output/signal312/signal_{}.pkl'.format(m), 'rb'))
 		histos = s['histograms']
 		h_signal = histos[plot][selection]
@@ -85,7 +86,8 @@ if isSignal:
 						color = colors[i], lw = 2)
 
 ### Saving plot
-ax.legend()
+if plot != 'nJets': ax.legend()
+else: ax.legend(bbox_to_anchor = (1, 0.8))
 ax.set_xlabel(xLabel)
 ax.set_ylabel('Proportion of events')
 plt.xlim(left = 0)
@@ -93,6 +95,7 @@ plt.ylim(bottom = 0)
 if plot == 'nJets':
 	plt.xticks(h_signal.axes[0].edges[:-1]),
 	plt.minorticks_off()
-plt.savefig('{}-n-1.png'.format(plot))
+	plt.tight_layout()
+plt.savefig('plots/{0}/{1}-n-1.png'.format(coupling, plot))
 
 
