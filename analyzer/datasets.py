@@ -1,13 +1,33 @@
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
+from collections.abc import Mapping
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
+
+
+@dataclass
+class Style:
+    color: Optional[str]
+    alpha: Optional[float]
+
+    @staticmethod
+    def fromDict(data):
+        color = data.get("color")
+        op = data.get("alpha")
+        return Style(color, op)
+
+    def toDict(self):
+        return dict(
+            (field.name, getattr(self, field.name))
+            for field in fields(self)
+            if getattr(self, field.name) is not None
+        )
 
 
 @dataclass
@@ -28,13 +48,15 @@ class SampleFile:
 @dataclass
 class SampleSet:
     name: str
+    title: str
     derived_from: Optional[Union[str, "SampleSet"]]
     produced_on: Optional[str]
     lumi: Optional[float]
     x_sec: Optional[float]
-    n_events: Optional[int]
+    n_events: int
     files: List[SampleFile] = field(default_factory=list)
     tags: Set[str] = field(default_factory=set)
+    style: Optional[Union[Style, str]] = None
 
     @staticmethod
     def fromDict(data):
@@ -45,27 +67,57 @@ class SampleSet:
         x_sec = data.get("x_sec", None)
         n_events = data.get("n_events", None)
         tags = set(data.get("tags", []))
+        title = data.get("title", name)
         if not (x_sec and n_events and lumi) and not derived_from:
             raise Exception(
                 f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}"
             )
         files = [SampleFile.fromDict(x) for x in data["files"]]
+
+        style = data.get("style", {})
+        if not isinstance(style, str):
+            style = Style.fromDict(style)
+
         ss = SampleSet(
-            name, derived_from, produced_on, lumi, x_sec, n_events, files, tags
+            name,
+            title,
+            derived_from,
+            produced_on,
+            lumi,
+            x_sec,
+            n_events,
+            files,
+            tags,
+            style,
         )
         return ss
+
+    def getStyle(self):
+        return self.style
+
+    def getLumi(self):
+        if self.derived_from:
+            return self.derived_from.lumi
+        else:
+            return self.lumi
+
+    def getTitle(self):
+        return self.title
 
     def getFiles(self):
         return {self.name: [f.getFile() for f in self.files]}
 
-    def getWeight(self):
+    def getWeight(self, target_lumi=None):
         if self.derived_from:
-            return self.derived_from.getWeight()
+            w= self.derived_from.getWeight()
         else:
-            return self.lumi * self.x_sec / self.n_events
+            w= self.lumi * self.x_sec / self.n_events
+        if target_lumi:
+            w = w * target_lumi / self.getLumi()
+        return w
 
-    def getWeightMap(self):
-        return {self.name: self.getWeight()}
+    def getWeightMap(self, target_lumi=None):
+        return {self.name: self.getWeight(target_lumi)}
 
     def getTags(self):
         return self.tags
@@ -76,6 +128,7 @@ class SampleSet:
             name: [f for f in flist if f not in other_files]
             for name, flist in all_files.items()
         }
+
     def totalEvents(self):
         return self.n_events
 
@@ -85,22 +138,37 @@ class SampleSet:
     def __repr__(self):
         return str(self)
 
+
 @dataclass
 class SampleCollection:
     name: str
+    title: str
     sets: List[SampleSet] = field(default_factory=list)
     treat_separate: bool = False
+    style: Optional[Union[Style, str]] = None
 
     @staticmethod
     def fromDict(data, manager, force_separate=False):
         name = data["name"]
         sets = data["sets"]
+        title = data.get("title", name)
         real_sets = [manager.sets[s] for s in sets]
+        style = data.get("style", {})
+        if not isinstance(style, str):
+            style = Style.fromDict(style)
 
         sc = SampleCollection(
-            name, real_sets, data.get("treat_separate", False or force_separate)
+            name,
+            title,
+            real_sets,
+            data.get("treat_separate", False or force_separate),
+            style,
         )
+
         return sc
+
+    def getTitle(self):
+        return self.title
 
     def getFiles(self):
         everything = {}
@@ -112,10 +180,10 @@ class SampleCollection:
             }
         return everything
 
-    def getWeightMap(self):
+    def getWeightMap(self, target_lumi=None):
         merged = {}
         for s in self.sets:
-            merged.update(s.getWeightMap())
+            merged.update(s.getWeightMap(target_lumi))
         return merged
 
     def getTags(self):
@@ -131,6 +199,9 @@ class SampleCollection:
             name: [f for f in flist if f not in other_files]
             for name, flist in all_files.items()
         }
+
+    def getStyle(self):
+        return self.style
 
     def totalEvents(self):
         return sum(s.totalEvents() for s in self.sets)
@@ -156,6 +227,10 @@ class SampleManager:
         else:
             return self.sets[key]
 
+    def __iter__(self):
+        yield from self.sets
+        yield from self.collections
+
 
 def loadSamplesFromDirectory(directory, force_separate=False):
     directory = Path(directory)
@@ -180,4 +255,13 @@ def loadSamplesFromDirectory(directory, force_separate=False):
             ]:
                 s = SampleCollection.fromDict(d, manager, force_separate)
                 manager.collections[s.name] = s
+    for s in manager:
+        sample = manager[s]
+        style = sample.getStyle()
+        if isinstance(style, str):
+            manager[s].style = manager[style].getStyle()
+
     return manager
+
+
+Dataset = Union[SampleSet, SampleCollection]

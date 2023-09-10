@@ -113,14 +113,14 @@
 ## ***************************************************************************
 ## See https://matplotlib.org/stable/api/artist_api.html#module-matplotlib.lines
 ## for more information on line properties.
-#lines.linewidth: 1.5               # line width in points
+lines.linewidth: 2               # line width in points
 #lines.linestyle: -                 # solid line
 #lines.color:     C0                # has no affect on plot(); see axes.prop_cycle
 #lines.marker:          None        # the default marker
 #lines.markerfacecolor: auto        # the default marker face color
 #lines.markeredgecolor: auto        # the default marker edge color
 #lines.markeredgewidth: 1.0         # the line width around the marker symbol
-#lines.markersize:      6           # marker size, in points
+lines.markersize:      10           # marker size, in points
 #lines.dash_joinstyle:  round       # {miter, round, bevel}
 #lines.dash_capstyle:   butt        # {butt, round, projecting}
 #lines.solid_joinstyle: round       # {miter, round, bevel}
@@ -264,7 +264,7 @@ font.style:   normal
 font.variant: normal
 font.weight:  normal
 font.stretch: normal
-font.size:    12.0
+font.size:    26.0
 
 #font.serif:      DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
 font.sans-serif:  TeX Gyre Heros, Arial
@@ -310,7 +310,7 @@ font.sans-serif:  TeX Gyre Heros, Arial
 ## ***************************************************************************
 ## For more information on LaTeX properties, see
 ## https://matplotlib.org/stable/tutorials/text/usetex.html
-#text.usetex: True  # use latex for all text handling. The following fonts
+text.usetex: False  # use latex for all text handling. The following fonts
                      # are supported through the usual rc parameter settings:
                      # new century schoolbook, bookman, times, palatino,
                      # zapf chancery, charter, serif, sans-serif, helvetica,
@@ -339,17 +339,17 @@ font.sans-serif:  TeX Gyre Heros, Arial
 ## "mathtext.fontset: custom" is defined by the mathtext.bf, .cal, .it, ...
 ## settings which map a TeX font name to a fontconfig font pattern.  (These
 ## settings are not used for other font sets.)
-#mathtext.bf:  sans:bold
-#mathtext.cal: cursive
-#mathtext.it:  sans:italic
-#mathtext.rm:  sans
-#mathtext.sf:  sans
-#mathtext.tt:  monospace
+mathtext.bf:  TeX Gyre Heros:bold
+mathtext.cal: TeX Gyre Heros
+mathtext.it:  TeX Gyre Heros:italic
+mathtext.rm:  TeX Gyre Heros
+mathtext.sf:  TeX Gyre Heros
+mathtext.tt:  TeX Gyre Heros
 #mathtext.fallback: cm  # Select fallback font from ['cm' (Computer Modern), 'stix'
                         # 'stixsans'] when a symbol can not be found in one of the
                         # custom math fonts. Select 'None' to not perform fallback
                         # and replace the missing character by a dummy symbol.
-#mathtext.default: it  # The default font to use for math.
+mathtext.default: regular  # The default font to use for math.
                        # Can be any of the LaTeX font names, including
                        # the special name "regular" for the same font
                        # used in regular text.
@@ -363,7 +363,7 @@ font.sans-serif:  TeX Gyre Heros, Arial
 ## https://matplotlib.org/stable/api/axes_api.html#module-matplotlib.axes
 #axes.facecolor:     white   # axes background color
 #axes.edgecolor:     black   # axes edge color
-#axes.linewidth:     0.8     # edge line width
+axes.linewidth:     2     # edge line width
 #axes.grid:          False   # display grid or not
 #axes.grid.axis:     both    # which axis the grid should apply to
 #axes.grid.which:    major   # grid lines at {major, minor, both} ticks
@@ -374,7 +374,7 @@ font.sans-serif:  TeX Gyre Heros, Arial
                              # text.color as default value
 #axes.titley:        None    # position title (axes relative units).  None implies auto
 axes.titlepad:      10.0     # pad between axes and title in points
-#axes.labelsize:     medium  # font size of the x and y labels
+axes.labelsize:     medium  # font size of the x and y labels
 #axes.labelpad:      4.0     # space between label and axis
 #axes.labelweight:   normal  # weight of the x and y labels
 #axes.labelcolor:    black
@@ -383,7 +383,7 @@ axes.titlepad:      10.0     # pad between axes and title in points
                              #     - above patches but below lines ('line')
                              #     - above all (False)
 
-axes.formatter.limits: -3, 3  # use scientific notation if log10
+axes.formatter.limits: -3, 4  # use scientific notation if log10
                                # of the axis range is smaller than the
                                # first or larger than the second
 #axes.formatter.use_locale: False  # When True, format tick labels
@@ -392,13 +392,13 @@ axes.formatter.limits: -3, 3  # use scientific notation if log10
                                    # separator in the fr_FR locale.
 axes.formatter.use_mathtext: True  # When True, use mathtext for scientific
                                      # notation.
-axes.formatter.min_exponent: 4  # minimum exponent to format in scientific notation
+axes.formatter.min_exponent: 5  # minimum exponent to format in scientific notation
 #axes.formatter.useoffset: True  # If True, the tick label formatter
                                  # will default to labeling ticks relative
                                  # to an offset when the data range is
                                  # small compared to the minimum absolute
                                  # value of the data.
-axes.formatter.offset_threshold: 4  # When useoffset is True, the offset
+#axes.formatter.offset_threshold: 4  # When useoffset is True, the offset
                                      # will be used when it can remove
                                      # at least this number of significant
                                      # digits from tick labels.
@@ -408,7 +408,7 @@ axes.formatter.offset_threshold: 4  # When useoffset is True, the offset
 #axes.spines.top:    True
 #axes.spines.right:  True
 
-#axes.unicode_minus: True  # use Unicode for the minus symbol rather than hyphen.  See
+axes.unicode_minus: False  # use Unicode for the minus symbol rather than hyphen.  See
                            # https://en.wikipedia.org/wiki/Plus_and_minus_signs#Character_codes
 #axes.prop_cycle: cycler('color', ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467bd', '8c564b', 'e377c2', '7f7f7f', 'bcbd22', '17becf'])
                   # color cycle for plot lines as list of string color specs:
@@ -434,8 +434,8 @@ axes.formatter.offset_threshold: 4  # When useoffset is True, the offset
 ## ***************************************************************************
 ## * AXIS                                                                    *
 ## ***************************************************************************
-xaxis.labellocation: center  # alignment of the xaxis label: {left, right, center}
-yaxis.labellocation: center  # alignment of the yaxis label: {bottom, top, center}
+xaxis.labellocation: right  # alignment of the xaxis label: {left, right, center}
+yaxis.labellocation: top  # alignment of the yaxis label: {bottom, top, center}
 
 
 ## ***************************************************************************
@@ -481,7 +481,7 @@ xtick.minor.size:     6.0      # minor tick size in points
 #xtick.minor.pad:     3.4     # distance to the minor tick label in points
 #xtick.color:         black   # color of the ticks
 #xtick.labelcolor:    inherit # color of the tick labels or inherit from xtick.color
-#xtick.labelsize:     medium  # font size of the tick labels
+xtick.labelsize:     small  # font size of the tick labels
 xtick.direction:     in     # direction: {in, out, inout}
 xtick.minor.visible: True   # visibility of minor ticks on x-axis
 xtick.major.top:     True    # draw x axis top major ticks
@@ -492,24 +492,24 @@ xtick.minor.bottom:  True    # draw x axis bottom minor ticks
 
 ytick.left:          True    # draw ticks on the left side
 ytick.right:         True   # draw ticks on the right side
-#ytick.labelleft:     True    # draw tick labels on the left side
-#ytick.labelright:    False   # draw tick labels on the right side
+ytick.labelleft:     True    # draw tick labels on the left side
+ytick.labelright:    False   # draw tick labels on the right side
 ytick.major.size:     12    # major tick size in points
 ytick.minor.size:     6.0       # minor tick size in points
-#ytick.major.width:   0.8     # major tick width in points
-#ytick.minor.width:   0.6     # minor tick width in points
-#ytick.major.pad:     3.5     # distance to major tick label in points
-#ytick.minor.pad:     3.4     # distance to the minor tick label in points
-#ytick.color:         black   # color of the ticks
-#ytick.labelcolor:    inherit # color of the tick labels or inherit from ytick.color
-#ytick.labelsize:     medium  # font size of the tick labels
+ytick.major.width:   0.8     # major tick width in points
+ytick.minor.width:   0.6     # minor tick width in points
+ytick.major.pad:     3.5     # distance to major tick label in points
+ytick.minor.pad:     3.4     # distance to the minor tick label in points
+ytick.color:         black   # color of the ticks
+ytick.labelcolor:    inherit # color of the tick labels or inherit from ytick.color
+ytick.labelsize:     small  # font size of the tick labels
 ytick.direction:      in     # direction: {in, out, inout}
 ytick.minor.visible: True   # visibility of minor ticks on y-axis
 ytick.major.left:    True    # draw y axis left major ticks
 ytick.major.right:   True    # draw y axis right major ticks
 ytick.minor.left:    True    # draw y axis left minor ticks
 ytick.minor.right:   True    # draw y axis right minor ticks
-#ytick.alignment:     center_baseline  # alignment of yticks
+ytick.alignment:     center_baseline  # alignment of yticks
 
 
 ## ***************************************************************************
@@ -518,14 +518,14 @@ ytick.minor.right:   True    # draw y axis right minor ticks
 #grid.color:     "#b0b0b0"  # grid color
 #grid.linestyle: -          # solid
 #grid.linewidth: 0.8        # in points
-#grid.alpha:     1.0        # transparency, between 0.0 and 1.0
+grid.alpha:     0.8       # transparency, between 0.0 and 1.0
 
 
 ## ***************************************************************************
 ## * LEGEND                                                                  *
 ## ***************************************************************************
 #legend.loc:           best
-#legend.frameon:       True     # if True, draw the legend on a background patch
+legend.frameon:       False     # if True, draw the legend on a background patch
 legend.framealpha:    1      # legend patch transparency
 #legend.facecolor:     inherit  # inherit from axes.facecolor; or color spec
 legend.edgecolor:     0      # background patch boundary color
@@ -535,14 +535,14 @@ legend.fancybox:      False     # if True, use a rounded box for the
 #legend.numpoints:     1        # the number of marker points in the legend line
 #legend.scatterpoints: 1        # number of scatter points
 #legend.markerscale:   1.0      # the relative size of legend markers vs. original
-legend.fontsize:      small
+legend.fontsize:      20
 #legend.labelcolor:    None
 #legend.title_fontsize: None    # None sets to the same as the default axes.
 
 ## Dimensions as fraction of font size:
 legend.borderpad:     0.5  # border whitespace
 #legend.labelspacing:  0.5  # the vertical space between the legend entries
-#legend.handlelength:  2.0  # the length of the legend lines
+legend.handlelength:  1.5  # the length of the legend lines
 #legend.handleheight:  0.7  # the height of the legend handle
 #legend.handletextpad: 0.8  # the space between the legend line and legend text
 #legend.borderaxespad: 0.5  # the border between the axes and legend edge
@@ -557,11 +557,11 @@ legend.borderpad:     0.5  # border whitespace
 #figure.titleweight: normal    # weight of the figure title
 #figure.labelsize:   large     # size of the figure label (``Figure.sup[x|y]label()``)
 #figure.labelweight: normal    # weight of the figure label
-figure.figsize:     7, 7
+figure.figsize:     10, 10
 figure.dpi:         100       # figure dots per inch
 #figure.facecolor:   white     # figure face color
 #figure.edgecolor:   white     # figure edge color
-#figure.frameon:     True      # enable figure frame
+figure.frameon:     False      # enable figure frame
 #figure.max_open_warning: 20   # The maximum number of figures to open through
                                # the pyplot interface before emitting a warning.
                                # If less than one this feature is disabled.
@@ -578,7 +578,7 @@ figure.dpi:         100       # figure dots per inch
                                # expressed as a fraction of the average axis height
 
 ## Figure layout
-figure.autolayout: True  # When True, automatically adjust subplot
+#figure.autolayout: True  # When True, automatically adjust subplot
                            # parameters to make the plot fit the figure
                            # using `tight_layout`
 #figure.constrained_layout.use: False  # When True, automatically make plot

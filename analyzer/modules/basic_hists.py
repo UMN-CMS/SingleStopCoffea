@@ -1,8 +1,10 @@
 from analyzer.core import analyzerModule, ModuleType
+from analyzer.utilities import angleToNPiToPi
 from .axes import *
 import awkward as ak
 from .objects import b_tag_wps
 import itertools as it
+
 
 @analyzerModule("pre_sel_hists", ModuleType.PreSelectionHist)
 def makePreSelectionHistograms(events, hmaker):
@@ -21,14 +23,12 @@ def makePreSelectionHistograms(events, hmaker):
     return ret
 
 
-
-
 @analyzerModule("event_level_hists", ModuleType.MainHist)
 def createEventLevelHistograms(events, hmaker):
     dataset = events.metadata["dataset"]
     ret = {}
     ret[f"HT"] = hmaker(
-        ht_axis,
+        makeAxis(60, 0, 3000, "HT", unit="GeV"),
         events.HT,
         name="Event HT",
         description="Sum of $p_T$ of good AK4 jets.",
@@ -36,24 +36,25 @@ def createEventLevelHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return ret
     ret[f"nQLHE"] = hmaker(
-        tencountaxis,
+        makeAxis(10, 0, 10, "Quark Count LHE"),
         events.LHE.Nuds + events.LHE.Nc + events.LHE.Nb,
         name="Quark Count LHE",
         description="Number of LHE level Quarks",
     )
     ret[f"nJLHE"] = hmaker(
-        tencountaxis,
+        makeAxis(10, 0, 10, "Jet Count LHE"),
         events.LHE.Njets,
         name="Jet Count LHE",
         description="Number of LHE level Jets",
     )
     ret[f"nGLHE"] = hmaker(
-        tencountaxis,
+        makeAxis(10, 0, 10, "Gluon Count LHE"),
         events.LHE.Nglu,
         name="Gluon Count LHE",
         description="Number of LHE level gluons",
     )
     return ret
+
 
 @analyzerModule("chargino_hists", ModuleType.MainHist)
 def charginoRecoHistograms(events, hmaker):
@@ -78,66 +79,96 @@ def charginoRecoHistograms(events, hmaker):
     max_no_lead_over_max_sublead = max_dr_no_lead / max_dr_no_sublead
 
     jets = gj[:, 0:4].sum()
-    m14= jets.mass
+    m14 = jets.mass
 
-    uncomp_charg =  (no_lead_jets[:, 0:3].sum()).mass
+    uncomp_charg = (no_lead_jets[:, 0:3].sum()).mass
 
-    m14_axis = hist.axis.Regular(60, 0, 3000, name="m14", label=r"$m_{14}$ [GeV]")
-    mchi_axis = hist.axis.Regular(60, 0, 3000, name="mchi", label=r"$m_{\chi}$ [GeV]")
+    m14_axis = makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]")
+    mchi_axis = makeAxis(60, 0, 3000, r"$m_{\chi}$ [GeV]")
 
     ret[f"m3_top_3_no_lead_b"] = hmaker(
-        mchi_axis,
+        makeAxis(60, 0, 3000, r"Mass of Jets 1-3 without Leading b", unit="GeV"),
         uncomp_charg,
-        name="m3_top_3_no_lead_b",
+        name="Mass of Jets 1-3 Without Leading B",
     )
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
-        [m14_axis,mchi_axis],
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"Mass of Jets 1-3 without Leading b", unit="GeV"),
+        ],
         [m14, uncomp_charg],
-        name="m3_top_3_no_lead_b",
+        name="$m_{14}$ vs Mass of Jets 1-3 Without Leading B",
     )
 
-    ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
-        mchi_axis,
-        ak.where(
-            max_no_lead_over_max_sublead > 2,
-            (no_lead_jets[:, 0:3].sum()).mass,
-            (
-                gj[no_lead_or_sublead_idxs][:, 0:2].sum()
-                + gj[ak.singletons(lead_b_idx)][:, 0]
-            ).mass,
-        ),
-        name="m3_top3_no_b_unless_dR_charg_gt_2",
-    )
+    # ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
+    #    mchi_axis,
+    #    ak.where(
+    #        max_no_lead_over_max_sublead > 2,
+    #        (no_lead_jets[:, 0:3].sum()).mass,
+    #        (
+    #            gj[no_lead_or_sublead_idxs][:, 0:2].sum()
+    #            + gj[ak.singletons(lead_b_idx)][:, 0]
+    #        ).mass,
+    #    ),
+    #    name="m3_top3_no_b_unless_dR_charg_gt_2",
+    # )
 
-    comp_charg= (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
+    comp_charg = (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
-        mchi_axis,
-        uncomp_charg,
+        makeAxis(
+            60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"
+        ),
+        comp_charg,
         name="m3_top_2_plus_lead_b",
     )
 
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
-        [m14_axis,mchi_axis],
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"Mass of leading 2 $p_{T}$ Jets + leading b Jet",
+                unit="GeV",
+            ),
+        ],
         [m14, comp_charg],
-        name="m14_vs_m3_top_2_plus_lead_b",
+        name="Mass of Top 2 $p_T$ Jets Plus Leading b Jet",
     )
     ratio_axis = hist.axis.Regular(
-            50,
-            0,
-            1,
-            name=f"ratio",
-            label=rf"$\frac{{m_{{ \chi }} }}{{ m_{{ 14 }} }}$ [GeV]",
-        )
+        50,
+        0,
+        1,
+        name=f"ratio",
+        label=r"$\frac{m_{\chi}}{m_{14}}$ [GeV]",
+    )
 
     ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
-        [m14_axis, ratio_axis],
-        [m14, comp_charg/m14],
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]"),
+            makeAxis(
+                50,
+                0,
+                1,
+                r"Mass of leading 2 $p_{T}$ Jets + leading b Jet $/  m_{14}$",
+            ),
+        ],
+        [m14, comp_charg / m14],
         name="ratio_m14_vs_m3_top_2_plus_lead_b",
     )
 
     ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
-        [m14_axis,ratio_axis],
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]"),
+            makeAxis(
+                50,
+                0,
+                1,
+                r"Mass of Jets 1-3 without Leading b $/ m_{14}$",
+            ),
+        ],
         [m14, uncomp_charg / m14],
         name="ratio_m3_top_3_no_lead_b",
     )
@@ -162,19 +193,25 @@ def createJetHistograms(events, hmaker):
         jets = gj[:, i:j].sum()
         masses[(i, j)] = jets.mass
         ret[f"m{i+1}{j}_pt"] = hmaker(
-            pt_axis,
+            makeAxis(
+                100,
+                0,
+                1500,
+                f"$p_T ( \\sum_{{n={i+1}}}^{{{j}}} jet_{{n}})$ ",
+                unit="GeV",
+            ),
             jets.pt,
             name=f"Composite Jet {i+1} to Jet {j} $p_T$",
             description=f"$p_T$ of the sum of jets {i+1} to {j}",
         )
         ret[f"m{i+1}{j}_eta"] = hmaker(
-            eta_axis,
+            makeAxis(20, -5, 5, f"$\eta ( \\sum_{{n={i+1}}}^{{{j}}} ) jet_{{n}}$"),
             jets.eta,
             name=rf"Composite Jet {i+1} to Jet {j} $\eta$",
             description=rf"$\eta$ of the sum of jets {i+1} to {j}",
         )
         ret[rf"m{i+1}{j}_m"] = hmaker(
-            mass_axis,
+            makeAxis(60, 0, 3000, f"$m_{{{i+1}{j}}}$", unit="GeV"),
             jets.mass,
             name=rf"Composite Jet {i+1} to Jet {j} mass",
             description=rf"Mass of the sum of jets {i+1} to {j}",
@@ -183,83 +220,27 @@ def createJetHistograms(events, hmaker):
     for p1, p2 in co(jet_combos):
         p1_1, p1_2 = p1
         p2_1, p2_2 = p2
-        m1 = hist.axis.Regular(
-            60,
-            0,
-            3000,
-            name=f"mass_{p1_1+1}{p1_2}",
-            label=rf"$m_{{{p1_1 + 1}{p1_2}}}$ [GeV]",
-        )
-        m2 = hist.axis.Regular(
-            60,
-            0,
-            3000,
-            name=f"mass_{p2_1+1}{p2_2}",
-            label=rf"$m_{{{p2_1 + 1}{p2_2}}}$ [GeV]",
-        )
-        ratio = hist.axis.Regular(
-            50,
-            0,
-            1,
-            name=f"ratio",
-            label=rf"$\frac{{m_{{ \sum {p2_1+1}{p2_2} }} }}{{ m_{{ \sum {p1_1+1}{p1_2} }} }}$ [GeV]",
-        )
         ret[f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
-            [m1, m2], [masses[p1], masses[p2]], name="Comp mass"
+            [
+                makeAxis(60, 0, 3000, rf"$m_{{{p1_1 + 1}{p1_2}}}$", unit="GeV"),
+                makeAxis(60, 0, 3000, rf"$m_{{{p2_1 + 1}{p2_2}}}$", unit="GeV"),
+            ],
+            [masses[p1], masses[p2]],
+            name="Comp mass",
         )
 
         ret[f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
-            [m1, ratio], [masses[p1], masses[p2] / masses[p1]], name="mass2dratio"
-        )
-
-    for i, j in jet_combos:
-        mask = ak.num(gj, axis=1) > 3
-        gj_mask = gj[mask]
-        masses_mask = masses[(i, j)][mask]
-
-        mask1 = ak.num(gj, axis=1) > 1
-        gj_mask1 = gj[mask1]
-        masses_mask1 = masses[(i, j)][mask1]
-        events_mask1 = events[mask1]
-
-        b_mask = ak.num(events.med_bs, axis=1) > 0
-        masses_bmask = masses[(i, j)][b_mask]
-        events_bmask = events[b_mask]
-
-        b_mask2 = ak.num(events.med_bs, axis=1) > 1
-        masses_bmask2 = masses[(i, j)][b_mask2]
-        events_bmask2 = events[b_mask2]
-
-        m1 = hist.axis.Regular(
-            60,
-            0,
-            3000,
-            name=f"mass_{i}{j}",
-            label=rf"$m_{{{i}{j}}}$ [GeV]",
-        )
-        ret[f"m{i}{j}_vs_pt4"] = hmaker(
-            [m1, pt_axis], [masses_mask, gj_mask[:, 3].pt], mask = mask, name=f"m{i}{j}_vs_pt4"
-        )
-        ret[f"m{i}{j}_vs_pt1"] = hmaker(
-            [m1, pt_axis], [masses_mask1, gj_mask1[:, 0].pt], mask = mask1, name=f"m{i}{j}_vs_pt1"
-        )
-
-        ret[f"m{i}{j}_vs_HT"] = hmaker(
-            [m1, pt_axis], [masses_mask1, events_mask1.HT], mask = mask1, name=f"m{i}{j}_vs_HT"
-        )
-
-        ret[f"m{i}{j}_vs_lead_b"] = hmaker(
-            [m1, pt_axis],
-            [masses_bmask, events_bmask.med_bs[:, 0].pt],
-					  mask = b_mask,
-            name=f"m{i}{j}_vs_lead_b_pt",
-        )
-
-        ret[f"m{i}{j}_vs_sublead_b"] = hmaker(
-            [m1, pt_axis],
-            [masses_bmask2, events_bmask2.med_bs[:, 1].pt],
-						mask = b_mask2,
-            name=f"m{i}{j}_vs_sublead_b_pt",
+            [
+                makeAxis(60, 0, 3000, rf"$m_{{{p1_1 + 1}{p1_2}}}$", unit="GeV"),
+                makeAxis(
+                    50,
+                    0,
+                    1,
+                    rf"$\frac{{m_{{ {p2_1+1}{p2_2} }} }}{{ m_{{  {p1_1+1}{p1_2} }} }}$",
+                ),
+            ],
+            [masses[p1], masses[p2] / masses[p1]],
+            name=f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}",
         )
 
     for i in range(0, 4):
@@ -372,25 +353,19 @@ def createTagHistograms(events, hmaker):
             name=f"Number of wp{wp} {name}",
         )
 
+
 @analyzerModule("b_hists", ModuleType.MainHist)
 def createBHistograms(events, hmaker):
     ret = {}
     dataset = events.metadata["dataset"]
     l_bjets = events.loose_bs
-    m_bjets = events.med_bs
 
     ret[f"loose_bjet_pt"] = hmaker(pt_axis, l_bjets.pt, name="Loose BJet $p_{T}$")
     ret[f"loose_nb"] = hmaker(b_axis, ak.num(l_bjets.pt), name="Loose BJet Count")
-    ret[f"loose_bdr"] = hmaker(
-        b_axis,
-        l_bjets[:, 0].delta_r(l_bjets[:, 1]),
-        name=rf"Loose BJet $\Delta R$",
-        description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
-    )
     for i in range(0, 4):
         mask = ak.num(l_bjets, axis=1) > i
         ret[f"loose_b_{i}_pt"] = hmaker(
-            pt_axis,
+            makeAxis(20, 0, 5, f"$p_{{T}}$ of rank  {i} loose b jet"),
             l_bjets[mask][:, i].pt,
             mask=mask,
             name=f"Loose BJet {i} $p_T$",
@@ -398,26 +373,90 @@ def createBHistograms(events, hmaker):
         )
     mask = ak.num(l_bjets, axis=1) > 1
     top2 = l_bjets[mask]
-    lb_eta = top2[:, 0].eta - top2[:, 1].eta
-    lb_phi = top2[:, 0].phi - top2[:, 1].phi
+    lb_eta = abs(top2[:, 0].eta - top2[:, 1].eta)
+    lb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
     lb_dr = top2[:, 0].delta_r(top2[:, 1])
 
     ret[f"loose_bb_eta"] = hmaker(
-        eta_axis,
+        makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading loose b jets"),
         lb_eta,
         name=rf"$\Delta \eta$ BB$",
         description=rf"$\Delta \eta$ between the two highest rank loose b jets",
     )
     ret[f"loose_bb_phi"] = hmaker(
-        phi_axis,
+        makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading loose b jets"),
         lb_phi,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank loose b jets",
     )
-    ret[f"loose_bb_deltar"] = hmaker(
-        dr_axis,
+    ret[f"loose_bdr"] = hmaker(
+        makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 loose b jets"),
         lb_dr,
-        name=f"$\Delta R$ BB$",
-        description=f"$\Delta R$ between the two highest rank loose b jets",
+        name=rf"Loose BJet $\Delta R$",
+        description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
     )
+
+    l_bjets = events.med_bs
+    ret[f"medium_bjet_pt"] = hmaker(pt_axis, l_bjets.pt, name="Medium BJet $p_{T}$")
+    ret[f"medium_nb"] = hmaker(b_axis, ak.num(l_bjets.pt), name="Medium BJet Count")
+    for i in range(0, 4):
+        mask = ak.num(l_bjets, axis=1) > i
+        ret[f"medium_b_{i}_pt"] = hmaker(
+            makeAxis(20, 0, 5, f"$p_{{T}}$ of rank  {i} medium b jet"),
+            l_bjets[mask][:, i].pt,
+            mask=mask,
+            name=f"Medium BJet {i} $p_T$",
+            description=f"$p_T$ of the rank {i} $p_T$ b jet",
+        )
+    mask = ak.num(l_bjets, axis=1) > 1
+    top2 = l_bjets[mask]
+    lb_eta = abs(top2[:, 0].eta - top2[:, 1].eta)
+    lb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
+    lb_dr = top2[:, 0].delta_r(top2[:, 1])
+
+    ret[f"medium_bb_eta"] = hmaker(
+        makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading medium b jets"),
+        lb_eta,
+        name=rf"$\Delta \eta$ BB$",
+        description=rf"$\Delta \eta$ between the two highest rank medium b jets",
+    )
+    ret[f"medium_bb_phi"] = hmaker(
+        makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading medium b jets"),
+        lb_phi,
+        name=rf"$\Delta \phi$ BB$",
+        description=rf"$\Delta \phi$ between the two highest rank medium b jets",
+    )
+    ret[f"medium_bdr"] = hmaker(
+        makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 medium b jets"),
+        lb_dr,
+        name=rf"Medium BJet $\Delta R$",
+        description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
+    )
+
+    return ret
+
+
+@analyzerModule("b_ordinality_hists", ModuleType.MainHist)
+def createBHistograms(events, hmaker):
+    ret = {}
+    gj = events.good_jets
+    idx = ak.local_index(gj, axis=1)
+    med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
+    t_lead_b_idx = idx[med_bjet_mask]
+    lead_b_idx = t_lead_b_idx[:, 0]
+    sublead_b_idx = idx[med_bjet_mask][:, 1]
+
+    ordax = hist.axis.Regular(10, 0, 10, name="Jet Rank", label=r"Jet Rank")
+
+    ret[f"lead_medium_bjet_ordinality"] = hmaker(
+        makeAxis(6, 1, 7, "Leading Medium B Jet Rank"),
+        lead_b_idx + 1,
+        name="Leading $p_{T}$ Medium B Jet Rank",
+    )
+    ret[f"sublead_medium_bjet_ordinality"] = hmaker(
+        makeAxis(6, 1, 7, "SubLeading Medium B Jet Rank"),
+        sublead_b_idx + 1,
+        name="Subleading $p_{T}$ Medium B Jet Rank",
+    )
+
     return ret
