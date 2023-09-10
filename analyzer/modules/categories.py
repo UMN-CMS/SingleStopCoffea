@@ -47,7 +47,12 @@ def dRJetsCategory(events, data):
 def bSelection(events, selection):
 	mediumBs = events.med_bs
 	tightBs = events.tight_bs
-	selection.add("3bjet", ((ak.num(tight_b) >= 3).to_numpy()))
+	selection.add("3bjet", ((ak.num(tightBs) >= 3).to_numpy()))
+	print("tight bs")
 	tightBs = ak.pad_none(tightBs, 2, axis = 1)
 	dRbb12 = ak.fill_none(tightBs[:, 0].delta_r(tightBs[:, 1]), False)
 	selection.add('dRbb12', (dRbb12 < 1).to_numpy())
+	print("dRbb12")
+	selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet400_TrimMass30).to_numpy())
+	print("HT trigger")
+	return selection
