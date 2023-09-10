@@ -83,7 +83,7 @@ def simplePlot(
 
         ax.set_yscale(scale)
         addEra(ax, lumi or 59.8)
-        addPrelim(ax, additional_text="$\\lambda_{312}$ " + (add_label or ""))
+        addPrelim(ax, additional_text="$\\lambda_{312}''$ " + (add_label or ""))
 
         addTitles1D(ax, hc, top_pad=0.4)
 
@@ -204,11 +204,24 @@ simplePlot("sublead_medium_bjet_ordinality", uncompressed, add_name="uncompresse
 simplePlot(
     "num_top_3_jets_matched_chi_children", compressed, [], add_label="Compressed"
 )
-simplePlot(
-    "num_top_4_jets_matched_stop_children", representative, []
-)
+simplePlot("num_top_4_jets_matched_stop_children", representative, [])
 simplePlot(
     "num_sub_3_jets_matched_chi_children", uncompressed, [], add_label="Uncompressed"
+)
+
+simplePlot(
+    "mstop_gen_matched",
+    compressed+uncompressed,
+    [],
+    normalize=True,
+    scale="linear",
+)
+simplePlot(
+    "mchi_gen_matched",
+    compressed+uncompressed,
+    [],
+    normalize=True,
+    scale="linear",
 )
 
 simplePlot("m14_vs_m24", uncompressed)

@@ -81,6 +81,8 @@ class PlotObject:
     def getStyle(self):
         if self.dataset:
             return self.dataset.style
+        else:
+            return {}
 
 
 def autoSplit(func):

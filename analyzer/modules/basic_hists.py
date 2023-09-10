@@ -56,6 +56,40 @@ def createEventLevelHistograms(events, hmaker):
     return ret
 
 
+@analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
+def genMatchingMassReco(events, hmaker):
+    ret = {}
+    mask = ~ak.any(ak.is_none(events.matched_jets,axis=1), axis=1)
+    all_matched = events.matched_jets[mask]
+    print(all_matched)
+
+    ret[f"mchi_gen_matched"] = hmaker(
+        makeAxis(
+            60,
+            0,
+            3000,
+            r"Mass of Gen Matched Jets From $\tilde{\chi}^{\pm}$",
+            unit="GeV",
+        ),
+        all_matched[:, 1:4].sum().mass,
+        mask=mask,
+        name="genmatchedchi",
+    )
+    ret[f"mstop_gen_matched"] = hmaker(
+        makeAxis(
+            60,
+            0,
+            3000,
+            r"Mass of Gen Matched Jets From $\tilde{t}$",
+            unit="GeV",
+        ),
+        all_matched[:, 0:4].sum().mass,
+        mask=mask,
+        name="Genmatchedm14",
+    )
+    return ret
+
+
 @analyzerModule("chargino_hists", ModuleType.MainHist)
 def charginoRecoHistograms(events, hmaker):
     ret = {}

@@ -25,6 +25,6 @@ def createSelection(events, selection):
     selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)).to_numpy())
     selection.add("2bjet", (ak.num(med_b) >= 2).to_numpy())
     selection.add("1tightbjet", (ak.num(tight_b) >= 1).to_numpy())
-    selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
+    #selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
     selection.add("b_dr", (med_dr > 1).to_numpy())
     return selection
