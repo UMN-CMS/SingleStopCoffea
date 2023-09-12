@@ -128,7 +128,7 @@ def charginoRecoHistograms(events, hmaker):
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 3000, r"Mass of Jets 1-3 without Leading b", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{13 (no b)}$", unit="GeV"),
         ],
         [m14, uncomp_charg],
         name="$m_{14}$ vs Mass of Jets 1-3 Without Leading B",
@@ -186,7 +186,7 @@ def charginoRecoHistograms(events, hmaker):
                 50,
                 0,
                 1,
-                r"Mass of leading 2 $p_{T}$ Jets + leading b Jet $/  m_{14}$",
+                r"$\frac{m_{13 (incl b)}}{m_{14}}$",
             ),
         ],
         [m14, comp_charg / m14],
@@ -200,7 +200,7 @@ def charginoRecoHistograms(events, hmaker):
                 50,
                 0,
                 1,
-                r"Mass of Jets 1-3 without Leading b $/ m_{14}$",
+                r"$\frac{m_{13 \mathrm{(no b)}}}{m_{14}}$",
             ),
         ],
         [m14, uncomp_charg / m14],

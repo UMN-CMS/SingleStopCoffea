@@ -4,7 +4,6 @@ import matplotlib.font_manager as font_manager
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-import importlib.resources as imp_res
 from . import static
 from dataclasses import dataclass
 from functools import partial, wraps
@@ -14,24 +13,34 @@ import itertools as it
 import hist
 import re
 
+import importlib.resources as imp_res
+from pathlib import Path
+HAS_IMPRES = hasattr(imp_res, "files")
 
 default_linewidth = 3
 
 
 def loadStyles():
-    style = imp_res.files(static) / "style.mplstyle"
+    if HAS_IMPRES:
+        style = imp_res.files(static) / "style.mplstyle"
+        print(style)
+        font_dirs = [imp_res.files(static) / "fonts"]
+    else:
+        from pkg_resources import resource_string, resource_listdir, resource_filename
 
-    font_dirs = [imp_res.files(static) / "fonts"]
+        style = resource_filename("analyzer.plotting.static", "style.mplstyle")
+        font_dirs = [resource_filename("analyzer.plotting.static", "fonts")]
+
     font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
     for font in font_files:
         font_manager.fontManager.addfont(font)
     plt.style.use(style)
 
 
-def addPrelim(ax, pos="in", additional_text=None) -> mpl.axis.Axis:
+def addPrelim(ax, pos="in", additional_text=None, color="black") -> mpl.axis.Axis:
     text = r"$\bf{CMS}\ \it{Preliminary}$"
     if additional_text:
-        text += "\n" + additional_text
+        text += additional_text
     if pos == "in":
         ax.text(
             0.02,
@@ -41,6 +50,7 @@ def addPrelim(ax, pos="in", additional_text=None) -> mpl.axis.Axis:
             verticalalignment="top",
             transform=ax.transAxes,
             fontsize=20,
+            color=color,
         )
     elif pos == "out":
         ax.text(
@@ -51,6 +61,7 @@ def addPrelim(ax, pos="in", additional_text=None) -> mpl.axis.Axis:
             verticalalignment="bottom",
             transform=ax.transAxes,
             fontsize=20,
+            color=color,
         )
     return ax
 
@@ -75,12 +86,12 @@ def histRank(hist):
 @dataclass
 class PlotObject:
     hist: hist.Hist
-    title: Optional[str]
-    dataset: Optional[Dataset]
+    title: Optional[str] = None
+    dataset: Optional[Dataset] = None
 
     def getStyle(self):
         if self.dataset:
-            return self.dataset.style
+            return self.dataset.style.toDict()
         else:
             return {}
 
@@ -145,7 +156,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
             yerr=var,
             fmt="none",
             linewidth=default_linewidth,
-            **style.toDict(),
+            **style,
             **kwargs,
         )
         ax.hlines(
@@ -154,7 +165,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
             ed[:-1],
             label=p.title,
             linewidth=default_linewidth,
-            **style.toDict(),
+            **style,
         )
     else:
         ax.scatter(
@@ -163,7 +174,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
             label=p.title,
             marker="+",
             linewidth=default_linewidth,
-            **style.toDict(),
+            **style,
             **kwargs,
         )
     return ax
@@ -171,7 +182,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
 
 @magicPlot
 @autoSplit
-def drawAs1DHist(ax, plot_object, yerr=True, fill=True, **kwargs):
+def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
     style = plot_object.getStyle()
     h = plot_object.hist
     a = h.axes[0]
@@ -180,33 +191,56 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, **kwargs):
     raw_vals = h.values()
     vals = np.append(raw_vals, raw_vals[-1])
     errs = np.sqrt(h.variances())
+    kwargs = dict(**kwargs)
 
     if yerr:
-        ax.errorbar(
-            x,
-            raw_vals,
-            yerr=errs,
-            fmt="none",
-            linewidth=default_linewidth,
-            **style.toDict(),
-            **kwargs,
-        )
+        if orient == "h":
+            ax.errorbar(
+                x,
+                raw_vals,
+                yerr=errs,
+                fmt="none",
+                linewidth=default_linewidth,
+                **style,
+                **kwargs,
+            )
+        else:
+            ax.errorbar(
+                raw_vals,
+                x,
+                xerr=errs,
+                fmt="none",
+                linewidth=default_linewidth,
+                **style,
+                **kwargs,
+            )
     if fill:
-        ax.fill_between(
-            edges,
-            vals,
-            step="post",
-            label=plot_object.title,
-            **style.toDict(),
-            **kwargs,
-        )
+        if orient == "h":
+            ax.fill_between(
+                edges,
+                vals,
+                step="post",
+                label=plot_object.title,
+                **style,
+                **kwargs,
+            )
+        else:
+            ax.fill_betweenx(
+                edges,
+                vals,
+                step="post",
+                label=plot_object.title,
+                **style,
+                **kwargs,
+            )
     else:
         ax.stairs(
             raw_vals,
             edges,
             label=plot_object.title,
             linewidth=default_linewidth,
-            **style.toDict(),
+            orientation="horizontal" if orient == "h" else "vertical",
+            **style,
             **kwargs,
         )
 
@@ -214,7 +248,7 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, **kwargs):
 
 
 @magicPlot
-def drawAs2DHist(ax, plot_object, **kwargs):
+def drawAs2DHist(ax, plot_object, divider=None, add_color_bar=True, **kwargs):
     h = plot_object.hist
     a1 = h.axes[0]
     a2 = h.axes[1]
@@ -228,10 +262,13 @@ def drawAs2DHist(ax, plot_object, **kwargs):
     im = ax.hist2d(x, y, bins=[e1, e2], weights=w, **kwargs)
     ax.set_xlabel(a1.label)
     ax.set_ylabel(a2.label)
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    cbar = plt.colorbar(im[3], cax=cax)
-    ax.cax = cax
+    ax.quadmesh = im[3]
+    if divider is None:
+        divider = make_axes_locatable(ax)
+    if add_color_bar:
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = plt.colorbar(ax.quadmesh, cax=cax)
+        ax.cax = cax
     return ax
 
 
@@ -286,21 +323,23 @@ def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
 
 def addTitles2D(ax, hist):
     axes = hist.axes
-    cax = ax.cax
     x_unit = getattr(axes[0], "unit", None)
     y_unit = getattr(axes[1], "unit", None)
-    ax.set_xlabel(axes[0].label + f" [{x_unit}]" if x_unit else "")
-    ax.set_ylabel(axes[1].label + f" [{y_unit}]" if x_unit else "")
+    ax.set_xlabel(axes[0].label + (f" [{x_unit}]" if x_unit else ""))
+    ax.set_ylabel(axes[1].label + (f" [{y_unit}]" if y_unit else ""))
+
     if hist.sum().value < 20:
         zlab = "Normalized Events"
     else:
         zlab = "Weighted Events"
     if x_unit and y_unit and x_unit == y_unit:
-            zlab += f" / {x_unit or ''}$^2$"
+        zlab += f" / {x_unit or ''}$^2$"
     elif x_unit or y_unit:
         zlab += f" / {x_unit or ''} {y_unit or ''}"
 
-    cax.set_ylabel(zlab)
+    if hasattr(ax, "cax"):
+        cax = ax.cax
+        cax.set_ylabel(zlab)
     return ax
 
 
@@ -317,3 +356,40 @@ def getNormalized(hist, dataset_axis=None):
             s = this.sum(flow=True).value
             ret[{dataset_axis: x}] = np.stack([val / s, var / s**2], axis=-1)
     return ret
+
+
+@magicPlot
+def drawAs2DExtended(
+    ax,
+    plot_object_2d,
+    top_stack=None,
+    right_stack=None,
+    color_bar=False,
+    top_pad=0.2,
+    right_pad=0.2,
+    **plotopts,
+):
+    divider = make_axes_locatable(ax)
+    ax = drawAs2DHist(
+        ax, plot_object_2d, divider=divider, add_color_bar=False, **plotopts
+    )
+
+    ax.top_axes = []
+    ax.right_axes = []
+    for plot_object in top_stack or []:
+        ax_histx = divider.append_axes("top", 1, pad=top_pad, sharex=ax)
+        drawAs1DHist(ax_histx, plot_object)
+        ax_histx.xaxis.set_tick_params(labelbottom=False)
+        ax.top_axes.append(ax_histx)
+
+    for plot_object in right_stack or []:
+        ax_histy = divider.append_axes("right", 1, pad=right_pad, sharey=ax)
+        drawAs1DHist(ax_histy, plot_object, orient="v")
+        ax_histy.yaxis.set_tick_params(labelleft=False)
+        ax.right_axes.append(ax_histy)
+
+    if color_bar:
+        cax = divider.append_axes("left", size="5%", pad=1.5)
+        cbar = plt.colorbar(ax.quadmesh, cax=cax, orientation="vertical")
+        ax.cax = cax
+    return ax

@@ -83,7 +83,7 @@ def simplePlot(
 
         ax.set_yscale(scale)
         addEra(ax, lumi or 59.8)
-        addPrelim(ax, additional_text="$\\lambda_{312}''$ " + (add_label or ""))
+        addPrelim(ax, additional_text="\n$\\lambda_{312}''$ " + (add_label or ""))
 
         addTitles1D(ax, hc, top_pad=0.4)
 
@@ -93,10 +93,25 @@ def simplePlot(
     elif len(h.axes) == 3:
         for x in hc.axes[0]:
             realh = hc[{"dataset": x}]
-            fig, ax = drawAs2DHist(PlotObject(realh, x, manager[x]))
-            addTitles2D(ax, realh)
-            addPrelim(ax, "out")
-            addEra(ax, lumi or 59.8)
+            if sig_style == "hist":
+                fig, ax = drawAs2DHist(PlotObject(realh, x, manager[x]))
+                addTitles2D(ax, realh)
+                addPrelim(ax, "out")
+                addEra(ax, lumi or 59.8)
+            elif sig_style == "profile":
+                fig, ax = drawAs2DExtended(
+                    PlotObject(realh, x, manager[x]),
+                    top_stack=[PlotObject(realh[sum, :], x, manager[x])],
+                    right_stack=[PlotObject(realh[:, sum], x, manager[x])],
+                )
+                addTitles2D(ax, realh)
+                addPrelim(
+                    ax,
+                    additional_text="\n$\\lambda_{312}''$" + f" {add_label}," + f"{manager[x].getTitle()}",
+                    pos="in",
+                    color="white",
+                )
+                addEra(ax.top_axes[-1], lumi or 59.8)
             name = h.name
             fig.savefig(savedir / f"{add_name}{hist}_{x}.pdf")
             plt.close(fig)
@@ -107,6 +122,8 @@ savedir.mkdir(exist_ok=True, parents=True)
 open(savedir / "descriptions.txt", "wt")
 
 
+simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
+sys.exit(0)
 simplePlot("h_njet", compressed, add_name="compressed")
 simplePlot("h_njet", uncompressed, add_name="uncompressed")
 
@@ -211,14 +228,14 @@ simplePlot(
 
 simplePlot(
     "mstop_gen_matched",
-    compressed+uncompressed,
+    compressed + uncompressed,
     [],
     normalize=True,
     scale="linear",
 )
 simplePlot(
     "mchi_gen_matched",
-    compressed+uncompressed,
+    compressed + uncompressed,
     [],
     normalize=True,
     scale="linear",
