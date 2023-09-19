@@ -239,7 +239,7 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
             edges,
             label=plot_object.title,
             linewidth=default_linewidth,
-            orientation="horizontal" if orient == "h" else "vertical",
+            orientation="vertical" if orient == "h" else "horizontal",
             **style,
             **kwargs,
         )

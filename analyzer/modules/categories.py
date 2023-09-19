@@ -80,6 +80,7 @@ def triggers(events, selection):
 @analyzerModule("nMinusOnePlots", ModuleType.MainHist)
 def nMinusOnePlots(events, hmaker):
 	gj = events.good_jets
+	mediumBs = events.med_bs
 	ret = {}
 
 	mask = ak.num(gj, axis=1) > 0

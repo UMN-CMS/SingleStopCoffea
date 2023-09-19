@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 loadStyles()
 
 
-backgrounds = ["Skim_QCDInclusive2018"]
+backgrounds = ["QCDInclusive2018"]
 compressed = [f"signal_312_{p}" for p in ("2000_1900", "1200_1100", "1500_1400")]
 uncompressed = [f"signal_312_{p}" for p in ("2000_1400", "1200_400", "1500_900")]
 both = compressed + uncompressed
@@ -34,8 +34,8 @@ lumi = data["target_lumi"]
 
 def simplePlot(
     hist,
-    sig_set=['signal_312_1200_400', 'signal_312_1500_900', 'signal_312_2000_1900'],
-    bkg_set=['QCDInclusive2018'],
+    sig_set,
+    bkg_set,
     scale="log",
     title="",
     add_name="",
@@ -54,7 +54,7 @@ def simplePlot(
     elif hist == 'pT1':
       selection = { 'jetpT300': sum, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': 1, 'dRbb_313': sum }
     elif hist == 'dRbb12':
-      selection = { 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': 1, 'dRbb_313': sum }
+      selection = { 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
 
     h = histos[hist][selection]
     with open(savedir / "descriptions.txt", "a") as f:
@@ -130,9 +130,9 @@ savedir = Path("figures")
 savedir.mkdir(exist_ok=True, parents=True)
 open(savedir / "descriptions.txt", "wt")
 
-simplePlot('pT1', representative)
-simplePlot('dRbb12', representative)
-simplePlot('nJets', representative)
+simplePlot('pT1', representative, backgrounds)
+simplePlot('dRbb12', representative, backgrounds)
+simplePlot('nJets', representative, backgrounds)
 
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
