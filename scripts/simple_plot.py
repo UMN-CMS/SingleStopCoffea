@@ -123,7 +123,6 @@ open(savedir / "descriptions.txt", "wt")
 
 
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
-sys.exit(0)
 simplePlot("h_njet", compressed, add_name="compressed")
 simplePlot("h_njet", uncompressed, add_name="uncompressed")
 
