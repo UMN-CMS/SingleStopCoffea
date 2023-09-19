@@ -117,5 +117,16 @@ def nMinusOnePlots(events, hmaker):
 		description = 'HT',
 	)
 
+	mediumBs = events.med_bs
+	b_mask = ak.num(mediumBs) > 2
+	maskedBs = mediumBs[b_mask]
+	dRbb12 = maskedBs[:, 0].delta_r(maskedBs[:, 1])
+	ret[rf'dRbb12'] = hmaker(
+		dr_axis,
+		dRbb12,
+		mask = b_mask,
+		name = rf'$\Delta R$ between medium-b-tagged jets 1 and 2',
+		description = rf'$\Delta R$ between medium-b-tagged jets 1 and 2',
+	)
 
 	return ret

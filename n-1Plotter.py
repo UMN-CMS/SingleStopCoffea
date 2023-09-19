@@ -43,10 +43,14 @@ elif plot == 'pT1':
 	selection = { 'dataset': sum, 'jetpT300': sum, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': 1, '312Bs': sum, '313Bs': 1, 'dRbb_312': sum, 'dRbb_313': 1}
 	xLabel = r'$p_{T, 1}$'
 
+elif plot == 'dRbb12':
+	selection = { 'dataset': sum, 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': 1, 'dRbb_312': sum, 'dRbb_313': sum}
+	xLabel = r'$\Delta R_{b_{1}, b_{2}}$'
+
 if coupling == '312':
 	selection['312Bs'] = 1
 	selection['313Bs'] = sum
-	selection['dRbb_312'] = 1
+	selection['dRbb_312'] = 1 if plot != 'dRbb12' else sum
 	selection['dRbb_313'] = sum
 
 if isQCD:
@@ -96,6 +100,6 @@ if plot == 'nJets':
 	plt.xticks(h_signal.axes[0].edges[:-1]),
 	plt.minorticks_off()
 	plt.tight_layout()
-plt.savefig('plots/{0}/{1}-n-1.png'.format(coupling, plot))
+plt.savefig('plots/{0}/{1}-n-1.pdf'.format(coupling, plot))
 
 
