@@ -117,7 +117,7 @@ def nMinusOnePlots(events, hmaker):
 		description = 'HT',
 	)
 
-	mediumBs = events.med_bs
+
 	b_mask = ak.num(mediumBs) > 2
 	maskedBs = mediumBs[b_mask]
 	dRbb12 = maskedBs[:, 0].delta_r(maskedBs[:, 1])
