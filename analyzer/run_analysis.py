@@ -6,6 +6,7 @@ from analyzer.process import AnalysisProcessor
 import analyzer.chunk_runner
 import sys
 import shutil
+import itertools as it
 
 from coffea import processor
 from coffea.processor import accumulate
@@ -124,11 +125,11 @@ def getChunksFromFiles(flist, runner, retries=3):
 
 def runModulesOnSamples(modules, samples, chunks, runner, target_lumi):
     wmap = {}
-    tag_sets = iter([s.getTags() for s in samples])
-    common_tags = next(tag_sets).intersection(*tag_sets)
-    tag_map = {s.name: s.getTags() for s in samples}
+    #tag_map = {s.name: s.getTags() for s in samples}
+    tag_map = {}
     for samp in samples:
         wmap.update(samp.getWeightMap(target_lumi))
+        tag_map.update(samp.getTagMap())
 
     for name in wmap:
         w = wmap[name]
@@ -446,8 +447,12 @@ def runAnalysis():
 
     max_retries = args.max_retries
     retry_count = 0
+    samples = list(sample_manager[x] for x in args.samples)
+    print(
+        f"Running on the following samples:\n\t- "
+        + "\n\t- ".join(x.name for x in samples)
+    )
     while retry_count < max_retries:
-        samples = [sample_manager[sample] for sample in args.samples]
         out = workFunction(runner, samples, modules, existing_data, args.target_lumi)
         existing_data = out
         check_res = check(out, sample_manager, runner)

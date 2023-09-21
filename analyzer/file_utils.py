@@ -19,14 +19,11 @@ def copyFile(fr, to):
         import XRootD
         import XRootD.client
         copyproc = XRootD.client.CopyProcess()
-        print("FROMTO")
-        print(str(fr), str(to))
         copyproc.add_job(str(fr), str(to))
         copyproc.prepare()
         copyproc.run()
         client = XRootD.client.FileSystem(to_netloc)
         status = client.locate(to_path, XRootD.client.flags.OpenFlags.READ)
-        print(status)
         assert status[0].ok
         del client
         del copyproc

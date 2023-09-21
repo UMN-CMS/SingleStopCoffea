@@ -11,6 +11,10 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
+class ForbiddenDataset(Exception):
+    pass
+
+
 @dataclass
 class Style:
     color: Optional[str]
@@ -57,6 +61,8 @@ class SampleSet:
     files: List[SampleFile] = field(default_factory=list)
     tags: Set[str] = field(default_factory=set)
     style: Optional[Union[Style, str]] = None
+    isdata: bool = False
+    forbid: Optional[bool] = False
 
     @staticmethod
     def fromDict(data):
@@ -68,7 +74,9 @@ class SampleSet:
         n_events = data.get("n_events", None)
         tags = set(data.get("tags", []))
         title = data.get("title", name)
-        if not (x_sec and n_events and lumi) and not derived_from:
+        isdata = data.get("isdata", False)
+        forbid = data.get("forbid", None)
+        if not (x_sec and n_events and lumi) and not (derived_from or isdata):
             raise Exception(
                 f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}"
             )
@@ -89,8 +97,19 @@ class SampleSet:
             files,
             tags,
             style,
+            isdata,
+            forbid,
         )
         return ss
+
+    def isForbidden(self):
+        if self.forbid is None:
+            if self.derived_from is None:
+                return False
+            else:
+                return self.derived_from.isForbidden()
+        else:
+            return self.forbid
 
     def getStyle(self):
         return self.style
@@ -105,19 +124,29 @@ class SampleSet:
         return self.title
 
     def getFiles(self):
+        if self.isForbidden():
+            raise ForbiddenDataset(
+                f"Attempting to access the files for forbidden dataset {self.name}"
+            )
         return {self.name: [f.getFile() for f in self.files]}
 
     def getWeight(self, target_lumi=None):
         if self.derived_from:
-            w= self.derived_from.getWeight()
+            w = self.derived_from.getWeight()
         else:
-            w= self.lumi * self.x_sec / self.n_events
+            if self.isdata:
+                w = 1
+            else:
+                w = self.lumi * self.x_sec / self.n_events
         if target_lumi:
             w = w * target_lumi / self.getLumi()
         return w
 
     def getWeightMap(self, target_lumi=None):
         return {self.name: self.getWeight(target_lumi)}
+
+    def getTagMap(self):
+        return {self.name: set(self.tags)}
 
     def getTags(self):
         return self.tags
@@ -186,12 +215,14 @@ class SampleCollection:
             merged.update(s.getWeightMap(target_lumi))
         return merged
 
-    def getTags(self):
-        tags = iter(it.chain(s.tags for s in self.sets))
-        ret = next(tags)
-        for t in tags:
-            ret = t.intersection(ret)
-        return ret
+    def getTagMap(self):
+        merged = {}
+        if self.treat_separate:
+            for s in self.sets:
+                merged.update(s.getTagMap())
+        else:
+            merged = {self.name: set(it.chain.from_iterable(x.tags for x in self.sets))}
+        return merged
 
     def getMissing(self, other_files):
         all_files = self.getFiles()

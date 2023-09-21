@@ -1,26 +1,39 @@
 import pickle as pkl
 import sys
+
 sys.path.append(".")
 import hist
 import uproot
 
 from pathlib import Path
+import argparse
+from rich.progress import track
 
 
-file_name = "all_hists.pkl"
-data = pkl.load(open(file_name, "rb"))
-histos = data["histograms"]
 
-root_output= uproot.recreate("output.root")
 
-def convertToRoot(h, name, dset_axis = "dataset"):
+
+def convertToRoot(h, name, out, dset_axis="dataset"):
     for x in h.axes[dset_axis]:
         newhist = h[{dset_axis: x}]
-        root_output[f"{x}_{name}"] = newhist.to_numpy()
+        out[f"{x}_{name}"] = newhist.to_numpy()
 
 
 
 
-for h in histos:
-    convertToRoot(histos[h], h)
+def main():
+    parser = argparse.ArgumentParser(
+        description="Convert an analyzer output file to root"
+    )
+    parser.add_argument("input", type=str)
+    parser.add_argument("output", type=str)
+    args= parser.parse_args()
+    data = pkl.load(open(args.input, "rb"))
+    root_output = uproot.recreate(args.output)
+    histos = data["histograms"]
+    for h in track(histos, description = "Converting..."):
+        convertToRoot(histos[h], h, root_output)
 
+
+if __name__ == "__main__":
+    main()
