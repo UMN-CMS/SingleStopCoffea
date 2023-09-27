@@ -12,7 +12,8 @@
   n_events: 14560798
 
 - name: CR0b_QCDInclusive2018
-  derived_from: QCDInclusive2018
+  style: QCDInclusive2018
+  title: "QCD"
   sets:
   - CR0b_QCDInclusive2018_HT300to500
   - CR0b_QCDInclusive2018_HT500to700

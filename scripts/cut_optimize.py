@@ -10,6 +10,7 @@ import json
 from scipy.optimize import curve_fit
 from scipy.stats import crystalball
 import sys
+
 sys.path.append(".")
 from analyzer.datasets import loadSamplesFromDirectory
 from analyzer.plotting.core_plots import *
@@ -27,7 +28,7 @@ def getHistograms(path):
     return r["histograms"]
 
 
-all_hists = getHistograms("all_hists.pkl")
+all_hists = getHistograms("signalhists.pkl")
 
 
 def gauss(x, *p):
@@ -153,7 +154,7 @@ for sig in signals:
         label = "Uncompressed"
         target = "m14_vs_m13"
         target = "ratio_m14_vs_m3_top_3_no_lead_b"
-        #target = "ratio_m14_vs_m13"
+        # target = "ratio_m14_vs_m13"
         a1 = "13"
         a1 = "ratio"
         a1 = 1
@@ -161,7 +162,7 @@ for sig in signals:
         label = "Compressed"
         target = "m14_vs_m24"
         target = "ratio_comp_m14_vs_m24"
-        target = "ratio_m14_vs_m13"#_top_2_plus_lead_b"
+        target = "ratio_m14_vs_m13"  # _top_2_plus_lead_b"
         a1 = "ratio"
         a1 = "ratio"
         a1 = 1
@@ -204,7 +205,7 @@ for sig in signals:
         right_stack=[
             PlotObject(hs[sum, :], sig, manager[sig]),
         ],
-        top_pad=0.2
+        top_pad=0.2,
     )
     for a, l in it.product([ax, *ax.right_axes], window):
         a.axhline(y=l)
@@ -218,8 +219,9 @@ for sig in signals:
     )
     addEra(ax.top_axes[-1], lumi or 59.8)
     ax = addTitles2D(ax, hs)
-    
+
     fig.savefig(outdir / sig / "sig.pdf")
+    plt.close(fig)
 
     #############################################################
     bkg = "Skim_QCDInclusive2018"
@@ -232,7 +234,7 @@ for sig in signals:
         right_stack=[
             PlotObject(hb[sum, :], bkg, manager[bkg]),
         ],
-        #top_pad=0.2
+        # top_pad=0.2
     )
     addTitles2D(ax, hb)
     for a, l in it.product([ax, *ax.right_axes], window):
@@ -246,7 +248,14 @@ for sig in signals:
         color="white",
     )
     addEra(ax.top_axes[-1], lumi or 59.8)
+    for a in ax.top_axes:
+        ot = a.get_yaxis().get_offset_text()
+        if not ot:
+            continue
+        x,y = ot.get_position()
+        ot.set_position((x-0.15,y))
     fig.savefig(outdir / sig / "bkg.pdf")
+    plt.close(fig)
     data = dict(
         before_sig=before_sig,
         after_sig=after_sig,

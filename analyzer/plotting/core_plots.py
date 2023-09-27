@@ -96,6 +96,10 @@ class PlotObject:
             return {}
 
 
+
+        
+
+
 def autoSplit(func):
     @wraps(func)
     def inner(ax, hist, cat_axis=None, cat_filter=None, manager=None, **kwargs):
@@ -311,6 +315,7 @@ def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
     if sc == "log":
         top_pad = 10 ** (1 + top_pad)
         bottom = max(1, lim[0] - delta * 0.05)
+        bottom = lim[0]
     else:
         bottom = lim[0] - delta * 0.05
 

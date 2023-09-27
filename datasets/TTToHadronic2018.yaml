@@ -1,6 +1,6 @@
 - name: TTToHadronic2018
   x_sec: 380.1326
-  n_events: 331506194
+  n_events: 334206000
   lumi: 59.8
   files: 
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/0A0C246F-D01B-6F4D-85E6-3A75C27C5197.root
@@ -342,3 +342,4 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/93AA745C-D894-CA43-8BD7-F5FA90020F2B.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/18D885EA-36C9-5A4C-A686-449C956DD035.root
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/327E6857-E387-7F43-A607-51BAD8096C59.root
+

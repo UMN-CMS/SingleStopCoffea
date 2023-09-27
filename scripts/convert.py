@@ -18,9 +18,6 @@ def convertToRoot(h, name, out, dset_axis="dataset"):
         newhist = h[{dset_axis: x}]
         out[f"{x}_{name}"] = newhist.to_numpy()
 
-
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Convert an analyzer output file to root"
