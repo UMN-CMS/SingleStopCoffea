@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 loadStyles()
 
 
-backgrounds = ["QCDInclusive2018"]
+backgrounds = ["QCDInclusive2018", "TTToHadronic2018"]
 compressed = [f"signal_312_{p}" for p in ("2000_1900", "1200_1100", "1500_1400")]
 uncompressed = [f"signal_312_{p}" for p in ("2000_1400", "1200_400", "1500_900")]
 both = compressed + uncompressed
@@ -130,9 +130,9 @@ savedir = Path("figures")
 savedir.mkdir(exist_ok=True, parents=True)
 open(savedir / "descriptions.txt", "wt")
 
-simplePlot('pT1', representative, backgrounds)
-simplePlot('dRbb12', representative, backgrounds)
-simplePlot('nJets', representative, backgrounds)
+simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
+simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
+simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
 
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
