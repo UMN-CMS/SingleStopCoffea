@@ -1,7 +1,7 @@
 from analyzer.core import analyzerModule, ModuleType
 from .axes import *
 import awkward as ak
-from analyzer.utilities import angleToNPiToPi
+from analyzer.math_funcs import angleToNPiToPi
 
 
 @analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
@@ -56,13 +56,13 @@ def createSignalHistograms(events, hmaker):
     )
 
     ret[f"chi_b_phi"] = hmaker(
-        makeAxis(50, -4, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
+        makeAxis(25, 0, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
         abs(angleToNPiToPi(events.SignalParticles.chi.phi - events.SignalParticles.stop_b.phi)),
         name="chi_b_phi",
     )
 
     ret[f"chi_b_eta"] = hmaker(
-        makeAxis(50, -4, 4, "$\\Delta \\eta$ between $\\chi$ and b from $\\tilde{t}$"),
+        makeAxis(25, 0, 4, "$\\Delta \\eta$ between $\\chi$ and b from $\\tilde{t}$"),
         events.SignalParticles.chi.eta - events.SignalParticles.stop_b.eta,
         name="chi_b_phi",
     )

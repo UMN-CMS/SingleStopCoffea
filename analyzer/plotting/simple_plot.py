@@ -136,5 +136,6 @@ class Plotter:
                     )
                     addEra(ax.top_axes[-1], self.lumi or 59.8)
                 name = h.name
+                fig.tight_layout()
                 fig.savefig(self.outdir / f"{add_name}{hist}_{x}.pdf")
                 plt.close(fig)
