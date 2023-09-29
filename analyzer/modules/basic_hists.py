@@ -178,7 +178,13 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"$m_{4}$",
+                unit="GeV",
+            ),
             makeAxis(
                 50,
                 0,
@@ -192,7 +198,13 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"$m_{4}$",
+                unit="GeV",
+            ),
             makeAxis(
                 50,
                 0,

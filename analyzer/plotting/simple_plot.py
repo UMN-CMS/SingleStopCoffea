@@ -11,6 +11,8 @@ from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 import logging
+from enum import Enum, atuo
+
 
 loadStyles()
 

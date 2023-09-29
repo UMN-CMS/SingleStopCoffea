@@ -272,6 +272,7 @@ def drawAs2DHist(ax, plot_object, divider=None, add_color_bar=True, **kwargs):
     if add_color_bar:
         cax = divider.append_axes("right", size="5%", pad=0.05)
         cbar = plt.colorbar(ax.quadmesh, cax=cax)
+        cax.get_yaxis().set_offset_position("left")
         ax.cax = cax
     return ax
 
