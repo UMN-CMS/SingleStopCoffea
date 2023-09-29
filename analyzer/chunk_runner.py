@@ -21,10 +21,28 @@ from typing import (
     Tuple,
     Union,
 )
+import itertools as it
+
+
+def wrappedWorkFunction(*args, **kwargs):
+    w = next(x for x in it.chain(args, kwargs.values()) if isinstance(x, WorkItem))
+    try:
+        return processor.Runner._work_function(*args, **kwargs)
+    except Exception as e:
+        return {
+            "out": {
+                "exceptions": {
+                    f"{w.filename}:{w.entrystart}:{w.entrystop}": str(e.__context__)
+                }
+            },
+            "metrics": {},
+        }
+
 
 def runChunks(self, chunks, processor_instance, treename):
     import lz4.frame as lz4f
     import cloudpickle
+
     if self.processor_compression is None:
         pi_to_send = processor_instance
     else:
@@ -36,7 +54,8 @@ def runChunks(self, chunks, processor_instance, treename):
     if isinstance(self.executor, DaskExecutor):
         self.executor.heavy_input = pi_to_send
         closure = partial(
-            self._work_function,
+            # self._work_function,
+            wrappedWorkFunction,
             self.format,
             self.xrootdtimeout,
             self.mmap,
@@ -48,7 +67,8 @@ def runChunks(self, chunks, processor_instance, treename):
         )
     else:
         closure = partial(
-            self._work_function,
+            # self._work_function,
+            wrappedWorkFunction,
             self.format,
             self.xrootdtimeout,
             self.mmap,
@@ -112,3 +132,4 @@ def runChunks(self, chunks, processor_instance, treename):
 
 
 processor.Runner.runChunks = runChunks
+processor.Runner.wrappedWorkFunction = wrappedWorkFunction

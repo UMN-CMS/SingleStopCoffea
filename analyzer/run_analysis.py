@@ -112,7 +112,7 @@ def getChunksFromFiles(flist, runner, retries=3):
 
 def runModulesOnSamples(modules, samples, chunks, runner, target_lumi):
     wmap = {}
-    #tag_map = {s.name: s.getTags() for s in samples}
+    # tag_map = {s.name: s.getTags() for s in samples}
     tag_map = {}
     for samp in samples:
         wmap.update(samp.getWeightMap(target_lumi))
@@ -440,17 +440,30 @@ def runAnalysis():
     )
     while retry_count < max_retries:
         out = workFunction(runner, samples, modules, existing_data, args.target_lumi)
+        print(out)
+        exceptions = out["exceptions"]
+        out.pop("exceptions")
         existing_data = out
         check_res = check(out, sample_manager, runner)
         if check_res:
             print("All checks passed")
             break
         else:
+            print(
+                f"Encountered the exceptions during processing:\n\t- "
+                + "\n\t- ".join(
+                    f"{w}:\n\t\t\"{y}\""
+                    for w, y in exceptions.items()
+                )
+            )
             print("Not all checks passed, attempting retry")
             retry_count += 1
             if retry_count == max_retries:
                 print(
-                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer"
+                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer."
+                )
+                print(
+                    "If you see that some exceptions were thrown during the analysis, this could point to a systematic issue. "
                 )
 
     if args.metadata_cache:
