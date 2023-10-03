@@ -1,5 +1,5 @@
 from analyzer.core import analyzerModule, ModuleType
-from analyzer.utilities import angleToNPiToPi
+from analyzer.math_funcs import angleToNPiToPi
 from .axes import *
 import awkward as ak
 from .objects import b_tag_wps
@@ -11,7 +11,6 @@ def makePreSelectionHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return {}
     ret = {}
-    dataset = events.metadata["dataset"]
     w = events.EventWeight
     # ret[f"LHEHT"] = hmaker(
     #    ht_axis,
@@ -25,7 +24,6 @@ def makePreSelectionHistograms(events, hmaker):
 
 @analyzerModule("event_level_hists", ModuleType.MainHist)
 def createEventLevelHistograms(events, hmaker):
-    dataset = events.metadata["dataset"]
     ret = {}
     ret[f"HT"] = hmaker(
         makeAxis(60, 0, 3000, "HT", unit="GeV"),
@@ -59,9 +57,8 @@ def createEventLevelHistograms(events, hmaker):
 @analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
 def genMatchingMassReco(events, hmaker):
     ret = {}
-    mask = ~ak.any(ak.is_none(events.matched_jets,axis=1), axis=1)
+    mask = ~ak.any(ak.is_none(events.matched_jets, axis=1), axis=1)
     all_matched = events.matched_jets[mask]
-    print(all_matched)
 
     ret[f"mchi_gen_matched"] = hmaker(
         makeAxis(
@@ -128,7 +125,7 @@ def charginoRecoHistograms(events, hmaker):
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 3000, r"$m_{13 (no b)}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{3 (no b)}$", unit="GeV"),
         ],
         [m14, uncomp_charg],
         name="$m_{14}$ vs Mass of Jets 1-3 Without Leading B",
@@ -159,7 +156,7 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{4}$", unit="GeV"),
             makeAxis(
                 60,
                 0,
@@ -176,17 +173,17 @@ def charginoRecoHistograms(events, hmaker):
         0,
         1,
         name=f"ratio",
-        label=r"$\frac{m_{\chi}}{m_{14}}$ [GeV]",
+        label=r"$\frac{m_{\chi}}{m_{4}}$ [GeV]",
     )
 
     ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]"),
+            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
             makeAxis(
                 50,
                 0,
                 1,
-                r"$\frac{m_{13 (incl b)}}{m_{14}}$",
+                r"$\frac{m_{3 (incl b)}}{m_{4}}$",
             ),
         ],
         [m14, comp_charg / m14],
@@ -195,12 +192,12 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]"),
+            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
             makeAxis(
                 50,
                 0,
                 1,
-                r"$\frac{m_{13 \mathrm{(no b)}}}{m_{14}}$",
+                r"$\frac{m_{3 \mathrm{(no b)}}}{m_{4}}$",
             ),
         ],
         [m14, uncomp_charg / m14],
@@ -213,7 +210,6 @@ def charginoRecoHistograms(events, hmaker):
 @analyzerModule("jet_hists", ModuleType.MainHist)
 def createJetHistograms(events, hmaker):
     ret = {}
-    dataset = events.metadata["dataset"]
     gj = events.good_jets
     w = events.EventWeight
 
@@ -244,8 +240,9 @@ def createJetHistograms(events, hmaker):
             name=rf"Composite Jet {i+1} to Jet {j} $\eta$",
             description=rf"$\eta$ of the sum of jets {i+1} to {j}",
         )
+        mtitle = 4 if j - i == 4 else 3
         ret[rf"m{i+1}{j}_m"] = hmaker(
-            makeAxis(60, 0, 3000, f"$m_{{{i+1}{j}}}$", unit="GeV"),
+            makeAxis(60, 0, 3000, f"$m_{{{mtitle}}}$", unit="GeV"),
             jets.mass,
             name=rf"Composite Jet {i+1} to Jet {j} mass",
             description=rf"Mass of the sum of jets {i+1} to {j}",
@@ -254,10 +251,16 @@ def createJetHistograms(events, hmaker):
     for p1, p2 in co(jet_combos):
         p1_1, p1_2 = p1
         p2_1, p2_2 = p2
+        mtitle1 = 4 if p1_2 - p1_1 == 4 else 3
+        mtitle2 = 4 if p2_2 - p2_1 == 4 else 3
         ret[f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
             [
-                makeAxis(60, 0, 3000, rf"$m_{{{p1_1 + 1}{p1_2}}}$", unit="GeV"),
-                makeAxis(60, 0, 3000, rf"$m_{{{p2_1 + 1}{p2_2}}}$", unit="GeV"),
+                makeAxis(
+                    60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV", append_name="1"
+                ),
+                makeAxis(
+                    60, 0, 3000, rf"$m_{{{mtitle2}}}$", unit="GeV", append_name="2"
+                ),
             ],
             [masses[p1], masses[p2]],
             name="Comp mass",
@@ -265,16 +268,16 @@ def createJetHistograms(events, hmaker):
 
         ret[f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
             [
-                makeAxis(60, 0, 3000, rf"$m_{{{p1_1 + 1}{p1_2}}}$", unit="GeV"),
+                makeAxis(60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV"),
                 makeAxis(
                     50,
                     0,
                     1,
-                    rf"$\frac{{m_{{ {p2_1+1}{p2_2} }} }}{{ m_{{  {p1_1+1}{p1_2} }} }}$",
+                    rf"$\frac{{m_{{ {mtitle2} }} }}{{ m_{{ {mtitle1} }} }}$",
                 ),
             ],
             [masses[p1], masses[p2] / masses[p1]],
-            name=f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}",
+            name=f"ratio_m{mtitle1}_vs_m{mtitle2}",
         )
 
     for i in range(0, 4):
@@ -371,7 +374,6 @@ def createJetHistograms(events, hmaker):
 @analyzerModule("tag_hists", ModuleType.MainHist)
 def createTagHistograms(events, hmaker):
     ret = {}
-    dataset = events.metadata["dataset"]
     gj = events.good_jets
     w = events.EventWeight
     for name, wp in it.product(("tops", "bs", "Ws"), ("loose", "med", "tight")):
@@ -391,7 +393,6 @@ def createTagHistograms(events, hmaker):
 @analyzerModule("b_hists", ModuleType.MainHist)
 def createBHistograms(events, hmaker):
     ret = {}
-    dataset = events.metadata["dataset"]
     l_bjets = events.loose_bs
 
     ret[f"loose_bjet_pt"] = hmaker(pt_axis, l_bjets.pt, name="Loose BJet $p_{T}$")
@@ -492,5 +493,65 @@ def createBHistograms(events, hmaker):
         sublead_b_idx + 1,
         name="Subleading $p_{T}$ Medium B Jet Rank",
     )
+
+    return ret
+
+
+@analyzerModule("cr_mass_plots", ModuleType.MainHist)
+def crMassHists(events, hmaker):
+    ret = {}
+    gj = events.good_jets
+
+    jets = gj[:, 0:4].sum()
+    mass = jets.mass
+
+    idx = ak.local_index(gj, axis=1)
+    not_med_bjet_mask = gj.btagDeepFlavB < b_tag_wps[1]
+    loose_bjet_mask = gj.btagDeepFlavB > b_tag_wps[0]
+    loose_not_med = not_med_bjet_mask & loose_bjet_mask
+    one_lnm_mask = ak.num(loose_not_med[loose_not_med], axis=1) == 1
+
+    mbs = events.med_bs
+    sr_med_mask = ak.num(mbs, axis=1) >= 2
+    sr_tight_mask = ak.num(events.tight_bs, axis=1) >= 1
+    filled_med = ak.pad_none(mbs, 2, axis=1)
+    med_dr = ak.fill_none(filled_med[:, 0].delta_r(filled_med[:, 1]), False)
+    dr_mask = med_dr > 1
+    sr_mask = sr_med_mask & sr_tight_mask & dr_mask
+
+    tbs = events.tight_bs
+    sr_313_tight_mask = ak.num(tbs, axis=1) >= 3
+    filled_tight = ak.pad_none(tbs, 2, axis=1)
+    tight_dr = ak.fill_none(filled_tight[:, 0].delta_r(filled_tight[:, 1]), False)
+    tight_dr_mask = tight_dr > 1
+    sr_313_mask = sr_313_tight_mask & tight_dr_mask
+
+    w = events.EventWeight
+    print(sr_mask)
+
+    ret[rf"lnm_m4_m"] = hmaker(
+        makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
+        jets.mass[one_lnm_mask],
+        name=rf"M4 in 1 LNM Region",
+        description=rf"M4 in 1 LNM region",
+        mask=one_lnm_mask,
+    )
+
+    ret[rf"sr_m4_m"] = hmaker(
+        makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
+        jets.mass[sr_mask],
+        name=rf"M4 in 312 SR Region",
+        description=rf"M4 in 312 SR",
+        mask=sr_mask,
+    )
+
+    ret[rf"sr313_m4_m"] = hmaker(
+        makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
+        jets.mass[sr_313_mask],
+        name=rf"M4 in 313 SR Region",
+        description=rf"M4 in 313 SR",
+        mask=sr_313_mask,
+    )
+    print(ret)
 
     return ret

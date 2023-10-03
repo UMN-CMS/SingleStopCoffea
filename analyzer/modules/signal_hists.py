@@ -1,7 +1,7 @@
 from analyzer.core import analyzerModule, ModuleType
 from .axes import *
 import awkward as ak
-from analyzer.utilities import angleToNPiToPi
+from analyzer.math_funcs import angleToNPiToPi
 
 
 @analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
@@ -37,9 +37,17 @@ def createSignalHistograms(events, hmaker):
         stop_match_axis, num_top_4_are_stop, name="num_top_4_are_stop"
     )
 
-    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"Jet idx")
+    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"$\chi^{\pm}$ b matched jet idx")
     e = events.matched_jet_idx[:, 1]
-    ret[f"chi_b_jet_idx"] = hmaker(idx_axis, ak.fill_none(e, 7), name="chi_b_jet_idx")
+    m = ~ak.is_none(e)
+    e=e[m]
+    ret[f"chi_b_jet_idx"] = hmaker(idx_axis, e, name="chi_b_jet_idx", mask=m)
+
+    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"$\tilde{t}$ b matched jet idx")
+    e = events.matched_jet_idx[:, 0]
+    m = ~ak.is_none(e)
+    e=e[m]
+    ret[f"stop_b_jet_idx"] = hmaker(idx_axis, e, name="stop_b_jet_idx", mask=m)
 
     ret[f"chi_b_dr"] = hmaker(
         makeAxis(20, 0, 5, "$\\Delta R$ between $\\chi$ and b from $\\tilde{t}$"),
@@ -48,13 +56,13 @@ def createSignalHistograms(events, hmaker):
     )
 
     ret[f"chi_b_phi"] = hmaker(
-        makeAxis(50, -4, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
+        makeAxis(25, 0, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
         abs(angleToNPiToPi(events.SignalParticles.chi.phi - events.SignalParticles.stop_b.phi)),
         name="chi_b_phi",
     )
 
     ret[f"chi_b_eta"] = hmaker(
-        makeAxis(50, -4, 4, "$\\Delta \\eta$ between $\\chi$ and b from $\\tilde{t}$"),
+        makeAxis(25, 0, 4, "$\\Delta \\eta$ between $\\chi$ and b from $\\tilde{t}$"),
         events.SignalParticles.chi.eta - events.SignalParticles.stop_b.eta,
         name="chi_b_phi",
     )

@@ -1,5 +1,5 @@
 - name: WJetsToQQ2018
-  set:
+  sets:
     - WJetsToQQ2018_HT-200To400
     - WJetsToQQ2018_HT-400To600
     - WJetsToQQ2018_HT-600To800

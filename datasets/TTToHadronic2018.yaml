@@ -1,6 +1,6 @@
 - name: TTToHadronic2018
   x_sec: 380.1326
-  n_events: 331506194
+  n_events: 334206000
   lumi: 59.8
   style:
     color: "#c91910"
