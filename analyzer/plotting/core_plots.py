@@ -182,7 +182,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
 
 @magicPlot
 @autoSplit
-def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
+def drawAs1DHist(ax, plot_object, plot_name = "", yerr=True, fill=True, orient="h", **kwargs):
     style = plot_object.getStyle()
     h = plot_object.hist
     a = h.axes[0]

@@ -2,7 +2,7 @@ import pickle as pkl
 import sys
 
 sys.path.append(".")
-import hist
+import hist as hst
 import matplotlib.pyplot as plt
 
 from analyzer.plotting.styles import *
@@ -62,9 +62,11 @@ def simplePlot(
     hc = h[{"dataset": bkg_set + sig_set}]
     if normalize:
         hc = getNormalized(hc, "dataset")
+    #if hist == 'pT1': hc[::2j]
     if len(h.axes) == 2:
         fig, ax = drawAs1DHist(
             hc,
+            plot_name = hist,
             cat_axis="dataset",
             manager=manager,
             cat_filter="^(?!signal)",
