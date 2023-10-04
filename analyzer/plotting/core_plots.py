@@ -1,20 +1,19 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
-
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from . import static
 from dataclasses import dataclass
 from functools import partial, wraps
 from analyzer.datasets import Style, Dataset
-from typing import Optional
+from typing import Optional, Dict, Any
 import itertools as it
 import hist
 import re
-
 import importlib.resources as imp_res
 from pathlib import Path
+
 HAS_IMPRES = hasattr(imp_res, "files")
 
 default_linewidth = 3
@@ -23,7 +22,6 @@ default_linewidth = 3
 def loadStyles():
     if HAS_IMPRES:
         style = imp_res.files(static) / "style.mplstyle"
-        print(style)
         font_dirs = [imp_res.files(static) / "fonts"]
     else:
         from pkg_resources import resource_string, resource_listdir, resource_filename
@@ -88,16 +86,15 @@ class PlotObject:
     hist: hist.Hist
     title: Optional[str] = None
     dataset: Optional[Dataset] = None
+    style: Optional[Dict[str, Any]] = None
 
     def getStyle(self):
-        if self.dataset:
+        if self.style is not None:
+            return self.style
+        elif self.dataset:
             return self.dataset.style.toDict()
         else:
             return {}
-
-
-
-        
 
 
 def autoSplit(func):
@@ -196,7 +193,6 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
     vals = np.append(raw_vals, raw_vals[-1])
     errs = np.sqrt(h.variances())
     kwargs = dict(**kwargs)
-
     if yerr:
         if orient == "h":
             ax.errorbar(
@@ -205,8 +201,8 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
                 yerr=errs,
                 fmt="none",
                 linewidth=default_linewidth,
-                **style,
                 **kwargs,
+                **style,
             )
         else:
             ax.errorbar(

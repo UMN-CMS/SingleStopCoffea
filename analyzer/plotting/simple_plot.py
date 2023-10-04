@@ -1,5 +1,6 @@
 import pickle as pkl
 import sys
+from coffea.processor import accumulate
 
 sys.path.append(".")
 import hist
@@ -11,7 +12,7 @@ from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 import logging
-from enum import Enum, atuo
+from enum import Enum, auto
 
 
 loadStyles()
@@ -20,27 +21,36 @@ loadStyles()
 class Plotter:
     def __init__(
         self,
-        filename,
+        filenames,
         outdir,
         default_backgrounds=None,
         dataset_dir="datasets",
         coupling="312",
     ):
-        self.data = pkl.load(open(filename, "rb"))
-        self.histos = self.data["histograms"]
-        self.lumi = self.data["target_lumi"]
-        self.default_backgrounds = default_backgrounds or []
-        self.outdir = Path(outdir)
-        self.manager = loadSamplesFromDirectory(dataset_dir)
-        self.outdir.mkdir(exist_ok=True, parents=True)
-        self.coupling = coupling
-
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.INFO)
         stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(stream_handler)
+
+        filenames = [filenames] if isinstance(filenames, str) else list(filesname)
+        self.data = [pkl.load(open(f, "rb")) for f in filenames]
+        self.data = pkl.load(open(filename, "rb"))
+        self.lumi = None
+        sl = set(x.get("target_lumi") for x in self.data)
+        if len(sl) == 1:
+            self.lumi = sl.pop()
+        else:
+            self.logger.warn(
+                "The loaded files have different target luminosities. This may result in issues."
+            )
+        self.histos = accumulate([f["histograms"] for f in self.data])
+        self.default_backgrounds = default_backgrounds or []
+        self.outdir = Path(outdir)
+        self.manager = loadSamplesFromDirectory(dataset_dir)
+        self.outdir.mkdir(exist_ok=True, parents=True)
+        self.coupling = coupling
 
         self.description = ""
 

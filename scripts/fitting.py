@@ -1,5 +1,6 @@
 import pickle as pkl
 import uproot
+import matplotlib.pyplot as plt
 import hist
 import math
 import itertools as it
@@ -17,6 +18,10 @@ from sklearn.gaussian_process.kernels import (
     WhiteKernel,
     RBF,
 )
+import re
+from analyzer.plotting.core_plots import loadStyles
+loadStyles()
+
 
 
 def fitGp(histogram, length_scale=None):
@@ -41,43 +46,77 @@ def fitGp(histogram, length_scale=None):
     return ret
 
 
-def chisqr(exp,uncert, pred):
-    return np.sum((exp-pred)**2 / uncert)
+def chisqr(exp, uncert, pred):
+    return np.sum((exp - pred) ** 2 / uncert)
+
 
 def getPrediction(histogram, gp):
     bc = histogram.axes[0].centers
     v = gp.predict(bc.reshape(-1, 1))
     cs = chisqr(histogram.values(), histogram.variances(), v)
     print(f"Reduced Chi^2 results are {cs:0.2f}; Chi^2/DOF = {cs/(len(bc) - 1)}")
-    return np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
+    h =  np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
+    ratio =  histogram.sum().value/ sum(h[0]) 
+    h =  (h[0] * ratio,h[1])
+    print(f"Scaling is {ratio}")
+    return h
 
 
-def generateDiagnosticPlots(histogram, gp, min_bound=1050):
+def generateDiagnosticPlots(histogram, gp, min_bound=1050, outdir=Path("diagnostics")):
     ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
     fig, ax = plt.subplots()
-    mean_prediction, std_prediction = gaussian_process.predict(ls, return_std=True)
-    ax.plot(points, vals, label=histogram.name, linestyle="dotted")
+    mean_prediction, std_prediction = gp.predict(ls, return_std=True)
+
+    bc = histogram.axes[0].centers
+    v = gp.predict(bc.reshape(-1, 1))
+    cs = chisqr(histogram.values(), histogram.variances(), v)
+    vals, points, varia = (
+        histogram.values(),
+        histogram.axes[0].centers,
+        np.sqrt(histogram.variances()),
+    )
+
+    # ax.plot(points, vals, label=histogram.name, linestyle="dotted")
     ax.errorbar(
         points,
         vals,
-        v,
+        varia,
         linestyle="None",
         color="tab:blue",
         marker=".",
         markersize=10,
         label="Observations",
     )
-    ax.plot(ls, mean_prediction, label="Mean prediction")
+    ax.plot(ls.ravel(), mean_prediction, label="Mean prediction", color="tab:orange")
     ax.fill_between(
         ls.ravel(),
         mean_prediction - 1.96 * std_prediction,
         mean_prediction + 1.96 * std_prediction,
-        alpha=0.5,
+        alpha=0.3,
         label=r"95% confidence interval",
+        color="tab:orange",
     )
+    transform = ax.transAxes
+
+    scale = gp.kernel_.get_params()["k2__length_scale"]
+    ax.text(0.95, 0.7, f"$\chi^2/DOF = {cs/(len(bc)-1):0.2f}$\nLength Scale={scale:0.2f}", horizontalalignment="right", transform=transform)
     ax.legend()
-    ax.xlabel(histogram.name)
-    ax.ylabel("Events")
+    ax.set_xlabel(histogram.axes[0].label)
+    ax.set_ylabel("Events")
+    outdir.mkdir(exist_ok=True, parents=True)
+    fig.tight_layout()
+    fig.savefig(outdir / "gaussian_process_fit.pdf")
+
+    fig, ax = plt.subplots()
+    bc = histogram.axes[0].centers
+    v = gp.predict(bc.reshape(-1, 1))
+    v, e = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
+    ax.bar(e[:-1], v, width=np.diff(e), edgecolor="black", align="edge")
+    ax.plot(ls, mean_prediction, label="Mean prediction")
+    ax.set_xlabel(histogram.axes[0].label)
+    ax.set_ylabel("Events")
+    fig.tight_layout()
+    fig.savefig(outdir / "gaussian_template_shape.pdf")
 
 
 def getMatching(ax, val):
@@ -120,11 +159,10 @@ def main():
     parser.add_argument("-m", "--min-bound", default=1050, type=float)
     args = parser.parse_args()
     data = pkl.load(open(args.input, "rb"))
-
+    plotdir = Path(args.plot_dir)
     root_output = uproot.recreate(args.output)
     histos = data["histograms"]
     histogram = histos[args.name]
-
     for bkg in args.backgrounds:
         h = histogram[getMatching(histogram.axes[0], bkg), hist.loc(args.min_bound) :]
         if args.input_control_region:
@@ -143,15 +181,17 @@ def main():
             print(f"Found length scale {ls:0.2f}")
 
         res = getPrediction(h, gp)
-        root_output[bkg] = res
+        generateDiagnosticPlots(h, gp, args.min_bound, plotdir / bkg)
+        root_output[f"SignalChannel/{bkg}/nominal"] = res
 
     for bkg in args.backgrounds:
         h = histogram[getMatching(histogram.axes[0], bkg), hist.loc(args.min_bound) :]
         root_output["data_obs"] = h
 
     for sig in args.signals:
-        h = histogram[sig, hist.loc(args.min_bound) :]
-        root_output[sig] = h
+        for x in (y for y in histogram.axes[0] if sig in y):
+            h = histogram[x, hist.loc(args.min_bound) :]
+            root_output[f"SignalChannel/{x}/nominal"] = h
 
 
 if __name__ == "__main__":
