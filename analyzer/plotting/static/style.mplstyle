@@ -619,7 +619,7 @@ figure.frameon:     False      # enable figure frame
 ## ***************************************************************************
 ## * ERRORBAR PLOTS                                                          *
 ## ***************************************************************************
-#errorbar.capsize: 0  # length of end cap on error bars in pixels
+#errorbar.capsize: 5  # length of end cap on error bars in pixels
 
 
 ## ***************************************************************************
