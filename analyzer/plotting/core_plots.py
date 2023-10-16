@@ -314,7 +314,7 @@ def drawPull(ax, pred, obs, uncertainty_type="poisson", hline_list=None, **kwarg
     unc = pred.getUncertainty()
     ounc = obs.getUncertainty()
     real_unc = np.sqrt(unc**2 + ounc**2)
-    real_unc = unc
+    real_unc = ounc
     pull = np.divide(
         ov - pv,
         real_unc,

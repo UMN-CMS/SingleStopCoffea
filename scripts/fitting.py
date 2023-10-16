@@ -18,6 +18,7 @@ from sklearn.gaussian_process.kernels import (
     WhiteKernel,
     RBF,
     Kernel,
+    Matern,
     Hyperparameter,
 )
 import re
@@ -161,10 +162,16 @@ def fitGp(histogram, length_scale=None):
         np.sqrt(histogram.variances()),
     )
     if length_scale:
+        # kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * Matern(
+        #    length_scale=length_scale, length_scale_bounds="fixed", nu=4.5
+        # )
         kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * RBF(
             length_scale=length_scale, length_scale_bounds="fixed"
         )
     else:
+        # kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * Matern(
+        #    length_scale=200.0, length_scale_bounds=(1, 1e4), nu=4.5
+        # )
         kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * RBF(
             length_scale=200.0, length_scale_bounds=(1, 1e4)
         )
@@ -216,6 +223,7 @@ def generatePulls(
     sig_hist=None,
     sig_name=None,
     sig_strength=None,
+    name="pulls_bkg_only",
 ):
     bc = histogram.axes[0].centers
     v, std = gp.predict(bc.reshape(-1, 1), return_std=True)
@@ -234,7 +242,7 @@ def generatePulls(
     ab = ax.bottom_axes[0]
     drawPull(ab, pred, obs, hline_list=[-1, 0, 1])
     # ab.set_ylabel(r"$\frac{obs - pred}{\sqrt{\sigma_{p}^2 + \sigma_{o}^2}}$")
-    ab.set_ylabel(r"$\frac{obs - pred}{\sigma_{p}}$")
+    ab.set_ylabel(r"$\frac{obs - pred}{\sigma_{o}}$")
     if target:
         ax.axvline(target, color="black", linewidth=0.3, linestyle="-.")
         ab.axvline(target, color="black", linewidth=0.3, linestyle="-.")
@@ -259,10 +267,16 @@ def generatePulls(
     )
     outdir.mkdir(exist_ok=True, parents=True)
     fig.tight_layout()
-    fig.savefig(outdir / "pulls_bkg_only.pdf")
+    fig.savefig(outdir / f"{name}.pdf")
 
 
-def generateDiagnosticPlots(histogram, gp, min_bound=1050, outdir=Path("diagnostics"), name="gaussian_process_fit"):
+def generateDiagnosticPlots(
+    histogram,
+    gp,
+    min_bound=1050,
+    outdir=Path("diagnostics"),
+    name="gaussian_process_fit",
+):
     ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
     fig, ax = plt.subplots()
     mean_prediction, std_prediction = gp.predict(ls, return_std=True)
@@ -317,7 +331,7 @@ def generateDiagnosticPlots(histogram, gp, min_bound=1050, outdir=Path("diagnost
     ax.set_xlabel(histogram.axes[0].label)
     ax.set_ylabel("Events")
     fig.tight_layout()
-    fig.savefig(outdir / "gaussian_template_shape.pdf")
+    fig.savefig(outdir / f"{name}_template_shape.pdf")
 
 
 def getMatching(ax, val):
@@ -351,6 +365,7 @@ def main():
         nargs="+",
         help="Backgrounds to add",
     )
+    parser.add_argument("--only-cr", action="store_true")
     parser.add_argument(
         "-s",
         "--signals",
@@ -374,6 +389,33 @@ def main():
     histogram = histos[args.name]
     target = None
     sigh = None
+    if args.only_cr:
+        for bkg in args.backgrounds:
+            if args.input_control_region:
+                print("Optimizing length scale in control region")
+                datacr = pkl.load(open(args.input_control_region, "rb"))
+                hcr = datacr["histograms"][args.name]
+                hcr = hcr[
+                    getMatching(hcr.axes[0], bkg),
+                    hist.loc(args.min_bound) :: hist.rebin(args.rebin),
+                ]
+                crgp = fitGp(hcr)
+                ls = crgp.kernel_.get_params()["k2__length_scale"]
+                generatePulls(
+                    hcr,
+                    crgp,
+                    plotdir / bkg,
+                    args.min_bound,
+                    target=target,
+                    sig_hist=sigh,
+                    sig_name=args.inject_name,
+                    sig_strength=args.inject_strength,
+                    name="pulls_cr",
+                )
+                generateDiagnosticPlots(
+                    hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit"
+                )
+        return 0
     for bkg in args.backgrounds:
         h = histogram[
             getMatching(histogram.axes[0], bkg),
@@ -401,7 +443,20 @@ def main():
             ]
             crgp = fitGp(hcr)
             ls = crgp.kernel_.get_params()["k2__length_scale"]
-            generateDiagnosticPlots(hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit")
+            generatePulls(
+                hcr,
+                crgp,
+                plotdir / bkg,
+                args.min_bound,
+                target=target,
+                sig_hist=sigh,
+                sig_name=args.inject_name,
+                sig_strength=args.inject_strength,
+                name="pulls_cr",
+            )
+            generateDiagnosticPlots(
+                hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit"
+            )
             print(f"Found length scale {ls:0.2f}")
             gp = fitGp(h, ls)
         else:
@@ -422,6 +477,12 @@ def main():
             sig_hist=sigh,
             sig_name=args.inject_name,
             sig_strength=args.inject_strength,
+            name="pull_sr"
+            + (
+                f"_{args.inject_name}_r{args.inject_strength}".replace(".", "p")
+                if args.inject_name
+                else "_bkg_only"
+            ),
         )
         root_output[f"SignalChannel/{bkg}/nominal"] = res
 
