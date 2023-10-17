@@ -5,7 +5,7 @@ dataset_axis = hist.axis.StrCategory(
 )
 
 mass_axis = hist.axis.Regular(60, 0, 3000, name="mass", label=r"$m$ [GeV]")
-pt_axis = hist.axis.Regular(50, 0, 1500, name="pt", label=r"$p_{T}$ [GeV]")
+pt_axis = hist.axis.Regular(30, 0, 1500, name="pt", label=r"$p_{T, 1}$ [GeV]")
 ht_axis = hist.axis.Regular(60, 0, 3000, name="ht", label=r"$HT$ [GeV]")
 dr_axis = hist.axis.Regular(25, 0, 5, name="dr", label=r"$\Delta R_{b_{1}, b_{2}}$")
 eta_axis = hist.axis.Regular(20, -5, 5, name="eta", label=r"$\eta$")

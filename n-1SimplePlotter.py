@@ -59,7 +59,8 @@ def simplePlot(
     h = histos[hist][selection]
     with open(savedir / "descriptions.txt", "a") as f:
         f.write(f"{hist}: {h.description}\n")
-    hc = h[{"dataset": bkg_set + sig_set}]
+    datasets = sorted(bkg_set) + sorted(sig_set)
+    hc = h[{"dataset": datasets}]
     if normalize:
         hc = getNormalized(hc, "dataset")
     #if hist == 'pT1': hc[::2j]
@@ -94,9 +95,15 @@ def simplePlot(
 
         ax.set_yscale(scale)
         addEra(ax, lumi or 59.8)
-        addPrelim(ax, additional_text="\n$\\lambda_{312}''$ " + (add_label or ""))
+        addPrelim(ax, additional_text="\n$\\lambda_{312}''$" + " Selection" + (add_label or ""))
 
         addTitles1D(ax, hc, top_pad=0.4)
+        handles, labels = ax.get_legend_handles_labels()
+        print(handles, labels)
+        labels, handles = zip(
+          *reversed(sorted(zip(labels, handles), key=lambda t: t[0]))
+        )
+        ax.legend(handles, labels)
 
         fig.tight_layout()
         fig.savefig(savedir / f"{add_name}{hist}.pdf")
