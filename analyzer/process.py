@@ -160,9 +160,12 @@ class AnalysisProcessor(processor.ProcessorABC):
         #for cat, it in modules_to_run.items():
         #    print(f"{str(cat)} -- {[x.name for x in it]}")
 
-        events["EventWeight"] = (
-            ak.where(events.genWeight > 0, 1, -1) * self.weight_map[set_name]
-        )
+        if "genWeight" in events.fields:
+            events["EventWeight"] = (
+                ak.where(events.genWeight > 0, 1, -1) * self.weight_map[set_name]
+            )
+        else:
+            events["EventWeight"] = self.weight_map[set_name]
 
         for module in modules_to_run.get(ModuleType.BaseObjectDef, []):
             events = module.func(events)

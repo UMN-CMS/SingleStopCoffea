@@ -1,5 +1,6 @@
 - name: CR0b_Data2018
   derived_from: Data2018
+  forbid: false
   files:
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_0.root
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_1.root

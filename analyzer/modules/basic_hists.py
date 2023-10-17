@@ -178,7 +178,13 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"$m_{4}$",
+                unit="GeV",
+            ),
             makeAxis(
                 50,
                 0,
@@ -192,7 +198,13 @@ def charginoRecoHistograms(events, hmaker):
 
     ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
-            makeAxis(60, 0, 3000, r"$m_{4}$ [GeV]"),
+            makeAxis(
+                60,
+                0,
+                3000,
+                r"$m_{4}$",
+                unit="GeV",
+            ),
             makeAxis(
                 50,
                 0,
@@ -497,27 +509,14 @@ def createBHistograms(events, hmaker):
     return ret
 
 
-@analyzerModule("cr_mass_plots", ModuleType.MainHist)
-def crMassHists(events, hmaker):
+@analyzerModule("other_region_mass_plots", ModuleType.MainHist)
+def otherRegionMassHists(events, hmaker):
     ret = {}
     gj = events.good_jets
 
+
     jets = gj[:, 0:4].sum()
     mass = jets.mass
-
-    idx = ak.local_index(gj, axis=1)
-    not_med_bjet_mask = gj.btagDeepFlavB < b_tag_wps[1]
-    loose_bjet_mask = gj.btagDeepFlavB > b_tag_wps[0]
-    loose_not_med = not_med_bjet_mask & loose_bjet_mask
-    one_lnm_mask = ak.num(loose_not_med[loose_not_med], axis=1) == 1
-
-    mbs = events.med_bs
-    sr_med_mask = ak.num(mbs, axis=1) >= 2
-    sr_tight_mask = ak.num(events.tight_bs, axis=1) >= 1
-    filled_med = ak.pad_none(mbs, 2, axis=1)
-    med_dr = ak.fill_none(filled_med[:, 0].delta_r(filled_med[:, 1]), False)
-    dr_mask = med_dr > 1
-    sr_mask = sr_med_mask & sr_tight_mask & dr_mask
 
     tbs = events.tight_bs
     sr_313_tight_mask = ak.num(tbs, axis=1) >= 3
@@ -526,32 +525,13 @@ def crMassHists(events, hmaker):
     tight_dr_mask = tight_dr > 1
     sr_313_mask = sr_313_tight_mask & tight_dr_mask
 
-    w = events.EventWeight
-    print(sr_mask)
-
-    ret[rf"lnm_m4_m"] = hmaker(
-        makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
-        jets.mass[one_lnm_mask],
-        name=rf"M4 in 1 LNM Region",
-        description=rf"M4 in 1 LNM region",
-        mask=one_lnm_mask,
-    )
-
-    ret[rf"sr_m4_m"] = hmaker(
-        makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
-        jets.mass[sr_mask],
-        name=rf"M4 in 312 SR Region",
-        description=rf"M4 in 312 SR",
-        mask=sr_mask,
-    )
-
-    ret[rf"sr313_m4_m"] = hmaker(
+    ret[rf"313_m4_m"] = hmaker(
         makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
         jets.mass[sr_313_mask],
-        name=rf"M4 in 313 SR Region",
-        description=rf"M4 in 313 SR",
+        name=rf"M4 in the 313 Region",
+        description=rf"M4 in the 313 region",
         mask=sr_313_mask,
     )
-    print(ret)
+
 
     return ret

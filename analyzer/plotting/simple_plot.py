@@ -1,5 +1,6 @@
 import pickle as pkl
 import sys
+from coffea.processor import accumulate
 
 sys.path.append(".")
 import hist
@@ -11,6 +12,10 @@ from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 import logging
+from enum import Enum, auto
+from concurrent.futures import ProcessPoolExecutor, wait
+import atexit
+
 
 loadStyles()
 
@@ -18,21 +23,13 @@ loadStyles()
 class Plotter:
     def __init__(
         self,
-        filename,
+        filenames,
         outdir,
         default_backgrounds=None,
         dataset_dir="datasets",
         coupling="312",
+        parallel=None,
     ):
-        self.data = pkl.load(open(filename, "rb"))
-        self.histos = self.data["histograms"]
-        self.lumi = self.data["target_lumi"]
-        self.default_backgrounds = default_backgrounds or []
-        self.outdir = Path(outdir)
-        self.manager = loadSamplesFromDirectory(dataset_dir)
-        self.outdir.mkdir(exist_ok=True, parents=True)
-        self.coupling = coupling
-
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.INFO)
         stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
@@ -40,9 +37,94 @@ class Plotter:
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(stream_handler)
 
-        self.description = ""
+        filenames = [filenames] if isinstance(filenames, str) else list(filesnames)
+        self.data = [pkl.load(open(f, "rb")) for f in filenames]
+        self.lumi = None
+        sl = set(x.get("target_lumi") for x in self.data)
+        if len(sl) == 1:
+            self.lumi = sl.pop()
+        else:
+            self.logger.warn(
+                "The loaded files have different target luminosities. This may result in issues."
+            )
+        self.histos = accumulate([f["histograms"] for f in self.data])
+        self.default_backgrounds = default_backgrounds or []
+        self.outdir = Path(outdir)
+        self.manager = loadSamplesFromDirectory(dataset_dir)
+        self.outdir.mkdir(exist_ok=True, parents=True)
+        self.coupling = coupling
 
-    def __call__(
+        self.description = ""
+        self.parallel = parallel
+        if self.parallel:
+            self.pool = ProcessPoolExecutor(self.parallel)
+            self.futures = []
+            atexit.register(self.finishRemaining)
+
+    def __call__(self, *args, **kwargs):
+        if self.parallel:
+            x = self.pool.submit(self.doPlot, *args, **kwargs)
+            self.futures.append(x)
+        else:
+            self.doPlot(*args, **kwargs)
+        # self.logger.info("".join('1' if x.done() else '0' for x in self.futures))
+
+    def finishRemaining(self):
+        self.logger.info("".join("1" if x.done() else "0" for x in self.futures))
+        for x in self.futures:
+            print(x.exception())
+        if any(x.running() for x in self.futures):
+            self.logger(f"Finalizing plots.")
+            wait(self.futures)
+        self.pool.shutdown()
+
+    def plotPulls(self, target, hist_obs, hist_pred):
+        ho = self.histos[target][hist_obs, ...]
+        hp = self.histos[target][hist_pred, ...]
+        hopo = PlotObject(ho, self.manager[hist_obs].getTitle(), self.manager[hist_obs])
+        hppo = PlotObject(
+            hp, self.manager[hist_pred].getTitle(), self.manager[hist_pred]
+        )
+        fig, ax = drawAs1DHist(hopo, yerr=True, fill=False)
+        drawAs1DHist(ax, hppo, yerr=True, fill=False)
+        addAxesToHist(ax, num_bottom=1, bottom_pad=0)
+        ab = ax.bottom_axes[0]
+        drawPull(ab, hppo, hopo)
+        ab.set_ylabel(r"$\frac{pred - obs}{\sigma_{pred}}$")
+        addEra(ax, self.lumi or 59.8)
+        addPrelim(
+               ax,
+               additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ "
+        )
+        addTitles1D(ax, ho, top_pad=0.2)
+        fig.tight_layout()
+        fig.savefig(self.outdir / f"pull_{hist_obs}_{hist_pred}.pdf")
+        plt.close(fig)
+
+    def plotRatio(self, target, hist_obs, hist_pred):
+        ho = self.histos[target][hist_obs, ...]
+        hp = self.histos[target][hist_pred, ...]
+        hopo = PlotObject(ho, self.manager[hist_obs].getTitle(), self.manager[hist_obs])
+        hppo = PlotObject(
+            hp, self.manager[hist_pred].getTitle(), self.manager[hist_pred]
+        )
+        fig, ax = drawAs1DHist(hopo, yerr=True, fill=False)
+        drawAs1DHist(ax, hppo, yerr=True, fill=False)
+        addAxesToHist(ax, num_bottom=1, bottom_pad=0)
+        ab = ax.bottom_axes[0]
+        drawRatio(ab, hppo, hopo)
+        ab.set_ylabel("Ratio")
+        addEra(ax, self.lumi or 59.8)
+        addPrelim(
+               ax,
+               additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ "
+        )
+        addTitles1D(ax, ho, top_pad=0.2)
+        fig.tight_layout()
+        fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
+        plt.close(fig)
+
+    def doPlot(
         self,
         hist,
         sig_set,

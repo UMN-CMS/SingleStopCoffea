@@ -37,16 +37,20 @@ def createSignalHistograms(events, hmaker):
         stop_match_axis, num_top_4_are_stop, name="num_top_4_are_stop"
     )
 
-    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"$\chi^{\pm}$ b matched jet idx")
+    idx_axis = hist.axis.IntCategory(
+        range(0, 8), name="Jet Idx", label=r"$\chi^{\pm}$ b matched jet idx"
+    )
     e = events.matched_jet_idx[:, 1]
     m = ~ak.is_none(e)
-    e=e[m]
+    e = e[m]
     ret[f"chi_b_jet_idx"] = hmaker(idx_axis, e, name="chi_b_jet_idx", mask=m)
 
-    idx_axis = hist.axis.IntCategory(range(0, 8), name="Jet Idx", label=r"$\tilde{t}$ b matched jet idx")
+    idx_axis = hist.axis.IntCategory(
+        range(0, 8), name="Jet Idx", label=r"$\tilde{t}$ b matched jet idx"
+    )
     e = events.matched_jet_idx[:, 0]
     m = ~ak.is_none(e)
-    e=e[m]
+    e = e[m]
     ret[f"stop_b_jet_idx"] = hmaker(idx_axis, e, name="stop_b_jet_idx", mask=m)
 
     ret[f"chi_b_dr"] = hmaker(
@@ -57,7 +61,11 @@ def createSignalHistograms(events, hmaker):
 
     ret[f"chi_b_phi"] = hmaker(
         makeAxis(25, 0, 4, "$\\Delta \\phi$ between $\\chi$ and b from $\\tilde{t}$"),
-        abs(angleToNPiToPi(events.SignalParticles.chi.phi - events.SignalParticles.stop_b.phi)),
+        abs(
+            angleToNPiToPi(
+                events.SignalParticles.chi.phi - events.SignalParticles.stop_b.phi
+            )
+        ),
         name="chi_b_phi",
     )
 
@@ -67,4 +75,36 @@ def createSignalHistograms(events, hmaker):
         name="chi_b_phi",
     )
 
+    return ret
+
+@analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
+def genMatchingMassReco(events, hmaker):
+    ret = {}
+    mask = ~ak.any(ak.is_none(events.matched_jets, axis=1), axis=1)
+    all_matched = events.matched_jets[mask]
+
+    ret[f"mchi_gen_matched"] = hmaker(
+        makeAxis(
+            60,
+            0,
+            3000,
+            r"Mass of Gen Matched Jets From $\tilde{\chi}^{\pm}$",
+            unit="GeV",
+        ),
+        all_matched[:, 1:4].sum().mass,
+        mask=mask,
+        name="genmatchedchi",
+    )
+    ret[f"mstop_gen_matched"] = hmaker(
+        makeAxis(
+            60,
+            0,
+            3000,
+            r"Mass of Gen Matched Jets From $\tilde{t}$",
+            unit="GeV",
+        ),
+        all_matched[:, 0:4].sum().mass,
+        mask=mask,
+        name="Genmatchedm14",
+    )
     return ret
