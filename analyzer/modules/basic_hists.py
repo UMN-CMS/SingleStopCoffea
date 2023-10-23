@@ -4,6 +4,7 @@ from .axes import *
 import awkward as ak
 from .objects import b_tag_wps
 import itertools as it
+from .utils import numMatching
 
 
 @analyzerModule("pre_sel_hists", ModuleType.PreSelectionHist)
@@ -54,43 +55,25 @@ def createEventLevelHistograms(events, hmaker):
     return ret
 
 
-@analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
-def genMatchingMassReco(events, hmaker):
-    ret = {}
-    mask = ~ak.any(ak.is_none(events.matched_jets, axis=1), axis=1)
-    all_matched = events.matched_jets[mask]
-
-    ret[f"mchi_gen_matched"] = hmaker(
-        makeAxis(
-            60,
-            0,
-            3000,
-            r"Mass of Gen Matched Jets From $\tilde{\chi}^{\pm}$",
-            unit="GeV",
-        ),
-        all_matched[:, 1:4].sum().mass,
-        mask=mask,
-        name="genmatchedchi",
-    )
-    ret[f"mstop_gen_matched"] = hmaker(
-        makeAxis(
-            60,
-            0,
-            3000,
-            r"Mass of Gen Matched Jets From $\tilde{t}$",
-            unit="GeV",
-        ),
-        all_matched[:, 0:4].sum().mass,
-        mask=mask,
-        name="Genmatchedm14",
-    )
-    return ret
-
-
 @analyzerModule("chargino_hists", ModuleType.MainHist)
 def charginoRecoHistograms(events, hmaker):
     ret = {}
     gj = events.good_jets
+
+    ret[f"m13_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ M13|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], ak.local_index(gj, axis=1)[:, 0:3]),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
+    ret[f"m24_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ M24|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], ak.local_index(gj, axis=1)[:, 1:4]),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
     w = events.EventWeight
     idx = ak.local_index(gj, axis=1)
     med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
@@ -122,6 +105,16 @@ def charginoRecoHistograms(events, hmaker):
         uncomp_charg,
         name="Mass of Jets 1-3 Without Leading B",
     )
+    x = numMatching(events.matched_jet_idx[:,1:4], no_lead_idxs[:, 0:3])
+    for i in range(4):
+        print(f"{events.matched_jet_idx[i,1:4]} -- {no_lead_idxs[i,0:3]} -- {x[i]}")
+    ret[f"m3_top_3_no_lead_b_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top3NoB|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], no_lead_idxs[:, 0:3]),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
@@ -145,6 +138,9 @@ def charginoRecoHistograms(events, hmaker):
     # )
 
     comp_charg = (no_lead_jets[:, 0:2].sum() + gj[ak.singletons(lead_b_idx)][:, 0]).mass
+    comp_charg_idxs = ak.concatenate(
+        [no_lead_idxs[:, 0:2], ak.singletons(lead_b_idx)], axis=1
+    )
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
         makeAxis(
@@ -152,6 +148,14 @@ def charginoRecoHistograms(events, hmaker):
         ),
         comp_charg,
         name="m3_top_2_plus_lead_b",
+    )
+
+    ret[f"m3_top_2_plus_lead_b_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top2PlusB|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], comp_charg_idxs),
+        name="Number of jets in this set that are also in the gen level matching",
     )
 
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
@@ -506,7 +510,6 @@ def otherRegionMassHists(events, hmaker):
     ret = {}
     gj = events.good_jets
 
-
     jets = gj[:, 0:4].sum()
     mass = jets.mass
 
@@ -524,6 +527,5 @@ def otherRegionMassHists(events, hmaker):
         description=rf"M4 in the 313 region",
         mask=sr_313_mask,
     )
-
 
     return ret

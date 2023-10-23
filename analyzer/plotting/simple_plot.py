@@ -179,7 +179,7 @@ class Plotter:
             addEra(ax, self.lumi or 59.8)
             addPrelim(
                 ax,
-                additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ "
+                additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ Selection\n"
                 + (add_label or ""),
             )
 
@@ -210,8 +210,8 @@ class Plotter:
                     addTitles2D(ax, realh)
                     addPrelim(
                         ax,
-                        additional_text=f"\n$\\lambda_{{{self.coupling}}}''$"
-                        + f" {add_label},"
+                        additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ Selection\n"
+                        + f"{add_label},"
                         + f"{self.manager[x].getTitle()}",
                         pos="in",
                         color="white",
