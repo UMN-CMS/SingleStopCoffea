@@ -55,11 +55,12 @@ def createEventLevelHistograms(events, hmaker):
     return ret
 
 
-@analyzerModule("chargino_hists", ModuleType.MainHist)
-def charginoRecoHistograms(events, hmaker):
+
+
+@analyzerModule("reco_efficiency", ModuleType.MainHist, after=["chargino_hists"], require_tags=["signal"])
+def recoEfficiency(events, hmaker):
     ret = {}
     gj = events.good_jets
-
     ret[f"m13_matching"] = hmaker(
         hist.axis.IntCategory(
             [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ M13|"
@@ -74,6 +75,36 @@ def charginoRecoHistograms(events, hmaker):
         numMatching(events.matched_jet_idx[:, 1:4], ak.local_index(gj, axis=1)[:, 1:4]),
         name="Number of jets in this set that are also in the gen level matching",
     )
+    ret[f"m3_top_3_no_lead_b_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top3NoB|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], events.matching_algos.top_3_no_lead_b),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
+
+    ret[f"m3_top_2_plus_lead_b_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top2PlusB|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], events.matching_algos.top_2_plus_lead_b),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
+
+    ret[f"m3_dr_switched_matching"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ DR SWitched|"
+        ),
+        numMatching(events.matched_jet_idx[:, 1:4], events.matching_algos.delta_r_switched),
+        name="Number of jets in this set that are also in the gen level matching",
+    )
+    return ret
+
+@analyzerModule("chargino_hists", ModuleType.MainHist)
+def charginoRecoHistograms(events, hmaker):
+    ret = {}
+    gj = events.good_jets
+
     w = events.EventWeight
     idx = ak.local_index(gj, axis=1)
     med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
@@ -92,11 +123,11 @@ def charginoRecoHistograms(events, hmaker):
     max_dr_no_sublead = ak.max(first.delta_r(second), axis=1)
     max_no_lead_over_max_sublead = max_dr_no_lead / max_dr_no_sublead
 
+
     jets = gj[:, 0:4].sum()
     m14 = jets.mass
-
+    uncomp_charg_idxs = no_lead_idxs[:, 0:3]
     uncomp_charg = (no_lead_jets[:, 0:3].sum()).mass
-
     m14_axis = makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]")
     mchi_axis = makeAxis(60, 0, 3000, r"$m_{\chi}$ [GeV]")
 
@@ -104,16 +135,6 @@ def charginoRecoHistograms(events, hmaker):
         makeAxis(60, 0, 3000, r"Mass of Jets 1-3 without Leading b", unit="GeV"),
         uncomp_charg,
         name="Mass of Jets 1-3 Without Leading B",
-    )
-    x = numMatching(events.matched_jet_idx[:,1:4], no_lead_idxs[:, 0:3])
-    for i in range(4):
-        print(f"{events.matched_jet_idx[i,1:4]} -- {no_lead_idxs[i,0:3]} -- {x[i]}")
-    ret[f"m3_top_3_no_lead_b_matching"] = hmaker(
-        hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top3NoB|"
-        ),
-        numMatching(events.matched_jet_idx[:, 1:4], no_lead_idxs[:, 0:3]),
-        name="Number of jets in this set that are also in the gen level matching",
     )
     ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
         [
@@ -141,6 +162,21 @@ def charginoRecoHistograms(events, hmaker):
     comp_charg_idxs = ak.concatenate(
         [no_lead_idxs[:, 0:2], ak.singletons(lead_b_idx)], axis=1
     )
+    
+    one,two =  ak.unzip(ak.cartesian([no_lead_jets[:,0:3],no_lead_jets[:,0:3]]), 2)
+    dr = one.delta_r(two)
+    max_dr_no_lead_b = ak.max(dr, axis=1)
+    one,two =  ak.unzip(ak.cartesian([gj[no_sublead_idxs[:,0:3]], gj[no_sublead_idxs[:,0:3]]],axis=1),2)
+    dr = one.delta_r(two)
+    max_dr_no_sublead_b = ak.max(dr, axis=1)
+    ratio = (max_dr_no_lead_b / max_dr_no_sublead_b) > 2
+    decided = ak.where(ratio, comp_charg, uncomp_charg)
+    decided_idxs = ak.where(ratio, comp_charg_idxs, uncomp_charg_idxs)
+
+    events["matching_algos"] = ak.zip(dict(delta_r_switched = decided_idxs,
+                                           top_2_plus_lead_b = comp_charg_idxs,
+                                           top_3_no_lead_b = uncomp_charg_idxs))
+        
 
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
         makeAxis(
@@ -150,13 +186,15 @@ def charginoRecoHistograms(events, hmaker):
         name="m3_top_2_plus_lead_b",
     )
 
-    ret[f"m3_top_2_plus_lead_b_matching"] = hmaker(
-        hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ Top2PlusB|"
+
+    ret[f"m3_dr_switched"] = hmaker(
+        makeAxis(
+            60, 0, 3000, r"$\Delta R$>2 Switched Mass", unit="GeV"
         ),
-        numMatching(events.matched_jet_idx[:, 1:4], comp_charg_idxs),
-        name="Number of jets in this set that are also in the gen level matching",
+        comp_charg,
+        name="m3_top_2_plus_lead_b_delta_r_switch",
     )
+
 
     ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
         [

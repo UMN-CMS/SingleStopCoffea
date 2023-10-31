@@ -38,130 +38,16 @@ from analyzer.plotting.simple_plot import Plotter
 loadStyles()
 
 
-# class RBF(Kernel):
-#     def __init__(
-#         self,
-#         length_scale=1.0,
-#         length_scale_bounds=(1e-5, 1e5),
-#         peak_location=1,
-#         peak_location_bound=(1e-5, 1e5),
-#     ):
-#         self.length_scale = length_scale
-#         self.length_scale_bounds = length_scale_bounds
-
-#         self.peak_location = peak_location
-#         self.peak_location_bounds = peak_location_bounds
-
-#     @property
-#     def anisotropic(self):
-#         return np.iterable(self.length_scale) and len(self.length_scale) > 1
-
-#     @property
-#     def hyperparameter_length_scale(self):
-#         if self.anisotropic:
-#             return Hyperparameter(
-#                 "length_scale",
-#                 "numeric",
-#                 self.length_scale_bounds,
-#                 len(self.length_scale),
-#             )
-#         return Hyperparameter("length_scale", "numeric", self.length_scale_bounds)
-
-#     @property
-#     def hyperparameter_peak_location(self):
-#         return Hyperparameter(
-#             "peak_location",
-#             "numeric",
-#             self.peak_location_bounds,
-#             len(self.peak_location),
-#         )
-
-#     def __call__(self, X, Y=None, eval_gradient=False):
-#         """Return the kernel k(X, Y) and optionally its gradient.
-
-#         Parameters
-#         ----------
-#         X : ndarray of shape (n_samples_X, n_features)
-#             Left argument of the returned kernel k(X, Y)
-
-#         Y : ndarray of shape (n_samples_Y, n_features), default=None
-#             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-#             if evaluated instead.
-
-#         eval_gradient : bool, default=False
-#             Determines whether the gradient with respect to the log of
-#             the kernel hyperparameter is computed.
-#             Only supported when Y is None.
-
-#         Returns
-#         -------
-#         K : ndarray of shape (n_samples_X, n_samples_Y)
-#             Kernel k(X, Y)
-
-#         K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
-#                 optional
-#             The gradient of the kernel k(X, X) with respect to the log of the
-#             hyperparameter of the kernel. Only returned when `eval_gradient`
-#             is True.
-#         """
-#         X = np.atleast_2d(X)
-#         length_scale = _check_length_scale(X, self.length_scale)
-
-#         def metric(x, y):
-#             return cdist(
-#                 x / self.length_scale, self.peak_location / self.length_scale
-#             ) + cdist(y / self.length_scale, self.peak_location / self.length_scale)
-
-#         if Y is None:
-#             dists = pdist(X, metric=metric)
-#             K = np.exp(-0.5 * dists)
-#             K = squareform(K)
-#             np.fill_diagonal(K, 1)
-#         else:
-#             if eval_gradient:
-#                 raise ValueError("Gradient can only be evaluated when Y is None.")
-#             dists = cdist(X, Y, metric=metric)
-#             K = np.exp(-0.5 * dists)
-
-#         if eval_gradient:
-#             if (
-#                 self.hyperparameter_length_scale.fixed
-#                 and self.hyperparameter_peak_location.fixed
-#             ):
-#                 # Hyperparameter l kept fixed
-#                 return K, np.empty((X.shape[0], X.shape[0], 0))
-#             elif not self.anisotropic or length_scale.shape[0] == 1:
-#                 K_gradient = (K * squareform(dists))[:, :, np.newaxis]
-#                 return K, K_gradient
-#             elif self.anisotropic:
-#                 # We need to recompute the pairwise dimension-wise distances
-#                 K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-#                     length_scale**2
-#                 )
-#                 K_gradient *= K[..., np.newaxis]
-#                 return K, K_gradient
-#         else:
-#             return K
-
-#     def __repr__(self):
-#         if self.anisotropic:
-#             return "{0}(length_scale=[{1}])".format(
-#                 self.__class__.__name__,
-#                 ", ".join(map("{0:.3g}".format, self.length_scale)),
-#             )
-#         else:  # isotropic
-#             return "{0}(length_scale={1:.3g})".format(
-#                 self.__class__.__name__, np.ravel(self.length_scale)[0]
-#             )
-
-
-def fitGp(histogram, length_scale=None):
+def fitGp(histogram, length_scale=None, window=None):
     vals, points, varia = (
         histogram.values(),
         histogram.axes[0].centers.reshape(-1, 1),
         np.sqrt(histogram.variances()),
     )
-    if length_scale:
+    if window:
+        mask = np.ravel((points < window[0]) | (points > window[1]))
+        vals,points,varia=vals[mask],points[mask],varia[mask]
+    if length_scale: 
         # kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * Matern(
         #    length_scale=length_scale, length_scale_bounds="fixed", nu=4.5
         # )
@@ -238,7 +124,7 @@ def generatePulls(
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     if sig_hist:
         drawAs1DHist(ax, PlotObject(sig_hist), yerr=True, fill=None)
-    ax.set_yscale("log")
+    ax.set_yscale("linear")
     ab = ax.bottom_axes[0]
     drawPull(ab, pred, obs, hline_list=[-1, 0, 1])
     # ab.set_ylabel(r"$\frac{obs - pred}{\sqrt{\sigma_{p}^2 + \sigma_{o}^2}}$")
@@ -263,7 +149,7 @@ def generatePulls(
         text,
         horizontalalignment="right",
         transform=transform,
-        fontsize=12,
+        fontsize=20,
     )
     outdir.mkdir(exist_ok=True, parents=True)
     fig.tight_layout()
@@ -338,13 +224,16 @@ def getMatching(ax, val):
     return next(x for x in ax if val in x)
 
 
-def main():
+def parseArgs():
     parser = argparse.ArgumentParser(
         description="Generate template shape output files for fitting"
     )
     parser.add_argument("-i", "--input", required=True, type=str)
     parser.add_argument("--inject-name", type=str, default=None)
     parser.add_argument("--inject-strength", type=float, default=None)
+    parser.add_argument("--inject-fake", nargs=2, type=float, default=None)
+    parser.add_argument("--force-scale", type=float, default=None)
+    parser.add_argument("--window", type=float, nargs=2, default=None)
     parser.add_argument("-r", "--input-control-region", default=None, type=str)
     parser.add_argument("-o", "--output", required=True, type=str)
     parser.add_argument(
@@ -382,6 +271,18 @@ def main():
     )
     parser.add_argument("-m", "--min-bound", default=1050, type=float)
     args = parser.parse_args()
+    return args
+
+
+def addSignalToHist(hist, normalize_to, mean, sigma, name="fake_signal"):
+    norm = hist[{"dataset": normalize_to}].sum().value
+    gaus = np.random.normal(loc=mean, scale=sigma, size=10000)
+    hist.fill(name, gaus, weight=norm / 10000)
+    return hist
+
+
+def main():
+    args = parseArgs()
     data = pkl.load(open(args.input, "rb"))
     plotdir = Path(args.plot_dir)
     root_output = uproot.recreate(args.output)
@@ -389,6 +290,18 @@ def main():
     histogram = histos[args.name]
     target = None
     sigh = None
+    signame=args.inject_name
+    append_to_files = (
+        f"_{signame}_r{args.inject_strength}"
+        if signame
+        else "_bkg_only"
+    )
+    if args.force_scale:
+        append_to_files += f"__scale_force_{round(args.force_scale)}"
+    window=args.window
+    if window:
+        append_to_files += f"_w{window[0]}_{window[1]}"
+    append_to_files = append_to_files.replace(".", "p")
     if args.only_cr:
         for bkg in args.backgrounds:
             if args.input_control_region:
@@ -401,35 +314,41 @@ def main():
                 ]
                 crgp = fitGp(hcr)
                 ls = crgp.kernel_.get_params()["k2__length_scale"]
-                generatePulls(
-                    hcr,
-                    crgp,
-                    plotdir / bkg,
-                    args.min_bound,
-                    target=target,
-                    sig_hist=sigh,
-                    sig_name=args.inject_name,
-                    sig_strength=args.inject_strength,
-                    name="pulls_cr",
-                )
-                generateDiagnosticPlots(
-                    hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit"
-                )
+                #generatePulls(
+                #    hcr,
+                #    crgp,
+                #    plotdir / bkg,
+                #    args.min_bound,
+                #    target=target,
+                #    sig_hist=sigh,
+                #    sig_name=signame,
+                #    sig_strength=args.inject_strength,
+                #    name="pulls_cr" + append_to_files,
+                #)
+                # generateDiagnosticPlots(
+                #    hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit" + append_to_files
+                # )
         return 0
     for bkg in args.backgrounds:
         h = histogram[
             getMatching(histogram.axes[0], bkg),
             hist.loc(args.min_bound) :: hist.rebin(args.rebin),
         ]
-        if args.inject_name and args.inject_strength:
-            target = int(args.inject_name.split("_")[2])
-            print(f"Injecting signal {args.inject_name} at rate {args.inject_strength}")
-
+        if signame and args.inject_strength:
+            hname = signame
+            if args.inject_fake:
+                m, s = args.inject_fake
+                print(f"Using fake signal")
+                hname += f"_fake_s{s}"
+                append_to_files += hname
+                append_to_files = append_to_files.replace(".", "p")
+                histogram = addSignalToHist(histogram, signame, m, s, hname)
+            target = int(signame.split("_")[2])
+            signame = hname
+            print(f"Injecting signal {signame} at rate {args.inject_strength}")
             sigh = (
                 args.inject_strength
-                * histogram[
-                    args.inject_name, hist.loc(args.min_bound) :: hist.rebin(args.rebin)
-                ]
+                * histogram[hname, hist.loc(args.min_bound) :: hist.rebin(args.rebin)]
             )
             h += sigh
 
@@ -443,30 +362,33 @@ def main():
             ]
             crgp = fitGp(hcr)
             ls = crgp.kernel_.get_params()["k2__length_scale"]
-            generatePulls(
-                hcr,
-                crgp,
-                plotdir / bkg,
-                args.min_bound,
-                target=target,
-                sig_hist=sigh,
-                sig_name=args.inject_name,
-                sig_strength=args.inject_strength,
-                name="pulls_cr",
-            )
+            #generatePulls(
+            #    hcr,
+            #    crgp,
+            #    plotdir / bkg,
+            #    args.min_bound,
+            #    target=target,
+            #    sig_hist=sigh,
+            #    sig_name=signame,
+            #    sig_strength=args.inject_strength,
+            #    name="pulls_cr" + append_to_files,
+            #)
             generateDiagnosticPlots(
-                hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit"
+               hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit" + append_to_files
             )
             print(f"Found length scale {ls:0.2f}")
-            gp = fitGp(h, ls)
+            gp = fitGp(h, ls, window=window)
+        elif args.force_scale:
+            print(f"Using manually entered length scale {args.force_scale}")
+            gp = fitGp(h, args.force_scale, window=window)
         else:
-            gp = fitGp(h)
+            gp = fitGp(h, window=window)
             print("Optimizing length scale in signal region")
             ls = gp.kernel_.get_params()["k2__length_scale"]
             print(f"Found length scale {ls:0.2f}")
 
         res = getPrediction(h, gp)
-        generateDiagnosticPlots(h, gp, args.min_bound, plotdir / bkg)
+        # generateDiagnosticPlots(h, gp, args.min_bound, plotdir / bkg, name="gaussian_process_fit" + append_to_files)
         # sigh=None
         generatePulls(
             h,
@@ -475,14 +397,9 @@ def main():
             args.min_bound,
             target=target,
             sig_hist=sigh,
-            sig_name=args.inject_name,
+            sig_name=signame,
             sig_strength=args.inject_strength,
-            name="pull_sr"
-            + (
-                f"_{args.inject_name}_r{args.inject_strength}".replace(".", "p")
-                if args.inject_name
-                else "_bkg_only"
-            ),
+            name="pull_sr" + append_to_files,
         )
         root_output[f"SignalChannel/{bkg}/nominal"] = res
 

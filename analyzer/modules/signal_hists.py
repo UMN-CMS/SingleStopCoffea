@@ -5,8 +5,6 @@ from analyzer.math_funcs import angleToNPiToPi
 from .utils import numMatching
 
 
-
-
 @analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
 def createSignalHistograms(events, hmaker):
     ret = {}
@@ -100,7 +98,6 @@ def genMatchingMassReco(events, hmaker):
         name="genmatchedchi",
     )
     ret[f"mstop_gen_matched"] = hmaker(
-        
         makeAxis(
             60,
             0,
@@ -114,10 +111,22 @@ def genMatchingMassReco(events, hmaker):
     )
     ret[f"perfect_matching_check"] = hmaker(
         hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\cap$ M13|"
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher|"
         ),
         numMatching(events.matched_jet_idx[:, 1:4], events.matched_jet_idx[:, 1:4]),
         name="Number of jets in this set that are also in the gen level matching",
+    )
+    ret[f"perfect_matching_count"] = hmaker(
+        hist.axis.IntCategory(
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher|"
+        ),
+        ak.num(
+            events.matched_jet_idx[:, 1:4][
+                ~ak.is_none(events.matched_jet_idx[:, 1:4], axis=1)
+            ],
+            axis=1,
+        ),
+        name="Number of perfectly matched jets",
     )
 
     return ret
