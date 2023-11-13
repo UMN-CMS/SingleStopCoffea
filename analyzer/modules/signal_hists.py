@@ -90,7 +90,7 @@ def genMatchingMassReco(events, hmaker):
             60,
             0,
             3000,
-            r"Mass of Gen Matched Jets From $\tilde{\chi}^{\pm}$",
+            r"Mass of Gen Matched $\Delta R < 0.2$ Jets From $\tilde{\chi}^{\pm}$",
             unit="GeV",
         ),
         all_matched[:, 1:4].sum().mass,
@@ -102,7 +102,7 @@ def genMatchingMassReco(events, hmaker):
             60,
             0,
             3000,
-            r"Mass of Gen Matched Jets From $\tilde{t}$",
+            r"Mass of Gen Matched $\Delta R < 0.2$ Jets From $\tilde{t}$",
             unit="GeV",
         ),
         all_matched[:, 0:4].sum().mass,
@@ -111,14 +111,14 @@ def genMatchingMassReco(events, hmaker):
     )
     ret[f"perfect_matching_check"] = hmaker(
         hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher|"
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\Delta R < 0.2$|"
         ),
         numMatching(events.matched_jet_idx[:, 1:4], events.matched_jet_idx[:, 1:4]),
         name="Number of jets in this set that are also in the gen level matching",
     )
     ret[f"perfect_matching_count"] = hmaker(
         hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher|"
+            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\Delta R < 0.2$| "
         ),
         ak.num(
             events.matched_jet_idx[:, 1:4][

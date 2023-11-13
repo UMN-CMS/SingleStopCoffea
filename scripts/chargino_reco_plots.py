@@ -16,162 +16,38 @@ both = compressed + uncompressed
 representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900")]
 
 
-plotter = Plotter("chargino_reco.pkl", "figures", default_backgrounds=backgrounds)
+plotter = Plotter(
+    "analyzerout/chargino_reco.pkl", "figures", default_backgrounds=backgrounds
+)
 histos = plotter.histos
-plotter(
-    "mchi_gen_matched",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
+plots = [
+    ("mchi_gen_matched", compressed),
+    ("mchi_gen_matched", uncompressed),
+#
+    ("m13_m", compressed),
+    ("m3_top_2_plus_lead_b", compressed),
+    #
+    ("m24_m", uncompressed),
+    ("m3_top_3_no_lead_b", uncompressed),
+    ("m3_dr_switched", uncompressed),
+    ("m3_top_3_no_lead_b_dr_cut", uncompressed),
 
-plotter(
-    "m24_m",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
+    ("m24_m_matching", uncompressed),
+    ("m3_top_3_no_lead_b_matching", uncompressed),
+    ("m3_dr_switched_matching", uncompressed),
+    ("m3_top_3_no_lead_b_dr_cut_matching", uncompressed),
 
-plotter(
-    "m3_top_3_no_lead_b",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-
-
-plotter(
-    "m24_matching",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m13_m",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m13_matching",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_top_3_no_lead_b_matching",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_dr_switched",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_dr_switched_matching",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_dr_switched",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_dr_switched_matching",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_top_2_plus_lead_b",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "m3_top_2_plus_lead_b_matching",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-plotter(
-    "perfect_matching_count",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-    add_name="compressed"
-)
-plotter(
-    "perfect_matching_count",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-    add_name="uncompressed"
-)
-
-plotter(
-    "mchi_gen_matched",
-    compressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-    add_name="compressed",
-)
-
-plotter(
-    "mchi_gen_matched",
-    uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-    add_name="uncompressed",
-)
+    ("m24_m_matching_all_three", uncompressed),
+    ("m3_top_3_no_lead_b_matching_all_three", uncompressed),
+    ("m3_dr_switched_matching_all_three", uncompressed),
+    ("m3_top_3_no_lead_b_dr_cut_matching_all_three", uncompressed),
+]
+for p,cat in plots:
+    plotter(
+        p,
+        cat,
+        [],
+        normalize=True,
+        scale="linear",
+        sig_style="hist",
+    )

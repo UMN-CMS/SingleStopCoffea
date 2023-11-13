@@ -45,7 +45,7 @@ def createDaskLocal(w):
 
     global local_cluster
     if local_cluster is None:
-        local_cluster = LocalCluster("tcp://localhost:8787", timeout="2s")
+        local_cluster = LocalCluster("tcp://localhost:8787", timeout="2s", memory_limit="4.0G")
     client = Client(local_cluster)
     print(client)
     return processor.DaskExecutor(client=client)
