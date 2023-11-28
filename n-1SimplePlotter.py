@@ -26,11 +26,10 @@ representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900
 
 manager = loadSamplesFromDirectory("datasets")
 
-file_name = "all.pkl"
+file_name = "singlemuon.pkl"
 data = pkl.load(open(file_name, "rb"))
 histos = data["histograms"]
 lumi = data["target_lumi"]
-
 
 def simplePlot(
     hist,
@@ -51,16 +50,25 @@ def simplePlot(
     selection = {}
     if hist == 'nJets':    
       selection = { 'jetpT300': sum, 'nJets456': sum, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
-    elif hist == 'pT1':
+    elif (hist == 'pT1') and ('DataSingleMuon2018' not in sig_set):
       selection = { 'jetpT300': sum, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': 1, 'dRbb_313': sum }
     elif hist == 'dRbb12':
       selection = { 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
+    elif hist == 'pT1':
+      selection = {'pT400': sum, 'HT1050': sum}
+    elif hist == 'HT':
+      selection = {'HT1050': sum, 'pT400': sum}
+
+
 
     h = histos[hist][selection]
     with open(savedir / "descriptions.txt", "a") as f:
         f.write(f"{hist}: {h.description}\n")
     datasets = sorted(bkg_set) + sorted(sig_set)
+    print(datasets)
+    print(len(h.axes))
     hc = h[{"dataset": datasets}]
+    hc = h
     if normalize:
         hc = getNormalized(hc, "dataset")
     #if hist == 'pT1': hc[::2j]
@@ -139,9 +147,12 @@ savedir = Path("figures")
 savedir.mkdir(exist_ok=True, parents=True)
 open(savedir / "descriptions.txt", "wt")
 
-simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
-simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
-simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
+singlemuon = ["DataSingleMuon2018"]
+#simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
+#simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
+#simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
+simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False)
+simplePlot('HT', singlemuon, [], scale = 'log', normalize = False)
 
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")

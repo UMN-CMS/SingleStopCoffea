@@ -77,6 +77,56 @@ def triggers(events, selection):
 	selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet400_TrimMass30).to_numpy())
 	return selection
 
+@analyzerModule("Mu50Trigger", ModuleType.Selection)
+def Mu50Trigger(events, selection):
+	good_electrons = events.good_electrons
+	good_muons = events.good_muons
+	selection.add("hlt", (events.HLT.Mu50).to_numpy())
+	selection.add("electronVeto", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)).to_numpy())
+	return selection
+
+@analyzerModule("pTTrigger", ModuleType.Categories)
+def pTTrigger(events, data):
+	pT400 = events.HLT.AK8PFJet400_TrimMass30
+	a = hist.axis.IntCategory([0, 1], name = 'pT400', label = 'pT400')
+	return (a, pT400)
+
+@analyzerModule("fatJetpTPlot", ModuleType.MainHist)
+def pTPlot(events, hmaker):
+	ret = {}
+	fatjets = events.FatJet
+	fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4) & (events.FatJet.msoftdrop > 50)]
+	mask = ak.num(fatjets, axis=1) > 0
+	fatjets_mask = fatjets[mask]
+	ret[rf"pT1"] = hmaker(
+		pt_axis,
+		fatjets_mask[:, 0].pt,
+		mask = mask,
+		name = f'p_T of leading AK8 jet',
+		description = f'p_T of leading AK8 jet',
+	)
+	return ret
+
+@analyzerModule("HTTrigger", ModuleType.Categories)
+def HTTrigger(events, data):
+  HT1050 = events.HLT.PFHT1050
+  a = hist.axis.IntCategory([0, 1], name = 'HT1050', label = 'HT1050')
+  return (a, HT1050)
+
+@analyzerModule("HTTriggerPlot", ModuleType.MainHist)
+def HTTriggerPlot(events, hmaker):
+	ret = {}
+	print(events.fields)
+	print(events.event.fields)
+	ret[rf'HT'] = hmaker(
+		ht_axis,
+		events.HT,
+		name = 'HT',
+		description = 'HT',
+	)
+	return ret
+
+
 @analyzerModule("nMinusOnePlots", ModuleType.MainHist)
 def nMinusOnePlots(events, hmaker):
 	gj = events.good_jets
