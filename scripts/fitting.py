@@ -10,18 +10,12 @@ from pathlib import Path
 import json
 import sys
 import argparse
-from sklearn.datasets import make_friedman2
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import (
-    DotProduct,
-    ConstantKernel,
-    WhiteKernel,
-    RBF,
-    Kernel,
-    Matern,
-    Hyperparameter,
-)
 import re
+import gpytorch
+from dataclasses import dataclass
+import dataclasses
+import torch
+from typing import Optional, Tuple, List, Union, Dict
 from analyzer.plotting.core_plots import (
     loadStyles,
     PlotObject,
@@ -38,73 +32,144 @@ from analyzer.plotting.simple_plot import Plotter
 loadStyles()
 
 
-def fitGp(histogram, length_scale=None, window=None):
+class ExactGPModel(gpytorch.models.ExactGP):
+    def __init__(
+        self,
+        train_x,
+        train_y,
+        likelihood,
+        init_lengthscale=205,
+        init_outscale=10,
+    ):
+        super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+        self.covar_module.base_kernel.lengthscale = init_lengthscale
+        self.covar_module.outputscale = init_outscale
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+    def getLS(self):
+        return self.covar_module.base_kernel.lengthscale.item()
+
+
+def createOptimizer(model, ls_lr=25, os_lr=1e9, mean_lr=500):
+    optimizer = torch.optim.Adam(
+        [
+            {"params": [model.covar_module.base_kernel.raw_lengthscale], "lr": ls_lr},
+            {"params": [model.covar_module.raw_outputscale], "lr": os_lr},
+            {"params": model.mean_module.parameters(), "lr": mean_lr},
+        ]
+    )
+    return optimizer
+
+
+def createLikelihood(noise):
+    likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(
+        noise=noise, learn_additional_noise=True
+    )
+    return likelihood
+
+
+def trainModel(likelihood, model, train_x, train_y, fix_ls=False):
+    if fix_ls:
+        optimizer = createOptimizer(model, ls_lr=0)
+    else:
+        optimizer = createOptimizer(model)
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+    for i in range(50):
+        # Zero gradients from previous iteration
+        optimizer.zero_grad()
+        # Output from model
+        output = model(train_x)
+        # Calc loss and backprop gradients
+        loss = -mll(output, train_y)
+        loss.backward()
+        if not i % 10:
+            print(
+                "Iter %d - Loss: %.6f   lengthscale: %.3f  scale: %.3f  mean:%0.3f"
+                % (
+                    i + 1,
+                    loss.item(),
+                    model.getLS(),
+                    model.covar_module.outputscale.item(),
+                    model.mean_module.constant.item(),
+                )
+            )
+        optimizer.step()
+    return model
+
+
+def createAndFit(histogram, fixed_ls=None, window=None):
     vals, points, varia = (
         histogram.values(),
         histogram.axes[0].centers.reshape(-1, 1),
-        np.sqrt(histogram.variances()),
+        histogram.variances(),
     )
     if window:
         mask = np.ravel((points < window[0]) | (points > window[1]))
-        vals,points,varia=vals[mask],points[mask],varia[mask]
-    if length_scale: 
-        # kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * Matern(
-        #    length_scale=length_scale, length_scale_bounds="fixed", nu=4.5
-        # )
-        kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * RBF(
-            length_scale=length_scale, length_scale_bounds="fixed"
-        )
-    else:
-        # kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * Matern(
-        #    length_scale=200.0, length_scale_bounds=(1, 1e4), nu=4.5
-        # )
-        kernel = ConstantKernel(10.0, constant_value_bounds=(0.1, 1e13)) * RBF(
-            length_scale=200.0, length_scale_bounds=(1, 1e4)
-        )
+        vals, points, varia = vals[mask], points[mask], varia[mask]
 
-    gaussian_process = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=20, alpha=varia**2
+    vals, points, varia = (
+        torch.from_numpy(vals),
+        torch.from_numpy(points),
+        torch.from_numpy(varia),
     )
-    ret = gaussian_process.fit(points, vals)
-    return ret
+    likelihood = createLikelihood(varia)
+    if fixed_ls:
+        model = ExactGPModel(points, vals, likelihood, init_lengthscale=fixed_ls)
+    else:
+        model = ExactGPModel(points, vals, likelihood)
+    model.train()
+    likelihood.train()
+    model = trainModel(likelihood, model, points, vals, fix_ls=fixed_ls is not None)
+    model.eval()
+    likelihood.eval()
+    return model
 
 
 def chisqr(exp, uncert, pred):
     return np.sum((exp - pred) ** 2 / uncert)
 
 
-def getPrediction(histogram, gp):
-    bc = histogram.axes[0].centers
-    v = gp.predict(bc.reshape(-1, 1))
-    cs = chisqr(histogram.values(), histogram.variances(), v)
-    print(f"Reduced Chi^2 results are {cs:0.2f}; Chi^2/DOF = {cs/(len(bc) - 1)}")
-    h = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
-    ratio = histogram.sum().value / sum(h[0])
-    h = (h[0] * ratio, h[1])
-    print(f"Scaling is {ratio}")
-    return h
+def getPrediction(model, points):
+    with torch.no_grad(), gpytorch.settings.fast_pred_var():
+        observed_pred = model(points)
+        upper, lower = observed_pred.confidence_region()
+        variance = observed_pred.variance
+        mean, upper, lower, variance = (
+            observed_pred.mean.numpy(),
+            upper.numpy(),
+            lower.numpy(),
+            variance.numpy(),
+        )
+    return mean, upper, lower, variance
 
 
-def plotGaussianProcess(ax, gp, min_bound=1050):
+def plotGaussianProcess(ax, model, min_bound=1050):
     ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
-    mean_prediction, std_prediction = gp.predict(ls, return_std=True)
-    ax.plot(ls.ravel(), mean_prediction, label="Mean prediction", color="tab:orange")
+    mean, upper, lower, _ = getPrediction(model, torch.from_numpy(ls))
+    ax.plot(ls.ravel(), mean, label="Mean prediction", color="tab:orange")
     ax.fill_between(
         ls.ravel(),
-        mean_prediction - std_prediction,
-        mean_prediction + std_prediction,
+        lower,
+        upper,
         alpha=0.3,
-        # label=r"95% confidence interval",
         color="tab:orange",
+        label=r"Mean$\pm 2\sigma$",
     )
     return ax
 
 
 def generatePulls(
     histogram,
-    gp,
+    model,
     outdir=Path("diagnostics"),
     min_bound=1050,
+    window=None,
     target=None,
     sig_hist=None,
     sig_name=None,
@@ -112,14 +177,15 @@ def generatePulls(
     name="pulls_bkg_only",
 ):
     bc = histogram.axes[0].centers
-    v, std = gp.predict(bc.reshape(-1, 1), return_std=True)
-    h = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
-    pred = PlotObject((*h, std))
+    mean_at_obs, upper_at_obs, lower_at_obs, variance_at_obs = getPrediction(
+        model, torch.from_numpy(bc.reshape(-1, 1))
+    )
+    h = np.histogram(bc, weights=mean_at_obs, bins=histogram.axes[0].edges)
+    pred = PlotObject((*h, variance_at_obs))
     obs = PlotObject(histogram)
-    # fig, ax = drawAs1DHist(obs, yerr=True, fill=False)
+
     fig, ax = drawAsScatter(obs, yerr=True)
-    # drawAs1DHist(ax, pred, yerr=True, fill=False)
-    plotGaussianProcess(ax, gp, min_bound=min_bound)
+    plotGaussianProcess(ax, model, min_bound=min_bound)
     ax.tick_params(axis="x", labelbottom=False)
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     if sig_hist:
@@ -127,22 +193,26 @@ def generatePulls(
     ax.set_yscale("linear")
     ab = ax.bottom_axes[0]
     drawPull(ab, pred, obs, hline_list=[-1, 0, 1])
-    # ab.set_ylabel(r"$\frac{obs - pred}{\sqrt{\sigma_{p}^2 + \sigma_{o}^2}}$")
     ab.set_ylabel(r"$\frac{obs - pred}{\sigma_{o}}$")
     if target:
         ax.axvline(target, color="black", linewidth=0.3, linestyle="-.")
         ab.axvline(target, color="black", linewidth=0.3, linestyle="-.")
+    if window:
+        ax.axvline(window[0], color="red", linewidth=0.3, linestyle="-.")
+        ab.axvline(window[0], color="red", linewidth=0.3, linestyle="-.")
+        ax.axvline(window[1], color="red", linewidth=0.3, linestyle="-.")
+        ab.axvline(window[1], color="red", linewidth=0.3, linestyle="-.")
     addEra(ax, 137)
     addPrelim(ax, additional_text=f"\n$\\lambda_{{312}}''$ ")
     addTitles1D(ax, histogram, top_pad=0.2)
     ax.legend()
     transform = ax.transAxes
-    cs = chisqr(histogram.values(), histogram.variances(), v)
-    scale = gp.kernel_.get_params()["k2__length_scale"]
-    text = f"$\chi^2/DOF = {cs/(len(bc)-1):0.2f}$\nLength Scale={scale:0.2f}"
+    cs = chisqr(histogram.values(), histogram.variances(), mean_at_obs)
+    cs = cs/(len(bc)-1)
+    scale = model.getLS()
+    text = f"$\chi^2/DOF = {cs:0.2f}$\nLength Scale={round(scale)}"
     if sig_name:
         text += f"\n{sig_name}: r={sig_strength}"
-
     ax.text(
         0.95,
         0.7,
@@ -154,74 +224,88 @@ def generatePulls(
     outdir.mkdir(exist_ok=True, parents=True)
     fig.tight_layout()
     fig.savefig(outdir / f"{name}.pdf")
+    return cs
 
 
-def generateDiagnosticPlots(
-    histogram,
-    gp,
-    min_bound=1050,
-    outdir=Path("diagnostics"),
-    name="gaussian_process_fit",
-):
-    ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
-    fig, ax = plt.subplots()
-    mean_prediction, std_prediction = gp.predict(ls, return_std=True)
-    bc = histogram.axes[0].centers
-    v = gp.predict(bc.reshape(-1, 1))
-    vals, points, varia = (
-        histogram.values(),
-        histogram.axes[0].centers,
-        np.sqrt(histogram.variances()),
-    )
-    ax.errorbar(
-        points,
-        vals,
-        varia,
-        linestyle="None",
-        color="tab:blue",
-        marker=".",
-        markersize=10,
-        label="Observations",
-    )
-    ax.plot(ls.ravel(), mean_prediction, label="Mean prediction", color="tab:orange")
-    ax.fill_between(
-        ls.ravel(),
-        mean_prediction - std_prediction,
-        mean_prediction + std_prediction,
-        alpha=0.3,
-        color="tab:orange",
-    )
-    transform = ax.transAxes
-    cs = chisqr(histogram.values(), histogram.variances(), v)
-    scale = gp.kernel_.get_params()["k2__length_scale"]
-    ax.text(
-        0.95,
-        0.7,
-        f"$\chi^2/DOF = {cs/(len(bc)-1):0.2f}$\nLength Scale={scale:0.2f}",
-        horizontalalignment="right",
-        transform=transform,
-    )
-    ax.legend()
-    ax.set_xlabel(histogram.axes[0].label)
-    ax.set_ylabel("Events")
-    outdir.mkdir(exist_ok=True, parents=True)
-    fig.tight_layout()
-    fig.savefig(outdir / f"{name}.pdf")
-
-    fig, ax = plt.subplots()
-    bc = histogram.axes[0].centers
-    v = gp.predict(bc.reshape(-1, 1))
-    v, e = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
-    ax.bar(e[:-1], v, width=np.diff(e), edgecolor="black", align="edge")
-    ax.plot(ls, mean_prediction, label="Mean prediction")
-    ax.set_xlabel(histogram.axes[0].label)
-    ax.set_ylabel("Events")
-    fig.tight_layout()
-    fig.savefig(outdir / f"{name}_template_shape.pdf")
+# def generateDiagnosticPlots(
+#    histogram,
+#    model,
+#    min_bound=1050,
+#    outdir=Path("diagnostics"),
+#    name="gaussian_process_fit",
+# ):
+#    ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
+#    fig, ax = plt.subplots()
+#    mean_prediction, std_prediction = gp.predict(ls, return_std=True)
+#    bc = histogram.axes[0].centers
+#    v = gp.predict(bc.reshape(-1, 1))
+#    vals, points, varia = (
+#        histogram.values(),
+#        histogram.axes[0].centers,
+#        np.sqrt(histogram.variances()),
+#    )
+#    ax.errorbar(
+#        points,
+#        vals,
+#        varia,
+#        linestyle="None",
+#        color="tab:blue",
+#        marker=".",
+#        markersize=10,
+#        label="Observations",
+#    )
+#    ax.plot(ls.ravel(), mean_prediction, label="Mean prediction", color="tab:orange")
+#    ax.fill_between(
+#        ls.ravel(),
+#        mean_prediction - std_prediction,
+#        mean_prediction + std_prediction,
+#        alpha=0.3,
+#        color="tab:orange",
+#    )
+#    transform = ax.transAxes
+#    cs = chisqr(histogram.values(), histogram.variances(), v)
+#    scale = gp.kernel_.get_params()["k2__length_scale"]
+#    ax.text(
+#        0.95,
+#        0.7,
+#        f"$\chi^2/DOF = {cs/(len(bc)-1):0.2f}$\nLength Scale={scale:0.2f}",
+#        horizontalalignment="right",
+#        transform=transform,
+#    )
+#    ax.legend()
+#    ax.set_xlabel(histogram.axes[0].label)
+#    ax.set_ylabel("Events")
+#    outdir.mkdir(exist_ok=True, parents=True)
+#    fig.tight_layout()
+#    fig.savefig(outdir / f"{name}.pdf")
+#
+#    fig, ax = plt.subplots()
+#    bc = histogram.axes[0].centers
+#    v = gp.predict(bc.reshape(-1, 1))
+#    v, e = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
+#    ax.bar(e[:-1], v, width=np.diff(e), edgecolor="black", align="edge")
+#    ax.plot(ls, mean_prediction, label="Mean prediction")
+#    ax.set_xlabel(histogram.axes[0].label)
+#    ax.set_ylabel("Events")
+#    fig.tight_layout()
+#    fig.savefig(outdir / f"{name}_template_shape.pdf")
 
 
 def getMatching(ax, val):
     return next(x for x in ax if val in x)
+
+
+def ranged(outtype):
+    def inner(string):
+        if string is None:
+            return [None]
+        if not "," in string:
+            return [outtype(string)]
+        else:
+            start, end, by = (int(x) for x in string.split(","))
+            return [outtype(x) for x in range(start, end, by)]
+
+    return inner
 
 
 def parseArgs():
@@ -229,13 +313,15 @@ def parseArgs():
         description="Generate template shape output files for fitting"
     )
     parser.add_argument("-i", "--input", required=True, type=str)
-    parser.add_argument("--inject-name", type=str, default=None)
-    parser.add_argument("--inject-strength", type=float, default=None)
-    parser.add_argument("--inject-fake", nargs=2, type=float, default=None)
-    parser.add_argument("--force-scale", type=float, default=None)
+    parser.add_argument("--inject-name", nargs="*", type=str, default=None)
+    parser.add_argument("--inject-strength", type=ranged(float), default=None)
+    parser.add_argument("--inject-point", type=ranged(float), default=None)
+    parser.add_argument("--inject-sigma", type=ranged(float), default=None)
+    parser.add_argument("--force-scale", type=ranged(float), default=None)
     parser.add_argument("--window", type=float, nargs=2, default=None)
     parser.add_argument("-r", "--input-control-region", default=None, type=str)
     parser.add_argument("-o", "--output", required=True, type=str)
+    parser.add_argument("-u", "--update", action="store_true", default=False)
     parser.add_argument(
         "-p", "--plot-dir", default=None, type=str, help="If set, save diagnostic plots"
     )
@@ -269,16 +355,56 @@ def parseArgs():
         default=1,
         help="Rebinning",
     )
-    parser.add_argument("-m", "--min-bound", default=1050, type=float)
+    parser.add_argument("-m", "--min-bound", default=1050, type=ranged(float))
     args = parser.parse_args()
     return args
 
 
 def addSignalToHist(hist, normalize_to, mean, sigma, name="fake_signal"):
+    hist = hist.copy(deep=True)
     norm = hist[{"dataset": normalize_to}].sum().value
     gaus = np.random.normal(loc=mean, scale=sigma, size=10000)
     hist.fill(name, gaus, weight=norm / 10000)
     return hist
+
+
+@dataclass
+class GaussianProcessFitResult:
+    fit_type: str
+    lower_bound: float
+    window: Optional[tuple[float, float]] = None
+    force_scale: Optional[float] = None
+    inject_signal_base: Optional[float] = None
+    inject_signal_rate: Optional[float] = None
+    inject_signal_params: Optional[Tuple[float, float]] = None
+    pull_figure_name: Optional[str] = None
+
+    length_scale: Optional[float] = None
+    reduced_chi2: Optional[float] = None
+
+    def getString(self):
+        all_parts = []
+        if self.inject_signal_base:
+            all_parts.append(f"inj_{self.inject_signal_base}")
+        else:
+            all_parts.append(f"bkg_only")
+        if self.lower_bound:
+            all_parts.append(f"lb{self.lower_bound}")
+        if self.inject_signal_rate:
+            all_parts.append(f"r{self.inject_signal_rate}")
+        if self.force_scale:
+            all_parts.append(f"fs_{self.force_scale}")
+        if self.inject_signal_params:
+            all_parts.append(
+                f"m{self.inject_signal_params[0]}_s{self.inject_signal_params[1]}"
+            )
+        if self.window:
+            all_parts.append(f"w_{self.window[0]}_{self.window[1]}")
+        return "__".join(all_parts).replace(".", "p")
+
+
+def product(*args):
+    return it.product(*(x if x is not None else [None] for x in args))
 
 
 def main():
@@ -290,130 +416,101 @@ def main():
     histogram = histos[args.name]
     target = None
     sigh = None
-    signame=args.inject_name
-    append_to_files = (
-        f"_{signame}_r{args.inject_strength}"
-        if signame
-        else "_bkg_only"
-    )
-    if args.force_scale:
-        append_to_files += f"__scale_force_{round(args.force_scale)}"
-    window=args.window
-    if window:
-        append_to_files += f"_w{window[0]}_{window[1]}"
-    append_to_files = append_to_files.replace(".", "p")
-    if args.only_cr:
-        for bkg in args.backgrounds:
-            if args.input_control_region:
-                print("Optimizing length scale in control region")
-                datacr = pkl.load(open(args.input_control_region, "rb"))
-                hcr = datacr["histograms"][args.name]
-                hcr = hcr[
-                    getMatching(hcr.axes[0], bkg),
-                    hist.loc(args.min_bound) :: hist.rebin(args.rebin),
-                ]
-                crgp = fitGp(hcr)
-                ls = crgp.kernel_.get_params()["k2__length_scale"]
-                #generatePulls(
-                #    hcr,
-                #    crgp,
-                #    plotdir / bkg,
-                #    args.min_bound,
-                #    target=target,
-                #    sig_hist=sigh,
-                #    sig_name=signame,
-                #    sig_strength=args.inject_strength,
-                #    name="pulls_cr" + append_to_files,
-                #)
-                # generateDiagnosticPlots(
-                #    hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit" + append_to_files
-                # )
-        return 0
-    for bkg in args.backgrounds:
-        h = histogram[
-            getMatching(histogram.axes[0], bkg),
-            hist.loc(args.min_bound) :: hist.rebin(args.rebin),
+    window = args.window
+
+    respath = plotdir / "results.json"
+    if respath.exists() and args.update:
+        all_results = json.load(open(plotdir / "results.json", "r"))
+    else:
+        all_results = []
+
+    for terms in product(
+        args.inject_name,
+        args.min_bound,
+        args.inject_strength,
+        args.force_scale,
+        args.inject_point,
+        args.inject_sigma,
+    ):
+        signame, mb, rate, scale, inj_point, inj_sigma = terms
+        gpresult = GaussianProcessFitResult(signame or "bkg_only", mb)
+        gpresult.inject_signal_base = signame
+        gpresult.inject_signal_rate = rate
+        gpresult.forced_scale = scale
+        gpresult.window = window
+        bkg_hist = histogram[
+            list(
+                it.chain(
+                    getMatching(histogram.axes[0], bkg) for bkg in args.backgrounds
+                )
+            ),
+            hist.loc(mb) :: hist.rebin(args.rebin),
         ]
-        if signame and args.inject_strength:
+
+        bkg_hist = bkg_hist[sum, ...]
+        if signame and rate:
             hname = signame
-            if args.inject_fake:
-                m, s = args.inject_fake
+            if inj_point:
+                m, s = inj_point, inj_sigma
                 print(f"Using fake signal")
                 hname += f"_fake_s{s}"
-                append_to_files += hname
-                append_to_files = append_to_files.replace(".", "p")
+                gpresult.inject_signal_params = m, s
                 histogram = addSignalToHist(histogram, signame, m, s, hname)
             target = int(signame.split("_")[2])
             signame = hname
-            print(f"Injecting signal {signame} at rate {args.inject_strength}")
-            sigh = (
-                args.inject_strength
-                * histogram[hname, hist.loc(args.min_bound) :: hist.rebin(args.rebin)]
-            )
-            h += sigh
-
+            print(f"Injecting signal {signame} at rate {rate}")
+            sigh = rate * histogram[hname, hist.loc(mb) :: hist.rebin(args.rebin)]
+            bkg_hist += sigh
         if args.input_control_region:
-            print("Optimizing length scale in control region")
             datacr = pkl.load(open(args.input_control_region, "rb"))
             hcr = datacr["histograms"][args.name]
             hcr = hcr[
                 getMatching(hcr.axes[0], bkg),
-                hist.loc(args.min_bound) :: hist.rebin(args.rebin),
+                hist.loc(mb) :: hist.rebin(args.rebin),
             ]
-            crgp = fitGp(hcr)
-            ls = crgp.kernel_.get_params()["k2__length_scale"]
-            #generatePulls(
-            #    hcr,
-            #    crgp,
-            #    plotdir / bkg,
-            #    args.min_bound,
-            #    target=target,
-            #    sig_hist=sigh,
-            #    sig_name=signame,
-            #    sig_strength=args.inject_strength,
-            #    name="pulls_cr" + append_to_files,
-            #)
-            generateDiagnosticPlots(
-               hcr, crgp, args.min_bound, plotdir / bkg, name="cr_fit" + append_to_files
-            )
+            hcr = hcr[sum, ...]
+            cr_model = createAndFit(hcr)
+            ls = cr_model.getLS()
             print(f"Found length scale {ls:0.2f}")
-            gp = fitGp(h, ls, window=window)
-        elif args.force_scale:
-            print(f"Using manually entered length scale {args.force_scale}")
-            gp = fitGp(h, args.force_scale, window=window)
+            model = createAndFit(bkg_hist, fixed_ls=ls, window=window)
+        elif scale:
+            print(f"Using manually entered length scale {scale}")
+            model = createAndFit(h, args.scale, window=window)
         else:
-            gp = fitGp(h, window=window)
+            model = createAndFit(bkg_hist, window=window)
             print("Optimizing length scale in signal region")
-            ls = gp.kernel_.get_params()["k2__length_scale"]
+            ls = model.getLS()
             print(f"Found length scale {ls:0.2f}")
 
-        res = getPrediction(h, gp)
-        # generateDiagnosticPlots(h, gp, args.min_bound, plotdir / bkg, name="gaussian_process_fit" + append_to_files)
-        # sigh=None
-        generatePulls(
-            h,
-            gp,
-            plotdir / bkg,
-            args.min_bound,
+        gpresult.length_scale = model.getLS()
+        pull_sr_figname = "pull_sr_" + gpresult.getString()
+        print(signame)
+        print(pull_sr_figname)
+
+        gpresult.pull_figure_name = pull_sr_figname
+        cs = generatePulls(
+            bkg_hist,
+            model,
+            plotdir,
+            mb,
             target=target,
             sig_hist=sigh,
             sig_name=signame,
-            sig_strength=args.inject_strength,
-            name="pull_sr" + append_to_files,
+            window=window,
+            sig_strength=rate,
+            name=pull_sr_figname,
         )
-        root_output[f"SignalChannel/{bkg}/nominal"] = res
-
-    for bkg in args.backgrounds:
-        h = histogram[
-            getMatching(histogram.axes[0], bkg),
-            hist.loc(args.min_bound) :: hist.rebin(args.rebin),
-        ]
-        root_output["data_obs"] = h
-
-    for sig in args.signals:
-        for x in (y for y in histogram.axes[0] if sig in y):
-            h = histogram[x, hist.loc(args.min_bound) :]
-            root_output[f"SignalChannel/{x}/nominal"] = h
+        gpresult.reduced_chi2 = cs
+        all_results.append(gpresult)
+        # root_output[f"SignalChannel/{bkg}/nominal"] = res
+    json.dump(
+        [
+            dataclasses.asdict(x) if isinstance(x, GaussianProcessFitResult) else x
+            for x in all_results
+        ],
+        open(plotdir / "results.json", "w"),
+        indent=2,
+    )
 
 
 if __name__ == "__main__":

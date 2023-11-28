@@ -3,6 +3,7 @@ from .axes import *
 import awkward as ak
 from analyzer.math_funcs import angleToNPiToPi
 from .utils import numMatching
+import numpy as np
 
 
 @analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
@@ -76,7 +77,55 @@ def createSignalHistograms(events, hmaker):
         name="chi_b_phi",
     )
 
+    xchildren = ak.concatenate(
+        [
+            events.SignalParticles.chi_b[:, np.newaxis],
+            events.SignalParticles.chi_d[:, np.newaxis],
+            events.SignalParticles.chi_s[:, np.newaxis],
+        ],
+        axis=1,
+    )
+    cross_jets = ak.cartesian([xchildren, xchildren], axis=1)
+    one, two = ak.unzip(cross_jets)
+    dr = one.delta_r(two)
+    max_delta_rs = ak.max(dr, axis=1)
+    min_delta_rs = ak.min(dr[dr > 0], axis=1)
+    ret[f"max_chi_child_dr"] = hmaker(
+        makeAxis(20, 0, 5, "Max $\\Delta R$ between $\\chi$ children"),
+        max_delta_rs,
+        name="max_chi_child_dr",
+    )
+    ret[f"min_chi_child_dr"] = hmaker(
+        makeAxis(20, 0, 5, "Min $\\Delta R$ between $\\chi$ children"),
+        min_delta_rs,
+        name="min_chi_child_dr",
+    )
+    ret[f"mean_chi_child_dr"] = hmaker(
+        makeAxis(20, 0, 5, "Mean $\\Delta R$ between $\\chi$ children"),
+        ak.mean(dr[dr > 0], axis=1),
+        name="mean_chi_child_dr",
+    )
+    ret[f"stop_pt"] = hmaker(
+        makeAxis(
+            100,
+            0,
+            1500,
+            r"$\tilde{t} p_{T}$",
+            unit="GeV",
+        ),
+        events.SignalParticles.stop.pt,
+    )
+
     return ret
+
+
+def makeIdxHist(ret, hmaker, idxs, name, axlabel, **kwargs):
+    ret[name] = hmaker(
+        hist.axis.IntCategory([0, 1, 2, 3, 4, 5, 6], name=name, label=axlabel),
+        idxs,
+        name=name,
+        **kwargs,
+    )
 
 
 @analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
@@ -118,7 +167,9 @@ def genMatchingMassReco(events, hmaker):
     )
     ret[f"perfect_matching_count"] = hmaker(
         hist.axis.IntCategory(
-            [0, 1, 2, 3], name="num_matched_chi", label=r"|GenMatcher $\Delta R < 0.2$| "
+            [0, 1, 2, 3],
+            name="num_matched_chi",
+            label=r"|GenMatcher $\Delta R < 0.2$| ",
         ),
         ak.num(
             events.matched_jet_idx[:, 1:4][
@@ -127,6 +178,16 @@ def genMatchingMassReco(events, hmaker):
             axis=1,
         ),
         name="Number of perfectly matched jets",
+    )
+
+    all_three_mask = ~ak.any(ak.is_none(events.matched_jet_idx[:, 1:4], axis=1), axis=1)
+    makeIdxHist(
+        ret,
+        hmaker,
+        events.matched_jet_idx[:, 1:4][all_three_mask],
+        "mchi_gen_matched_idxs",
+        "mchi_gen_matched_idxs",
+        mask=all_three_mask,
     )
 
     return ret

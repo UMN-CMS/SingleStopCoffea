@@ -9,7 +9,6 @@ import numpy as np
 
 
 def makeIdxHist(ret, hmaker, idxs, name, axlabel):
-    print(idxs)
     ret[name] = hmaker(
         hist.axis.IntCategory([0, 1, 2, 3, 4, 5, 6], name=name, label=axlabel),
         idxs,
@@ -178,6 +177,8 @@ def combo_method(events, hmaker):
     sublead_b_idx = idx[med_bjet_mask][:, 1]
 
     jets_idx = ak.argcombinations(gj, 3, axis=1, replacement=False)
+    import numpy as np
+
     one, two, three = ak.unzip(jets_idx)
     jets_idx = ak.concatenate(
         [one[:, :, np.newaxis], two[:, :, np.newaxis], three[:, :, np.newaxis]], axis=2
@@ -193,7 +194,7 @@ def combo_method(events, hmaker):
     one, two = ak.unzip(cross_jets)
     max_delta_rs = ak.max(one.delta_r(two), axis=2)
 
-    dr_mask = max_delta_rs < 3
+    dr_mask = max_delta_rs < 4
     lead_b_mask = (
         (jets_idx[:, :, 0] == lead_b_idx)
         | (jets_idx[:, :, 1] == lead_b_idx)
@@ -236,8 +237,8 @@ def combo_method(events, hmaker):
         ret,
         hmaker,
         uncomp_idx,
-        "m3_top_3_no_lead_b_delta_r_cut",
-        "m3_top_3_no_lead_b_delta_r_cut idxs",
+        "m3_top_3_no_lead_b_delta_r_cut_idx",
+        "m3_top_3_no_lead_b_delta_r_cut_idxs",
     )
     events["matching_algos", "top_3_no_lead_b_dr_cut"] = uncomp_idx
 
@@ -331,6 +332,22 @@ def charginoRecoHistograms(events, hmaker):
         )
     )
 
+    makeIdxHist(
+        ret,
+        hmaker,
+        uncomp_charg_idxs,
+        "m3_top_3_no_lead_b_idxs",
+        "m3_top_3_no_lead_b_idxs",
+    )
+    makeIdxHist(
+        ret,
+        hmaker,
+        comp_charg_idxs,
+        "m3_top_2_plus_lead_b_idxs",
+        "m3_top_2_plus_lead_b_idxs",
+    )
+    makeIdxHist(ret, hmaker, decided_idxs, "m3_dr_switched_idxs", "m3_dr_switched_idxs")
+
     ret[f"m3_top_2_plus_lead_b"] = hmaker(
         makeAxis(
             60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"
@@ -407,4 +424,22 @@ def charginoRecoHistograms(events, hmaker):
         name="ratio_m3_top_3_no_lead_b",
     )
 
+    return ret
+
+
+@analyzerModule(
+    "stop_reco",
+    ModuleType.MainHist,
+)
+def recoEfficiency(events, hmaker):
+    ret = {}
+    jets = events.good_jets[:, 0:4].sum()
+    ret[f"m14_vs_pt14"] = hmaker(
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(50, 0, 500, r"$pt_{14}$", unit="GeV"),
+        ],
+        [jets.mass, jets.pt],
+        name="m14 vs pt 14",
+    )
     return ret

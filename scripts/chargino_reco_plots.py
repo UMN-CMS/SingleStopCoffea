@@ -21,33 +21,47 @@ plotter = Plotter(
 )
 histos = plotter.histos
 plots = [
-    ("mchi_gen_matched", compressed),
-    ("mchi_gen_matched", uncompressed),
+    ("mchi_gen_matched", compressed, "compressed"),
+    ("mchi_gen_matched", uncompressed, "uncompressed"),
+
+    ("perfect_matching_count", compressed, "compressed"),
+    ("perfect_matching_count", uncompressed, "uncompressed"),
 #
     ("m13_m", compressed),
     ("m3_top_2_plus_lead_b", compressed),
+
+    ("m13_matching", compressed),
+    ("m3_top_2_plus_lead_b_matching", compressed),
+
+    ("m13_matching_all_three", compressed),
+    ("m3_top_2_plus_lead_b_matching_all_three", compressed),
     #
     ("m24_m", uncompressed),
     ("m3_top_3_no_lead_b", uncompressed),
     ("m3_dr_switched", uncompressed),
-    ("m3_top_3_no_lead_b_dr_cut", uncompressed),
+    ("m3_top_3_no_lead_b_delta_r_cut", uncompressed),
 
-    ("m24_m_matching", uncompressed),
+    ("m24_matching", uncompressed),
     ("m3_top_3_no_lead_b_matching", uncompressed),
     ("m3_dr_switched_matching", uncompressed),
     ("m3_top_3_no_lead_b_dr_cut_matching", uncompressed),
 
-    ("m24_m_matching_all_three", uncompressed),
+    ("m24_matching_all_three", uncompressed),
     ("m3_top_3_no_lead_b_matching_all_three", uncompressed),
     ("m3_dr_switched_matching_all_three", uncompressed),
     ("m3_top_3_no_lead_b_dr_cut_matching_all_three", uncompressed),
 ]
-for p,cat in plots:
+for x in plots:
+    if len(x) == 2:
+        (p,cat),add=x,None
+    else:
+        p,cat,add=x
     plotter(
         p,
         cat,
         [],
         normalize=True,
+        add_name=add,
         scale="linear",
         sig_style="hist",
     )
