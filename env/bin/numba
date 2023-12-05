@@ -1,0 +1,8 @@
+#!/uscms_data/d3/shardulr/SingleStop/CMSSW_10_6_19_patch2/src/PhysicsTools/NanoAODTools/python/postprocessing/SingleStopCoffea/env/bin/python
+# -*- coding: UTF-8 -*-
+from __future__ import print_function, division, absolute_import
+
+from numba.misc.numba_entry import main
+
+if __name__ == "__main__":
+    main()

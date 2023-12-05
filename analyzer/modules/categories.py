@@ -107,6 +107,22 @@ def pTPlot(events, hmaker):
 	)
 	return ret
 
+@analyzerModule("softDropMassPlot", ModuleType.MainHist)
+def pTPlot(events, hmaker):
+	ret = {}
+	fatjets = events.FatJet
+	fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4)]
+	mask = ak.num(fatjets, axis=1) > 0
+	fatjets_mask = fatjets[mask]
+	ret[rf"mSoftDrop"] = hmaker(
+		pt_axis,
+		fatjets_mask.msoftdrop,
+		mask = mask,
+		name = f'p_T of leading AK8 jet',
+		description = f'p_T of leading AK8 jet',
+	)
+	return ret
+
 @analyzerModule("HTTrigger", ModuleType.Categories)
 def HTTrigger(events, data):
   HT1050 = events.HLT.PFHT1050

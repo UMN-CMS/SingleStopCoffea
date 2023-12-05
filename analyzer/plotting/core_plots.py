@@ -280,7 +280,7 @@ def drawAs1DHist(ax, plot_object, plot_name = "", yerr=True, fill=True, orient="
 
 @magicPlot
 def drawRatio(
-    ax, numerator, denominator, uncertainty_type="poisson", hline_list=None, **kwargs
+    ax, numerator, denominator, uncertainty_type="efficiency", hline_list=None, **kwargs
 ):
     hline_list = hline_list or []
     nh, dh = numerator.hist, denominator.hist

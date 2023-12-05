@@ -41,25 +41,19 @@ def simplePlot(
     normalize=False,
     sig_style="hist",
     add_label=None,
+    selection = {},
 ):
     if add_label is None and add_name:
         add_label = add_name.title()
     print(f"Now plotting {hist}")
     add_name = add_name + "_" if add_name else ""
 
-    selection = {}
     if hist == 'nJets':    
-      selection = { 'jetpT300': sum, 'nJets456': sum, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
+      selection += { 'jetpT300': sum, 'nJets456': sum, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': sum, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
     elif (hist == 'pT1') and ('DataSingleMuon2018' not in sig_set):
-      selection = { 'jetpT300': sum, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': 1, 'dRbb_313': sum }
+      selection += { 'jetpT300': sum, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': 1, 'dRbb_313': sum }
     elif hist == 'dRbb12':
-      selection = { 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
-    elif hist == 'pT1':
-      selection = {'pT400': sum, 'HT1050': sum}
-    elif hist == 'HT':
-      selection = {'HT1050': sum, 'pT400': sum}
-
-
+      selection += { 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum }
 
     h = histos[hist][selection]
     with open(savedir / "descriptions.txt", "a") as f:
@@ -68,7 +62,6 @@ def simplePlot(
     print(datasets)
     print(len(h.axes))
     hc = h[{"dataset": datasets}]
-    hc = h
     if normalize:
         hc = getNormalized(hc, "dataset")
     #if hist == 'pT1': hc[::2j]
@@ -151,8 +144,27 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
-simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False)
-simplePlot('HT', singlemuon, [], scale = 'log', normalize = False)
+pT_Pass = simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': 1, 'HT1050': sum})
+HT_Pass = simplePlot('HT', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': 1})
+pT_Total = simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': sum})
+HT_Total = simplePlot('HT', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': sum})
+
+fig, ax = drawRatio(mpl.axis.Axis, pT_Pass, pT_Total)
+ax.set_yscale("log")
+addEra(ax, 59.8)
+addPrelim(ax, additional_text="\n$\\lambda_{312}''$" + " Selection")
+h = histos['pT1'][{ 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum, 'pT400': sum, 'HT1050': sum }]
+hc = h[{"dataset": "DataSingleMuon2018"}]
+addTitles1D(ax, hc, top_pad = 0.4)
+handles, labels = ax.get_legend_handles_labels()
+labels, handles = zip(
+          *reversed(sorted(zip(labels, handles), key=lambda t: t[0]))
+        )
+ax.legend(handles, labels)
+
+fig.tight_layout()
+fig.savefig(savedir / f"pT_Efficiency.pdf")
+plt.close(fig)
 
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
