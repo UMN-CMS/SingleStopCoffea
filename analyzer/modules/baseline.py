@@ -30,7 +30,7 @@ def createSelection(events, selection):
     return selection
 
 @analyzerModule("cr_selection", ModuleType.Selection)
-def createSelection(events, selection):
+def createCRSelection(events, selection):
     good_jets = events.good_jets
     fat_jets = events.FatJet
     good_muons = events.good_muons
