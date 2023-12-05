@@ -144,28 +144,42 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
-pT_Pass = simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': 1, 'HT1050': sum})
-HT_Pass = simplePlot('HT', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': 1})
-pT_Total = simplePlot('pT1', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': sum})
-HT_Total = simplePlot('HT', singlemuon, [], scale = 'log', normalize = False, selection = {'pT400': sum, 'HT1050': sum})
 
-fig, ax = drawRatio(mpl.axis.Axis, pT_Pass, pT_Total)
-ax.set_yscale("log")
+pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}]
+pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
+HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}]
+HT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
+
+ptp_PO = PlotObject(pT_pass, r'pT_1', '')
+ptt_PO = PlotObject(pT_total, r'pT_1', '')
+htp_PO = PlotObject(HT_pass, r'HT', '')
+htt_PO = PlotObject(HT_total, r'HT', '')
+
+fig, ax = drawAs1DHist(ptp_PO, yerr=True, fill=False)
+drawas1DHist(ax, ptt_PO, yerr=True, fill=False)
+addAxesToHist(ax, num_bottom=1, bottom_pad=0)
+ab = ax.bottom_axes[0]
+drawRatio(ab, ptp_PO, ptt_PO)
+ab.set_ylabel("Efficiency")
+
 addEra(ax, 59.8)
-addPrelim(ax, additional_text="\n$\\lambda_{312}''$" + " Selection")
-h = histos['pT1'][{ 'jetpT300': 1, 'nJets456': 1, 'leptonVeto': 1, 'dRJets24': sum, '312Bs': 1, '313Bs': sum, 'dRbb_312': sum, 'dRbb_313': sum, 'pT400': sum, 'HT1050': sum }]
-hc = h[{"dataset": "DataSingleMuon2018"}]
-addTitles1D(ax, hc, top_pad = 0.4)
-handles, labels = ax.get_legend_handles_labels()
-labels, handles = zip(
-          *reversed(sorted(zip(labels, handles), key=lambda t: t[0]))
-        )
-ax.legend(handles, labels)
 
 fig.tight_layout()
-fig.savefig(savedir / f"pT_Efficiency.pdf")
+fig.savefig("figures/pT_Efficiency.pdf")
 plt.close(fig)
 
+fig, ax = drawAs1DHist(htp_PO, yerr=True, fill=False)
+drawas1DHist(ax, htt_PO, yerr=True, fill=False)
+addAxesToHist(ax, num_bottom=1, bottom_pad=0)
+ab = ax.bottom_axes[0]
+drawRatio(ab, htp_PO, htt_PO)
+ab.set_ylabel("Efficiency")
+
+addEra(ax, 59.8)
+
+fig.tight_layout()
+fig.savefig("figures/HT_Efficiency.pdf")
+plt.close(fig)
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
 sys.exit(0)
