@@ -85,6 +85,17 @@ def Mu50Trigger(events, selection):
 	selection.add("electronVeto", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)).to_numpy())
 	return selection
 
+@analyzerModule("Mu50SoftDropPlotTrigger", ModuleType.Selection)
+def Mu50SoftDropPlotTrigger(events, selection):
+  good_electrons = events.good_electrons
+  good_muons = events.good_muons
+  fatjets = events.FatJet
+  fatjets = fatjets[(events.FatJet.pt > 500) & (abs(events.FatJet.eta) < 2.4)]
+  selection.add("hlt", (events.HLT.Mu50).to_numpy())
+  selection.add("electronVeto", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)).to_numpy())
+  selection.add("highPTJet", (ak.num(fatjets) > 0).to_numpy())
+  return selection
+
 @analyzerModule("pTTrigger", ModuleType.Categories)
 def pTTrigger(events, data):
 	pT400 = events.HLT.AK8PFJet400_TrimMass30
@@ -108,15 +119,15 @@ def pTPlot(events, hmaker):
 	return ret
 
 @analyzerModule("softDropMassPlot", ModuleType.MainHist)
-def pTPlot(events, hmaker):
+def mSoftDropMassPlot(events, hmaker):
 	ret = {}
 	fatjets = events.FatJet
 	fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4)]
 	mask = ak.num(fatjets, axis=1) > 0
 	fatjets_mask = fatjets[mask]
 	ret[rf"mSoftDrop"] = hmaker(
-		pt_axis,
-		fatjets_mask.msoftdrop,
+		softdrop_axis,
+		fatjets_mask[:, 0].msoftdrop,
 		mask = mask,
 		name = f'p_T of leading AK8 jet',
 		description = f'p_T of leading AK8 jet',

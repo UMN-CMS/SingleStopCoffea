@@ -218,7 +218,6 @@ def createJetHistograms(events, hmaker):
     return ret
 
 
-=======
 @analyzerModule("tag_hists", ModuleType.MainHist)
 def createTagHistograms(events, hmaker):
     ret = {}
