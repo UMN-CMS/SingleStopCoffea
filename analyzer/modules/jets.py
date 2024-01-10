@@ -6,6 +6,7 @@ from .objects import b_tag_wps
 import itertools as it
 from .utils import numMatching
 
+
 @analyzerModule("jet_hists", ModuleType.MainHist)
 def createJetHistograms(events, hmaker):
     ret = {}
@@ -13,7 +14,7 @@ def createJetHistograms(events, hmaker):
     w = events.EventWeight
 
     ret[f"h_njet"] = hmaker(nj_axis, ak.num(gj), name="njets")
-    jet_combos = [(0, 4), (0, 3), (1, 4)]
+    jet_combos = [(0, 4), (0, 3), (1, 4), (0, 2), (1, 3)]
     co = lambda x: it.combinations(x, 2)
 
     masses = {}
@@ -160,6 +161,7 @@ def createJetHistograms(events, hmaker):
             name=rf"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
         )
     return ret
+
 
 @analyzerModule("other_region_mass_plots", ModuleType.MainHist)
 def otherRegionMassHists(events, hmaker):
