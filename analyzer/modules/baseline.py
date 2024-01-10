@@ -29,6 +29,14 @@ def createSelection(events, selection):
     selection.add("b_dr", (med_dr > 1).to_numpy())
     return selection
 
+@analyzerModule("bbpt_selection", ModuleType.Selection)
+def createSelection(events, selection):
+    med_b = events.med_bs
+    filled_med = ak.pad_none(med_b, 2, axis=1)
+    bbpt = ak.fill_none((filled_med[:, 0] + filled_med[:, 1]).pt, False)
+    selection.add("bbpt", (bbpt>200).to_numpy())
+    return selection
+
 @analyzerModule("cr_selection", ModuleType.Selection)
 def createCRSelection(events, selection):
     good_jets = events.good_jets
