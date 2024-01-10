@@ -12,15 +12,29 @@ from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 import logging
+import logging.handlers
 from enum import Enum, auto
 from concurrent.futures import ProcessPoolExecutor, wait
+import multiprocess as mp
 import atexit
+
 
 
 loadStyles()
 
 
+class _Split(object):
+    def __new__(cls):
+        return NoParam
+
+    def __reduce__(self):
+        return (_NoParamType, ())
+
+
 class Plotter:
+    Split = object.__new__(_Split)
+    queue = mp.Queue()
+
     def __init__(
         self,
         filenames,
