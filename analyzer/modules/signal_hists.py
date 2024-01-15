@@ -1,4 +1,4 @@
-from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import analyzerModule
 from .axes import *
 import awkward as ak
 from analyzer.math_funcs import angleToNPiToPi
@@ -6,8 +6,9 @@ from .utils import numMatching
 import numpy as np
 
 
-@analyzerModule("signal_hists", ModuleType.MainHist, require_tags=["signal"])
-def createSignalHistograms(events, hmaker):
+@analyzerModule("signal_hists", depends_on=["objects"], categories="main")
+def createSignalHistograms(events, analyzer):
+    analyzer=analyzer.hmaker
     ret = {}
     chi_match_axis = hist.axis.IntCategory(
         [0, 1, 2, 3], name="num_matched_chi", label=r"Number of reco chi jets correct"
@@ -202,7 +203,7 @@ def makeIdxHist(ret, hmaker, idxs, name, axlabel, **kwargs):
     )
 
 
-@analyzerModule("perfect_hists", ModuleType.MainHist, require_tags=["signal"])
+@analyzerModule("perfect_hists", categories="main")
 def genMatchingMassReco(events, hmaker):
     ret = {}
     mask = ~ak.any(ak.is_none(events.matched_jets, axis=1), axis=1)

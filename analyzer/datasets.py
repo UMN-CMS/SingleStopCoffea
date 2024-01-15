@@ -4,6 +4,7 @@ from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
 from collections.abc import Mapping
+from coffea.dataset_tools.preprocess import DatasetSpec
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -13,6 +14,14 @@ except ImportError:
 
 class ForbiddenDataset(Exception):
     pass
+
+
+@dataclass
+class AnalyzerSample:
+    name: str
+    fillname: str
+    dataset_weight: float
+    coffea_dataset: DatasetSpec
 
 
 @dataclass
@@ -44,6 +53,9 @@ class SampleFile:
             return SampleFile(data)
         else:
             return SampleFile([data])
+
+    def getRootDir(self):
+        return "Events"
 
     def getFile(self):
         return self.paths[0]
@@ -123,12 +135,13 @@ class SampleSet:
     def getTitle(self):
         return self.title
 
-    def getFiles(self):
+    def toCoffeaDataset(self):
         if self.isForbidden():
             raise ForbiddenDataset(
                 f"Attempting to access the files for forbidden dataset {self.name}"
             )
-        return {self.name: [f.getFile() for f in self.files]}
+
+        return {self.name: {"files": {f.getFile(): f.getRootDir() for f in self.files}}}
 
     def getWeight(self, target_lumi=None):
         if self.derived_from:
@@ -145,18 +158,21 @@ class SampleSet:
     def getWeightMap(self, target_lumi=None):
         return {self.name: self.getWeight(target_lumi)}
 
+    def getAnalyzerSamples(self, target_lumi=None):
+        return [
+            AnalyzerSample(
+                name=self.name,
+                fillname=self.name,
+                coffea_dataset=self.toCoffeaDataset(),
+                dataset_weight=self.getWeight(target_lumi),
+            )
+        ]
+
     def getTagMap(self):
         return {self.name: set(self.tags)}
 
     def getTags(self):
         return self.tags
-
-    def getMissing(self, other_files):
-        all_files = self.getFiles()
-        return {
-            name: [f for f in flist if f not in other_files]
-            for name, flist in all_files.items()
-        }
 
     def totalEvents(self):
         return self.n_events
@@ -199,37 +215,35 @@ class SampleCollection:
     def getTitle(self):
         return self.title
 
-    def getFiles(self):
+    def toCoffeaDataset(self):
         everything = {}
         for s in self.sets:
-            everything.update(s.getFiles())
+            everything.update(s.toCoffeaDataset())
         if not self.treat_separate:
             everything = {
                 f"{self.name}:{name}": files for name, files in everything.items()
             }
         return everything
 
+    def getSampleSets(self):
+        return self.sets
+
+    def getAnalyzerSamples(self, target_lumi=None):
+        return [
+            AnalyzerSample(
+                name=x.name,
+                fillname=x.name if self.treat_separate else self.name,
+                coffea_dataset=x.toCoffeaDataset(),
+                dataset_weight=x.getWeight(target_lumi),
+            )
+            for x in self.getSampleSets()
+        ]
+
     def getWeightMap(self, target_lumi=None):
         merged = {}
         for s in self.sets:
             merged.update(s.getWeightMap(target_lumi))
         return merged
-
-    def getTagMap(self):
-        merged = {}
-        if self.treat_separate:
-            for s in self.sets:
-                merged.update(s.getTagMap())
-        else:
-            merged = {self.name: set(it.chain.from_iterable(x.tags for x in self.sets))}
-        return merged
-
-    def getMissing(self, other_files):
-        all_files = self.getFiles()
-        return {
-            name: [f for f in flist if f not in other_files]
-            for name, flist in all_files.items()
-        }
 
     def getStyle(self):
         return self.style

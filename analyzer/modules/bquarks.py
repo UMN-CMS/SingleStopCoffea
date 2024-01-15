@@ -1,4 +1,4 @@
-from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import analyzerModule
 from analyzer.math_funcs import angleToNPiToPi
 from .axes import *
 import awkward as ak
@@ -6,8 +6,10 @@ from .objects import b_tag_wps
 import itertools as it
 from .utils import numMatching
 
-@analyzerModule("b_hists", ModuleType.MainHist)
-def createBHistograms(events, hmaker):
+
+@analyzerModule("b_hists", categories="main", depends_on=["objects"])
+def createBHistograms(events, analyzer):
+    hmaker = analyzer.hmaker
     ret = {}
     l_bjets = events.loose_bs
 
@@ -90,16 +92,16 @@ def createBHistograms(events, hmaker):
         name=rf"medbmass",
     )
     ret[f"medium_b_pt"] = hmaker(
-        makeAxis(20, 0, 1000 , f"$p_{{T, bb}}$", unit="GeV"),
+        makeAxis(20, 0, 1000, f"$p_{{T, bb}}$", unit="GeV"),
         inv.pt,
         name=rf"medbmass",
     )
 
-    return ret
+    return events
 
 
-@analyzerModule("b_ordinality_hists", ModuleType.MainHist)
-def createBHistograms(events, hmaker):
+@analyzerModule("b_ordinality_hists", depends_on=["objects"])
+def createBHistograms(events, analyzer):
     ret = {}
     gj = events.good_jets
     idx = ak.local_index(gj, axis=1)
@@ -121,4 +123,4 @@ def createBHistograms(events, hmaker):
         name="Subleading $p_{T}$ Medium B Jet Rank",
     )
 
-    return ret
+    return events

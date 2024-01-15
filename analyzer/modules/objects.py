@@ -1,5 +1,5 @@
 import awkward as ak
-from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import analyzerModule
 
 
 def makeCutSet(x, s, *args):
@@ -16,8 +16,8 @@ elif MCCampaign == "UL2018":
     b_tag_wps = [0.0490, 0.2783, 0.7100]
 
 
-@analyzerModule("objects", ModuleType.BaseObjectDef)
-def createObjects(events):
+@analyzerModule("objects", categories="base_objects")
+def createObjects(events, analyzer):
     good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.4)]
     fat_jets = events.FatJet
     loose_top, med_top, tight_top = makeCutSet(

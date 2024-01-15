@@ -8,16 +8,16 @@ readme = "README.org"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-coffea = ">=0.7.21"
-dask = {extras = ["distributed"], version = "^2023.3.2"}
+
+coffea = {version="^2023", extras=["dask"]}
 hist = "^2.6.3"
-uproot = "^4"
 matplotlib = "^3.7"
 jupyter = "*"
-rich = "^13.0"
-scipy = "^1.9"
+
 pyyaml = "^6.0"
-gpytorch  = ">=1.11"
+
+#scipy = "^1.9"
+#gpytorch  = ">=1.11"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

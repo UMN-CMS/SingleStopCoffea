@@ -1,464 +1,343 @@
-import argparse
 import analyzer.modules
 from analyzer.datasets import loadSamplesFromDirectory
-from analyzer.core import modules as all_modules
-from analyzer.process import AnalysisProcessor
-import analyzer.chunk_runner
+from .histogram_builder import HistogramBuilder
+import analyzer.core as core
+import coffea.dataset_tools as dst
+from coffea.dataset_tools.apply_processor import DaskOutputType
+from coffea.dataset_tools.preprocess import DatasetSpec
+import dask
+import hist.dask as dah
+import hist
+
+from typing import Any, Callable, Dict, Hashable, List, Set, Tuple, Union, Optional
+import dask_awkward as dak
 import sys
 import shutil
 import itertools as it
+import awkward as ak
 
-from coffea import processor
-from coffea.processor import accumulate
-from coffea.processor.executor import WorkItem
-import uuid
-
-from coffea.nanoevents import NanoAODSchema
-
+from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
+from coffea.analysis_tools import PackedSelection, Weights
 
 import pickle
 
 from pathlib import Path
 
+from dataclasses import dataclass
 
-def createDaskCondor(w):
+
+class AnalyzerError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class DatasetAnalyzer:
+    def __init__(self, analyzer, sample_name, fill_name, dataset_weight):
+        self.analyzer = analyzer
+        self.sample_name = sample_name
+        self.fill_name = fill_name
+        self.dataset_weight = dataset_weight
+
+        self.histogram_builder = None
+
+        self.report = None
+        self.hmaker = None
+
+    @property
+    def selection(self):
+        if self.sample_name not in self.analyzer._selections:
+            self.analyzer._selections[self.sample_name] = PackedSelection()
+        return self.analyzer._selections[self.sample_name]
+
+    def applySelection(self, events):
+        events = events[self.selection.all(*self.selection.names)]
+        self.prepHistogramBuilder(events)
+        print(f"Current selection is {self.selection}")
+        return events
+
+    def prepHistogramBuilder(self, events):
+        self.histogram_builder.setEventWeights(events.EventWeight)
+
+    def maybeCreateAndFill(
+        self,
+        key,
+        axis,
+        data,
+        mask=None,
+        name=None,
+        description=None,
+        auto_expand=True,
+    ):
+        if key in self.analyzer._dask_histograms:
+            self.histogram_builder.fillHistogram(
+                self.analyzer._dask_histograms[key], data, mask
+            )
+        else:
+            self.analyzer._dask_histograms[
+                key
+            ] = self.histogram_builder.createHistogram(axis, data, name, description)
+            self.histogram_builder.fillHistogram(
+                self.analyzer._dask_histograms[key], data, mask
+            )
+
+    def H(self, *args, **kwargs):
+        return self.maybeCreateAndFill(*args, **kwargs)
+
+
+@dataclass
+class DatasetInput:
+    dataset_name: str
+    fill_name: str
+    dataset_weight: float
+    coffea_dataset: DatasetSpec
+    target_lumi: Optional[float]
+
+    def getDatasetWeight(self):
+        pass
+
+    @staticmethod
+    def fromSampleOrCollection(sample_or_collection, target_lumi=None):
+        return [
+            DatasetInput(
+                s.name, s.fillname, s.dataset_weight, s.coffea_dataset, target_lumi
+            )
+            for s in sample_or_collection.getAnalyzerSamples(target_lumi)
+        ]
+
+
+@dataclass
+class DatasetPreprocessed:
+    dataset_input: DatasetInput
+    coffea_dataset_split: DatasetSpec
+
+    @staticmethod
+    def fromDatasetInput(dataset_input, client, **kwargs):
+        out, x = dst.preprocess(dataset_input.coffea_dataset, **kwargs)
+        return DatasetPreprocessed(dataset_input, out)
+
+
+@dataclass
+class DatasetRunState:
+    dataset_preprocessed: DatasetPreprocessed
+    raw_events_processed: int = 0
+    dataset_run_report: Optional[ak.Array] = None
+
+    def getCoffeaDataset(self) -> DatasetSpec:
+        return self.dataset_preprocessed.coffea_dataset_split[
+            self.input_dataset.dataset_name
+        ]
+
+    @property
+    def input_dataset(self):
+        return self.dataset_preprocessed.dataset_input
+
+
+@dataclass
+class DatasetDaskRunState:
+    dataset_preprocessed: DatasetPreprocessed
+    raw_events_processed: Any
+    dataset_run_report: dak.Array
+
+
+@dataclass
+class AnalyzerDaskResult:
+    histograms: Dict[str, dah.Hist]
+    dataset_run_states: Dict[str, DatasetDaskRunState]
+
+
+@dataclass
+class AnalyzerResult:
+    histograms: Dict[str, hist.Hist]
+    dataset_run_states: Dict[str, DatasetRunState]
+
+
+class Analyzer:
+    """
+    Represents an analysis, a collection of modules.
+    """
+
+    def __init__(self, modules, cache):
+        self.modules: List[core.AnalyzerModule] = self.__createAndSortModules(*modules)
+        self.cache = cache
+
+        self._selections: Dict[str, PackedSelection] = {}
+        self._dask_histograms: Dict[str, dah.Hist] = {}
+        self._dataset_states: Dict[str, DatasetDaskRunState] = {}
+
+    def __createAndSortModules(self, *module_names):
+        m = core.namesToModules(module_names)
+        t = core.generateTopology(m)
+        modules = core.sortModules(m)
+        return modules
+
+    def registerToCompute(self, dataset_states: List[DatasetRunState]):
+        for dataset_state in dataset_states:
+            dataset_name = dataset_state.input_dataset.dataset_name
+            files = dataset_state.getCoffeaDataset()["files"]
+            events, report = NanoEventsFactory.from_root(
+                files,
+                schemaclass=NanoAODSchema,
+                uproot_options={"allow_read_errors_with_report": True},
+                persistent_cache=self.cache,
+            ).events()
+            dataset_analyzer = DatasetAnalyzer(
+                self,
+                dataset_name,
+                dataset_state.input_dataset.fill_name,
+                dataset_state.input_dataset.dataset_weight,
+            )
+            if "genWeight" in events.fields:
+                events["EventWeight"] = (
+                    dak.where(events.genWeight > 0, 1, -1)
+                    * dataset_analyzer.dataset_weight
+                )
+            else:
+                events["EventWeight"] = dataset_analyzer.dataset_weight
+
+            dataset_analyzer.histogram_builder = HistogramBuilder(events.EventWeight)
+            for m in self.modules:
+                print(f"Adding module {m}")
+                #events = m(events, dataset_analyzer)
+                events = m(events, dataset_analyzer)
+            self._dataset_states[dataset_name] = DatasetDaskRunState(
+                dataset_state.dataset_preprocessed, dak.num(events, axis=0), report
+            )
+
+    def execute(self, client) -> AnalyzerResult:
+        hists, states = client.compute(
+            [
+                self._dask_histograms,
+                {
+                    x: [y.raw_events_processed, y.dataset_run_report]
+                    for x, y in self._dataset_states.items()
+                },
+            ]
+        )
+
+        hists, states = client.gather([hists, states])
+        states = {
+            x: DatasetRunState(self._dataset_states[x].dataset_preprocessed, *y)
+            for x, y in states.items()
+        }
+        return hists, states
+
+
+def createLPCCondorCluster(configuration):
     from distributed import Client
     from lpcjobqueue import LPCCondorCluster
     import os
 
     logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / os.getlogin() / "dask_logs"
     logpath.mkdir(exist_ok=True, parents=True)
-    cluster = LPCCondorCluster(memory="2.0G", log_directory=logpath)
-    cluster.adapt(minimum=10, maximum=w)
-    client = Client(cluster)
-    print(client.get_versions())
-    shutil.make_archive("analyzer", "zip", base_dir="analyzer")
-    client.upload_file("analyzer.zip")
-    return processor.DaskExecutor(client=client)
+    cluster = LPCCondorCluster(
+        host="tcp://localhost:8787", memory="2.0G", log_directory=logpath
+    )
+    return cluster
 
 
-local_cluster = None
-
-
-def createDaskLocal(w):
+def createLocalCluster(configuration):
     from distributed import Client, TimeoutError, LocalCluster
 
-    global local_cluster
-    if local_cluster is None:
-        local_cluster = LocalCluster("tcp://localhost:8787", timeout="2s", memory_limit="4.0G")
-    client = Client(local_cluster)
-    print(client)
-    return processor.DaskExecutor(client=client)
+    local_cluster = LocalCluster(
+        "tcp://localhost:8787", timeout="2s", memory_limit="4.0G"
+    )
+    return local_cluster
 
 
-executor_map = dict(
-    iterative=lambda w: processor.IterativeExecutor(),
-    futures=lambda w: processor.FuturesExecutor(workers=w),
-    dask_local=createDaskLocal,
-    dask_condor=createDaskCondor,
+cluster_factory = dict(
+    local=createLocalCluster,
+    lpccondor=createLPCCondorCluster,
 )
 
 
-def sampleToFileList(samples):
-    # samples = [sample_manager[sample] for sample in samples]
-    files = {}
-    for samp in samples:
-        files.update(samp.getFiles())
-    return files
-
-
-def createRunner(
-    executor="iterative",
-    parallelism=8,
-    chunk_size=250000,
-    max_chunks=None,
-    metadata_cache=None,
-):
-
-    executor = executor_map[executor](parallelism)
-    runner = processor.Runner(
-        executor=executor,
-        schema=NanoAODSchema,
-        chunksize=chunk_size,
-        skipbadfiles=True,
-        maxchunks=max_chunks,
-        metadata_cache=metadata_cache,
-        savemetrics=True,
-        xrootdtimeout=60,
-    )
-    return runner
-
-
-def normalizeChunks(chunks):
-    normalized_chunks = [
-        WorkItem(
-            x.dataset,
-            x.filename,
-            x.treename,
-            x.entrystart,
-            x.entrystop,
-            str(uuid.UUID(bytes=x.fileuuid)),
-        )
-        for x in chunks
-    ]
-    return normalized_chunks
-
-
-def getChunksFromFiles(flist, runner, retries=3):
-    chunks = runner.preprocess(flist, "Events")
-    chunks = list(chunks)
-    return chunks
-
-
-def runModulesOnSamples(modules, samples, chunks, runner, target_lumi):
-    wmap = {}
-    #tag_map = {s.name: s.getTags() for s in samples}
-    tag_map = {}
-    for samp in samples:
-        wmap.update(samp.getWeightMap(target_lumi))
-        tag_map.update(samp.getTagMap())
-
-    for name in wmap:
-        w = wmap[name]
-
-    return runner.runChunks(
-        chunks,
-        AnalysisProcessor(tag_map, modules, wmap),
-        "Events",
-    )
-
-
-def getArguments():
-    parser = argparse.ArgumentParser("Run the RPV Analysis")
-    parser.add_argument(
-        "-s",
-        "--samples",
-        nargs="+",
-        help="Sample names to run over",
-        metavar="",
-    )
-    parser.add_argument(
-        "-d",
-        "--dataset-dir",
-        help="Directory containing data sets",
-        type=str,
-        default="datasets",
-    )
-    parser.add_argument(
-        "--signal-re",
-        type=str,
-        help="Regex to determine if running over signals only",
-        default="signal.*",
-    )
-    parser.add_argument(
-        "-k",
-        "--max-chunks",
-        type=int,
-        help="Maximum number of chunks",
-        default=None,
-    )
-    parser.add_argument(
-        "-r",
-        "--max-retries",
-        type=int,
-        help="Maximum number of retries",
-        default=5,
-    )
-    parser.add_argument(
-        "--list-samples",
-        action="store_true",
-        help="List available samples and exit",
-    )
-    parser.add_argument(
-        "--list-modules",
-        action="store_true",
-        help="List available modules and exit",
-    )
-    parser.add_argument(
-        "--force-separate",
-        action="store_true",
-        help="Treat sample sets within a collection as separate always.",
-    )
-    parser.add_argument("-o", "--output", type=Path, help="Output file for data")
-    parser.add_argument(
-        "--skimpath", default=None, type=str, help="Output file for skims"
-    )
-    parser.add_argument(
-        "-e",
-        "--executor",
-        type=str,
-        help="Exectuor to use",
-        choices=list(executor_map),
-        metavar="",
-        default="dask_local",
-    )
-    parser.add_argument(
-        "-t",
-        "--metadata-cache",
-        type=Path,
-        help="File to store and load metadatafrom",
-        default=None,
-    )
-    parser.add_argument(
-        "-m",
-        "--module-chain",
-        type=str,
-        nargs="*",
-        help="Modules to execture",
-        metavar="",
-        choices=list(all_modules),
-        default=list(all_modules),
-    )
-    parser.add_argument(
-        "-x",
-        "--exclude-modules",
-        type=str,
-        nargs="*",
-        help="Modules to exclude",
-        metavar="",
-        choices=list(all_modules),
-        default=None,
-    )
-    parser.add_argument(
-        "-p",
-        "--parallelism",
-        type=int,
-        help="Level of paralleism to use if running a compatible exectutor",
-        default=4,
-    )
-    parser.add_argument(
-        "-c", "--chunk-size", type=int, help="Chunk size to use", default=250000
-    )
-
-    parser.add_argument(
-        "-l",
-        "--target-lumi",
-        type=float,
-        help="Target luminosity, all samples will have their luminosity scaled to match the target",
-        default=None,
-    )
-
-    parser.add_argument(
-        "-u",
-        "--update-existing",
-        type=str,
-        help="Update an existing output by running over skipped files.",
-    )
-
-    parser.add_argument(
-        "-z", "--check-file", type=str, help="Check an existing output for anomalies"
-    )
-
-    args = parser.parse_args()
-    return args
-
-
-def produceChunks(existing_chunks, dataset_info, samples, runner):
-    all_files = [x.filename for x in existing_chunks]
-    all_wanted_chunks = set(existing_chunks)
-
-    all_missing = {}
-    for samp in samples:
-        missing = samp.getMissing(all_files)
-        all_missing.update(missing)
-
-    any_missing = any(bool(x) for x in all_missing.values())
-    if any_missing:
-        print(
-            "Existing chunk set is not complete, missing chunks for the following files:"
-        )
-        for k, v in all_missing.items():
-            print(f"{k}: ")
-            print("\n".join(f"\t- {f}" for f in v))
-
-        missing_chunks = getChunksFromFiles(all_missing, runner)
-        all_wanted_chunks += missing_chunks
-    already_processed_chunks = set(
-        x for y in dataset_info.values() for x in y["work_items"]
-    )
-    still_needed_chunks = set(all_wanted_chunks).difference(
-        set(already_processed_chunks)
-    )
-    if still_needed_chunks:
-        print(
-            f"Detected that not all chunks were successfully processed."
-            f"Expected {len(all_wanted_chunks)} found that {len(already_processed_chunks)} were succesfully processed"
-        )
-        print("Must run over the following missing chunks:")
-        print("\n".join(f"\t- {f}" for f in still_needed_chunks))
-        chunks = still_needed_chunks
-    else:
-        print(
-            "This file appears to be complete, all samples have generated chunks, and all expected chunks have been processed. Nothing left to do."
-        )
-        return None
-    return list(chunks)
-
-
-def check(data, sample_manager, runner):
-    dataset_info = data["dataset_info"]
-    existing_chunks = data["all_work_items"]
-    existing_samples = list(dataset_info.keys())
-    samples = [sample_manager[sample] for sample in existing_samples]
-    total_missing = 0
-    for samp in samples:
-        existing_list = set(x for x in dataset_info[samp.name]["file_data"].keys())
-        missing = samp.getMissing(existing_list)
-        missing = [x for y in missing.values() for x in y]
-        total_missing += len(missing)
-        expected_events = samp.totalEvents()
-        found_events = sum(
-            x["num_raw_events"] for x in dataset_info[samp.name]["file_data"].values()
-        )
-        if expected_events != found_events:
-            print(
-                f"Sample {samp} does not have the correct number of events, expected {expected_events}, found {found_events}: missing {expected_events-found_events}"
-            )
-        else:
-            print(
-                f"Sample {samp} seems complete, expected {expected_events} events, found {found_events} events"
-            )
-        if missing:
-            print(f"Sample {samp} is missing files:")
-            print("\n".join(f"\t-{f}" for f in missing))
-
-    if total_missing > 0:
-        print(
-            f"Found a total of {total_missing} missing files. You likely want to rerun the analyzer with the --update-existing option to reprocess the failed files"
-        )
-        return False
-
-    chunks = produceChunks(existing_chunks, dataset_info, samples, runner)
-    return not chunks
-
-
-def workFunction(runner, samples, modules, existing_data=None, target_lumi=None):
-    if existing_data is not None:
-        existing_chunks = existing_data["all_work_items"]
-        chunks = produceChunks(
-            existing_chunks, existing_data["dataset_info"], samples, runner
-        )
-        chunk_info = {"all_work_items": chunks}
-    else:
-        flist = sampleToFileList(samples)
-        chunks = getChunksFromFiles(flist, runner)
-        chunk_info = {"all_work_items": chunks}
-
-    if not chunks:
-        print(
-            f"Could not produce chunks, this likely means that a file is not accessible through xrd"
-        )
-        return existing_data
-
-    print(f"Running analyzer over {len(chunks)} chunks")
-
-    try:
-        out, metrics = runModulesOnSamples(
-            modules, samples, chunks, runner, target_lumi
-        )
-        out["metrics"] = metrics
-        out["target_lumi"] = target_lumi
-        if existing_data:
-            existing_data.pop("target_lumi", None)
-        out = accumulate([out, chunk_info])
-        out["all_work_items"] = list(set(out["all_work_items"]))
-        existing_data = existing_data if existing_data is not None else {}
-        out = accumulate([existing_data, out])
-        return out
-    except ValueError as e:
-        print(e)
-        return existing_data
-    return None
-
-
-def runAnalysis():
-    args = getArguments()
-
-    md = {}
-    if args.metadata_cache:
-        md_path = Path(args.metadata_cache)
-        if md_path.is_file():
-            print(f"Loading metadata from {md_path}")
-            md = pickle.load(open(md_path, "rb"))
-
-    runner = createRunner(
-        executor=args.executor,
-        parallelism=args.parallelism,
-        chunk_size=args.chunk_size,
-        max_chunks=args.max_chunks,
-        metadata_cache=md,
-    )
-
-    sample_manager = loadSamplesFromDirectory(args.dataset_dir)
-    all_samples = sample_manager.possibleInputs()
-
-    exist_path = args.update_existing or args.check_file
-
-    existing_data = None
-    if exist_path:
-        update_file_path = Path(exist_path)
-        with open(update_file_path, "rb") as f:
-            existing_data = pickle.load(f)
-
-    if args.check_file:
-        check(existing_data, sample_manager, runner)
-        sys.exit(0)
-
-    list_mode = False
-    if args.list_samples:
-        list_mode = True
-        for x in all_samples:
-            print(x)
-    if args.list_modules:
-        list_mode = True
-        for x in all_modules:
-            print(x)
-    if list_mode:
-        sys.exit(0)
-
-    for sample in args.samples:
-        if sample not in all_samples:
-            print(
-                f"Sample {sample} is not known, please use --list-samples to show available samples."
-            )
-            sys.exit(1)
-
-    if not (args.samples):
-        print("Error: When not in list mode you must provide samples")
-        sys.exit(1)
-
-    modules = args.module_chain
-    if args.exclude_modules:
-        modules = [x for x in all_modules if x not in args.exclude_modules]
-
-    max_retries = args.max_retries
-    retry_count = 0
-    samples = list(sample_manager[x] for x in args.samples)
-    print(
-        f"Running on the following samples:\n\t- "
-        + "\n\t- ".join(x.name for x in samples)
-    )
-    while retry_count < max_retries:
-        out = workFunction(runner, samples, modules, existing_data, args.target_lumi)
-        existing_data = out
-        check_res = check(out, sample_manager, runner)
-        if check_res:
-            print("All checks passed")
-            break
-        else:
-            print("Not all checks passed, attempting retry")
-            retry_count += 1
-            if retry_count == max_retries:
-                print(
-                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer"
-                )
-
-    if args.metadata_cache:
-        md_path = Path(args.metadata_cache)
-        pickle.dump(md, open(md_path, "wb"))
-
-    if args.output:
-        print(f"Saving output {args.output}")
-        outdir = args.output.parent
-        outdir.mkdir(exist_ok=True, parents=True)
-        pickle.dump(out, open(args.output, "wb"))
+# def runAnalysis():
+#    args = getArguments()
+#
+#    md = {}
+#    if args.metadata_cache:
+#        md_path = Path(args.metadata_cache)
+#        if md_path.is_file():
+#            print(f"Loading metadata from {md_path}")
+#            md = pickle.load(open(md_path, "rb"))
+#
+#    runner = createRunner(
+#        executor=args.executor,
+#        parallelism=args.parallelism,
+#        chunk_size=args.chunk_size,
+#        max_chunks=args.max_chunks,
+#        metadata_cache=md,
+#    )
+#
+#    sample_manager = loadSamplesFromDirectory(args.dataset_dir)
+#    all_samples = sample_manager.possibleInputs()
+#
+#    exist_path = args.update_existing or args.check_file
+#
+#    existing_data = None
+#    if exist_path:
+#        update_file_path = Path(exist_path)
+#        with open(update_file_path, "rb") as f:
+#            existing_data = pickle.load(f)
+#
+#    if args.check_file:
+#        check(existing_data, sample_manager, runner)
+#        sys.exit(0)
+#
+#    list_mode = False
+#    if args.list_samples:
+#        list_mode = True
+#        for x in all_samples:
+#            print(x)
+#    if args.list_modules:
+#        list_mode = True
+#        for x in all_modules:
+#            print(x)
+#    if list_mode:
+#        sys.exit(0)
+#
+#    for sample in args.samples:
+#        if sample not in all_samples:
+#            print(
+#                f"Sample {sample} is not known, please use --list-samples to show available samples."
+#            )
+#            sys.exit(1)
+#
+#    if not (args.samples):
+#        print("Error: When not in list mode you must provide samples")
+#        sys.exit(1)
+#
+#    modules = args.module_chain
+#    if args.exclude_modules:
+#        modules = [x for x in all_modules if x not in args.exclude_modules]
+#
+#    max_retries = args.max_retries
+#    retry_count = 0
+#    samples = list(sample_manager[x] for x in args.samples)
+#    print(
+#        f"Running on the following samples:\n\t- "
+#        + "\n\t- ".join(x.name for x in samples)
+#    )
+#    while retry_count < max_retries:
+#        out = workFunction(runner, samples, modules, existing_data, args.target_lumi)
+#        existing_data = out
+#        check_res = check(out, sample_manager, runner)
+#        if check_res:
+#            print("All checks passed")
+#            break
+#        else:
+#            print("Not all checks passed, attempting retry")
+#            retry_count += 1
+#            if retry_count == max_retries:
+#                print(
+#                    "Checks failed but have reached max retries. You will likely need to rerun the analyzer"
+#                )
+#
+#    if args.metadata_cache:
+#        md_path = Path(args.metadata_cache)
+#        pickle.dump(md, open(md_path, "wb"))
+#
+#    if args.output:
+#        print(f"Saving output {args.output}")
+#        outdir = args.output.parent
+#        outdir.mkdir(exist_ok=True, parents=True)
+#        pickle.dump(out, open(args.output, "wb"))

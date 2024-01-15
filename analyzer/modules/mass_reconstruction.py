@@ -1,4 +1,4 @@
-from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import analyzerModule
 from analyzer.math_funcs import angleToNPiToPi
 from .axes import *
 import awkward as ak
@@ -17,12 +17,10 @@ def makeIdxHist(ret, hmaker, idxs, name, axlabel):
 
 
 @analyzerModule(
-    "reco_efficiency",
-    ModuleType.MainHist,
-    after=["chargino_hists", "combo_mass"],
-    require_tags=["signal"],
+    "reco_efficiency", categories="main", depends_on=["chargino_hists", "combo_mass"]
 )
-def recoEfficiency(events, hmaker):
+def recoEfficiency(events, analyzer):
+    hmaker = analyzer.hmaker
     ret = {}
     gj = events.good_jets
     all_three_mask = ~ak.any(ak.is_none(events.matched_jet_idx[:, 1:4], axis=1), axis=1)
@@ -165,8 +163,9 @@ def recoEfficiency(events, hmaker):
     return ret
 
 
-@analyzerModule("combo_mass", ModuleType.MainHist, after=["chargino_hists"])
-def combo_method(events, hmaker):
+@analyzerModule("combo_mass", depends_on=["chargino_hists"], categories="main")
+def combo_method(events, analyzer):
+    hmaker = analyzer.hmaker
     ret = {}
     gj = events.good_jets
 
@@ -247,12 +246,12 @@ def combo_method(events, hmaker):
     return ret
 
 
-@analyzerModule("chargino_hists", ModuleType.MainHist)
-def charginoRecoHistograms(events, hmaker):
+@analyzerModule("chargino_hists", categories="main")
+def charginoRecoHistograms(events, analyzer):
+    hmaker = analyzer.hmaker
     ret = {}
     gj = events.good_jets
 
-    w = events.EventWeight
     idx = ak.local_index(gj, axis=1)
     med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
 
@@ -427,11 +426,9 @@ def charginoRecoHistograms(events, hmaker):
     return ret
 
 
-@analyzerModule(
-    "stop_reco",
-    ModuleType.MainHist,
-)
-def stopreco(events, hmaker):
+@analyzerModule("stop_reco", categories="main")
+def stopreco(events, analyzer):
+    hmaker = analyzer.hmaker
     ret = {}
     jets = events.good_jets[:, 0:4].sum()
     ret[f"m14_vs_pt14"] = hmaker(
@@ -443,21 +440,17 @@ def stopreco(events, hmaker):
         name="m14 vs pt 14",
     )
 
-    padded_jets = ak.pad_none(events.good_jets, 6,axis=1)
+    padded_jets = ak.pad_none(events.good_jets, 6, axis=1)
 
-    top5sum = padded_jets[:,0:5].sum()
-    top6sum = padded_jets[:,0:6].sum()
+    top5sum = padded_jets[:, 0:5].sum()
+    top6sum = padded_jets[:, 0:6].sum()
 
-
-
-    fsrincluded = ak.where((top5sum.pt < jets.pt) , top5sum.mass, jets.mass)
-
+    fsrincluded = ak.where((top5sum.pt < jets.pt), top5sum.mass, jets.mass)
 
     ret[f"m14_gt100_m15"] = hmaker(
         makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
         fsrincluded,
         name="m14 or maybe m15",
     )
-
 
     return ret

@@ -1,4 +1,4 @@
-from analyzer.core import analyzerModule, ModuleType
+from analyzer.core import analyzerModule
 from analyzer.math_funcs import angleToNPiToPi
 from .axes import *
 import awkward as ak
@@ -7,7 +7,7 @@ import itertools as it
 from .utils import numMatching
 
 
-@analyzerModule("pre_sel_hists", ModuleType.PreSelectionHist)
+@analyzerModule("pre_sel_hists", categories="presel")
 def makePreSelectionHistograms(events, hmaker):
     if "LHE" not in events.fields:
         return {}
@@ -23,7 +23,7 @@ def makePreSelectionHistograms(events, hmaker):
     return ret
 
 
-@analyzerModule("event_level_hists", ModuleType.MainHist)
+@analyzerModule("event_level_hists", categories="main", depends_on=["objects"])
 def createEventLevelHistograms(events, hmaker):
     ret = {}
     ret[f"HT"] = hmaker(
@@ -54,7 +54,8 @@ def createEventLevelHistograms(events, hmaker):
     )
     return ret
 
-@analyzerModule("tag_hists", ModuleType.MainHist)
+
+@analyzerModule("tag_hists", depends_on=["objects"])
 def createTagHistograms(events, hmaker):
     ret = {}
     gj = events.good_jets
@@ -71,4 +72,3 @@ def createTagHistograms(events, hmaker):
             ak.num(events[f"{name}_wp{wp}"], axis=1),
             name=f"Number of wp{wp} {name}",
         )
-
