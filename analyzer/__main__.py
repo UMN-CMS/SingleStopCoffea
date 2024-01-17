@@ -1,4 +1,5 @@
-from analyzer.run_analysis import runAnalysis
+from analyzer.cli import runCli
 
 if __name__ == "__main__":
-    runAnalysis()
+    runCli()
+    

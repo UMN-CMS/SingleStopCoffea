@@ -9,7 +9,7 @@ readme = "README.org"
 [tool.poetry.dependencies]
 python = "^3.9"
 
-coffea = {version="^2023", extras=["dask"]}
+coffea = {version="^2024", extras=["dask"]}
 hist = "^2.6.3"
 matplotlib = "^3.7"
 jupyter = "*"

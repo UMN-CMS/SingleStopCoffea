@@ -75,4 +75,4 @@ def createObjects(events, analyzer):
     events["deep_W_wp3"] = deep_W_wp3
     events["deep_W_wp4"] = deep_W_wp4
 
-    return events
+    return events ,analyzer

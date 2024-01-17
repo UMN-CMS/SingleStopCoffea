@@ -1,6 +1,12 @@
-#import awkward as ak
-import dask_awkward as ak
+# import awkward as ak
+import dask_awkward as dak
+import awkward as ak
 import hist.dask as hda
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 
 class HistogramBuilder:
@@ -10,28 +16,30 @@ class HistogramBuilder:
         self.event_weights = event_weights
 
     def addCategory(self, axis, value):
+        logger.debug(f"Adding axis with name {axis.name} and values {value} to histogram builder.")
         self.cat_axes.append(axis)
         self.cat_values.append(value)
 
-    def setEventWeights(self, weights):
-        self.event_weights = weights
-
     def fillHistogram(self, histogram, data, mask=None, auto_expand=True):
+        logger.debug(f"Filling histogram {histogram.name} with data {data} and mask {mask}")
+        weights = self.event_weights.weight()
         if not isinstance(data, list):
             data = [data]
         if not data:
             raise Exception("No data")
         h = histogram
-        if isinstance(self.event_weights, ak.Array):
-            weights = (
-                self.event_weights[mask] if mask is not None else self.event_weights
-            )
-        else:
-            weights = self.event_weights
+        if weights is not None:
+            if isinstance(weights, (ak.Array, dak.Array)):
+                weights = (
+                    weights[mask] if mask is not None else weights
+                )
+            else:
+                weights = self.event_weights
         base_category_vals = self.cat_values
         if mask is not None:
             base_category_vals = [
-                x[mask] if isinstance(x, ak.Array) else x for x in base_category_vals
+                x[mask] if isinstance(x, (ak.Array, dak.Array)) else x
+                for x in base_category_vals
             ]
         shaped_cat_vals = base_category_vals
         shaped_data_vals = data
@@ -39,13 +47,14 @@ class HistogramBuilder:
             mind, maxd = data[0].layout.minmax_depth
             if maxd > 1:
                 ol = ak.ones_like(data[0])
-                weights = ak.flatten(ol * weights)
+                if weights is not None:
+                    weights = ak.flatten(ol * weights)
                 shaped_cat_vals = [
-                    ak.flatten(ol * x) if isinstance(x, ak.Array) else x
+                    ak.flatten(ol * x) if isinstance(x, (ak.Array, dak.Array)) else x
                     for x in base_category_vals
                 ]
                 shaped_data_vals = [
-                    ak.flatten(x) if isinstance(x, ak.Array) else x
+                    ak.flatten(x) if isinstance(x, (ak.Array, dak.Array)) else x
                     for x in shaped_data_vals
                 ]
         d = shaped_cat_vals + shaped_data_vals
@@ -55,14 +64,10 @@ class HistogramBuilder:
     def createHistogram(
         self,
         axis,
-        data,
         name=None,
         description=None,
     ):
-        if not isinstance(data, list):
-            data = [data]
-        if not data:
-            raise Exception("No data")
+        logger.debug(f"Creating histogram with axes {axis} and name {name}")
 
         if isinstance(axis, list):
             all_axes = self.cat_axes + list(axis)

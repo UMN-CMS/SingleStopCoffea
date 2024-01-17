@@ -5,6 +5,6 @@ import awkward as ak
 def addEventLevelVars(events, analyzer):
     ht = ak.sum(events.good_jets.pt, axis=1)
     events["HT"] = ht
-    return events
+    return events ,analyzer
 
 

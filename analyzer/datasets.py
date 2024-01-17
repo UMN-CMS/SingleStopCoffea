@@ -20,7 +20,6 @@ class ForbiddenDataset(Exception):
 class AnalyzerSample:
     name: str
     fillname: str
-    dataset_weight: float
     coffea_dataset: DatasetSpec
 
 
@@ -155,16 +154,13 @@ class SampleSet:
             w = w * target_lumi / self.getLumi()
         return w
 
-    def getWeightMap(self, target_lumi=None):
-        return {self.name: self.getWeight(target_lumi)}
-
     def getAnalyzerSamples(self, target_lumi=None):
         return [
             AnalyzerSample(
                 name=self.name,
                 fillname=self.name,
                 coffea_dataset=self.toCoffeaDataset(),
-                dataset_weight=self.getWeight(target_lumi),
+
             )
         ]
 
@@ -176,6 +172,10 @@ class SampleSet:
 
     def totalEvents(self):
         return self.n_events
+
+    def getSets(self):
+        return [self]
+
 
     def __str__(self):
         return self.name
@@ -225,7 +225,7 @@ class SampleCollection:
             }
         return everything
 
-    def getSampleSets(self):
+    def getSets(self):
         return self.sets
 
     def getAnalyzerSamples(self, target_lumi=None):
@@ -234,22 +234,17 @@ class SampleCollection:
                 name=x.name,
                 fillname=x.name if self.treat_separate else self.name,
                 coffea_dataset=x.toCoffeaDataset(),
-                dataset_weight=x.getWeight(target_lumi),
             )
-            for x in self.getSampleSets()
+            for x in self.getSets()
         ]
-
-    def getWeightMap(self, target_lumi=None):
-        merged = {}
-        for s in self.sets:
-            merged.update(s.getWeightMap(target_lumi))
-        return merged
 
     def getStyle(self):
         return self.style
 
     def totalEvents(self):
         return sum(s.totalEvents() for s in self.sets)
+
+
 
     def __str__(self):
         return self.name

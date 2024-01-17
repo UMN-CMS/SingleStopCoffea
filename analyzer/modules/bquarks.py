@@ -97,7 +97,7 @@ def createBHistograms(events, analyzer):
         name=rf"medbmass",
     )
 
-    return events
+    return events, analyzer
 
 
 @analyzerModule("b_ordinality_hists", depends_on=["objects"])
@@ -123,4 +123,4 @@ def createBHistograms(events, analyzer):
         name="Subleading $p_{T}$ Medium B Jet Rank",
     )
 
-    return events
+    return events, analyzer

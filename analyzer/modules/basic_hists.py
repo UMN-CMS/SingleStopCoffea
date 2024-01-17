@@ -24,35 +24,39 @@ def makePreSelectionHistograms(events, hmaker):
 
 
 @analyzerModule("event_level_hists", categories="main", depends_on=["objects"])
-def createEventLevelHistograms(events, hmaker):
+def createEventLevelHistograms(events, analyzer):
     ret = {}
-    ret[f"HT"] = hmaker(
+    analyzer.H(
+        f"HT",
         makeAxis(60, 0, 3000, "HT", unit="GeV"),
         events.HT,
         name="Event HT",
         description="Sum of $p_T$ of good AK4 jets.",
     )
     if "LHE" not in events.fields:
-        return ret
-    ret[f"nQLHE"] = hmaker(
+        return events, analyzer
+    analyzer.H(
+        f"nQLHE",
         makeAxis(10, 0, 10, "Quark Count LHE"),
         events.LHE.Nuds + events.LHE.Nc + events.LHE.Nb,
         name="Quark Count LHE",
         description="Number of LHE level Quarks",
     )
-    ret[f"nJLHE"] = hmaker(
+    analyzer.H(
+        f"nJLHE",
         makeAxis(10, 0, 10, "Jet Count LHE"),
         events.LHE.Njets,
         name="Jet Count LHE",
         description="Number of LHE level Jets",
     )
-    ret[f"nGLHE"] = hmaker(
+    analyzer.H(
+        f"nGLHE",
         makeAxis(10, 0, 10, "Gluon Count LHE"),
         events.LHE.Nglu,
         name="Gluon Count LHE",
         description="Number of LHE level gluons",
     )
-    return ret
+    return events, analyzer
 
 
 @analyzerModule("tag_hists", depends_on=["objects"])

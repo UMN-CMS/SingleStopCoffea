@@ -58,7 +58,7 @@ def goodGenParticles(events):
     events["SignalQuarks"] = ak.concatenate(
         [ak.singletons(val) for val in [sb, xb, xd, xs]], axis=1
     )
-    return events
+    return events ,analyzer
 
 
 #@analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"], after=["good_gen"])
@@ -78,4 +78,4 @@ def deltaRMatch(events):
     events["matched_jets"] = matched_jets
     events["matched_dr"] = dr
     events["matched_jet_idx"] = idx_j
-    return events
+    return events ,analyzer

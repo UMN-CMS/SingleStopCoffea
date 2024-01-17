@@ -38,7 +38,7 @@ def createSelection(events, analyzer):
     # selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
     selection.add("b_dr", (med_dr > 1))
     events = analyzer.applySelection(events)
-    return events 
+    return events, analyzer 
 
 
 @analyzerModule("bbpt_selection", categories="selection", depends_on=["objects"])
@@ -49,7 +49,7 @@ def createSelection(events, analyzer):
     bbpt = ak.fill_none((filled_med[:, 0] + filled_med[:, 1]).pt, False)
     selection.add("bbpt", (bbpt > 200).to_numpy())
     events = analyzer.applySelection(events)
-    return events
+    return events, analyzer
 
 
 @analyzerModule("cr_selection", categories="selection", depends_on=["objects"])
@@ -80,4 +80,4 @@ def createCRSelection(events, analyzer):
     )
     selection.add("0looseb", (ak.num(loose_b) == 0).to_numpy())
     events = analyzer.applySelection(events)
-    return events
+    return events, analyzer

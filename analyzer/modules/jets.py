@@ -9,9 +9,7 @@ import dask
 
 
 @analyzerModule("jets", categories="main", depends_on=["objects", "event_level"])
-@dask.delayed
 def createJetHistograms(events, analyzer):
-    hmaker = analyzer.hmaker
     gj = events.good_jets
     analyzer.H(f"h_njet", nj_axis, ak.num(gj), name="njets")
     jet_combos = [(0, 4), (0, 3), (1, 4), (0, 2), (1, 3)]
@@ -185,4 +183,4 @@ def otherRegionMassHists(events, analyzer):
         mask=sr_313_mask,
     )
 
-    return events
+    return events, analyzer
