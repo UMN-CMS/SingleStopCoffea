@@ -158,7 +158,7 @@ class DatasetInput:
         sample_or_collection: Union[SampleSet, SampleCollection]
     ):
         return [
-            DatasetInput(s.name, s.fillname, s.coffea_dataset)
+            DatasetInput(s.name, s.setname, s.coffea_dataset)
             for s in sample_or_collection.getAnalyzerSamples()
         ]
 
@@ -170,7 +170,7 @@ class DatasetPreprocessed:
 
     @staticmethod
     def fromDatasetInput(dataset_input, client, **kwargs):
-        out, x = dst.preprocess(dataset_input.coffea_dataset, **kwargs)
+        out, x = dst.preprocess(dataset_input.coffea_dataset, save_form=True, **kwargs)
         return DatasetPreprocessed(dataset_input, out)
 
     def getCoffeaDataset(self) -> DatasetSpec:
@@ -210,11 +210,11 @@ class DatasetProcessor:
     def __init__(
         self,
         dask_result: DatasetDaskRunResult,
-        fill_name: str,
+        setname: str,
     ):
-        self.fill_name = fill_name
-
+        self.setname = setname
         self.dask_result = dask_result
+
         self.__selection = PackedSelection()
         self.__weights = Weights(None)
 

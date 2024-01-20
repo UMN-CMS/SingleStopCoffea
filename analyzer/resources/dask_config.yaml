@@ -24,6 +24,7 @@ jobqueue:
     env-extra: null
     job-script-prologue:
       - 'source setup.sh'
+      - 'export X509_USER_PROXY=/srv/x509up_u57509'
     job-extra: null             # Extra submit attributes
     job-extra-directives: {}
     job-directives-skip: []

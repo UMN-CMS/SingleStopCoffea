@@ -5,6 +5,9 @@ from yaml import load, dump
 import itertools as it
 from collections.abc import Mapping
 from coffea.dataset_tools.preprocess import DatasetSpec
+import rich
+import re
+from rich.table import Table
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -19,7 +22,7 @@ class ForbiddenDataset(Exception):
 @dataclass
 class AnalyzerSample:
     name: str
-    fillname: str
+    setname: str
     coffea_dataset: DatasetSpec
 
 
@@ -122,17 +125,17 @@ class SampleSet:
         else:
             return self.forbid
 
-    def getStyle(self):
-        return self.style
-
     def getLumi(self):
         if self.derived_from:
             return self.derived_from.lumi
         else:
             return self.lumi
 
-    def getTitle(self):
-        return self.title
+    def getXSec(self):
+        if self.derived_from:
+            return self.derived_from.getXSec()
+        else:
+            return self.x_sec
 
     def toCoffeaDataset(self):
         if self.isForbidden():
@@ -158,30 +161,25 @@ class SampleSet:
         return [
             AnalyzerSample(
                 name=self.name,
-                fillname=self.name,
+                setname=self.name,
                 coffea_dataset=self.toCoffeaDataset(),
-
             )
         ]
 
-    def getTagMap(self):
-        return {self.name: set(self.tags)}
-
-    def getTags(self):
-        return self.tags
-
     def totalEvents(self):
         return self.n_events
-
-    def getSets(self):
-        return [self]
-
 
     def __str__(self):
         return self.name
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 @dataclass
@@ -212,19 +210,6 @@ class SampleCollection:
 
         return sc
 
-    def getTitle(self):
-        return self.title
-
-    def toCoffeaDataset(self):
-        everything = {}
-        for s in self.sets:
-            everything.update(s.toCoffeaDataset())
-        if not self.treat_separate:
-            everything = {
-                f"{self.name}:{name}": files for name, files in everything.items()
-            }
-        return everything
-
     def getSets(self):
         return self.sets
 
@@ -232,19 +217,14 @@ class SampleCollection:
         return [
             AnalyzerSample(
                 name=x.name,
-                fillname=x.name if self.treat_separate else self.name,
+                setname=x.name if self.treat_separate else self.name,
                 coffea_dataset=x.toCoffeaDataset(),
             )
             for x in self.getSets()
         ]
 
-    def getStyle(self):
-        return self.style
-
     def totalEvents(self):
         return sum(s.totalEvents() for s in self.sets)
-
-
 
     def __str__(self):
         return self.name
@@ -261,47 +241,106 @@ class SampleManager:
     def possibleInputs(self):
         return [*self.sets, *self.collections]
 
+    def getSet(self, name):
+        return self.sets.get(name, None)
+
+    def getCollection(self, name):
+        return self.collections(name, None)
+
     def __getitem__(self, key):
-        if key in self.collections:
-            return self.collections[key]
-        else:
-            return self.sets[key]
+        return self.sets.get(key, None) or self.collections[key]
 
-    def __iter__(self):
-        yield from self.sets
-        yield from self.collections
-
-
-def loadSamplesFromDirectory(directory, force_separate=False):
-    directory = Path(directory)
-    files = list(directory.glob("*.yaml"))
-    ret = {}
-    manager = SampleManager()
-    for f in files:
-        with open(f, "r") as fo:
-            data = load(fo, Loader=Loader)
+    def loadSamplesFromDirectory(self, directory, force_separate=False):
+        directory = Path(directory)
+        files = list(directory.glob("*.yaml"))
+        file_contents = {}
+        for f in files:
+            with open(f, "r") as fo:
+                data = load(fo, Loader=Loader)
+                file_contents[f] = data
             for d in [x for x in data if x.get("type", "") == "set" or "files" in x]:
                 s = SampleSet.fromDict(d)
-                manager.sets[s.name] = s
-    for s_name in manager.sets:
-        derived = manager[s_name].derived_from
-        if derived:
-            manager.sets[s_name].derived_from = manager.sets[derived]
-    for f in files:
-        with open(f, "r") as fo:
-            data = load(fo, Loader=Loader)
+                if s.name in self.sets:
+                    raise KeyError(
+                        f"Dataset name '{s.name}' is already use. Please use a different name for this dataset."
+                    )
+                self.sets[s.name] = s
+        for name, val in self.sets.items():
+            derived = val.derived_from
+            if derived:
+                val.derived_from = self.sets[derived]
+
+        for data in file_contents.values():
             for d in [
                 x for x in data if x.get("type", "") == "collection" or "sets" in x
             ]:
-                s = SampleCollection.fromDict(d, manager, force_separate)
-                manager.collections[s.name] = s
-    for s in manager:
-        sample = manager[s]
-        style = sample.getStyle()
-        if isinstance(style, str):
-            manager[s].style = manager[style].getStyle()
+                s = SampleCollection.fromDict(d, self, force_separate)
+                if s.name in self.sets:
+                    raise KeyError(
+                        f"SampleCollection name '{s.name}' is already used by a set. Please use a different name for this dataset."
+                    )
+                if s.name in self.collections:
+                    raise KeyError(
+                        f"SampleCollection name '{s.name}' is already used by a collection. Please use a different name for this dataset."
+                    )
+                self.collections[s.name] = s
 
-    return manager
+
+def createSampleAndCollectionTable(manager, re_filter=None):
+    table = Table(title="Samples And Collections")
+    table.add_column("Name")
+    table.add_column("Type")
+    table.add_column("Number Events")
+    everything = list(
+        it.chain(
+            zip(manager.sets.values(), it.repeat("Set")),
+            zip(manager.collections.values(), it.repeat("Colletions")),
+        )
+    )
+    if re_filter:
+        p = re.compile(re_filter)
+        everything = [x for x in everything if p.search(x[0].name)]
+    for s, t in everything:
+        table.add_row(s.name, t, str(s.totalEvents()))
+    return table
 
 
-Dataset = Union[SampleSet, SampleCollection]
+def createSetTable(manager, re_filter=None):
+    table = Table(title="Samples Sets")
+    table.add_column("Name")
+    table.add_column("Number Events")
+    table.add_column("X-Sec")
+    table.add_column("Lumi")
+    table.add_column("Number Files")
+    everything = list(manager.sets.values())
+    if re_filter:
+        p = re.compile(re_filter)
+        everything = [x for x in everything if p.search(x.name)]
+    for s in everything:
+        xs = s.getXSec()
+        lumi = s.getLumi()
+        table.add_row(
+            s.name,
+            f"{str(s.totalEvents())}",
+            f"{xs:0.2g}" if xs else "N/A",
+            f"{lumi:0.4g}" if lumi else "N/A",
+            f"{len(s.files)}",
+        )
+    return table
+
+
+def createCollectionTable(manager, re_filter=None):
+    table = Table(title="Samples Collections")
+    table.add_column("Name")
+    table.add_column("Number Events")
+    table.add_column("Number Sets")
+    table.add_column("Treat Separate")
+    everything = list(manager.collections.values())
+    if re_filter:
+        p = re.compile(re_filter)
+        everything = [x for x in everything if p.search(x.name)]
+    for s in everything:
+        table.add_row(
+            s.name, f"{str(s.totalEvents())}", f"{len(s.sets)}", f"{s.treat_separate}"
+        )
+    return table

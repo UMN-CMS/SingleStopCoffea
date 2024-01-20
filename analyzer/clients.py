@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 def createLPCCondorCluster(configuration):
-
     workers = configuration["n_workers"]
     memory = configuration["memory"]
     schedd_host = configuration["schedd_host"]
@@ -27,15 +26,16 @@ def createLPCCondorCluster(configuration):
         memory=memory,
         ship_env=False,
         image="cmssw/cc7:x86_64",
-        transfer_input_files=["setup.sh", "coffeaenv/", "analyzer/"],
+        transfer_input_files=["setup.sh", "coffeaenv/"],
         log_directory=logpath,
         scheduler_options=dict(
             host=schedd_host,
             dashboard_address=dash_host,
         ),
     )
+    cluster.scale(workers)
     print(cluster)
-    cluster.adapt(minimum=4, maximum=workers)
+    # cluster.adapt(minimum=4, maximum=workers)
     return cluster
 
 
@@ -60,9 +60,10 @@ cluster_factory = dict(
 
 
 def createNewCluster(cluster_type, config):
-    dask_cfg_path = (
-        Path(importlib.resources.files(analyzer.resources)) / "dask_config.yaml"
-    )
+    with importlib.resources.as_file(
+        importlib.resources.files(analyzer.resources)
+    ) as f:
+        dask_cfg_path = Path(f) / "dask_config.yaml"
     with open(dask_cfg_path) as f:
         defaults = yaml.safe_load(f)
     dask.config.update(dask.config.config, defaults, priority="new")
@@ -81,11 +82,11 @@ def cleanup(p):
 
 def runNewCluster(cluster_type, config):
     # p = multiprocessing.Process(target=createNewCluster, args=(cluster_type, config))
-    #atexit.register(cleanup, p)
-    #p.start()
+    # atexit.register(cleanup, p)
+    # p.start()
     cluster = createNewCluster(cluster_type, config)
     time.sleep(config["timeout"])
-    #cleanup(p)
+    # cleanup(p)
 
 
 # def runAnalysis():

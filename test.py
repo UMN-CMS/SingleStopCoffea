@@ -1,4 +1,3 @@
-import analyzer.datasets as ds
 import dask
 import analyzer.modules
 import coffea
@@ -16,12 +15,12 @@ import tempfile
 from analyzer.clients import createLPCCondorCluster, createNewCluster
 
 if __name__ == "__main__":
-    #cluster = createNewCluster(
+    # cluster = createNewCluster(
     #    "local",
     #    dict(n_workers=4, memory="2.0G", schedd_host=None, dashboard_host=None),
-    #)
-    #client = Client(cluster)
-    client = Client("localhost:8786")
+    # )
+    client = Client("localhost:10005")
+    # client = Client("localhost:8786")
     print(client)
     # shutil.make_archive("coffeaenv", 'zip', "coffeaenv")
     # client.upload_file("coffeaenv.zip")
@@ -47,14 +46,12 @@ if __name__ == "__main__":
         "dataset_category",
         "event_level",
         "event_level_hists",
-        #"jets",
+        "jets",
+        "b_hists",
     ]
 
-    cache = {}
-    analyzer = ac.Analyzer(modules, cache)
 
-    samples = ds.loadSamplesFromDirectory("datasets")
-    wanted = ["signal_312_2000_1900"] #, "signal_312_2000_1400", "Skim_QCDInclusive2018"]
+    wanted = ["signal_312_2000_1900", "signal_312_2000_1400", "Skim_QCDInclusive2018"]
     s = [samples[x] for x in wanted]
     sample2 = samples["signal_312_2000_1900"]
     ss = list(
@@ -62,7 +59,7 @@ if __name__ == "__main__":
     )
 
     dataset_preps = [
-        ac.DatasetPreprocessed.fromDatasetInput(x, None, maybe_step_size=50000)
+        ac.DatasetPreprocessed.fromDatasetInput(x, None, maybe_step_size=25000)
         for x in ss
     ]
     # with open("test.pkl", 'wb') as f:

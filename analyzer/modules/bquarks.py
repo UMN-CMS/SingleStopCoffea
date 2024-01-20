@@ -9,15 +9,13 @@ from .utils import numMatching
 
 @analyzerModule("b_hists", categories="main", depends_on=["objects"])
 def createBHistograms(events, analyzer):
-    hmaker = analyzer.hmaker
-    ret = {}
     l_bjets = events.loose_bs
-
-    ret[f"loose_bjet_pt"] = hmaker(pt_axis, l_bjets.pt, name="Loose BJet $p_{T}$")
-    ret[f"loose_nb"] = hmaker(b_axis, ak.num(l_bjets.pt), name="Loose BJet Count")
+    analyzer.H(f"loose_bjet_pt", pt_axis, l_bjets.pt, name="Loose BJet $p_{T}$")
+    analyzer.H(f"loose_nb", b_axis, ak.num(l_bjets.pt), name="Loose BJet Count")
     for i in range(0, 4):
         mask = ak.num(l_bjets, axis=1) > i
-        ret[f"loose_b_{i}_pt"] = hmaker(
+        analyzer.H(
+            f"loose_b_{i}_pt",
             makeAxis(20, 0, 5, f"$p_{{T}}$ of rank  {i} loose b jet"),
             l_bjets[mask][:, i].pt,
             mask=mask,
@@ -30,19 +28,22 @@ def createBHistograms(events, analyzer):
     lb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
     lb_dr = top2[:, 0].delta_r(top2[:, 1])
 
-    ret[f"loose_bb_eta"] = hmaker(
+    analyzer.H(
+        f"loose_bb_eta",
         makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading loose b jets"),
         lb_eta,
         name=rf"$\Delta \eta$ BB$",
         description=rf"$\Delta \eta$ between the two highest rank loose b jets",
     )
-    ret[f"loose_bb_phi"] = hmaker(
+    analyzer.H(
+        f"loose_bb_phi",
         makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading loose b jets"),
         lb_phi,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank loose b jets",
     )
-    ret[f"loose_bdr"] = hmaker(
+    analyzer.H(
+        f"loose_bdr",
         makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 loose b jets"),
         lb_dr,
         name=rf"Loose BJet $\Delta R$",
@@ -50,11 +51,12 @@ def createBHistograms(events, analyzer):
     )
 
     m_bjets = events.med_bs
-    ret[f"medium_bjet_pt"] = hmaker(pt_axis, m_bjets.pt, name="Medium BJet $p_{T}$")
-    ret[f"medium_nb"] = hmaker(b_axis, ak.num(m_bjets.pt), name="Medium BJet Count")
+    analyzer.H(f"medium_bjet_pt", pt_axis, m_bjets.pt, name="Medium BJet $p_{T}$")
+    analyzer.H(f"medium_nb", b_axis, ak.num(m_bjets.pt), name="Medium BJet Count")
     for i in range(0, 4):
         mask = ak.num(m_bjets, axis=1) > i
-        ret[f"medium_b_{i}_pt"] = hmaker(
+        analyzer.H(
+            f"medium_b_{i}_pt",
             makeAxis(20, 0, 5, f"$p_{{T}}$ of rank  {i} medium b jet"),
             m_bjets[mask][:, i].pt,
             mask=mask,
@@ -67,31 +69,36 @@ def createBHistograms(events, analyzer):
     mb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
     mb_dr = top2[:, 0].delta_r(top2[:, 1])
 
-    ret[f"medium_bb_eta"] = hmaker(
+    analyzer.H(
+        f"medium_bb_eta",
         makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading medium b jets"),
         mb_eta,
         name=rf"$\Delta \eta$ BB$",
         description=rf"$\Delta \eta$ between the two highest rank medium b jets",
     )
-    ret[f"medium_bb_phi"] = hmaker(
+    analyzer.H(
+        f"medium_bb_phi",
         makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading medium b jets"),
         mb_phi,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank medium b jets",
     )
-    ret[f"medium_bdr"] = hmaker(
+    analyzer.H(
+        f"medium_bdr",
         makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 medium b jets"),
         mb_dr,
         name=rf"Medium BJet $\Delta R$",
         description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
     )
     inv = top2[:, 0] + top2[:, 1]
-    ret[f"medium_b_m"] = hmaker(
+    analyzer.H(
+        f"medium_b_m",
         makeAxis(60, 0, 3000, f"$m_{{bb}}", unit="GeV"),
         inv.mass,
         name=rf"medbmass",
     )
-    ret[f"medium_b_pt"] = hmaker(
+    analyzer.H(
+        f"medium_b_pt",
         makeAxis(20, 0, 1000, f"$p_{{T, bb}}$", unit="GeV"),
         inv.pt,
         name=rf"medbmass",
@@ -102,7 +109,6 @@ def createBHistograms(events, analyzer):
 
 @analyzerModule("b_ordinality_hists", depends_on=["objects"])
 def createBHistograms(events, analyzer):
-    ret = {}
     gj = events.good_jets
     idx = ak.local_index(gj, axis=1)
     med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
@@ -112,12 +118,14 @@ def createBHistograms(events, analyzer):
 
     ordax = hist.axis.Regular(10, 0, 10, name="Jet Rank", label=r"Jet Rank")
 
-    ret[f"lead_medium_bjet_ordinality"] = hmaker(
+    analyzer.H(
+        f"lead_medium_bjet_ordinality",
         makeAxis(6, 1, 7, "Leading Medium B Jet Rank"),
         lead_b_idx + 1,
         name="Leading $p_{T}$ Medium B Jet Rank",
     )
-    ret[f"sublead_medium_bjet_ordinality"] = hmaker(
+    analyzer.H(
+        f"sublead_medium_bjet_ordinality",
         makeAxis(6, 1, 7, "SubLeading Medium B Jet Rank"),
         sublead_b_idx + 1,
         name="Subleading $p_{T}$ Medium B Jet Rank",

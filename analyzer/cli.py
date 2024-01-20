@@ -1,9 +1,20 @@
 import argparse
 from analyzer.core import modules as all_modules
 from analyzer.clients import createNewCluster, runNewCluster, cluster_factory
+from analyzer.run_analysis import runAnalysisOnSamples
+from pathlib import Path
+from rich import print
+from rich.console import Console
+import sys
+import logging
+import analyzer.datasets as ds
+
+
+logger = logging.getLogger(__name__)
 
 
 def handleCluster(args):
+    logger.info("Handling cluster-start")
     config = {
         "n_workers": args.workers,
         "memory": args.memory,
@@ -14,8 +25,43 @@ def handleCluster(args):
     client = runNewCluster(args.type, config)
 
 
+def handleRunAnalysis(args):
+    logger.info("Handling run analysis")
+    ret = runAnalysisOnSamples(args.modules, args.samples, args.scheduler_address)
+    print(ret)
+
+
+def handleSamples(args):
+    logger.info("Handling sample inspection")
+    manager = ds.SampleManager()
+    manager.loadSamplesFromDirectory("datasets")
+    if args.type is None:
+        table = ds.createSampleAndCollectionTable(manager, re_filter=args.filter)
+    elif args.type == "set":
+        table = ds.createSetTable(manager, re_filter=args.filter)
+    elif args.type == "collection":
+        table = ds.createCollectionTable(manager, re_filter=args.filter)
+    console = Console()
+    console.print(table)
+
+
+def handleModules(args):
+    logger.info("Handling module inspection")
+
+
 def addSubparserSamples(subparsers):
-    pass
+    subparser = subparsers.add_parser(
+        "samples", help="Get information on available data samples"
+    )
+    subparser.set_defaults(func=handleSamples)
+    subparser.add_argument("-f", "--filter", default=None, help="Regex to filter names")
+    subparser.add_argument(
+        "-t",
+        "--type",
+        choices=["set", "collection"],
+        default=None,
+        help="Show information for only samples or collections",
+    )
 
 
 def addSubparserModules(subparsers):
@@ -63,48 +109,59 @@ def addSubparserRun(subparsers):
     subparser = subparsers.add_parser(
         "run", help="Run analyzer over some collection of samples"
     )
-    subparser.add_argument("-o", "--output", type=Path, help="Output data path.")
     subparser.add_argument(
-        "--skimpath", default=None, type=str, help="Output file for skims"
+        "-o", "--output", required=True, type=Path, help="Output data path."
     )
-    subparser.add_argument(
-        "-c",
-        "--cluster",
+
+    run_mode = subparser.add_mutually_exclusive_group()
+    run_mode.add_argument(
+        "-a",
+        "--scheduler-address",
         type=str,
-        help="Type of cluster to use",
-        choices=list(cluster_factory),
-        metavar="",
-        default="dask_local",
+        help="Address of the scheduler to use for dask",
     )
+
+    run_mode.add_argument(
+        "-y",
+        "--run-synchronous",
+        help="Do not use dask, instead run synchronously.",
+    )
+
     subparser.add_argument(
-        "-t",
-        "--metadata-cache",
-        type=Path,
-        help="File to store and load metadata from",
-        default=None,
+        "-s",
+        "--samples",
+        type=str,
+        nargs="+",
+        help="List of samples to run over",
+        metavar="",
     )
     subparser.add_argument(
         "-m",
         "--modules",
         type=str,
-        nargs="*",
-        help="Modules to execute",
+        nargs="+",
+        help="List of modules to execute.",
         metavar="",
     )
+    subparser.set_defaults(func=handleRunAnalysis)
 
-    subparser.add_argument(
-        "-l",
-        "--target-lumi",
-        type=float,
-        help="Target luminosity, all samples will have their luminosity scaled to match the target",
-        default=None,
-    )
+
+def addGeneralArguments(parser):
+    parser.add_argument("--log-level", type=str, default="WARN", help="Logging level")
 
 
 def runCli():
     parser = argparse.ArgumentParser(prog="SingleStopAnalyzer")
+    addGeneralArguments(parser)
+
     subparsers = parser.add_subparsers()
     addSubparserCluster(subparsers)
+    addSubparserRun(subparsers)
+    addSubparserSamples(subparsers)
+
     args = parser.parse_args()
-    args.func(args)
+
+    if not hasattr(args, "func"):
+        parser.print_help(sys.stderr)
+        return None
     return args

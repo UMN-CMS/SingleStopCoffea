@@ -7,13 +7,16 @@ from pathlib import Path
 
 
 def setup_logging(
-    default_path=(
-        Path(importlib.resources.files(analyzer.resources)) / "logging_config.yaml"
-    ),
+    default_path=None,
     default_level=logging.INFO,
     env_key="LOG_CFG",
 ):
-    path = default_path
+    if default_path is None:
+        with importlib.resources.as_file(
+            importlib.resources.files(analyzer.resources)
+        ) as f:
+            default_path = Path(f) / "logging_config.yaml"
+    path = Path(default_path)
     value = os.getenv(env_key, None)
     if value:
         path = value
@@ -23,6 +26,3 @@ def setup_logging(
         logging.config.dictConfig(config)
     else:
         logging.basicConfig(level=default_level)
-
-
-setup_logging()
