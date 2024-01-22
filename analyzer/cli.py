@@ -1,7 +1,7 @@
 import argparse
 from analyzer.core import modules as all_modules
 from analyzer.clients import createNewCluster, runNewCluster, cluster_factory
-from analyzer.run_analysis import runAnalysisOnSamples
+import analyzer.run_analysis as ra
 from pathlib import Path
 from rich import print
 from rich.console import Console
@@ -27,8 +27,9 @@ def handleCluster(args):
 
 def handleRunAnalysis(args):
     logger.info("Handling run analysis")
-    ret = runAnalysisOnSamples(args.modules, args.samples, args.scheduler_address)
-    print(ret)
+    ret = ra.runAnalysisOnSamples(args.modules, args.samples, args.scheduler_address)
+    ret.save(args.output)
+
 
 
 def handleSamples(args):

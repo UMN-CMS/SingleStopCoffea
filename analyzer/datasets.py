@@ -242,10 +242,10 @@ class SampleManager:
         return [*self.sets, *self.collections]
 
     def getSet(self, name):
-        return self.sets.get(name, None)
+        return self.sets[name]
 
     def getCollection(self, name):
-        return self.collections(name, None)
+        return self.collections[name]
 
     def __getitem__(self, key):
         return self.sets.get(key, None) or self.collections[key]

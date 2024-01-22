@@ -1,7 +1,12 @@
 from dataclasses import dataclass
-
-from functools import wraps
+from datetime import datetime
+from pathlib import Path
+import pickle as pkl
+import itertools as it
+from graphlib import TopologicalSorter, CycleError
+from collections.abc import Collection, Coroutine, Iterator, Sequence
 from collections import namedtuple, defaultdict
+from functools import wraps
 from dataclasses import dataclass, field
 from typing import (
     Any,
@@ -15,9 +20,7 @@ from typing import (
     Optional,
     Iterable,
 )
-from graphlib import TopologicalSorter, CycleError
 
-from collections.abc import Collection, Coroutine, Iterator, Sequence
 
 from distributed import Client
 
@@ -27,19 +30,17 @@ from coffea.dataset_tools.apply_processor import DaskOutputType
 from coffea.dataset_tools.preprocess import DatasetSpec
 
 
+import hist
+import dask
 import dask_awkward as dak
 import awkward as ak
+import hist.dask as dah
 
 import analyzer.utils as utils
 from analyzer.datasets import SampleSet, SampleCollection
 from analyzer.histogram_builder import HistogramBuilder
 
 import coffea.dataset_tools as dst
-
-import itertools as it
-import dask
-import hist.dask as dah
-import hist
 
 
 from rich.console import Console, ConsoleOptions, RenderResult
@@ -163,7 +164,7 @@ class DatasetInput:
         ]
 
 
-@dataclass
+@dataclass(eq=True)
 class DatasetPreprocessed:
     dataset_input: DatasetInput
     coffea_dataset_split: DatasetSpec
@@ -184,6 +185,9 @@ class DatasetDaskRunResult:
     raw_events_processed: Any
     run_report: dak.Array
 
+    def getName(self):
+        return self.dataset_preprocessed.dataset_input.dataset_name
+
 
 @dataclass
 class DatasetRunResult:
@@ -199,11 +203,19 @@ class DatasetRunResult:
         final_weight = reweighted * weight
         return {name: final_weight * h for name, h in self.histograms.items()}
 
+    def update(self, other):
+        if self.dataset_preprocessed != other.dataset_preprocessed:
+            raise ValueError()
+        new_hists = accumulate([self.histograms, other.histograms])
+        total_events = self.raw_events_processed + other.raw_events_processed
+        report = ak.concat(self.dataset_run_report, other.dataset_run_report)
+        result = DatasetRunResult(
+            self.dataset_preprocessed, new_hists, total_events, report
+        )
+        return result
 
-def mergeAndWeightResults(results, sample_manager, target_lumi=None):
-    return utils.accumulate(
-        [x.getScaledHistograms(sample_manager, target_lumi) for x in results]
-    )
+    def getName(self):
+        return self.dataset_preprocessed.dataset_input.dataset_name
 
 
 class DatasetProcessor:
@@ -277,10 +289,14 @@ class Analyzer:
     def getDatasetFutures(self, dsprep: DatasetPreprocessed) -> DatasetDaskRunResult:
         dataset_name = dsprep.dataset_input.dataset_name
         files = dsprep.getCoffeaDataset()["files"]
+        maybe_base_form = dsprep.coffea_dataset_split.get("form", None)
+        if maybe_base_form is not None:
+            maybe_base_form = ak.forms.from_json(decompress_form(maybe_base_form))
         events, report = NanoEventsFactory.from_root(
             files,
             schemaclass=NanoAODSchema,
             uproot_options={"allow_read_errors_with_report": True},
+            known_base_form=maybe_base_form,
             persistent_cache=self.cache,
         ).events()
 
@@ -288,26 +304,117 @@ class Analyzer:
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
         num = (dak.num(events, axis=0),)
         for m in self.modules:
-            print(f"Adding module {m}")
             test = m(events, dataset_analyzer)
             events, dataset_analyzer = test
         return daskres
 
     def execute(self, futures: Iterable[DatasetDaskRunResult], client: Client):
         futures = list(futures)
-        dsk = [
-            [
+        dsk = {
+            x.getName(): [
+                x.dataset_preprocessed,
                 x.histograms,
                 x.raw_events_processed,
                 x.run_report,
             ]
             for x in futures
-        ]
+        }
         res = client.compute(dsk)
         gathered = client.gather(res)
+        # ret = {x.getName(): x for x in gathered}
+        # return ret
         return {
-            x.dataset_preprocessed.dataset_input.dataset_name: DatasetRunResult(
-                x.dataset_preprocessed, h, r, rep
-            )
-            for x, (h, r, rep) in zip(futures, gathered)
+            name: DatasetRunResult(prep, h, r, rep)
+            for name, (prep, h, r, rep) in gathered.items()
         }
+
+
+@dataclass
+class ResultModification:
+    user: str
+    time: datetime
+
+
+def mergeAndWeightResults(results, sample_manager, target_lumi=None):
+    return utils.accumulate(
+        [x.getScaledHistograms(sample_manager, target_lumi) for x in results]
+    )
+
+
+@dataclass
+class AnalysisResult:
+    # modifications: List[ResultModification]
+    results: Dict[str, DatasetRunResult]
+
+    def save(self, output_file):
+        path = Path(output_file)
+        parent = path.parent
+        parent.mkdir(exist_ok=True, parents=True)
+        with open(path, "wb") as f:
+            pkl.dump(self, f)
+
+    @staticmethod
+    def fromFile(path):
+        path = Path(path)
+        with open(path, "rb") as f:
+            ret = pkl.load(f)
+        if not isinstance(ret, AnalysisResult):
+            raise RuntimeError(f"File {path} does not contain an analysis result")
+        return ret
+
+    def getMergedHistograms(self, sample_manager, target_lumi=None):
+        return mergeAndWeightResults(self.results.values(), sample_manager, target_lumi)
+
+
+@dataclass
+class AnalysisInspectionResult:
+    class ErrorType(Enum):
+        ok = 0
+        missing_events = 1
+        file_missing_from_input = 2
+        file_failed_open = 3
+        unknown = 99
+
+    type: ErrorType
+    description: str
+
+
+def checkAnalysisResult(result):
+    pass
+
+
+class NEventChecker:
+    def __init__(self, sample_manager):
+        self.sample_manager = manager
+
+    def __call__(self, result):
+        expected = manager.getSet(result.getName()).getTotalEvents()
+        actual = result.raw_events_processed
+        if expected == actual:
+            return AnalysisInspectionResult(
+                AnalysisInspectionResult.ErrorType.ok,
+                f"Expected {expected}, found {expected}",
+            )
+        else:
+            return AnalysisInspectionResult(
+                AnalysisInspectionResult.ErrorType.missing_events,
+                f"Expected {expected}, found {expected}",
+            )
+
+def checkAllFilesPresentInPrep(result):
+    sample = manager.getSet(result.getName())
+    files = set(x.getFile() for x in sample.files)
+    prepped = result.dataset_preprocessed
+    cof_dataset = prepped.coffea_dataset_split
+    cof_files = set(x["files"].values())
+    if files != cof_files:
+        return AnalysisInspectionResult(
+            AnalysisInspectionResult.ErrorType.file_missing_from_input,
+            f"Expected {expected}, found {expected}",
+        )
+        
+
+
+def checkDatasetResult(ds_result):
+
+    pass
