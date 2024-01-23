@@ -31,11 +31,11 @@ handlers:
     encoding: utf8
 
 loggers:
-  my_module:
-    level: ERROR
+  analyzer:
+    level: DEBUG
     handlers: [console]
     propagate: no
 
 root:
-  level: INFO
-  handlers: [console, info_file_handler, error_file_handler]
+  level: ERROR
+  handlers: [console]

@@ -1,75 +1,33 @@
 * Introduction
-
 Coffea is a columnar analysis framework, has a similar interface to common python packages like numpy or pandas.
-
 This repository is an implementation of the single stop analysis written in Coffea. 
 
 * Getting started
-
 Begin by cloning and entering the repository.
-
 #+begin_src bash
 git clone git@github.com:UMN-CMS/SingleStopCoffea.git
 cd SingleStopCoffea
 #+end_src
 
-From within the repository, you can install the python dependencies using a method of your choice. It is recommended to use a virtual environment.
-
-** With venv and pip
-
-#+begin_src  bash
-# Run below command only if running on fermilab
-source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
-
-python3.9 -m venv env
-source env/bin/activate
-
-# Run below command only if running on fermilab
-source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
-
-pip3 install .
-#+end_src
-
-** With poetry 
-#+begin_src  bash
-poetry init
-poetry update
-#+end_src
-
-** Fermilab Notes
-Depending on the location you are running things, it may be necessary to acquire a more recent python version. For example, at fermilab, this can be done by running 
+Getting things setup should be as simple as running
 #+begin_src bash
-source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
+source setup.sh
 #+end_src
+This will automatically source the correct LCG environment and install the dependencies.
 
-* Running the analyzer
-To get help running the analyzer, run the command
+* Running the Program
+The entrypoint for the program is the command
 #+begin_src bash
-python3 -m analyzer --help
+python3 -m analyzer
 #+end_src
 
-Under normal operation this should return 
-#+begin_src bash
-usage: Run the RPV Analysis [-h] [-s  [...]] [--signal-re SIGNAL_RE] [--list-signals] [--list-modules] [-o OUTPUT] [-e] [-m [...]] [-p PARALLELISM] [-c CHUNK_SIZE]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -s  [ ...], --samples  [ ...]
-                        Sample names to run over
-  --signal-re SIGNAL_RE
-                        Regex to determine if running over signals only
-  --list-signals        List available signals and exit
-  --list-modules        List available modules and exit
-  -o OUTPUT, --output OUTPUT
-                        Output file for data
-  -e , --executor       Exectuor to use
-  -m [ ...], --module-chain [ ...]
-                        Modules to execture
-  -p PARALLELISM, --parallelism PARALLELISM
-                        Level of paralleism to use if running a compatible exectutor
-  -c CHUNK_SIZE, --chunk-size CHUNK_SIZE
-                        Chunk size to use
-#+end_src
+
+* Extending the Analysis
+
+
+* Scaling Out
+
 
 * Using Notebooks
 Coffea works very nicely when used with jupyter notebooks. Chances are you want to run the notebook on a remote node, but view it in your local browser.

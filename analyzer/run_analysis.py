@@ -51,9 +51,10 @@ def transferAnalyzerToClient(client):
 def runAnalysisOnSamples(
     modules,
     samples,
+    sample_manager,
     dask_schedd_address=None,
     dataset_directory="datasets",
-    step_size=2500,
+    step_size=100000,
 ):
     import analyzer.modules
 
@@ -65,7 +66,7 @@ def runAnalysisOnSamples(
         logger.info("No scheduler address provided, running locally")
     sample_manager = ds.SampleManager()
     sample_manager.loadSamplesFromDirectory("datasets")
-    logger.debug(f"Creating analyzer using {len(modules)} modules")
+    logger.info(f"Creating analyzer using {len(modules)} modules")
     analyzer = ac.Analyzer(modules, cache)
     samples = [sample_manager[x] for x in samples]
     all_sets = list(
@@ -73,12 +74,14 @@ def runAnalysisOnSamples(
             ac.DatasetInput.fromSampleOrCollection(x) for x in samples
         )
     )
-    dataset_preps = [
-        ac.DatasetPreprocessed.fromDatasetInput(x, None, maybe_step_size=step_size)
-        for x in all_sets
-    ]
+    logger.info(f"Preprocessing {len(all_sets)} ")
+    dataset_preps = ac.preprocessBulk(all_sets, maybe_step_size=step_size)
     logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
-    futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]
+    futures = [analyzer.getDatasetFutures(client, x) for x in dataset_preps]
+    x = client.compute(*futures)
+    print(x)
+    y = client.gather(x)
+    print(y)
     logger.info(f"Generated {len(futures)} analysis futures")
     with ProgressBar():
         if not dask_schedd_address:

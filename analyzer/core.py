@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from datetime import datetime
 from pathlib import Path
 import pickle as pkl
@@ -45,6 +46,11 @@ import coffea.dataset_tools as dst
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
+
+from urllib import parse
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AnalyzerGraphError(Exception):
@@ -175,7 +181,15 @@ class DatasetPreprocessed:
         return DatasetPreprocessed(dataset_input, out)
 
     def getCoffeaDataset(self) -> DatasetSpec:
-        return self.coffea_dataset_split[self.dataset_input.dataset_name]
+        return self.coffea_dataset_split
+
+
+def preprocessBulk(dataset_input: Iterable[DatasetInput], **kwargs):
+    mapping = {x.dataset_name: x for x in dataset_input}
+    all_inputs = utils.accumulate([x.coffea_dataset for x in dataset_input])
+    out, x = dst.preprocess(all_inputs, **kwargs)
+    ret = [DatasetPreprocessed(mapping[k], v) for k, v in out.items()]
+    return ret
 
 
 @dataclass
@@ -268,6 +282,16 @@ class DatasetProcessor:
         return self.maybeCreateAndFill(*args, **kwargs)
 
 
+@dask.delayed
+def makeGraphForModules(ds_prep, events, report, fillname, modules):
+    daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
+    dataset_analyzer = DatasetProcessor(daskres, fillname)
+    for m in modules:
+        test = m(events, dataset_analyzer)
+        events, dataset_analyzer = test
+    return daskres
+
+
 class Analyzer:
     """
     Represents an analysis, a collection of modules.
@@ -276,7 +300,6 @@ class Analyzer:
     def __init__(self, modules: Iterable[AnalyzerModule], cache: Any):
         self.modules: List[AnalyzerModule] = self.__createAndSortModules(*modules)
         self.cache = cache
-
         self.__dataset_ps: Dict[str, DatasetProcessingState] = {}
         self.__run_reports: Dict[str, dak.Array] = {}
 
@@ -286,8 +309,11 @@ class Analyzer:
         modules = sortModules(m)
         return modules
 
-    def getDatasetFutures(self, dsprep: DatasetPreprocessed) -> DatasetDaskRunResult:
+    def getDatasetFutures(
+        self, client, dsprep: DatasetPreprocessed
+    ) -> DatasetDaskRunResult:
         dataset_name = dsprep.dataset_input.dataset_name
+        logger.debug(f"Generating futures for dataset {dataset_name}")
         files = dsprep.getCoffeaDataset()["files"]
         maybe_base_form = dsprep.coffea_dataset_split.get("form", None)
         if maybe_base_form is not None:
@@ -295,21 +321,28 @@ class Analyzer:
         events, report = NanoEventsFactory.from_root(
             files,
             schemaclass=NanoAODSchema,
-            uproot_options={"allow_read_errors_with_report": True},
+            uproot_options=dict(
+                allow_read_errors_with_report=True,
+                use_threads=False,
+            ),
             known_base_form=maybe_base_form,
             persistent_cache=self.cache,
         ).events()
 
         daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
-        num = (dak.num(events, axis=0),)
+        #daskres = makeGraphForModules(
+        #    ds_prep, events, report, dsprep.dataset_input.fill_name, self.modules
+        #)
         for m in self.modules:
-            test = m(events, dataset_analyzer)
-            events, dataset_analyzer = test
+           logger.debug(f"Generating futures for dataset {dataset_name}")
+           test = m(events, dataset_analyzer)
+           events, dataset_analyzer = test
         return daskres
 
     def execute(self, futures: Iterable[DatasetDaskRunResult], client: Client):
         futures = list(futures)
+        logger.debug(f"Executing {len(futures)} analysis futures.")
         dsk = {
             x.getName(): [
                 x.dataset_preprocessed,
@@ -368,53 +401,68 @@ class AnalysisResult:
 
 @dataclass
 class AnalysisInspectionResult:
-    class ErrorType(Enum):
-        ok = 0
-        missing_events = 1
-        file_missing_from_input = 2
-        file_failed_open = 3
-        unknown = 99
-
-    type: ErrorType
+    type: str
+    passed: bool
     description: str
-
-
-def checkAnalysisResult(result):
-    pass
 
 
 class NEventChecker:
     def __init__(self, sample_manager):
-        self.sample_manager = manager
+        self.sample_manager = sample_manager
 
     def __call__(self, result):
-        expected = manager.getSet(result.getName()).getTotalEvents()
+        expected = self.sample_manager.getSet(result.getName()).n_events
         actual = result.raw_events_processed
         if expected == actual:
             return AnalysisInspectionResult(
-                AnalysisInspectionResult.ErrorType.ok,
+                "Number Events",
+                True,
                 f"Expected {expected}, found {expected}",
             )
         else:
             return AnalysisInspectionResult(
-                AnalysisInspectionResult.ErrorType.missing_events,
+                "Number Events",
+                True,
                 f"Expected {expected}, found {expected}",
             )
 
-def checkAllFilesPresentInPrep(result):
-    sample = manager.getSet(result.getName())
-    files = set(x.getFile() for x in sample.files)
-    prepped = result.dataset_preprocessed
-    cof_dataset = prepped.coffea_dataset_split
-    cof_files = set(x["files"].values())
-    if files != cof_files:
-        return AnalysisInspectionResult(
-            AnalysisInspectionResult.ErrorType.file_missing_from_input,
-            f"Expected {expected}, found {expected}",
+
+class InputChecker:
+    def __init__(self, sample_manager):
+        self.sample_manager = sample_manager
+
+    def __call__(self, result):
+        sample = self.sample_manager.getSet(result.getName())
+        files = set(parse.urlparse(x.getFile())[2] for x in sample.files)
+        prepped = result.dataset_preprocessed
+        cof_dataset = prepped.coffea_dataset_split
+        cof_files = set(
+            parse.urlparse(x)[2] for x in cof_dataset[result.getName()]["files"].keys()
         )
-        
+        diff = files.difference(cof_files)
+        if diff:
+            return AnalysisInspectionResult(
+                "Input Files",
+                False,
+                f"Missing files from input {diff} from analysis input",
+            )
+        else:
+            return AnalysisInspectionResult(
+                "Input Files",
+                True,
+                f"All files in sample found in input to analyzer",
+            )
 
 
-def checkDatasetResult(ds_result):
+def checkDatasetResult(ds_result, sample_manager):
+    checkers = [NEventChecker(sample_manager), InputChecker(sample_manager)]
+    results = [checker(ds_result) for checker in checkers]
+    return results
 
-    pass
+
+def checkAnalysisResult(result, sample_manager):
+    ret = {
+        name: checkDatasetResult(ds_res, sample_manager)
+        for name, ds_res in result.results.items()
+    }
+    return ret

@@ -4,6 +4,8 @@ LCG_ARCH=x86_64-centos7-gcc11-opt
 LCG_SETUP="/cvmfs/sft.cern.ch/lcg/views/${LCG_VIEW}/${LCG_ARCH}/setup.sh"
 CONTAINER=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/cc7:x86_64
 
+export CONDOR_CONFIG=".condor_config"
+
 
 function source_lcg(){
     printf "Sourcing %s for achitecture %s\n" "${LCG_VIEW}"  "${LCG_ARCH}"

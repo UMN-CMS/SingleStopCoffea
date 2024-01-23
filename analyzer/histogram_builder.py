@@ -35,6 +35,7 @@ class HistogramBuilder:
                 )
             else:
                 weights = self.event_weights
+
         base_category_vals = self.cat_values
         if mask is not None:
             base_category_vals = [
@@ -57,6 +58,8 @@ class HistogramBuilder:
                     ak.flatten(x) if isinstance(x, (ak.Array, dak.Array)) else x
                     for x in shaped_data_vals
                 ]
+        logger.debug(f"Shaped category values are\n {shaped_cat_vals}")
+        logger.debug(f"Shaped data values are\n {shaped_data_vals}")
         d = shaped_cat_vals + shaped_data_vals
         ret = h.fill(*d, weight=weights)
         return ret

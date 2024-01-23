@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from typing import List, Dict, Set, Union, Optional
 from yaml import load, dump
 import itertools as it
@@ -63,7 +63,7 @@ class SampleFile:
         return self.paths[0]
 
 
-@dataclass
+@dataclass(frozen=True)
 class SampleSet:
     name: str
     title: str
@@ -268,7 +268,7 @@ class SampleManager:
         for name, val in self.sets.items():
             derived = val.derived_from
             if derived:
-                val.derived_from = self.sets[derived]
+                self.sets[name] = replace(val, derived_from=self.sets[derived])
 
         for data in file_contents.values():
             for d in [
@@ -312,6 +312,7 @@ def createSetTable(manager, re_filter=None):
     table.add_column("X-Sec")
     table.add_column("Lumi")
     table.add_column("Number Files")
+    table.add_column("Derived From")
     everything = list(manager.sets.values())
     if re_filter:
         p = re.compile(re_filter)
@@ -325,6 +326,7 @@ def createSetTable(manager, re_filter=None):
             f"{xs:0.2g}" if xs else "N/A",
             f"{lumi:0.4g}" if lumi else "N/A",
             f"{len(s.files)}",
+            f"{s.derived_from.name}" if s.derived_from else "N/A",
         )
     return table
 
