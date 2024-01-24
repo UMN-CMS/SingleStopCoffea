@@ -9,11 +9,23 @@ git clone git@github.com:UMN-CMS/SingleStopCoffea.git
 cd SingleStopCoffea
 #+end_src
 
+
+You can then run the setup script as described below.
+
+
+** With LCG Alone
 Getting things setup should be as simple as running
 #+begin_src bash
-source setup.sh
+source setup.sh lcg
 #+end_src
 This will automatically source the correct LCG environment and install the dependencies.
+
+** In a Container
+If there are issues with the raw LCG installation, you can try to run in container mode
+#+begin_src bash
+source setup.sh container
+#+end_src
+
 
 * Running the Program
 The entrypoint for the program is the command
@@ -22,11 +34,36 @@ python3 -m analyzer
 #+end_src
 
 
+For more information on the use of the program, call
+#+begin_src bash
+python3 -m analyzer --help
+#+end_src
 
-* Extending the Analysis
+** Examples
+*** Running a Basic Analysis
+The below command will run a basic analysis on the =signal_312_2000_1900= mass point. This analysis will run locally.
+#+begin_src bash
+python3  -m analyzer run -o "myoutput.pkl" -m objects baseline_selection dataset_category event_level jets -s signal_312_2000_1900
+#+end_src
+
+*** Viewing Information on Samples
+#+begin_src bash
+python3  -m analyzer samples
+#+end_src
+
+*** Viewing Information on Modules
+#+begin_src bash
+python3  -m analyzer modules
+#+end_src
 
 
 * Scaling Out
+To analyze more substantial datasets, we need to be able to take advantage of distributed computing resources.
+** Starting a Cluster
+The =cluster-start= subcommand provides the ability to start a cluster. The below command shows how to start a cluster consisting of 20 condor worker nodes on the LPC.
+#+begin_src bash
+python3 -m analyzer cluster-start -t lpcondor -s :10005 -d localhost:8787 -m "2.0GB" -w 20
+#+end_src
 
 
 * Using Notebooks

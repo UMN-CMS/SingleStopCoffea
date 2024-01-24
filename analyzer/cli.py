@@ -52,8 +52,8 @@ def handleSamples(args):
         table = ds.createSetTable(manager, re_filter=args.filter)
     elif args.type == "collection":
         table = ds.createCollectionTable(manager, re_filter=args.filter)
-    console = Console()
-    console.print(table)
+        console = Console()
+        console.print(table)
 
 
 def handleModules(args):
@@ -68,8 +68,8 @@ def handleModules(args):
             ",".join(x for x in module.categories),
             ",".join(x for x in module.depends_on),
         )
-    console = Console()
-    console.print(table)
+        console = Console()
+        console.print(table)
 
 
 def addSubparserSamples(subparsers):
@@ -213,6 +213,14 @@ def addSubparserRun(subparsers):
         type=str,
         help="Path to directory containing dataset files",
     )
+
+    subparser.add_argument(
+        "--save-graph",
+        default=None,
+        type=str,
+        help="In set, interpret as a path to which the task-graph should be saved.",
+    )
+
     subparser.set_defaults(func=handleRunAnalysis)
 
 

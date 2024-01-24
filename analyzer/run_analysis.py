@@ -55,6 +55,8 @@ def runAnalysisOnSamples(
     dask_schedd_address=None,
     dataset_directory="datasets",
     step_size=100000,
+    save_graph=None,
+    no_execute=False,
 ):
     import analyzer.modules
 
@@ -81,6 +83,8 @@ def runAnalysisOnSamples(
     futures = [analyzer.getDatasetFutures(client, x) for x in dataset_preps]
     ac.pr.dump_stats("profile.prof")
     logger.info(f"Generated {len(futures)} analysis futures")
+    if no_execute:
+        return None
     with ProgressBar():
         if not dask_schedd_address:
             computed, *rest = dask.compute(futures, scheduler="single-threaded")
