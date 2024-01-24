@@ -58,7 +58,18 @@ def handleSamples(args):
 
 def handleModules(args):
     logger.info("Handling module inspection")
-    all_modules  = list(ac.modules.values())
+    import analyzer.modules
+
+    all_modules = list(ac.modules.values())
+    table = Table("Name", "Categories", "Depends On", title="Analysis Modules")
+    for module in ac.modules.values():
+        table.add_row(
+            module.name,
+            ",".join(x for x in module.categories),
+            ",".join(x for x in module.depends_on),
+        )
+    console = Console()
+    console.print(table)
 
 
 def addSubparserSamples(subparsers):
@@ -77,7 +88,10 @@ def addSubparserSamples(subparsers):
 
 
 def addSubparserModules(subparsers):
-    pass
+    subparser = subparsers.add_parser(
+        "modules", help="Get information on available analysis modules"
+    )
+    subparser.set_defaults(func=handleModules)
 
 
 def handleCheck(args):
@@ -100,8 +114,6 @@ def handleCheck(args):
 
     console = Console()
     console.print(table)
-
-
 
 
 def addSubparserCheck(subparsers):
@@ -217,10 +229,11 @@ def runCli():
     addSubparserRun(subparsers)
     addSubparserSamples(subparsers)
     addSubparserCheck(subparsers)
+    addSubparserModules(subparsers)
 
     args = parser.parse_args()
 
     if not hasattr(args, "func"):
         parser.print_help(sys.stderr)
-        return None
+
     return args

@@ -51,28 +51,27 @@ def createObjects(events, analyzer):
     events["good_jets"] = good_jets
     events["good_electrons"] = good_electrons
     events["good_muons"] = good_muons
-    events["loose_bs"] = loose_b
 
     events["loose_bs"] = loose_b
     events["med_bs"] = med_b
     events["tight_bs"] = tight_b
 
     events["tight_tops"] = tight_top
-    events["med_tops"] = med_top
-    events["loose_tops"] = loose_top
+    #events["med_tops"] = med_top
+    #events["loose_tops"] = loose_top
 
-    events["tight_Ws"] = tight_W
-    events["med_Ws"] = med_W
-    events["loose_Ws"] = loose_W
+    #events["tight_Ws"] = tight_W
+    #events["med_Ws"] = med_W
+    #events["loose_Ws"] = loose_W
 
-    events["deep_top_wp1"] = deep_top_wp1
-    events["deep_top_wp2"] = deep_top_wp2
-    events["deep_top_wp3"] = deep_top_wp3
-    events["deep_top_wp4"] = deep_top_wp4
+    #events["deep_top_wp1"] = deep_top_wp1
+    #events["deep_top_wp2"] = deep_top_wp2
+    #events["deep_top_wp3"] = deep_top_wp3
+    #events["deep_top_wp4"] = deep_top_wp4
 
-    events["deep_W_wp1"] = deep_W_wp1
-    events["deep_W_wp2"] = deep_W_wp2
-    events["deep_W_wp3"] = deep_W_wp3
-    events["deep_W_wp4"] = deep_W_wp4
+    #events["deep_W_wp1"] = deep_W_wp1
+    #events["deep_W_wp2"] = deep_W_wp2
+    #events["deep_W_wp3"] = deep_W_wp3
+    #events["deep_W_wp4"] = deep_W_wp4
 
     return events ,analyzer

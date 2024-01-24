@@ -49,6 +49,9 @@ from rich.table import Table
 
 from urllib import parse
 import logging
+import cProfile
+
+pr = cProfile.Profile()
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +92,7 @@ class AnalyzerModule:
 modules = {}
 category_after = {
     "main": ["selection", "weights", "category"],
+    "category": ["selection"],
     "weights": ["selection"],
 }
 
@@ -282,10 +286,34 @@ class DatasetProcessor:
         return self.maybeCreateAndFill(*args, **kwargs)
 
 
-@dask.delayed
-def makeGraphForModules(ds_prep, events, report, fillname, modules):
+def makeGraphForModules(dsprep, events, report, fillname, modules):
     daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
     dataset_analyzer = DatasetProcessor(daskres, fillname)
+    for m in modules:
+        test = m(events, dataset_analyzer)
+        events, dataset_analyzer = test
+    return daskres
+
+
+@dask.delayed
+def makeGraphForModules2(dsprep, modules):
+    dataset_name = dsprep.dataset_input.dataset_name
+    files = dsprep.getCoffeaDataset()["files"]
+    maybe_base_form = dsprep.coffea_dataset_split.get("form", None)
+    if maybe_base_form is not None:
+        maybe_base_form = ak.forms.from_json(decompress_form(maybe_base_form))
+    events, report = NanoEventsFactory.from_root(
+        files,
+        schemaclass=NanoAODSchema,
+        uproot_options=dict(
+            allow_read_errors_with_report=True,
+            use_threads=False,
+        ),
+        known_base_form=maybe_base_form,
+    ).events()
+    print(events)
+    daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
+    dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
     for m in modules:
         test = m(events, dataset_analyzer)
         events, dataset_analyzer = test
@@ -299,6 +327,10 @@ class Analyzer:
 
     def __init__(self, modules: Iterable[AnalyzerModule], cache: Any):
         self.modules: List[AnalyzerModule] = self.__createAndSortModules(*modules)
+        logger.info(
+            "Will run modules in the following order:\n"
+            + "\n".join(f"\t{i+1}. {x.name}" for i, x in enumerate(self.modules))
+        )
         self.cache = cache
         self.__dataset_ps: Dict[str, DatasetProcessingState] = {}
         self.__run_reports: Dict[str, dak.Array] = {}
@@ -331,13 +363,12 @@ class Analyzer:
 
         daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
-        #daskres = makeGraphForModules(
-        #    ds_prep, events, report, dsprep.dataset_input.fill_name, self.modules
-        #)
+        pr.enable()
         for m in self.modules:
-           logger.debug(f"Generating futures for dataset {dataset_name}")
-           test = m(events, dataset_analyzer)
-           events, dataset_analyzer = test
+            logger.info(f"Adding module {m.name} to dataset {dataset_name}")
+            test = m(events, dataset_analyzer)
+            events, dataset_analyzer = test
+        pr.disable()
         return daskres
 
     def execute(self, futures: Iterable[DatasetDaskRunResult], client: Client):
@@ -354,8 +385,6 @@ class Analyzer:
         }
         res = client.compute(dsk)
         gathered = client.gather(res)
-        # ret = {x.getName(): x for x in gathered}
-        # return ret
         return {
             name: DatasetRunResult(prep, h, r, rep)
             for name, (prep, h, r, rep) in gathered.items()

@@ -75,21 +75,17 @@ def runAnalysisOnSamples(
         )
     )
     logger.info(f"Preprocessing {len(all_sets)} ")
-    dataset_preps = ac.preprocessBulk(all_sets, maybe_step_size=step_size)
+    with ProgressBar():
+        dataset_preps = ac.preprocessBulk(all_sets, maybe_step_size=step_size)
     logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
     futures = [analyzer.getDatasetFutures(client, x) for x in dataset_preps]
-    x = client.compute(*futures)
-    print(x)
-    y = client.gather(x)
-    print(y)
+    ac.pr.dump_stats("profile.prof")
     logger.info(f"Generated {len(futures)} analysis futures")
     with ProgressBar():
         if not dask_schedd_address:
             computed, *rest = dask.compute(futures, scheduler="single-threaded")
-            print(computed)
             ret = {x.getName(): x for x in computed}
         else:
             ret = analyzer.execute(futures, client)
-
     ret = ac.AnalysisResult(ret)
     return ret

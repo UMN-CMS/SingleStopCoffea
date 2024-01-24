@@ -428,10 +428,10 @@ def charginoRecoHistograms(events, analyzer):
 
 @analyzerModule("stop_reco", categories="main")
 def stopreco(events, analyzer):
-    hmaker = analyzer.hmaker
     ret = {}
     jets = events.good_jets[:, 0:4].sum()
-    ret[f"m14_vs_pt14"] = hmaker(
+    analyzer.H(
+        f"m14_vs_pt14",
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
             makeAxis(50, 0, 500, r"$pt_{14}$", unit="GeV"),
@@ -447,10 +447,11 @@ def stopreco(events, analyzer):
 
     fsrincluded = ak.where((top5sum.pt < jets.pt), top5sum.mass, jets.mass)
 
-    ret[f"m14_gt100_m15"] = hmaker(
+    analyzer.H(
+        "m14_gt100_m15",
         makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
         fsrincluded,
         name="m14 or maybe m15",
     )
 
-    return ret
+    return events,analyzer

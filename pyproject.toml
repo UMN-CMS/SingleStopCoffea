@@ -17,7 +17,9 @@ jupyter = "*"
 pyyaml = "^6.0"
 
 #scipy = "^1.9"
-#gpytorch  = ">=1.11"
+gpytorch  = ">=1.11"
+
+lpcjobqueue = { git = "https://github.com/CoffeaTeam/lpcjobqueue", branch = "main" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

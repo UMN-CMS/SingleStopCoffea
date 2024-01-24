@@ -8,7 +8,7 @@ from pathlib import Path
 
 def setup_logging(
     default_path=None,
-    default_level=logging.INFO,
+    default_level=None,
     env_key="LOG_CFG",
 ):
     if default_path is None:
@@ -20,9 +20,14 @@ def setup_logging(
     value = os.getenv(env_key, None)
     if value:
         path = value
+
+
     if os.path.exists(path):
         with open(path, "rt") as f:
             config = yaml.safe_load(f.read())
         logging.config.dictConfig(config)
-    else:
-        logging.basicConfig(level=default_level)
+
+    if default_level is not None:
+        logger = logging.getLogger("analyzer")
+        logger.setLevel(default_level)
+
