@@ -39,6 +39,7 @@ def handleRunAnalysis(args):
         sample_manager,
         dask_schedd_address=args.scheduler_address,
     )
+    print(ret)
     ret.save(args.output)
 
 

@@ -25,7 +25,7 @@ def createLPCCondorCluster(configuration):
     cluster = LPCCondorCluster(
         memory=memory,
         ship_env=False,
-        image="cmssw/cc7:x86_64",
+        image="coffea-dask:latest",
         transfer_input_files=["setup.sh", "coffeaenv/"],
         log_directory=logpath,
         scheduler_options=dict(

@@ -285,6 +285,12 @@ class SampleManager:
                     )
                 self.collections[s.name] = s
 
+        for x in it.chain(self.sets.values(), self.collections.values()):
+            if isinstance(x.style, str):
+                x.style = self[x.style].style
+            
+        
+
 
 def createSampleAndCollectionTable(manager, re_filter=None):
     table = Table(title="Samples And Collections")

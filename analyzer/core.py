@@ -181,7 +181,7 @@ class DatasetPreprocessed:
 
     @staticmethod
     def fromDatasetInput(dataset_input, client, **kwargs):
-        out, x = dst.preprocess(dataset_input.coffea_dataset, save_form=True, **kwargs)
+        out, x = dst.preprocess(dataset_input.coffea_dataset, save_form=False, **kwargs)
         return DatasetPreprocessed(dataset_input, out)
 
     def getCoffeaDataset(self) -> DatasetSpec:
@@ -276,6 +276,7 @@ class DatasetProcessor:
         description=None,
         auto_expand=True,
     ):
+        name = name or key
         if key not in self.histograms:
             self.histograms[key] = self.histogram_builder.createHistogram(
                 axis, name, description
@@ -341,9 +342,7 @@ class Analyzer:
         modules = sortModules(m)
         return modules
 
-    def getDatasetFutures(
-        self, client, dsprep: DatasetPreprocessed
-    ) -> DatasetDaskRunResult:
+    def getDatasetFutures(self, dsprep: DatasetPreprocessed) -> DatasetDaskRunResult:
         dataset_name = dsprep.dataset_input.dataset_name
         logger.debug(f"Generating futures for dataset {dataset_name}")
         files = dsprep.getCoffeaDataset()["files"]
@@ -355,13 +354,12 @@ class Analyzer:
             schemaclass=NanoAODSchema,
             uproot_options=dict(
                 allow_read_errors_with_report=True,
-                use_threads=False,
             ),
             known_base_form=maybe_base_form,
             persistent_cache=self.cache,
         ).events()
 
-        daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
+        daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
         pr.enable()
         for m in self.modules:
@@ -383,11 +381,16 @@ class Analyzer:
             ]
             for x in futures
         }
-        res = client.compute(dsk)
-        gathered = client.gather(res)
+
+        if client is None:
+            computed, *rest = dask.compute(dsk, scheduler="single-threaded")
+        else:
+            f = client.compute(dsk)
+            computed = client.gather(f)
+
         return {
             name: DatasetRunResult(prep, h, r, rep)
-            for name, (prep, h, r, rep) in gathered.items()
+            for name, (prep, h, r, rep) in computed.items()
         }
 
 

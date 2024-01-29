@@ -79,6 +79,7 @@ class HistogramBuilder:
 
         h = hda.Hist(*all_axes, storage="weight", name=name)
         setattr(h, "description", description)
+        setattr(h, "name", name)
         return h
 
     def __call__(self, *args, **kwargs):

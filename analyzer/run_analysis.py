@@ -54,9 +54,7 @@ def runAnalysisOnSamples(
     sample_manager,
     dask_schedd_address=None,
     dataset_directory="datasets",
-    step_size=100000,
-    save_graph=None,
-    no_execute=False,
+    step_size=30000,
 ):
     import analyzer.modules
 
@@ -65,6 +63,7 @@ def runAnalysisOnSamples(
         logger.info(f"Connecting client to scheduler at {dask_schedd_address}")
         client = Client(dask_schedd_address)
     else:
+        client = None
         logger.info("No scheduler address provided, running locally")
     sample_manager = ds.SampleManager()
     sample_manager.loadSamplesFromDirectory("datasets")
@@ -79,17 +78,13 @@ def runAnalysisOnSamples(
     logger.info(f"Preprocessing {len(all_sets)} ")
     with ProgressBar():
         dataset_preps = ac.preprocessBulk(all_sets, maybe_step_size=step_size)
+
     logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
-    futures = [analyzer.getDatasetFutures(client, x) for x in dataset_preps]
-    ac.pr.dump_stats("profile.prof")
+    futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]
     logger.info(f"Generated {len(futures)} analysis futures")
-    if no_execute:
-        return None
+
     with ProgressBar():
-        if not dask_schedd_address:
-            computed, *rest = dask.compute(futures, scheduler="single-threaded")
-            ret = {x.getName(): x for x in computed}
-        else:
-            ret = analyzer.execute(futures, client)
+        ret = analyzer.execute(futures, client)
+
     ret = ac.AnalysisResult(ret)
     return ret

@@ -23,7 +23,7 @@ jobqueue:
     log-directory: null
     env-extra: null
     job-script-prologue:
-      - 'source setup.sh lcg'
+      - 'source setup.sh container'
       - 'export X509_USER_PROXY=/srv/x509up_u57509'
     job-extra: null             # Extra submit attributes
     job-extra-directives: {}

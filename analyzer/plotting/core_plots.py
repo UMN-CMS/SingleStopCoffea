@@ -9,7 +9,7 @@ import hist.intervals as hinter
 from . import static
 from dataclasses import dataclass
 from functools import partial, wraps
-from analyzer.datasets import Style, Dataset
+from analyzer.datasets import Style
 from typing import Optional, Dict, Any, Union, Tuple
 import itertools as it
 import hist
@@ -86,9 +86,8 @@ def histRank(hist):
 
 @dataclass
 class PlotObject:
-    hist: Union[hist.Hist, tuple[np.ndarray]]
+    hist: hist.Hist
     title: Optional[str] = None
-    dataset: Optional[Dataset] = None
     style: Optional[Dict[str, Any]] = None
 
     def ishist(self):
@@ -124,44 +123,54 @@ class PlotObject:
             return self.hist[2]
 
     def getStyle(self):
-        if self.style is not None:
-            return self.style
-        elif self.dataset:
-            return self.dataset.style.toDict()
-        else:
-            return {}
+        return self.style.toDict() if self.style is not None else {}
 
 
-def autoSplit(func):
-    @wraps(func)
-    def inner(ax, hist, cat_axis=None, cat_filter=None, manager=None, **kwargs):
+def createPlotObjects(hist, cat_axis, manager, cat_filter=None):
+    other_axes = [a for a in hist.axes if a.name != cat_axis]
+    titles = [a.label for a in other_axes]
+    ret = [
+        PlotObject(hist[{cat_axis: n}], manager[n].title, manager[n].style)
+        for n in hist.axes[cat_axis]
+        if cat_filter is None or (re.search(cat_filter, n))
+    ]
+    return ret
 
-        if cat_axis is None:
-            if isinstance(hist, PlotObject):
-                return func(ax, hist, **kwargs)
-            else:
-                return func(ax, PlotObject(hist), **kwargs)
-        else:
-            other_axes = [a for a in hist.axes if a.name != cat_axis]
-            titles = [a.label for a in other_axes]
-            ax_title = hist.name
-            to_plot = [
-                PlotObject(hist[{cat_axis: n}], manager[n].getTitle(), manager[n])
-                for n in hist.axes[cat_axis]
-                if cat_filter is None or (re.search(cat_filter, n))
-            ]
-            to_plot = reversed(sorted(to_plot, key=lambda x: x.hist.sum().value))
-            for p in to_plot:
-                ax = func(ax, p, **kwargs)
-            ax.set_xlabel(titles[0])
-            if len(other_axes) > 1:
-                ax.set_ylabel(titles[1])
-            else:
-                ax.set_ylabel("Events")
-            ax.legend()
-            return ax
 
-    return inner
+def sortPlotObjects(plot_objects):
+    ret = reversed(sorted(plot_objets, key=lambda x: x.hist.sum().value))
+    return ret
+
+
+# def autoSplit(func):
+#    @wraps(func)
+#    def inner(ax, hist, cat_axis=None, cat_filter=None, manager=None, **kwargs):
+#        if cat_axis is None:
+#            if isinstance(hist, PlotObject):
+#                return func(ax, hist, **kwargs)
+#            else:
+#                return func(ax, PlotObject(hist), **kwargs)
+#        else:
+#            other_axes = [a for a in hist.axes if a.name != cat_axis]
+#            titles = [a.label for a in other_axes]
+#            ax_title = hist.name
+#            to_plot = [
+#                PlotObject(hist[{cat_axis: n}], manager[n].getTitle(), manager[n].style)
+#                for n in hist.axes[cat_axis]
+#                if cat_filter is None or (re.search(cat_filter, n))
+#            ]
+#            to_plot = reversed(sorted(to_plot, key=lambda x: x.hist.sum().value))
+#            for p in to_plot:
+#                ax = func(ax, p, **kwargs)
+#            ax.set_xlabel(titles[0])
+#            if len(other_axes) > 1:
+#                ax.set_ylabel(titles[1])
+#            else:
+#                ax.set_ylabel("Events")
+#            ax.legend()
+#            return ax
+#
+#    return inner
 
 
 def magicPlot(func):
@@ -177,7 +186,6 @@ def magicPlot(func):
 
 
 @magicPlot
-@autoSplit
 def drawAsScatter(ax, p, yerr=True, **kwargs):
     style = p.getStyle()
     hist = p.hist
@@ -217,7 +225,6 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
 
 
 @magicPlot
-@autoSplit
 def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
     style = plot_object.getStyle()
     h = plot_object.hist
@@ -374,10 +381,7 @@ def set_xmargin(ax, left=0.0, right=0.3):
 
 
 def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
-    exclude = exclude or {
-        "dataset",
-    }
-    axes = [x for x in hist.axes if x.name not in exclude]
+    axes = [x for x in hist.axes]
     unit = getattr(axes[0], "unit", None)
     lab = axes[0].label
     if unit:
@@ -388,7 +392,7 @@ def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
     else:
         ax.set_xlabel(lab)
     has_var = hist.variances()
-    if hist.sum().value < 20:
+    if hist.sum().value < 1.1:
         ylab = "Normalized Events"
     elif has_var is None:
         ylab = "Events"
