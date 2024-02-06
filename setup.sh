@@ -144,11 +144,13 @@ function startup_with_container(){
             printf "Cloning HTCondor configuration\n"
             condor_config_val  -summary > .condor_config
         fi
+        if [[ -e $HOME/.bash_eternal_history ]]; then
+            apptainer_flags="$apptainer_flags --bind $HOME/.bash_eternal_history:/srv/.bash_eternal_history"
+        fi
         apptainer exec \
                   --env "APPTAINER_WORKING_DIR=$PWD" \
                   --env "APPTAINER_IMAGE=$container" $apptainer_flags \
                   --bind /uscmst1b_scratch/ \
-                  --bind $HOME/.bash_eternal_history:/srv/.bash_eternal_history \
                   --bind /cvmfs \
                   --bind ${X509_USER_PROXY%/*} \
                   --bind ${PWD}:/srv \
