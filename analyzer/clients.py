@@ -1,6 +1,8 @@
 from distributed import Client, TimeoutError, LocalCluster
 from lpcjobqueue import LPCCondorCluster
+from lpcjobqueue.schedd import SCHEDD
 import os
+import shutil
 from pathlib import Path
 import yaml
 import multiprocessing
@@ -10,11 +12,49 @@ import importlib.resources
 import dask
 import atexit
 import logging
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 
 
+def createEnvArchive(base_dir, zip_path=None, name="environment", archive_type="gztar"):
+    base_dir = Path(base_dir)
+    base_name = base_dir.stem
+    if not zip_path:
+        temp_path = Path(tempfile.gettempdir())
+    else:
+        temp_path = Path(zip_path)
+
+    trimmed_path = temp_path / f"temp_{base_name}" / base_name
+    if trimmed_path.is_dir():
+        logger.info(f"Deleting tree at {trimmmed_path}")
+        shutil.rmtree(trimmed_path)
+
+    logger.info(f"Using {trimmed_path} as copy location.")
+    temp_analyzer = shutil.copytree(
+        base_dir,
+        trimmed_path,
+        ignore=shutil.ignore_patterns(
+            "__pycache__", "*.pyc", "*~", "*.md", "*IPython*", "*.js", "*jupyter*"
+        ),
+    )
+    package_path = shutil.make_archive(
+        temp_path / name,
+        archive_type,
+        root_dir=trimmed_path.parent,
+        base_dir=base_name,
+    )
+    shutil.rmtree(trimmed_path.parent)
+
+    final_path = temp_path / f"{name}.{archive_type}"
+    logger.info(f"Created analyzer archive at {final_path}")
+    return final_path
+
+
 def createLPCCondorCluster(configuration):
+    apptainer_container = "/".join(Path(os.environ["APPTAINER_CONTAINER"]).parts[-2:])
+    print(apptainer_container)
     workers = configuration["n_workers"]
     memory = configuration["memory"]
     schedd_host = configuration["schedd_host"]
@@ -22,20 +62,51 @@ def createLPCCondorCluster(configuration):
     logpath = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / os.getlogin() / "dask_logs"
     logpath.mkdir(exist_ok=True, parents=True)
 
+    base = Path(os.environ.get("APPTAINER_WORKING_DIR", ".")).resolve()
+    venv = Path(os.environ.get("VIRTUAL_ENV"))
+
+    logger.info("Deleting old dask logs")
+    base_log_path = Path("/uscmst1b_scratch/lpc1/3DayLifetime/ckapsiak/")
+    shutil.rmtree(base_log_path / "dask_logs")
+    for p in base_log_path.glob("tmp*"):
+        shutil.rmtree(p)
+
+    compressed_env = Path("compressed") / "environment.tar.gz"
+    if not compressed_env.exists():
+        createEnvArchive(venv, compressed_env.parent)
+
+    transfer_input_files = [str(base / "setup.sh"), str(base / str(compressed_env))]
+    transfer_input_files = ["setup.sh", compressed_env]
+    # transfer_input_files = ["setup.sh"]
+    kwargs = {}
+    kwargs["worker_extra_args"] = [
+        *dask.config.get("jobqueue.lpccondor.worker_extra_args"),
+        # "--preload",
+        # "lpcjobqueue.patch",
+    ]
+
+    kwargs["python"] = f"{venv}/bin/python"
+
+    logger.info(f"Transfering input files: \n{transfer_input_files}")
+    s = SCHEDD()
+    # print(s)
+
     cluster = LPCCondorCluster(
-        memory=memory,
         ship_env=False,
-        image="coffea-dask:latest",
-        transfer_input_files=["setup.sh", "coffeaenv/"],
+        image=apptainer_container,
+        memory=memory,
+        transfer_input_files=transfer_input_files,
         log_directory=logpath,
         scheduler_options=dict(
             host=schedd_host,
             dashboard_address=dash_host,
         ),
+        **kwargs,
     )
     cluster.scale(workers)
-    print(cluster)
-    # cluster.adapt(minimum=4, maximum=workers)
+    # print(cluster)
+    # cluster.adapt(minimum=workers, maximum=workers)
+
     return cluster
 
 
@@ -66,10 +137,10 @@ def createNewCluster(cluster_type, config):
         dask_cfg_path = Path(f) / "dask_config.yaml"
     with open(dask_cfg_path) as f:
         defaults = yaml.safe_load(f)
-    dask.config.update(dask.config.config, defaults, priority="new")
-    cluster = cluster_factory[cluster_type](config)
-    print(cluster)
-    print(cluster.dashboard_link)
+        dask.config.update(dask.config.config, defaults, priority="new")
+        cluster = cluster_factory[cluster_type](config)
+        print(cluster)
+        print(cluster.dashboard_link)
     return cluster
 
 

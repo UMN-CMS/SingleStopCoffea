@@ -10,21 +10,18 @@ cd SingleStopCoffea
 #+end_src
 
 
-You can then run the setup script as described below.
+We are using a container based system, using different containers for different analysis states (in the future we may build a custom container with everything we need).
 
-
-** With LCG Alone
-Getting things setup should be as simple as running
+For basic analysis, use the =coffea= mode, which includes =dask= and =coffea= to produce histograms. 
 #+begin_src bash
-source setup.sh lcg
+source setup.sh coffea
 #+end_src
-This will automatically source the correct LCG environment and install the dependencies.
 
-** In a Container
-If there are issues with the raw LCG installation, you can try to run in container mode
+If performing post processing, use the =torch= mode, which includes tools for performing the gaussian process regression.
 #+begin_src bash
-source setup.sh container
+source setup.sh torch
 #+end_src
+
 
 
 * Running the Program

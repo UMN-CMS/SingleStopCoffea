@@ -36,6 +36,11 @@ loggers:
     handlers: [console]
     propagate: no
 
+  distributed:
+    level: DEBUG
+    handlers: [console]
+    propagate: no
+
 root:
   level: ERROR
   handlers: [console]

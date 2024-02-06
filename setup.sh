@@ -1,56 +1,80 @@
 #!/usr/bin/env bash
 
-#ENVNAME=coffeaenv
 declare -A env_configs
 env_configs[coffea,venv]="coffeaenv"
-env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
+env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest-py3.10"
+#env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-base:v2024.1.2"
+#env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/cs9:x86_64"
+#env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.10"
+if [[ $(hostname) =~ "fnal" ]]; then
+    env_configs[coffea,extras]="lpcqueue"
+else
+    env_configs[coffea,extras]=""
+fi
+
 env_configs[torch,venv]="cmsmlenv"
+env_configs[torch,extras]="torch"
+#env_configs[torch,apptainer_flags]="--nv"
 env_configs[torch,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.10"
+#env_configs[torch,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/fnallpc/fnallpc-docker:pytorch-2.0.0-cuda11.7-cudnn8-runtime-singularity"
 
 
 function activate_venv(){
     local env=$1
     source "$env"/bin/activate
-    local localpath=$env$(python3 -c 'import sys; print(f"/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages")')
+    local localpath="$VIRTUAL_ENV$(python3 -c 'import sys; print(f"/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages")')"
     export PYTHONPATH=${localpath}:$PYTHONPATH
+    printf "Python path is %s\n" "$PYTHONPATH"
+    printf "Python bin is %s\n" "$(which python)"
+    printf "Python version is %s\n" "$(python3 --version)"
+    printf "Using environment %s\n" "$VIRTUAL_ENV"
+}
+
+function version_info(){
+    local packages_to_show=("coffea" "awkward" "dask-awkward" "dask")
+    local package_info="$(pip3 show ${packages_to_show[@]} )"
+    for package in ${packages_to_show[@]}; do
+        awk -v package="$package" 'BEGIN{pat=package "$" } a==1{printf("%s: %s\n", package, $2); exit} $0~pat{a++}' <<< "$package_info"
+    done  >&2 
 }
 
 function create_venv(){
     local env=$1
+    local extras=$2
     export TMPDIR=$(mktemp -d -p .)
-    python3 -m venv --copies --system-site-packages "$env"
-    activate_venv
+    
+    trap 'rm -rf -- "$TMPDIR"' EXIT
+
+    python3 -m venv --system-site-packages "$env"
+    activate_venv "$env"
+
+
     printf "Created virtual environment %s\n" "$env"
     printf "Upgrading installation tools\n"
     python3 -m pip install setuptools pip wheel --upgrade
     printf "Installing project\n"
-    python3 -m pip install .
+    if [[ -z $extras ]]; then
+        python3 -m pip install .
+    else
+        python3 -m pip install ".[$extras]"
+    fi
+
+    pip3 install ipython --upgrade
+    python3 -m ipykernel install --user --name "$env"
+
     rm -rf $TMPDIR && unset TMPDIR
-    unlink "$env"/lib64
+    rm -rf "$env/lib/*/site-packages/analyzer"
+
     sed -i "/PS1=/d" "$env"/bin/activate
     #for file in $NAME/bin/*; do
     #    sed -i '1s/#!.*python$/#!\/usr\/bin\/env python3/' "$file"
     #done
     #sed -i '40s/.*/VIRTUAL_ENV="$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}" )")" \&\& pwd)"/' $ENVNAME/bin/activate
+    trap - EXIT
 }
 
 
-function source_lcg(){
-    printf "Sourcing %s for achitecture %s\n" "${LCG_VIEW}"  "${LCG_ARCH}"
-    source "$LCG_SETUP"
-    printf "Python version is '%s'\n" "$(python3 --version)"
-}
 
-function startup_with_lcg(){
-    local env=${env_configs[$1,venv]}
-    source_lcg
-    if [[ ! -d $env ]]; then
-        printf "Virtual environment does not exist, creating virtual environment\n"
-        create_venv $env
-    else
-        activate_venv $env
-    fi
-}
 
 function rcmode(){
     K="\[\033[0;30m\]"    # black
@@ -79,12 +103,12 @@ function rcmode(){
     BGW="\[\033[47m\]"
     NONE="\[\033[0m\]"    # unsets color to term's fg color
     local env=${env_configs[$1,venv]}
+    local extras=${env_configs[$1,extras]}
     if [[ ! -d $env ]]; then
         printf "Virtual environment does not exist, creating virtual environment\n"
-        create_venv $env
-    else
-        activate_venv $env
+        create_venv "$env" "$extras"
     fi
+    activate_venv "$env"
 
     [ -z "$PS1" ] && return
 
@@ -101,36 +125,47 @@ function rcmode(){
     shopt -s cmdhist &>/dev/null
     export HISTFILE=~/.bash_eternal_history
     export CONDOR_CONFIG="/srv/.condor_config"
-    export JUPYTER_PATH=/srv/.jupyter
-    export JUPYTER_RUNTIME_DIR=/srv/.local/share/jupyter/runtime
-    export JUPYTER_DATA_DIR=/srv/.local/share/jupyter
-    export IPYTHONDIR=/srv/.ipython
+    export JUPYTER_PATH=/srv/.local/$env/.jupyter
+    export JUPYTER_RUNTIME_DIR=/srv/.local/$env/share/jupyter/runtime
+    export JUPYTER_DATA_DIR=/srv/.local/$env/share/jupyter
+    export IPYTHONDIR=/srv/.local/$env/.ipython
+    export MPLCONFIGDIR=/srv/.local/$env/.mpl
+    export LD_LIBRARY_PATH=/opt/conda/lib/:$LD_LIBRARY_PATH
 }
+
 
 function startup_with_container(){
     local in_apptainer=${APPTAINER_COMMAND:-false}
     local container=${env_configs[$1,container]}
+    local apptainer_flags=${env_configs[$1,apptainer_flags]}
     printf "Running in container mode %s\n" "$container"
     if [ "$in_apptainer"  = false ]; then
-        printf "Not in apptainer, running command to start container %s.\n" "${container}";
-        grep -v '^include' /etc/condor/config.d/01_cmslpc_interactive > .condor_config
-
-        local command="apptainer exec --bind /uscmst1b_scratch/ --bind $HOME/.bash_eternal_history:/srv/.bash_eternal_history --bind ${X509_USER_PROXY%/*}  --bind /cvmfs --home ${PWD}:/srv --pwd /srv "$CONTAINER" /bin/bash --rcfile <(printf \"source setup.sh bashrc\")"
-        
-        printf "Apptainer command is:\n%s\n" "$command"
+        if command -v condor_config_val &> /dev/null; then
+            printf "Cloning HTCondor configuration\n"
+            condor_config_val  -summary > .condor_config
+        fi
         apptainer exec \
+                  --env "APPTAINER_WORKING_DIR=$PWD" \
+                  --env "APPTAINER_IMAGE=$container" $apptainer_flags \
                   --bind /uscmst1b_scratch/ \
                   --bind $HOME/.bash_eternal_history:/srv/.bash_eternal_history \
                   --bind /cvmfs \
                   --bind ${X509_USER_PROXY%/*} \
-                  --home ${PWD}:/srv \
+                  --bind ${PWD}:/srv \
                   --pwd /srv "$container" /bin/bash \
                   --rcfile <(printf "source setup.sh '$1' bashrc")
-        #--rcfile containerrc.sh
     else
-        printf "Already in apptainer\n"
+        printf "Already in apptainer, nothing to do.\n"
     fi
 }
+
+
+function start_jupyter(){
+    local port=${1:-8999}
+    python3 -m jupyter lab --no-browser --port "$port" --allow-root
+}
+
+
 
 function main(){
     local config="$1"

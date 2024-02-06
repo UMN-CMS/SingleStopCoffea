@@ -8,18 +8,22 @@ readme = "README.org"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-
-coffea = {version="^2024", extras=["dask"]}
+coffea = {version="^2024", extras=["dask", "rucio"]}
 hist = "^2.6.3"
 matplotlib = "^3.7"
 jupyter = "*"
 
 pyyaml = "^6.0"
 
-#scipy = "^1.9"
-gpytorch  = ">=1.11"
 
-lpcjobqueue = { git = "https://github.com/CoffeaTeam/lpcjobqueue", branch = "main" }
+lpcjobqueue = { git = "https://github.com/CoffeaTeam/lpcjobqueue", branch = "main" , optional=true}
+
+gpytorch  = {version = ">=1.11", optional=true}
+
+
+[tool.poetry.extras]
+torch=["gpytorch"]
+lpcqueue=["lpcjobqueue"]
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

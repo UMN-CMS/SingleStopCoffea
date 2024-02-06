@@ -23,7 +23,11 @@ jobqueue:
     log-directory: null
     env-extra: null
     job-script-prologue:
-      - 'source setup.sh container'
+      - 'ls'
+      - 'tar xzf environment.tar.gz'
+      - 'ls'
+      - 'source setup.sh coffea bashrc'
+      - 'echo $VIRTUAL_ENV'
       - 'export X509_USER_PROXY=/srv/x509up_u57509'
     job-extra: null             # Extra submit attributes
     job-extra-directives: {}

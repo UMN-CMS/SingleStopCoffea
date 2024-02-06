@@ -77,7 +77,7 @@ def runAnalysisOnSamples(
     )
     logger.info(f"Preprocessing {len(all_sets)} ")
     with ProgressBar():
-        dataset_preps = ac.preprocessBulk(all_sets, maybe_step_size=step_size)
+        dataset_preps = ac.preprocessBulk(all_sets, step_size=step_size)
 
     logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
     futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]

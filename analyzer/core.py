@@ -46,10 +46,13 @@ import coffea.dataset_tools as dst
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
+from rich.progress import track
 
 from urllib import parse
 import logging
 import cProfile
+import warnings
+
 
 pr = cProfile.Profile()
 
@@ -287,39 +290,6 @@ class DatasetProcessor:
         return self.maybeCreateAndFill(*args, **kwargs)
 
 
-def makeGraphForModules(dsprep, events, report, fillname, modules):
-    daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
-    dataset_analyzer = DatasetProcessor(daskres, fillname)
-    for m in modules:
-        test = m(events, dataset_analyzer)
-        events, dataset_analyzer = test
-    return daskres
-
-
-@dask.delayed
-def makeGraphForModules2(dsprep, modules):
-    dataset_name = dsprep.dataset_input.dataset_name
-    files = dsprep.getCoffeaDataset()["files"]
-    maybe_base_form = dsprep.coffea_dataset_split.get("form", None)
-    if maybe_base_form is not None:
-        maybe_base_form = ak.forms.from_json(decompress_form(maybe_base_form))
-    events, report = NanoEventsFactory.from_root(
-        files,
-        schemaclass=NanoAODSchema,
-        uproot_options=dict(
-            allow_read_errors_with_report=True,
-            use_threads=False,
-        ),
-        known_base_form=maybe_base_form,
-    ).events()
-    print(events)
-    daskres = DatasetDaskRunResult(dsprep, {}, dak.num(events, axis=0), report)
-    dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
-    for m in modules:
-        test = m(events, dataset_analyzer)
-        events, dataset_analyzer = test
-    return daskres
-
 
 class Analyzer:
     """
@@ -358,7 +328,6 @@ class Analyzer:
             known_base_form=maybe_base_form,
             persistent_cache=self.cache,
         ).events()
-
         daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
         pr.enable()
@@ -469,7 +438,7 @@ class InputChecker:
         prepped = result.dataset_preprocessed
         cof_dataset = prepped.coffea_dataset_split
         cof_files = set(
-            parse.urlparse(x)[2] for x in cof_dataset[result.getName()]["files"].keys()
+            parse.urlparse(x)[2] for x in cof_dataset["files"].keys()
         )
         diff = files.difference(cof_files)
         if diff:

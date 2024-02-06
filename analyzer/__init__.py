@@ -30,4 +30,6 @@ def setup_logging(
     if default_level is not None:
         logger = logging.getLogger("analyzer")
         logger.setLevel(default_level)
+        logger = logging.getLogger("distributed")
+        logger.setLevel(default_level)
 
