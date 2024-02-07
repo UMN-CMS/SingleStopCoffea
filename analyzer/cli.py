@@ -13,6 +13,15 @@ from analyzer.clients import createNewCluster, runNewCluster, cluster_factory
 import analyzer.run_analysis as ra
 import analyzer.datasets as ds
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import (
+    WordCompleter,
+    NestedCompleter,
+    PathCompleter,
+    DynamicCompleter,
+)
+from prompt_toolkit.history import FileHistory
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +48,9 @@ def handleRunAnalysis(args):
         sample_manager,
         dask_schedd_address=args.scheduler_address,
     )
-    print(ret)
     ret.save(args.output)
+    if args.print_after:
+        print(ret)
 
 
 def handleSamples(args):
@@ -71,8 +81,8 @@ def handleModules(args):
             ",".join(x for x in module.categories),
             ",".join(x for x in module.depends_on),
         )
-    console = Console()
-    console.print(table)
+        console = Console()
+        console.print(table)
 
 
 def addSubparserSamples(subparsers):
@@ -132,6 +142,92 @@ def addSubparserCheck(subparsers):
     )
 
     subparser.set_defaults(func=handleCheck)
+
+
+class ResultInspectionCli:
+    def __init__(self):
+        self.current_result = None
+        self.dispatch = {"open": self.open}
+        self.completer = NestedCompleter.from_nested_dict({"open": PathCompleter()})
+
+    def getCompleter(self):
+        return self.completer
+
+    def info(self):
+        pass
+
+    def open(self, path):
+        self.current_result = ac.AnalysisResult.fromFile(path)
+        print(f"Opened file at {path}")
+        datasets = list(self.current_result.results)
+        d = {
+            "open": PathCompleter(),
+            "info": None,
+            "list-datasets": set(datasets),
+            "show-dataset-hist": {
+                name: set(res.histograms)
+                for name, res in self.current_result.results.items()
+            },
+        }
+        self.dispatch = {
+            "open": self.open,
+            "info": self.info,
+            "list-contents": self.listContents,
+            "show-dataset-hist": self.showHist,
+        }
+
+        self.completer = NestedCompleter.from_nested_dict(d)
+
+    def showHist(self, dataset, hname):
+        print(self.current_result.results[dataset].histograms[hname])
+
+    def listContents(self):
+        if not self.current_result:
+            print("No file currently open.")
+            return
+        print(list(self.current_result.results))
+
+    def processString(self, string):
+        import shlex
+
+        parsed = list(shlex.split(string))
+        if not parsed:
+            raise Exception()
+        command_name = parsed[0]
+        if command_name not in self.dispatch:
+            print(f"Unknown command {command_name}")
+            return
+        func = self.dispatch[command_name]
+        func(*parsed[1:])
+
+    def run(self):
+        session = PromptSession(
+            history=FileHistory(".inspect_cli_history"),
+        )
+
+        while True:
+            try:
+                text = session.prompt("> ", completer=self.completer)
+                self.processString(text)
+            except KeyboardInterrupt:
+                continue
+            except EOFError:
+                break
+
+        print("Goodbye")
+
+
+def handleInspect(args):
+    cli = ResultInspectionCli()
+    cli.run()
+
+
+def addSubparserInspect(subparsers):
+    subparser = subparsers.add_parser(
+        "inspect", help="Inspect contents of a results file"
+    )
+
+    subparser.set_defaults(func=handleInspect)
 
 
 def addSubparserCluster(subparsers):
@@ -224,6 +320,13 @@ def addSubparserRun(subparsers):
         help="In set, interpret as a path to which the task-graph should be saved.",
     )
 
+    subparser.add_argument(
+        "--print-after",
+        default=False,
+        action="store_true",
+        help="If true, print the result.",
+    )
+
     subparser.set_defaults(func=handleRunAnalysis)
 
 
@@ -241,6 +344,7 @@ def runCli():
     addSubparserSamples(subparsers)
     addSubparserCheck(subparsers)
     addSubparserModules(subparsers)
+    addSubparserInspect(subparsers)
 
     args = parser.parse_args()
 
