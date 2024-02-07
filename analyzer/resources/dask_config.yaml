@@ -29,6 +29,7 @@ jobqueue:
       - 'source setup.sh coffea bashrc'
       - 'echo $VIRTUAL_ENV'
       - 'export X509_USER_PROXY=/srv/x509up_u57509'
+      - 'version_info'
     job-extra: null             # Extra submit attributes
     job-extra-directives: {}
     job-directives-skip: []
