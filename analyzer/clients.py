@@ -36,8 +36,7 @@ def createEnvArchive(base_dir, zip_path=None, name="environment", archive_type="
         base_dir,
         trimmed_path,
         ignore=shutil.ignore_patterns(
-            "__pycache__", "*.pyc", "*~", "*.md", "*IPython*", "*.js", "*jupyter*"
-        ),
+            "__pycache__", "*.pyc", "*~", "*.md"),
     )
     package_path = shutil.make_archive(
         temp_path / name,
