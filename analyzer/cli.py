@@ -47,14 +47,16 @@ def handleSamples(args):
     logger.info("Handling sample inspection")
     manager = ds.SampleManager()
     manager.loadSamplesFromDirectory("datasets")
+
     if args.type is None:
         table = ds.createSampleAndCollectionTable(manager, re_filter=args.filter)
     elif args.type == "set":
         table = ds.createSetTable(manager, re_filter=args.filter)
     elif args.type == "collection":
         table = ds.createCollectionTable(manager, re_filter=args.filter)
-        console = Console()
-        console.print(table)
+
+    console = Console()
+    console.print(table)
 
 
 def handleModules(args):
@@ -69,8 +71,8 @@ def handleModules(args):
             ",".join(x for x in module.categories),
             ",".join(x for x in module.depends_on),
         )
-        console = Console()
-        console.print(table)
+    console = Console()
+    console.print(table)
 
 
 def addSubparserSamples(subparsers):
