@@ -431,7 +431,7 @@ def charginoRecoHistograms(events, hmaker):
     "stop_reco",
     ModuleType.MainHist,
 )
-def recoEfficiency(events, hmaker):
+def stopreco(events, hmaker):
     ret = {}
     jets = events.good_jets[:, 0:4].sum()
     ret[f"m14_vs_pt14"] = hmaker(
@@ -442,4 +442,22 @@ def recoEfficiency(events, hmaker):
         [jets.mass, jets.pt],
         name="m14 vs pt 14",
     )
+
+    padded_jets = ak.pad_none(events.good_jets, 6,axis=1)
+
+    top5sum = padded_jets[:,0:5].sum()
+    top6sum = padded_jets[:,0:6].sum()
+
+
+
+    fsrincluded = ak.where((top5sum.pt < jets.pt) , top5sum.mass, jets.mass)
+
+
+    ret[f"m14_gt100_m15"] = hmaker(
+        makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+        fsrincluded,
+        name="m14 or maybe m15",
+    )
+
+
     return ret

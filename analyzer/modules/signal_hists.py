@@ -87,9 +87,19 @@ def createSignalHistograms(events, hmaker):
     )
     cross_jets = ak.cartesian([xchildren, xchildren], axis=1)
     one, two = ak.unzip(cross_jets)
+
     dr = one.delta_r(two)
     max_delta_rs = ak.max(dr, axis=1)
     min_delta_rs = ak.min(dr[dr > 0], axis=1)
+
+    deta = abs(one.eta - two.eta)
+    max_delta_eta = ak.max(deta, axis=1)
+    min_delta_eta = ak.min(deta[deta > 0], axis=1)
+
+    dphi = abs(angleToNPiToPi(one.phi - two.phi))
+    max_delta_phi = ak.max(dphi, axis=1)
+    min_delta_phi = ak.min(dphi[dphi > 0], axis=1)
+
     ret[f"max_chi_child_dr"] = hmaker(
         makeAxis(20, 0, 5, "Max $\\Delta R$ between $\\chi$ children"),
         max_delta_rs,
@@ -105,6 +115,39 @@ def createSignalHistograms(events, hmaker):
         ak.mean(dr[dr > 0], axis=1),
         name="mean_chi_child_dr",
     )
+
+    ret[f"max_chi_child_eta"] = hmaker(
+        makeAxis(25, 0, 5, "Max $\\Delta \\eta$ between $\\chi$ children"),
+        max_delta_eta,
+        name="max_chi_child_eta",
+    )
+    ret[f"min_chi_child_eta"] = hmaker(
+        makeAxis(25, 0, 5, "Min $\\Delta \\eta$ between $\\chi$ children"),
+        min_delta_eta,
+        name="min_chi_child_eta",
+    )
+    ret[f"mean_chi_child_eta"] = hmaker(
+        makeAxis(25, 0, 5, "Mean $\\Delta \\eta$ between $\\chi$ children"),
+        ak.mean(deta[deta > 0], axis=1),
+        name="mean_chi_child_eta",
+    )
+
+    ret[f"max_chi_child_phi"] = hmaker(
+        makeAxis(25, 0, 5, "Max $\\Delta \\phi$ between $\\chi$ children"),
+        max_delta_phi,
+        name="max_chi_child_phi",
+    )
+    ret[f"min_chi_child_phi"] = hmaker(
+        makeAxis(25, 0, 5, "Min $\\Delta \\phi$ between $\\chi$ children"),
+        min_delta_phi,
+        name="min_chi_child_phi",
+    )
+    ret[f"mean_chi_child_phi"] = hmaker(
+        makeAxis(25, 0, 5, "Mean $\\Delta \\phi$ between $\\chi$ children"),
+        ak.mean(dphi[dphi > 0], axis=1),
+        name="mean_chi_child_phi",
+    )
+
     ret[f"stop_pt"] = hmaker(
         makeAxis(
             100,
@@ -114,6 +157,37 @@ def createSignalHistograms(events, hmaker):
             unit="GeV",
         ),
         events.SignalParticles.stop.pt,
+    )
+
+    all_three_mask = ~ak.any(ak.is_none(events.matched_jet_idx[:, 1:4], axis=1), axis=1)
+    ret[f"max_chi_child_dr_all_three"] = hmaker(
+        makeAxis(20, 0, 5, "Max $\\Delta R$ between $\\chi$ children"),
+        max_delta_rs[all_three_mask],
+        name="max_chi_child_dr",
+        mask=all_three_mask,
+    )
+    ret[f"min_chi_child_dr_all_three"] = hmaker(
+        makeAxis(20, 0, 5, "Min $\\Delta R$ between $\\chi$ children"),
+        min_delta_rs[all_three_mask],
+        name="min_chi_child_dr",
+        mask=all_three_mask,
+    )
+    ret[f"mean_chi_child_dr_all_three"] = hmaker(
+        makeAxis(20, 0, 5, "Mean $\\Delta R$ between $\\chi$ children"),
+        ak.mean(dr[dr > 0], axis=1)[all_three_mask],
+        name="mean_chi_child_dr",
+        mask=all_three_mask,
+    )
+    ret[f"stop_pt_all_three"] = hmaker(
+        makeAxis(
+            100,
+            0,
+            1500,
+            r"$\tilde{t} p_{T}$",
+            unit="GeV",
+        ),
+        events.SignalParticles.stop.pt[all_three_mask],
+        mask=all_three_mask,
     )
 
     return ret

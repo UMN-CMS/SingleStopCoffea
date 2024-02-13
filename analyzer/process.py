@@ -69,7 +69,7 @@ def makeCategoryHist(_cat_axes, _cat_vals, event_weights):
                 weights = ak.flatten(ol * weights)
                 shaped_cat_vals = [
                     ak.flatten(ol * x) if isinstance(x, ak.Array) else x
-                    for x in cat_vals
+                    for x in base_category_vals
                 ]
                 shaped_data_vals = [
                     ak.flatten(x) if isinstance(x, ak.Array) else x
@@ -180,7 +180,7 @@ class AnalysisProcessor(processor.ProcessorABC):
             selection = processor.PackedSelection()
             for module in modules_to_run.get(ModuleType.Selection, []):
                 selection = module.func(events, selection)
-                events = events[selection.all(*selection.names)]
+            events = events[selection.all(*selection.names)]
 
         to_accumulate = []
 

@@ -174,6 +174,7 @@ def generatePulls(
     sig_hist=None,
     sig_name=None,
     sig_strength=None,
+        add_text=True,
     name="pulls_bkg_only",
 ):
     bc = histogram.axes[0].centers
@@ -189,10 +190,12 @@ def generatePulls(
     ax.tick_params(axis="x", labelbottom=False)
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     if sig_hist:
-        drawAs1DHist(ax, PlotObject(sig_hist), yerr=True, fill=None)
+        drawAs1DHist(ax, PlotObject(sig_hist, "Injected Signal"), yerr=True, fill=None)
     ax.set_yscale("linear")
     ab = ax.bottom_axes[0]
     drawPull(ab, pred, obs, hline_list=[-1, 0, 1])
+    ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
+    mean_at_pred, upper_at_pred, lower_at_pred, variance_at_pred = getPrediction(model, torch.from_numpy(ls))
     ab.set_ylabel(r"$\frac{obs - pred}{\sigma_{o}}$")
     if target:
         ax.axvline(target, color="black", linewidth=0.3, linestyle="-.")
@@ -210,86 +213,22 @@ def generatePulls(
     cs = chisqr(histogram.values(), histogram.variances(), mean_at_obs)
     cs = cs/(len(bc)-1)
     scale = model.getLS()
-    text = f"$\chi^2/DOF = {cs:0.2f}$\nLength Scale={round(scale)}"
-    if sig_name:
-        text += f"\n{sig_name}: r={sig_strength}"
-    ax.text(
-        0.95,
-        0.7,
-        text,
-        horizontalalignment="right",
-        transform=transform,
-        fontsize=20,
-    )
+    if add_text:
+        text = f"$\chi^2/DOF = {cs:0.2f}$\nLength Scale={round(scale)}"
+        if sig_name:
+            text += f"\n{sig_name}: r={sig_strength}"
+        ax.text(
+            0.95,
+            0.7,
+            text,
+            horizontalalignment="right",
+            transform=transform,
+            fontsize=20,
+        )
     outdir.mkdir(exist_ok=True, parents=True)
     fig.tight_layout()
     fig.savefig(outdir / f"{name}.pdf")
     return cs
-
-
-# def generateDiagnosticPlots(
-#    histogram,
-#    model,
-#    min_bound=1050,
-#    outdir=Path("diagnostics"),
-#    name="gaussian_process_fit",
-# ):
-#    ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
-#    fig, ax = plt.subplots()
-#    mean_prediction, std_prediction = gp.predict(ls, return_std=True)
-#    bc = histogram.axes[0].centers
-#    v = gp.predict(bc.reshape(-1, 1))
-#    vals, points, varia = (
-#        histogram.values(),
-#        histogram.axes[0].centers,
-#        np.sqrt(histogram.variances()),
-#    )
-#    ax.errorbar(
-#        points,
-#        vals,
-#        varia,
-#        linestyle="None",
-#        color="tab:blue",
-#        marker=".",
-#        markersize=10,
-#        label="Observations",
-#    )
-#    ax.plot(ls.ravel(), mean_prediction, label="Mean prediction", color="tab:orange")
-#    ax.fill_between(
-#        ls.ravel(),
-#        mean_prediction - std_prediction,
-#        mean_prediction + std_prediction,
-#        alpha=0.3,
-#        color="tab:orange",
-#    )
-#    transform = ax.transAxes
-#    cs = chisqr(histogram.values(), histogram.variances(), v)
-#    scale = gp.kernel_.get_params()["k2__length_scale"]
-#    ax.text(
-#        0.95,
-#        0.7,
-#        f"$\chi^2/DOF = {cs/(len(bc)-1):0.2f}$\nLength Scale={scale:0.2f}",
-#        horizontalalignment="right",
-#        transform=transform,
-#    )
-#    ax.legend()
-#    ax.set_xlabel(histogram.axes[0].label)
-#    ax.set_ylabel("Events")
-#    outdir.mkdir(exist_ok=True, parents=True)
-#    fig.tight_layout()
-#    fig.savefig(outdir / f"{name}.pdf")
-#
-#    fig, ax = plt.subplots()
-#    bc = histogram.axes[0].centers
-#    v = gp.predict(bc.reshape(-1, 1))
-#    v, e = np.histogram(bc, weights=v, bins=histogram.axes[0].edges)
-#    ax.bar(e[:-1], v, width=np.diff(e), edgecolor="black", align="edge")
-#    ax.plot(ls, mean_prediction, label="Mean prediction")
-#    ax.set_xlabel(histogram.axes[0].label)
-#    ax.set_ylabel("Events")
-#    fig.tight_layout()
-#    fig.savefig(outdir / f"{name}_template_shape.pdf")
-
 
 def getMatching(ax, val):
     return next(x for x in ax if val in x)
@@ -319,6 +258,7 @@ def parseArgs():
     parser.add_argument("--inject-sigma", type=ranged(float), default=None)
     parser.add_argument("--force-scale", type=ranged(float), default=None)
     parser.add_argument("--window", type=float, nargs=2, default=None)
+    parser.add_argument("--add-text", default=False, action='store_true')
     parser.add_argument("-r", "--input-control-region", default=None, type=str)
     parser.add_argument("-o", "--output", required=True, type=str)
     parser.add_argument("-u", "--update", action="store_true", default=False)
@@ -413,7 +353,7 @@ def main():
     plotdir = Path(args.plot_dir)
     root_output = uproot.recreate(args.output)
     histos = data["histograms"]
-    histogram = histos[args.name]
+    histogram_orig = histos[args.name]
     target = None
     sigh = None
     window = args.window
@@ -432,6 +372,7 @@ def main():
         args.inject_point,
         args.inject_sigma,
     ):
+        histogram = histogram_orig.copy(deep=True)
         signame, mb, rate, scale, inj_point, inj_sigma = terms
         gpresult = GaussianProcessFitResult(signame or "bkg_only", mb)
         gpresult.inject_signal_base = signame
@@ -499,6 +440,7 @@ def main():
             window=window,
             sig_strength=rate,
             name=pull_sr_figname,
+            add_text=args.add_text,
         )
         gpresult.reduced_chi2 = cs
         all_results.append(gpresult)

@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.font_manager as font_manager
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.collections import RegularPolyCollection, PatchCollection
+from matplotlib.patches import Rectangle
 import numpy as np
 import hist.intervals as hinter
 from . import static
@@ -522,4 +524,52 @@ def drawAs2DExtended(
         cax = divider.append_axes("left", size="5%", pad=1.5)
         cbar = plt.colorbar(ax.quadmesh, cax=cax, orientation="vertical")
         ax.cax = cax
+    return ax
+
+
+@dataclass
+class AnnotRectangle:
+    x: float
+    y: float
+    w: float
+    h: float
+    text: str
+    value: float
+
+
+def drawRectangles(ax, rects):
+    ymax = max(r.y + r.h for r in rects)
+    xmax = max(r.x + r.w for r in rects)
+    ymin = min(r.y for r in rects)
+    xmin = min(r.x for r in rects)
+    ax.set_xlim((xmin, xmax))
+    ax.set_ylim((ymin, ymax))
+    patches = [
+        Rectangle(
+            (r.x, r.y),
+            r.w,
+            r.h,
+        )
+        for r in rects
+    ]
+    col = PatchCollection(patches)
+    col.set_array([r.value for r in rects])
+    ax.add_collection(col)
+    ax.autoscale_view()
+    for r in rects:
+        ax.annotate(
+            r.text,
+            (r.x + r.w / 2, r.y + r.h / 2),
+            color="w",
+            weight="bold",
+            fontsize=6,
+            ha="center",
+            va="center",
+        )
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = plt.colorbar(col, cax=cax)
+    cax.get_yaxis().set_offset_position("left")
+    ax.cax = cax
     return ax

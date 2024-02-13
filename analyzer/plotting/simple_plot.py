@@ -12,15 +12,29 @@ from analyzer.datasets import loadSamplesFromDirectory
 
 from pathlib import Path
 import logging
+import logging.handlers
 from enum import Enum, auto
 from concurrent.futures import ProcessPoolExecutor, wait
+import multiprocess as mp
 import atexit
+
 
 
 loadStyles()
 
 
+class _Split(object):
+    def __new__(cls):
+        return NoParam
+
+    def __reduce__(self):
+        return (_NoParamType, ())
+
+
 class Plotter:
+    Split = object.__new__(_Split)
+    queue = mp.Queue()
+
     def __init__(
         self,
         filenames,
@@ -29,13 +43,30 @@ class Plotter:
         dataset_dir="datasets",
         coupling="312",
         parallel=None,
+        default_axis_opts=None,
     ):
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.INFO)
-        stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
+        self.parallel = parallel
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
         self.logger.addHandler(stream_handler)
+        if self.parallel:
+            self.pool = ProcessPoolExecutor(self.parallel)
+            self.futures = []
+
+            atexit.register(self.finishRemaining)
+
+            handler = logging.handlers.QueueHandler(self.queue)
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
+            self.ql = logging.handlers.QueueListener(self.queue, stream_handler)
+            self.ql.start()
+            atexit.register(lambda: self.ql.stop())
+
+
+        self.logger.info("Creating plotter")
 
         filenames = [filenames] if isinstance(filenames, str) else list(filesnames)
         self.data = [pkl.load(open(f, "rb")) for f in filenames]
@@ -47,22 +78,20 @@ class Plotter:
             self.logger.warn(
                 "The loaded files have different target luminosities. This may result in issues."
             )
+
         self.histos = accumulate([f["histograms"] for f in self.data])
         self.default_backgrounds = default_backgrounds or []
         self.outdir = Path(outdir)
         self.manager = loadSamplesFromDirectory(dataset_dir)
         self.outdir.mkdir(exist_ok=True, parents=True)
         self.coupling = coupling
+        self.default_axis_opts = default_axis_opts
 
         self.description = ""
-        self.parallel = parallel
-        if self.parallel:
-            self.pool = ProcessPoolExecutor(self.parallel)
-            self.futures = []
-            atexit.register(self.finishRemaining)
 
     def __call__(self, *args, **kwargs):
         if self.parallel:
+            self.logger.info("Adding job to pool")
             x = self.pool.submit(self.doPlot, *args, **kwargs)
             self.futures.append(x)
         else:
@@ -92,10 +121,7 @@ class Plotter:
         drawPull(ab, hppo, hopo)
         ab.set_ylabel(r"$\frac{pred - obs}{\sigma_{pred}}$")
         addEra(ax, self.lumi or 59.8)
-        addPrelim(
-               ax,
-               additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ "
-        )
+        addPrelim(ax, additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ ")
         addTitles1D(ax, ho, top_pad=0.2)
         fig.tight_layout()
         fig.savefig(self.outdir / f"pull_{hist_obs}_{hist_pred}.pdf")
@@ -115,10 +141,7 @@ class Plotter:
         drawRatio(ab, hppo, hopo)
         ab.set_ylabel("Ratio")
         addEra(ax, self.lumi or 59.8)
-        addPrelim(
-               ax,
-               additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ "
-        )
+        addPrelim(ax, additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ ")
         addTitles1D(ax, ho, top_pad=0.2)
         fig.tight_layout()
         fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
@@ -126,6 +149,38 @@ class Plotter:
 
     def doPlot(
         self,
+        hist_name,
+        *args,
+        add_name=None,
+        axis_opts=None,
+        **kwargs,
+    ):
+        all_axis_opts = {**(self.default_axis_opts or {})}
+        all_axis_opts.update((axis_opts or {}))
+        h = self.histos[hist_name]
+        to_split = [x for x, y in all_axis_opts.items() if y is Plotter.Split]
+        all_axis_opts = {
+            x: y for x, y in all_axis_opts.items() if y is not Plotter.Split
+        }
+        h = h[all_axis_opts]
+        if to_split:
+            split_axes = [list(x) for x in h.axes if x.name in to_split]
+            split_names = [x.name for x in h.axes if x.name in to_split]
+            for combo in it.product(*split_axes):
+                if add_name:
+                    add_name = add_name + "_"
+                else:
+                    add_name = ""
+                new_name = add_name + "cuts__" + "_".join(str(x) for x in combo)
+                f = dict(zip(split_names, (hist.loc(x) for x in combo)))
+                to_pass = h[f]
+                self.__doPlot(hist_name, to_pass, *args, **kwargs, add_name=new_name)
+        else:
+            self.__doPlot(hist_name, h, *args, **kwargs, add_name=add_name)
+
+    def __doPlot(
+        self,
+        hist_name,
         hist,
         sig_set,
         bkg_set=None,
@@ -136,18 +191,23 @@ class Plotter:
         sig_style="hist",
         add_label=None,
         top_pad=0.4,
+        xlabel_override=None,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
         if add_label is None and add_name:
             add_label = add_name.title()
-        self.logger.info(f"Now plotting {hist}")
+        self.logger.info(f"Now plotting {hist_name}")
         add_name = add_name + "_" if add_name else ""
-        h = self.histos[hist]
-        self.description += f"{hist}: {h.description}\n"
-        hc = h[{"dataset": bkg_set + sig_set}]
+        self.description += f"{hist_name}: {hist.description}\n"
+        hc = hist[{"dataset": bkg_set + sig_set}]
+
+        def apply_after(ax):
+            if xlabel_override:
+                ax.set_xlabel(xlabel_override)
+
         if normalize:
             hc = getNormalized(hc, "dataset")
-        if len(h.axes) == 2:
+        if len(hist.axes) == 2:
             fig, ax = drawAs1DHist(
                 hc,
                 cat_axis="dataset",
@@ -188,36 +248,42 @@ class Plotter:
             labels, handles = zip(
                 *reversed(sorted(zip(labels, handles), key=lambda t: t[0]))
             )
-            ax.legend(handles, labels)
+            extra_legend_args = {}
+            if len(labels) > 5:
+                extra_legend_args["prop"] = {"size": 10}
+            ax.legend(handles, labels, **extra_legend_args)
+            apply_after(ax)
 
             fig.tight_layout()
-            fig.savefig(self.outdir / f"{add_name}{hist}.pdf")
+            fig.savefig(self.outdir / f"{add_name}{hist_name}.pdf")
             plt.close(fig)
-        elif len(h.axes) == 3:
+        elif len(hist.axes) == 3:
             for x in hc.axes[0]:
                 realh = hc[{"dataset": x}]
                 if sig_style == "hist":
                     fig, ax = drawAs2DHist(PlotObject(realh, x, self.manager[x]))
-                    addTitles2D(ax, realh)
-                    addPrelim(ax, "out")
                     addEra(ax, self.lumi or 59.8)
+                    pos = "in"
                 elif sig_style == "profile":
                     fig, ax = drawAs2DExtended(
                         PlotObject(realh, x, self.manager[x]),
                         top_stack=[PlotObject(realh[sum, :], x, self.manager[x])],
                         right_stack=[PlotObject(realh[:, sum], x, self.manager[x])],
                     )
-                    addTitles2D(ax, realh)
-                    addPrelim(
-                        ax,
-                        additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ Selection\n"
-                        + f"{add_label},"
-                        + f"{self.manager[x].getTitle()}",
-                        pos="in",
-                        color="white",
-                    )
                     addEra(ax.top_axes[-1], self.lumi or 59.8)
-                name = h.name
+                    pos = "out"
+
+                addPrelim(
+                    ax,
+                    additional_text=f"\n$\\lambda_{{{self.coupling}}}''$ Selection\n"
+                    + (f"{add_label}," if add_label else "")
+                    + f"{self.manager[x].getTitle()}",
+                    pos=pos,
+                    color="white",
+                )
+                addTitles2D(ax, realh)
+                apply_after(ax)
+                name = hist.name
                 fig.tight_layout()
-                fig.savefig(self.outdir / f"{add_name}{hist}_{x}.pdf")
+                fig.savefig(self.outdir / f"{add_name}{hist_name}_{x}.pdf")
                 plt.close(fig)
