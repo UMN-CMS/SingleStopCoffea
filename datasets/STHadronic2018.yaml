@@ -9,6 +9,7 @@
 
 
 - name: STHadronic2018_SChannel
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec:  5040.71
   n_events: 10592646
@@ -45,6 +46,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2830000/D28E074C-3100-9A4A-BAEB-DD5A9A3DB748.root
 
 - name: STHadronic2018_TChannelAntiTop
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec:  80950
   n_events: 90022642
@@ -181,6 +183,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2550000/C1D07240-2B3C-824F-AEA2-28D60E19C3D0.root
 
 - name: STHadronic2018_TChannelTop
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec:  136020
   n_events: 167111718
@@ -336,6 +339,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/80000/CC5F80A2-A5E6-F542-9190-3547BBD8466E.root
 
 - name: STHadronic2018_TWAntiTop
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec:  35850
   n_events: 7748690
@@ -365,6 +369,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/40000/8DB4A28D-8E5A-3D4A-9DB1-3A2838A551C3.root
 
 - name: STHadronic2018_TWTop
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec:  35850
   n_events: 7955614
