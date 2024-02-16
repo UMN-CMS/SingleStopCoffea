@@ -77,6 +77,7 @@ class SampleSet:
     style: Optional[Union[Style, str]] = None
     isdata: bool = False
     forbid: Optional[bool] = False
+    mc_campaign: Optional[str] = None
 
     @staticmethod
     def fromDict(data):
@@ -90,10 +91,16 @@ class SampleSet:
         title = data.get("title", name)
         isdata = data.get("isdata", False)
         forbid = data.get("forbid", None)
+        mc_campaign = data.get("mc_campaign", None)
         if not (x_sec and n_events and lumi) and not (derived_from or isdata):
             raise Exception(
                 f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}"
             )
+        if isdata and mc_campaign:
+            raise Exception(
+                f"A data sample cannot have an MC campaign."
+            )
+            
         files = [SampleFile.fromDict(x) for x in data["files"]]
 
         style = data.get("style", {})
