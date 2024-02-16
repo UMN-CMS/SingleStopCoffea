@@ -16,6 +16,8 @@ import hist
 import re
 import importlib.resources as imp_res
 from pathlib import Path
+import enum
+import functools
 
 
 default_linewidth = 3
@@ -84,46 +86,51 @@ def histRank(hist):
     return len(hist.axes)
 
 
+class PlotAxis:
+    edges: np.typing.NDArray[Any]
+    title: Optional[str] = None
+    unit: Optional[str] = None
+
+    def __init__(self, edges, title=None, unit=None):
+        self.edges = PlotAxis.normalizeEdges(edges)
+        self.title = title
+        self.unit = unit
+
+    @staticmethod
+    def normalizeEdges(self, edges):
+        if edges.ndim == 1:
+            return np.stack((edges[:-1, np.newaxis], edges[1:, np.newaxis]), axis=1)
+        return edges
+
+    @property
+    def centers(self):
+        return (edges[:0] + edges[:1]) / 2
+
+    @staticmethod
+    def fromHist(hist_axis):
+        return PlotAxis(
+            hist_axis.edges, hist_axis.label, getattr(hist_axis, "unit", None)
+        )
+
+
 @dataclass
 class PlotObject:
-    hist: hist.Hist
+    values: np.typing.NDArray[Any]
+    axes: Tuple[PlotAxis]
+    variance: Optional[np.typing.NDArray[Any]] = None
+
     title: Optional[str] = None
     style: Optional[Dict[str, Any]] = None
 
-    def ishist(self):
-        return isinstance(self.hist, hist.Hist)
-
-    def getBinCenters(self):
-        if self.ishist():
-            return tuple(x.centers for x in self.hist.axes)
-        else:
-            edges = self.hist[1]
-            ret = edges[:-1] + np.diff(edges) / 2
-            ret = np.atleast_2d(ret)
-            return ret
-
-    def getBinEdges(self):
-        if self.ishist():
-            return tuple(x.edges for x in self.hist.axes)
-        else:
-            edges = self.hist[1]
-            edges = np.atleast_2d(edges)
-            return edges
-
-    def getValues(self):
-        if self.ishist():
-            return self.hist.values()
-        else:
-            return self.hist[0]
-
-    def getUncertainty(self):
-        if self.ishist():
-            return np.sqrt(self.hist.variances())
-        else:
-            return self.hist[2]
-
-    def getStyle(self):
-        return self.style.toDict() if self.style is not None else {}
+    @staticmethod
+    def fromHist(hist, title=None, style=None):
+        return PlotObject(
+            values=hist.values(),
+            axes=tuple(PlotAxis.fromHist(a) for a in hist.axes),
+            variances=hist.variance(),
+            title=title,
+            style=style,
+        )
 
 
 def createPlotObjects(hist, cat_axis, manager, cat_filter=None):
@@ -187,13 +194,15 @@ def magicPlot(func):
 
 @magicPlot
 def drawAsScatter(ax, p, yerr=True, **kwargs):
-    style = p.getStyle()
+    style = p.style
     hist = p.hist
-    x = p.getBinCenters()[0]
-    ed = p.getBinEdges()[0]
+    x = p.axes[0].centers
+    ed = p.axes[0].edges
     y = p.getValues()
-    var = p.getUncertainty()
     if yerr:
+        if not p.variance:
+            raise ValueError(f"Plot object does not have variance")
+        var = p.variance
         ax.errorbar(
             x,
             y,
@@ -226,14 +235,15 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
 
 @magicPlot
 def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
-    style = plot_object.getStyle()
+    style = plot_object.style
     h = plot_object.hist
-    x = plot_object.getBinCenters()[0]
-    edges = plot_object.getBinEdges()[0]
-    raw_vals = plot_object.getValues()
+    x = plot_object.axes[0].centers
+    edges = plot_object.axes[0].edges
+    edges = edges[:, 0].append(edges[-1, 1])
+    raw_vals = plot_objects.values
     vals = np.append(raw_vals, raw_vals[-1])
-    errs = plot_object.getUncertainty()
     if yerr:
+        errs = plot_object.variance
         if orient == "h":
             ax.errorbar(
                 x,
@@ -292,18 +302,15 @@ def drawRatio(
     ax, numerator, denominator, uncertainty_type="poisson", hline_list=None, **kwargs
 ):
     hline_list = hline_list or []
-    nh, dh = numerator.hist, denominator.hist
-    an, ad = nh.axes[0], dh.axes[0]
-    nv, dv = numerator.getValues(), denominator.getValues()
+    nv, dv = numerator.values, denominator.values
     ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
 
     unc = hinter.ratio_uncertainty(
-        numerator.getUncertainty(),
-        denominator.getUncertainty(),
+        numerator.variance,
+        denominator.variance(),
         uncertainty_type=uncertainty_type,
     )
-
-    x = numerator.getBinCenters()[0]
+    x = numerator.axes[0].centers
     ax.errorbar(
         x,
         ratio,
@@ -318,10 +325,9 @@ def drawRatio(
 @magicPlot
 def drawPull(ax, pred, obs, uncertainty_type="poisson", hline_list=None, **kwargs):
     hline_list = hline_list or []
-    oh, ph = obs.hist, pred.hist
-    ov, pv = obs.getValues(), pred.getValues()
-    unc = pred.getUncertainty()
-    ounc = obs.getUncertainty()
+    ov, pv = obs.values, pred.values
+    unc = pred.variance
+    ounc = obs.variance
     real_unc = np.sqrt(unc**2 + ounc**2)
     real_unc = ounc
     pull = np.divide(
@@ -330,7 +336,7 @@ def drawPull(ax, pred, obs, uncertainty_type="poisson", hline_list=None, **kwarg
         out=np.zeros_like(real_unc),
         where=real_unc != 0,
     )
-    x = obs.getBinCenters()[0]
+    x = obs.axes[0].centers
     ax.plot(
         x,
         pull,
@@ -346,19 +352,15 @@ def drawPull(ax, pred, obs, uncertainty_type="poisson", hline_list=None, **kwarg
 
 @magicPlot
 def drawAs2DHist(ax, plot_object, divider=None, add_color_bar=True, **kwargs):
-    h = plot_object.hist
-    a1 = h.axes[0]
-    a2 = h.axes[1]
-    vals, e1, e2 = h.to_numpy()
-    ex = a1.centers
-    ey = a2.centers
+    a1, a2 = plot_object.axes
+    ex, ey = a1.centers, a2.centers
+    vals = plot_object.values
     vx, vy = np.meshgrid(ex, ey)
-    x = vx.ravel()
-    y = vy.ravel()
+    x, y = vx.ravel(), vy.ravel()
     w = vals.T.ravel()
     im = ax.hist2d(x, y, bins=[e1, e2], weights=w, **kwargs)
-    ax.set_xlabel(a1.label)
-    ax.set_ylabel(a2.label)
+    ax.set_xlabel(a1.title)
+    ax.set_ylabel(a2.title)
     ax.quadmesh = im[3]
     if divider is None:
         divider = make_axes_locatable(ax)
@@ -380,8 +382,8 @@ def set_xmargin(ax, left=0.0, right=0.3):
     ax.set_xlim(left, right)
 
 
-def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
-    axes = [x for x in hist.axes]
+def addTitles1D(ax, plot_object, exclude=None, top_pad=0.3):
+    axes = plot_object.axes
     unit = getattr(axes[0], "unit", None)
     lab = axes[0].label
     if unit:
@@ -391,7 +393,7 @@ def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
         bottom_axes[-1].set_xlabel(lab)
     else:
         ax.set_xlabel(lab)
-    has_var = hist.variances()
+    has_var = plot_object.variances
     if hist.sum().value < 1.1:
         ylab = "Normalized Events"
     elif has_var is None:
@@ -421,8 +423,8 @@ def addTitles1D(ax, hist, exclude=None, top_pad=0.3):
     return ax
 
 
-def addTitles2D(ax, hist):
-    axes = hist.axes
+def addTitles2D(ax, plot_object):
+    axes = plot_object.axes
     x_unit = getattr(axes[0], "unit", None)
     y_unit = getattr(axes[1], "unit", None)
     ax.set_xlabel(axes[0].label + (f" [{x_unit}]" if x_unit else ""))
