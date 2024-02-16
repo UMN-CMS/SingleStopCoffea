@@ -12,6 +12,7 @@ import analyzer.core as ac
 from analyzer.clients import createNewCluster, runNewCluster, cluster_factory
 import analyzer.run_analysis as ra
 import analyzer.datasets as ds
+from analyzer.plotting.simple_plot import Plotter
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import (
@@ -21,6 +22,7 @@ from prompt_toolkit.completion import (
     DynamicCompleter,
 )
 from prompt_toolkit.history import FileHistory
+import inspect
 
 
 logger = logging.getLogger(__name__)
@@ -147,8 +149,36 @@ def addSubparserCheck(subparsers):
 class ResultInspectionCli:
     def __init__(self):
         self.current_result = None
-        self.dispatch = {"open": self.open}
-        self.completer = NestedCompleter.from_nested_dict({"open": PathCompleter()})
+        self.dispatch = {
+            "open": self.open,
+            "exit": self.exit,
+            "help": self.help,
+        }
+        self.completer = NestedCompleter.from_nested_dict(
+            {
+                "open": PathCompleter(),
+                "exit": None,
+                "help": None,
+            }
+        )
+        self.plotter = None
+
+        self.running = True
+
+    def plot(self, dataset, hist, *ax_opts):
+        if len(ax_opts) % 2:
+            print("Incorrect ax_opts format")
+            return 
+        a_opts = dict(
+            zip(
+                ax_opts[::2],
+                (Plotter.Split if x == "split" else x for x in ax_opts[1::2]),
+            )
+        )
+        figs = self.plotter(hist, [dataset], axis_opts=a_opts)
+
+        for f in figs:
+            f.show()
 
     def getCompleter(self):
         return self.completer
@@ -156,27 +186,47 @@ class ResultInspectionCli:
     def info(self):
         pass
 
+    def exit(self):
+        self.running = False
+
     def open(self, path):
-        self.current_result = ac.AnalysisResult.fromFile(path)
-        print(f"Opened file at {path}")
+        try:
+            self.current_result = ac.AnalysisResult.fromFile(path)
+        except IOError as e:
+            print(f"Could not open {path}")
+            return
         datasets = list(self.current_result.results)
         d = {
             "open": PathCompleter(),
+            "help": None,
+            "exit": None,
             "info": None,
-            "list-datasets": set(datasets),
+            "list-contents": set(datasets),
             "show-dataset-hist": {
+                name: set(res.histograms)
+                for name, res in self.current_result.results.items()
+            },
+            "plot-hist": {
                 name: set(res.histograms)
                 for name, res in self.current_result.results.items()
             },
         }
         self.dispatch = {
             "open": self.open,
+            "exit": self.exit,
             "info": self.info,
+            "help": self.help,
             "list-contents": self.listContents,
             "show-dataset-hist": self.showHist,
+            "plot-hist": self.plot,
         }
-
         self.completer = NestedCompleter.from_nested_dict(d)
+
+        self.plotter = Plotter(self.current_result,None)
+
+    def help(self):
+        print(f"Available commands are:")
+        print(", ".join(list(self.dispatch)))
 
     def showHist(self, dataset, hname):
         print(self.current_result.results[dataset].histograms[hname])
@@ -184,7 +234,6 @@ class ResultInspectionCli:
     def listContents(self):
         if not self.current_result:
             print("No file currently open.")
-            return
         print(list(self.current_result.results))
 
     def processString(self, string):
@@ -195,17 +244,24 @@ class ResultInspectionCli:
             raise Exception()
         command_name = parsed[0]
         if command_name not in self.dispatch:
-            print(f"Unknown command {command_name}")
+            print(f'Unknown command "{command_name}"')
+            self.help()
             return
         func = self.dispatch[command_name]
-        func(*parsed[1:])
+        try:
+            func(*parsed[1:])
+        except TypeError as e:
+            print(e)
+            print(f"Incorrect arguments passed to command {command_name}")
+            return
+        return
 
     def run(self):
         session = PromptSession(
             history=FileHistory(".inspect_cli_history"),
         )
 
-        while True:
+        while self.running:
             try:
                 text = session.prompt("> ", completer=self.completer)
                 self.processString(text)
