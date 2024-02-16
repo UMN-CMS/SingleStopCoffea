@@ -5,6 +5,7 @@ from pathlib import Path
 import pickle as pkl
 import itertools as it
 from graphlib import TopologicalSorter, CycleError
+from functools import reduce
 from collections.abc import Collection, Coroutine, Iterator, Sequence
 from collections import namedtuple, defaultdict
 from functools import wraps
@@ -50,11 +51,8 @@ from rich.progress import track
 
 from urllib import parse
 import logging
-import cProfile
 import warnings
 
-
-pr = cProfile.Profile()
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +175,7 @@ class DatasetInput:
         ]
 
 
-@dataclass(eq=True)
+@dataclass
 class DatasetPreprocessed:
     dataset_input: DatasetInput
     coffea_dataset_split: DatasetSpec
@@ -330,12 +328,10 @@ class Analyzer:
         ).events()
         daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
         dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
-        pr.enable()
         for m in self.modules:
             logger.info(f"Adding module {m.name} to dataset {dataset_name}")
             test = m(events, dataset_analyzer)
             events, dataset_analyzer = test
-        pr.disable()
         return daskres
 
     def execute(self, futures: Iterable[DatasetDaskRunResult], client: Client):
