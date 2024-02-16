@@ -1,6 +1,9 @@
 distributed:
- dashboard:
+  dashboard:
     link:  "{scheme}://{host}:{port}/status"
+  worker:
+    profile:
+      enabled: false
 jobqueue:
   lpccondor:
     name: dask-worker
@@ -8,14 +11,17 @@ jobqueue:
     # Dask worker options
     cores: 1                 # Total number of cores per job
     memory: 2GB                # Total amount of memory per job
-    processes: 1                # Number of Python processes per job
+    processs: 1                # Number of Python processes per job
 
     interface: null             # Network interface to use like eth0 or ib0
     death-timeout: 60           # Number of seconds to wait if a worker can not find a scheduler
     local-directory: /srv       # Location of fast local storage like /scratch or $TMPDIR
     shared-temp-directory: null
     extra: null
-    worker-extra-args: ["--worker-port 10000:10070", "--nanny-port 10070:10100", "--no-dashboard"]
+    worker-extra-args:
+      - "--worker-port 10000:10070"
+      - "--nanny-port 10070:10100"
+      - "--no-dashboard"
 
     # HTCondor Resource Manager options
     disk: 200MB                  # Total amount of disk per job
@@ -28,6 +34,7 @@ jobqueue:
       - 'ls'
       - 'source setup.sh coffea bashrc'
       - 'echo $VIRTUAL_ENV'
+      - 'echo $LD_LIBRARY_PATH'
       - 'export X509_USER_PROXY=/srv/x509up_u57509'
       - 'version_info'
     job-extra: null             # Extra submit attributes
