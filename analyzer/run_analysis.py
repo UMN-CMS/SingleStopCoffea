@@ -1,5 +1,6 @@
 import analyzer.core as ac
 import itertools as it
+from analyzer.file_utils import compressDirectory
 from rich.console import Console
 import analyzer.datasets as ds
 from dask.distributed import Client
@@ -43,7 +44,8 @@ def createPackageArchive(zip_path=None, archive_type="zip"):
 
 
 def transferAnalyzerToClient(client):
-    p = str(createPackageArchive(archive_type="zip"))
+    analyzer_path = Path(ir.files(analyzer))
+    p = str(compressDirectory(analyzer_path, name="analyzer", archive_type="zip"))
     logger.info(f"Transfer file {p} to workers.")
     client.upload_file(p)
 
@@ -54,7 +56,7 @@ def runAnalysisOnSamples(
     sample_manager,
     dask_schedd_address=None,
     dataset_directory="datasets",
-    step_size=30000,
+    step_size=75000,
 ):
     import analyzer.modules
 
@@ -62,6 +64,7 @@ def runAnalysisOnSamples(
     if dask_schedd_address:
         logger.info(f"Connecting client to scheduler at {dask_schedd_address}")
         client = Client(dask_schedd_address)
+        transferAnalyzerToClient(client)
     else:
         client = None
         logger.info("No scheduler address provided, running locally")

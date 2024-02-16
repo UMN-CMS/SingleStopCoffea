@@ -14,41 +14,11 @@ import atexit
 import logging
 import os
 import sys
+from analyzer.file_utils import compressDirectory
 
 logger = logging.getLogger(__name__)
 
 
-def createEnvArchive(base_dir, zip_path=None, name="environment", archive_type="gztar"):
-    base_dir = Path(base_dir)
-    base_name = base_dir.stem
-    if not zip_path:
-        temp_path = Path(tempfile.gettempdir())
-    else:
-        temp_path = Path(zip_path)
-
-    trimmed_path = temp_path / f"temp_{base_name}" / base_name
-    if trimmed_path.is_dir():
-        logger.info(f"Deleting tree at {trimmmed_path}")
-        shutil.rmtree(trimmed_path)
-
-    logger.info(f"Using {trimmed_path} as copy location.")
-    temp_analyzer = shutil.copytree(
-        base_dir,
-        trimmed_path,
-        ignore=shutil.ignore_patterns(
-            "__pycache__", "*.pyc", "*~", "*.md"),
-    )
-    package_path = shutil.make_archive(
-        temp_path / name,
-        archive_type,
-        root_dir=trimmed_path.parent,
-        base_dir=base_name,
-    )
-    shutil.rmtree(trimmed_path.parent)
-
-    final_path = temp_path / f"{name}.{archive_type}"
-    logger.info(f"Created analyzer archive at {final_path}")
-    return final_path
 
 
 def createLPCCondorCluster(configuration):
@@ -72,7 +42,7 @@ def createLPCCondorCluster(configuration):
 
     compressed_env = Path("compressed") / "environment.tar.gz"
     if not compressed_env.exists():
-        createEnvArchive(venv, compressed_env.parent)
+        compressDirectory(venv, compressed_env.parent)
 
     transfer_input_files = [str(base / "setup.sh"), str(base / str(compressed_env))]
     transfer_input_files = ["setup.sh", compressed_env]
@@ -80,8 +50,8 @@ def createLPCCondorCluster(configuration):
     kwargs = {}
     kwargs["worker_extra_args"] = [
         *dask.config.get("jobqueue.lpccondor.worker_extra_args"),
-        # "--preload",
-        # "lpcjobqueue.patch",
+        #"--preload",
+        #"lpcjobqueue.patch",
     ]
 
     kwargs["python"] = f"{venv}/bin/python"
