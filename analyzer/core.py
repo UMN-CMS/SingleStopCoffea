@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime
+import hist.dask as hda
 from pathlib import Path
 import pickle as pkl
 import itertools as it
@@ -288,7 +289,6 @@ class DatasetProcessor:
         return self.maybeCreateAndFill(*args, **kwargs)
 
 
-
 class Analyzer:
     """
     Represents an analysis, a collection of modules.
@@ -433,9 +433,7 @@ class InputChecker:
         files = set(parse.urlparse(x.getFile())[2] for x in sample.files)
         prepped = result.dataset_preprocessed
         cof_dataset = prepped.coffea_dataset_split
-        cof_files = set(
-            parse.urlparse(x)[2] for x in cof_dataset["files"].keys()
-        )
+        cof_files = set(parse.urlparse(x)[2] for x in cof_dataset["files"].keys())
         diff = files.difference(cof_files)
         if diff:
             return AnalysisInspectionResult(
