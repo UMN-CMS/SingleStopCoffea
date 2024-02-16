@@ -3,6 +3,7 @@
 declare -A env_configs
 env_configs[coffea,venv]="coffeaenv"
 env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest-py3.10"
+#env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:l"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-base:v2024.1.2"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/cs9:x86_64"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.10"
@@ -61,9 +62,11 @@ function create_venv(){
 
     pip3 install ipython --upgrade
     python3 -m ipykernel install --user --name "$env"
+    pip3 install -I boost-histogram
+
+    rm -rf "$env/lib/*/site-packages/analyzer"
 
     rm -rf $TMPDIR && unset TMPDIR
-    rm -rf "$env/lib/*/site-packages/analyzer"
 
     sed -i "/PS1=/d" "$env"/bin/activate
     #for file in $NAME/bin/*; do
@@ -130,7 +133,7 @@ function rcmode(){
     export JUPYTER_DATA_DIR=/srv/.local/$env/share/jupyter
     export IPYTHONDIR=/srv/.local/$env/.ipython
     export MPLCONFIGDIR=/srv/.local/$env/.mpl
-    export LD_LIBRARY_PATH=/opt/conda/lib/:$LD_LIBRARY_PATH
+    #export LD_LIBRARY_PATH=/opt/conda/lib/:$LD_LIBRARY_PATH
 }
 
 
