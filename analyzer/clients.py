@@ -1,19 +1,20 @@
-from distributed import Client, TimeoutError, LocalCluster
-from lpcjobqueue import LPCCondorCluster
-from lpcjobqueue.schedd import SCHEDD
+import atexit
+import importlib.resources
+import logging
+import multiprocessing
 import os
 import shutil
-from pathlib import Path
-import yaml
-import multiprocessing
-import time
-import analyzer.resources
-import importlib.resources
-import dask
-import atexit
-import logging
-import os
 import sys
+import time
+from pathlib import Path
+
+import dask
+import yaml
+from distributed import Client, LocalCluster, TimeoutError
+from lpcjobqueue import LPCCondorCluster
+from lpcjobqueue.schedd import SCHEDD
+
+import analyzer.resources
 from analyzer.file_utils import compressDirectory
 
 logger = logging.getLogger(__name__)

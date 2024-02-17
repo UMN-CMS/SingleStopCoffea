@@ -1,148 +1,19 @@
+import itertools as it
+import logging
 import pickle as pkl
-import sys
-from analyzer.utils import accumulate
+import re
+from pathlib import Path
+
 import hist
 import matplotlib.pyplot as plt
-from analyzer.plotting.styles import *
-from analyzer.plotting.core_plots import *
+
 import analyzer.core as ac
 from analyzer.datasets import SampleManager
-from pathlib import Path
-import logging
-import logging.handlers
-from enum import Enum, auto
-import atexit
+from analyzer.utils import accumulate
 
-
-class _Split(object):
-    def __new__(cls):
-        return NoParam
-
-    def __reduce__(self):
-        return (_NoParamType, ())
-
-
-Split = object.__new__(_Split)
-
-
-def reformatHist(
-    hist,
-    axis_opts,
-):
-    h = hist
-    axes_names = {x.name for x in h.axes}
-    for n in all_axis_opts.keys():
-        if n not in axes_names:
-            raise KeyError(f"Name {n} is not an axis in {h}")
-    to_split = [x for x, y in all_axis_opts.items() if y is Split]
-    all_axis_opts = {x: y for x, y in all_axis_opts.items() if y is not Split}
-    h = h[all_axis_opts]
-    if to_split:
-        split_axes = [list(x) for x in h.axes if x.name in to_split]
-        split_names = [x.name for x in h.axes if x.name in to_split]
-        for combo in it.product(*split_axes):
-            f = dict(zip(split_names, (hist.loc(x) for x in combo)))
-            return h[f]
-    else:
-        return h
-
-
-def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
-    hopo = plotobj_obs
-    hppo = plotobj_pred
-    fig, ax = drawAs1DHist(hopo, yerr=True, fill=False)
-    drawAs1DHist(ax, hppo, yerr=True, fill=False)
-    addAxesToHist(ax, num_bottom=1, bottom_pad=0)
-    ab = ax.bottom_axes[0]
-    drawPull(ab, hppo, hopo)
-    ab.set_ylabel(r"$\frac{pred - obs}{\sigma_{pred}}$")
-    addEra(ax, lumi or 59.8)
-    addPrelim(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addTitles1D(ax, hopo.hist, top_pad=0.2)
-    fig.tight_layout()
-    return fig
-
-
-def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi):
-    hopo = plotobj_obs
-    hppo = plotobj_pred
-    fig, ax = drawAs1DHist(hopo, yerr=True, fill=False)
-    drawAs1DHist(ax, hppo, yerr=True, fill=False)
-    addAxesToHist(ax, num_bottom=1, bottom_pad=0)
-    ab = ax.bottom_axes[0]
-    drawRatio(ab, hppo, hopo)
-    ab.set_ylabel("Ratio")
-    addEra(ax, lumi)
-    addPrelim(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addTitles1D(ax, hopo.hist, top_pad=0.2)
-    fig.tight_layout()
-    return fig
-
-
-def plot1D(
-    signal_plobjs,
-    background_plobjs,
-    lumi,
-    coupling,
-    sig_style="hist",
-    scale="log",
-    xlabel_override=None,
-    add_label=None,
-    top_pad=0.4,
-):
-    fig, ax = plt.subplots()
-    for o in background_plobjs:
-        drawAs1DHist(ax, o, yerr=False)
-    for o in signal_plobjs:
-        # drawAs1DHist(ax, o, yerr=False)
-        if sig_style == "scatter":
-            drawAsScatter(ax, o, yerr=True)
-        elif sig_style == "hist":
-            drawAs1DHist(ax, o, yerr=True, fill=False)
-
-    ax.set_yscale(scale)
-    addEra(ax, lumi)
-    addPrelim(
-        ax,
-        additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-        + (add_label or ""),
-    )
-    hc = next(it.chain(signal_plobjs, background_plobjs)).hist
-    addTitles1D(ax, hc, top_pad=top_pad)
-    handles, labels = ax.get_legend_handles_labels()
-    labels, handles = zip(*reversed(sorted(zip(labels, handles), key=lambda t: t[0])))
-    extra_legend_args = {}
-    if len(labels) > 5:
-        extra_legend_args["prop"] = {"size": 10}
-    ax.legend(handles, labels, **extra_legend_args)
-    if xlabel_override:
-        ax.set_xlabel(xlabel_override)
-    fig.tight_layout()
-    return fig
-
-
-def plot2D(
-    plot_obj,
-    lumi,
-    coupling,
-    sig_style="hist",
-    scale="log",
-    add_label=None,
-):
-    fig, ax = plt.subplots()
-    drawAs2DHist(ax, plot_obj)
-    addEra(ax, lumi)
-    pos = "in"
-    addPrelim(
-        ax,
-        additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-        + (f"{add_label}," if add_label else "")
-        + f"{plot_obj.title}",
-        pos=pos,
-        color="white",
-    )
-    addTitles2D(ax, plot_obj.hist)
-    return fig
+from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio
+from .mplstyles import loadStyles
+from .plottables import createPlotObjects
 
 
 class Plotter:

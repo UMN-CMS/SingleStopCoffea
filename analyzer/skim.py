@@ -1,7 +1,8 @@
-from pathlib import Path
 import logging
-import uproot
+from pathlib import Path
+
 import awkward as ak
+import uproot
 
 
 def isRootCompat(a):

@@ -1,59 +1,38 @@
-from dataclasses import dataclass
-from enum import Enum
-from datetime import datetime
-import hist.dask as hda
-from pathlib import Path
-import pickle as pkl
 import itertools as it
-from graphlib import TopologicalSorter, CycleError
-from functools import reduce
+import logging
+import pickle as pkl
+import warnings
+from collections import defaultdict, namedtuple
 from collections.abc import Collection, Coroutine, Iterator, Sequence
-from collections import namedtuple, defaultdict
-from functools import wraps
 from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Hashable,
-    List,
-    Set,
-    Tuple,
-    Union,
-    Optional,
-    Iterable,
-)
+from datetime import datetime
+from enum import Enum
+from functools import reduce, wraps
+from graphlib import CycleError, TopologicalSorter
+from pathlib import Path
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Set, Tuple, Union)
+from urllib import parse
 
-
-from distributed import Client
-
-from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
+import awkward as ak
+import coffea.dataset_tools as dst
+import dask
+import dask_awkward as dak
+import hist
+import hist.dask as hda
+import hist.dask as dah
 from coffea.analysis_tools import PackedSelection, Weights
 from coffea.dataset_tools.apply_processor import DaskOutputType
 from coffea.dataset_tools.preprocess import DatasetSpec
-
-
-import hist
-import dask
-import dask_awkward as dak
-import awkward as ak
-import hist.dask as dah
+from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
+from distributed import Client
+from rich.console import Console, ConsoleOptions, RenderResult
+from rich.progress import track
+from rich.table import Table
 
 import analyzer.utils as utils
-from analyzer.datasets import SampleSet, SampleCollection
+from analyzer.datasets import SampleCollection, SampleSet
 from analyzer.histogram_builder import HistogramBuilder
-
-import coffea.dataset_tools as dst
-
-
-from rich.console import Console, ConsoleOptions, RenderResult
-from rich.table import Table
-from rich.progress import track
-
-from urllib import parse
-import logging
-import warnings
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,29 +1,23 @@
 import argparse
-
+import inspect
+import logging
+import sys
 from pathlib import Path
+
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import (DynamicCompleter, NestedCompleter,
+                                       PathCompleter, WordCompleter)
+from prompt_toolkit.history import FileHistory
 from rich import print
 from rich.console import Console
 from rich.table import Table
-import sys
-import logging
 
-from analyzer.core import modules as all_modules
 import analyzer.core as ac
-from analyzer.clients import createNewCluster, runNewCluster, cluster_factory
-import analyzer.run_analysis as ra
 import analyzer.datasets as ds
+import analyzer.run_analysis as ra
+from analyzer.clients import cluster_factory, createNewCluster, runNewCluster
+from analyzer.core import modules as all_modules
 from analyzer.plotting.simple_plot import Plotter
-
-from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import (
-    WordCompleter,
-    NestedCompleter,
-    PathCompleter,
-    DynamicCompleter,
-)
-from prompt_toolkit.history import FileHistory
-import inspect
-
 
 logger = logging.getLogger(__name__)
 

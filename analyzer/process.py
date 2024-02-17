@@ -1,16 +1,16 @@
+import itertools as it
+import pickle
+import uuid
+import warnings
+
+import awkward as ak
 from coffea import processor
+from coffea.processor import accumulate
+from coffea.processor.executor import WorkItem
+
 from analyzer.core import ModuleType
 from analyzer.core import modules as all_modules
-from coffea.processor import accumulate
-import pickle
-
-import itertools as it
 from analyzer.modules.axes import *
-
-from coffea.processor.executor import WorkItem
-import awkward as ak
-import warnings
-import uuid
 
 warnings.filterwarnings("ignore", message=r".*Missing cross-reference")
 warnings.filterwarnings("ignore", message=r".*In coffea version 0.8")

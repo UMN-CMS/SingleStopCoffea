@@ -1,6 +1,7 @@
+import uproot
+
 import analyzer.file_utils as futil
 from analyzer.skim import uprootWriteable
-import uproot
 
 #@analyzerModule("save_skim", ModuleType.Output)
 

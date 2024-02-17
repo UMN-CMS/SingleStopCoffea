@@ -1,4 +1,5 @@
 from analyzer.cli import runCli
+
 from . import setup_logging
 
 if __name__ == "__main__":

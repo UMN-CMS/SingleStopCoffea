@@ -1,5 +1,6 @@
-from analyzer.core import analyzerModule
 import awkward as ak
+
+from analyzer.core import analyzerModule
 
 
 @analyzerModule("baseline_selection", categories="selection", depends_on=["objects"])

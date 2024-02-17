@@ -1,9 +1,10 @@
 # From https://github.com/PocketCoffea/PocketCoffea
 
 from collections.abc import Iterable
-import numpy as np
+
 import awkward as ak
 import numba
+import numpy as np
 
 
 @numba.njit

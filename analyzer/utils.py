@@ -1,16 +1,18 @@
-import subprocess
 import copy
 import operator
+import subprocess
 from collections import defaultdict
 from collections.abc import MutableMapping, MutableSet
 from typing import Iterable, Optional, TypeVar, Union
+
 from dask.base import DaskMethodsMixin
 
 try:
     from typing import Protocol, runtime_checkable  # type: ignore
 except ImportError:
-    from typing_extensions import Protocol  # type: ignore
     from typing import runtime_checkable
+
+    from typing_extensions import Protocol  # type: ignore
 
 
 

@@ -1,7 +1,8 @@
 import awkward as ak
+import hist
+
 from analyzer.core import analyzerModule
 from analyzer.modules.axes import *
-import hist
 
 
 @analyzerModule("dataset_category", categories="axis_cat", depends_on=["objects"])

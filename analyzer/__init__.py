@@ -1,9 +1,11 @@
-import os
-import logging.config
-import yaml
-import analyzer.resources
 import importlib.resources
+import logging.config
+import os
 from pathlib import Path
+
+import yaml
+
+import analyzer.resources
 
 
 def setup_logging(

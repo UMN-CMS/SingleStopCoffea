@@ -1,9 +1,9 @@
 # import awkward as ak
-import dask_awkward as dak
-import awkward as ak
-import hist.dask as hda
 import logging
 
+import awkward as ak
+import dask_awkward as dak
+import hist.dask as hda
 
 logger = logging.getLogger(__name__)
 

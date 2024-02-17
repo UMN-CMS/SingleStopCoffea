@@ -1,18 +1,20 @@
-from pathlib import Path
-from dataclasses import dataclass, field, fields, replace
-from typing import List, Dict, Set, Union, Optional
-from yaml import load, dump
 import itertools as it
-from collections.abc import Mapping
-from coffea.dataset_tools.preprocess import DatasetSpec
-import rich
 import re
+from collections.abc import Mapping
+from dataclasses import dataclass, field, fields, replace
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Union
+
+import rich
+from coffea.dataset_tools.preprocess import DatasetSpec
 from rich.table import Table
+from yaml import dump, load
 
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 
 
 class ForbiddenDataset(Exception):

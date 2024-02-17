@@ -1,9 +1,12 @@
+import itertools as it
+
+import awkward as ak
+
 from analyzer.core import analyzerModule
 from analyzer.math_funcs import angleToNPiToPi
+
 from .axes import *
-import awkward as ak
 from .objects import b_tag_wps
-import itertools as it
 from .utils import numMatching
 
 

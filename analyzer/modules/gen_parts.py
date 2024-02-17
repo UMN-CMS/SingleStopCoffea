@@ -1,7 +1,9 @@
-import itertools as it
-from analyzer.core import analyzerModule
-import awkward as ak
 import gc
+import itertools as it
+
+import awkward as ak
+
+from analyzer.core import analyzerModule
 from analyzer.matching import object_matching
 
 

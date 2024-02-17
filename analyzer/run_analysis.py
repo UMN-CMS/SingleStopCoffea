@@ -1,18 +1,19 @@
-import analyzer.core as ac
-import itertools as it
-from analyzer.file_utils import compressDirectory
-from rich.console import Console
-import analyzer.datasets as ds
-from dask.distributed import Client
-import dask
 import importlib.resources as ir
-from pathlib import Path
-import tempfile
-import shutil
-import analyzer
-from dask.diagnostics import ProgressBar
+import itertools as it
 import logging
+import shutil
+import tempfile
+from pathlib import Path
 
+import dask
+from dask.diagnostics import ProgressBar
+from dask.distributed import Client
+from rich.console import Console
+
+import analyzer
+import analyzer.core as ac
+import analyzer.datasets as ds
+from analyzer.file_utils import compressDirectory
 
 logger = logging.getLogger(__name__)
 

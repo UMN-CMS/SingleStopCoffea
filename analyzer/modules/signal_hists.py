@@ -1,9 +1,11 @@
-from analyzer.core import analyzerModule
-from .axes import *
 import awkward as ak
-from analyzer.math_funcs import angleToNPiToPi
-from .utils import numMatching
 import numpy as np
+
+from analyzer.core import analyzerModule
+from analyzer.math_funcs import angleToNPiToPi
+
+from .axes import *
+from .utils import numMatching
 
 
 @analyzerModule("signal_hists", depends_on=["objects"], categories="main")

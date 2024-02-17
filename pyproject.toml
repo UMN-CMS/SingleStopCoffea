@@ -28,6 +28,7 @@ lpcqueue=["lpcjobqueue"]
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 mypy = "^1.3.0"
+isort = "^1.3.0"
 
 [build-system]
 requires = ["poetry-core"]
