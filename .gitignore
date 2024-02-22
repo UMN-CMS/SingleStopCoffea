@@ -25,4 +25,8 @@ share/python-wheels/
 *.pkl
 *.zip
 *.ipynb_checkpoints
-
+\#*\#
+*.elc
+auto-save-list
+tramp
+.\#*
