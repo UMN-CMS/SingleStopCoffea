@@ -24,3 +24,5 @@ share/python-wheels/
 *.root
 *.pkl
 *.zip
+*.ipynb_checkpoints
+
