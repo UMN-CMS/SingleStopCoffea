@@ -5,15 +5,14 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import dask
-from dask.diagnostics import ProgressBar
-from dask.distributed import Client
-from rich.console import Console
-
 import analyzer
 import analyzer.core as ac
 import analyzer.datasets as ds
+import dask
 from analyzer.file_utils import compressDirectory
+from dask.diagnostics import ProgressBar
+from dask.distributed import Client
+from rich.console import Console
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +57,7 @@ def runAnalysisOnSamples(
     dask_schedd_address=None,
     dataset_directory="datasets",
     step_size=75000,
+    delayed=True,
 ):
     import analyzer.modules
 
@@ -83,12 +83,23 @@ def runAnalysisOnSamples(
     with ProgressBar():
         dataset_preps = ac.preprocessBulk(all_sets, step_size=step_size)
 
-    logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
-    futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]
-    logger.info(f"Generated {len(futures)} analysis futures")
+    # x = dict((d.dataset_input.dataset_name, d.coffea_dataset_split) for d in dataset_preps)
+    # import json
 
-    with ProgressBar():
-        ret = analyzer.execute(futures, client)
+    # print(x)
+    # json.dump(x, open("out.json", "w"))
+    # return None
+
+    logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
+    if delayed:
+        futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]
+        logger.info(f"Generated {len(futures)} analysis futures")
+        with ProgressBar():
+            ret = ac.execute(futures, client)
+    else:
+        results = [analyzer.getDatasetFutures(x, delayed=False) for x in dataset_preps]
+        ret = {x.getName(): x for x in results}
+    print(ret)
 
     ret = ac.AnalysisResult(ret)
     return ret

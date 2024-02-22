@@ -3,7 +3,7 @@ distributed:
     link:  "{scheme}://{host}:{port}/status"
   worker:
     profile:
-      enabled: false
+      enabled: true
 jobqueue:
   lpccondor:
     name: dask-worker
@@ -21,7 +21,7 @@ jobqueue:
     worker-extra-args:
       - "--worker-port 10000:10070"
       - "--nanny-port 10070:10100"
-      - "--no-dashboard"
+      #- "--no-dashboard"
 
     # HTCondor Resource Manager options
     disk: 200MB                  # Total amount of disk per job

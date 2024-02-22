@@ -35,6 +35,7 @@ def createBHistograms(events, analyzer):
         f"loose_bb_eta",
         makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading loose b jets"),
         lb_eta,
+        mask=mask,
         name=rf"$\Delta \eta$ BB$",
         description=rf"$\Delta \eta$ between the two highest rank loose b jets",
     )
@@ -42,6 +43,7 @@ def createBHistograms(events, analyzer):
         f"loose_bb_phi",
         makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading loose b jets"),
         lb_phi,
+        mask=mask,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank loose b jets",
     )
@@ -49,6 +51,7 @@ def createBHistograms(events, analyzer):
         f"loose_bdr",
         makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 loose b jets"),
         lb_dr,
+        mask=mask,
         name=rf"Loose BJet $\Delta R$",
         description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
     )
@@ -76,6 +79,7 @@ def createBHistograms(events, analyzer):
         f"medium_bb_eta",
         makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading medium b jets"),
         mb_eta,
+        mask=mask,
         name=rf"$\Delta \eta$ BB$",
         description=rf"$\Delta \eta$ between the two highest rank medium b jets",
     )
@@ -83,6 +87,7 @@ def createBHistograms(events, analyzer):
         f"medium_bb_phi",
         makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading medium b jets"),
         mb_phi,
+        mask=mask,
         name=rf"$\Delta \phi$ BB$",
         description=rf"$\Delta \phi$ between the two highest rank medium b jets",
     )
@@ -90,6 +95,7 @@ def createBHistograms(events, analyzer):
         f"medium_bdr",
         makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 medium b jets"),
         mb_dr,
+        mask=mask,
         name=rf"Medium BJet $\Delta R$",
         description=rf"$\Delta R$ between the top 2 $p_T$ b jets",
     )
@@ -98,6 +104,7 @@ def createBHistograms(events, analyzer):
         f"medium_b_m",
         makeAxis(60, 0, 3000, f"$m_{{bb}}", unit="GeV"),
         inv.mass,
+        mask=mask,
         name=rf"medbmass",
     )
     analyzer.H(
@@ -105,6 +112,7 @@ def createBHistograms(events, analyzer):
         makeAxis(20, 0, 1000, f"$p_{{T, bb}}$", unit="GeV"),
         inv.pt,
         name=rf"medbmass",
+        mask=mask,
     )
 
     return events, analyzer

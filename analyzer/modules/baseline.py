@@ -22,24 +22,16 @@ def createSelection(events, analyzer):
     med_dr = ak.fill_none(filled_med[:, 0].delta_r(filled_med[:, 1]), False)
     # selection.add("trigger", (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
     if "HLT" in events.fields:
-        selection.add(
-            "hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30)
-        )
-    selection.add(
-        "highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False))
-    )
-    selection.add(
-        "jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6))
-    )
-    selection.add(
-        "0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0))
-    )
+        selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30))
+    selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
+    selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))
+    selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)))
     selection.add("2bjet", (ak.num(med_b) >= 2))
     selection.add("1tightbjet", (ak.num(tight_b) >= 1))
     # selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
     selection.add("b_dr", (med_dr > 1))
     events = analyzer.applySelection(events)
-    return events, analyzer 
+    return events, analyzer
 
 
 @analyzerModule("bbpt_selection", categories="selection", depends_on=["objects"])
@@ -67,18 +59,10 @@ def createCRSelection(events, analyzer):
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
     top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     if "HLT" in events.fields:
-        selection.add(
-            "hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30).to_numpy()
-        )
-    selection.add(
-        "highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)).to_numpy()
-    )
-    selection.add(
-        "jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)).to_numpy()
-    )
-    selection.add(
-        "0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)).to_numpy()
-    )
-    selection.add("0looseb", (ak.num(loose_b) == 0).to_numpy())
+        selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30))
+    selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
+    selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))
+    selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)))
+    selection.add("0looseb", (ak.num(loose_b) == 0))
     events = analyzer.applySelection(events)
     return events, analyzer

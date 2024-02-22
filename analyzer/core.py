@@ -2,6 +2,7 @@ import itertools as it
 import logging
 import pickle as pkl
 import warnings
+
 from collections import defaultdict, namedtuple
 from collections.abc import Collection, Coroutine, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -10,10 +11,21 @@ from enum import Enum
 from functools import reduce, wraps
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Set, Tuple, Union)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 from urllib import parse
 
+import analyzer.utils as utils
 import awkward as ak
 import coffea.dataset_tools as dst
 import dask
@@ -21,18 +33,18 @@ import dask_awkward as dak
 import hist
 import hist.dask as hda
 import hist.dask as dah
+from analyzer.datasets import SampleCollection, SampleSet
+from analyzer.histogram_builder import HistogramBuilder
 from coffea.analysis_tools import PackedSelection, Weights
 from coffea.dataset_tools.apply_processor import DaskOutputType
 from coffea.dataset_tools.preprocess import DatasetSpec
 from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
-from distributed import Client
+from distributed import Client, get_client, rejoin, secede
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.progress import track
 from rich.table import Table
 
-import analyzer.utils as utils
-from analyzer.datasets import SampleCollection, SampleSet
-from analyzer.histogram_builder import HistogramBuilder
+# warnings.filterwarnings("error", module="coffea.*")
 
 logger = logging.getLogger(__name__)
 
@@ -54,11 +66,20 @@ def toSet(x):
 
 
 class AnalyzerModule:
-    def __init__(self, name, function, depends_on=None, category=None, after=None):
+    def __init__(
+        self,
+        name,
+        function,
+        depends_on=None,
+        categories=None,
+        after=None,
+        default=False,
+    ):
         self.name = name
         self.function = function
         self.depends_on = toSet(depends_on) if depends_on else set()
-        self.categories = toSet(category) if category else set()
+        self.categories = toSet(categories) if categories else set()
+        self.default = default
 
     def __call__(self, events, analyzer):
         return self.function(events, analyzer)
@@ -80,19 +101,24 @@ category_after = {
 
 def generateTopology(module_list):
     mods = [x.name for x in module_list]
+    mods.extend([x.name for x in modules.values() if x.default])
+
     cats = defaultdict(list)
+
     for x in module_list:
         for c in x.categories:
             cats[c].append(x.name)
+
     graph = {}
+
     for i, module in enumerate(module_list):
         graph[module.name] = module.depends_on
-        if i > 0:
-            graph[module.name].update(
-                {
-                    mods[i - 1],
-                }
-            )
+        # if i > 0:
+        #    graph[module.name].update(
+        #        {
+        #            mods[i - 1],
+        #        }
+        #    )
 
         for c in module.categories:
             for a in category_after.get(c, []):
@@ -123,12 +149,12 @@ def sortModules(module_list):
     return namesToModules(ret)
 
 
-def analyzerModule(name, depends_on=None, categories=None):
+def analyzerModule(name, **kwargs):
     def decorator(func):
         if name in modules:
             raise KeyError(f"A module already exists with the name {name}")
 
-        modules[name] = AnalyzerModule(name, func, depends_on, categories)
+        modules[name] = AnalyzerModule(name, func, **kwargs)
         return func
 
     return decorator
@@ -222,9 +248,11 @@ class DatasetProcessor:
         self,
         dask_result: DatasetDaskRunResult,
         setname: str,
+        delayed=True,
     ):
         self.setname = setname
         self.dask_result = dask_result
+        self.delayed = delayed
 
         self.__selection = PackedSelection()
         self.__weights = Weights(None)
@@ -243,6 +271,10 @@ class DatasetProcessor:
     def weights(self):
         return self.__weights
 
+    @weights.setter
+    def weights(self, val):
+        self.__weights = val
+
     def applySelection(self, events):
         events = events[self.selection.all(*self.selection.names)]
         return events
@@ -260,12 +292,70 @@ class DatasetProcessor:
         name = name or key
         if key not in self.histograms:
             self.histograms[key] = self.histogram_builder.createHistogram(
-                axis, name, description
+                axis, name, description, delayed=self.delayed
             )
-        self.histogram_builder.fillHistogram(self.histograms[key], data, mask)
+        self.histogram_builder.fillHistogram(
+            self.histograms[key], data, mask, event_weights=self.weights
+        )
 
     def H(self, *args, **kwargs):
         return self.maybeCreateAndFill(*args, **kwargs)
+
+
+def execute(futures: Iterable[DatasetDaskRunResult], client: Client):
+    futures = list(futures)
+    logger.debug(f"Executing {len(futures)} analysis futures.")
+    dsk = {
+        x.getName(): [
+            x.dataset_preprocessed,
+            x.histograms,
+            x.raw_events_processed,
+            x.run_report,
+        ]
+        for x in futures
+    }
+
+    if client is None:
+        computed, *rest = dask.compute(dsk, scheduler="single-threaded")
+    else:
+        f = client.compute(dsk)
+        computed = client.gather(f)
+
+    return {
+        name: DatasetRunResult(prep, h, r, rep)
+        for name, (prep, h, r, rep) in computed.items()
+    }
+
+
+@dask.delayed
+def createFutureResult(modules, prepped_dataset):
+    dataset_name = prepped_dataset.dataset_input.dataset_name
+    logger.debug(f"Generating futures for dataset {dataset_name}")
+    files = prepped_dataset.getCoffeaDataset()["files"]
+    maybe_base_form = prepped_dataset.coffea_dataset_split.get("form", None)
+    if maybe_base_form is not None:
+        maybe_base_form = ak.forms.from_json(decompress_form(maybe_base_form))
+    events, report = NanoEventsFactory.from_root(
+        files,
+        schemaclass=NanoAODSchema,
+        uproot_options=dict(
+            allow_read_errors_with_report=True,
+        ),
+        known_base_form=maybe_base_form,
+    ).events()
+    # events = dask.delayed(events)
+    # daskres = DatasetDaskRunResult(prepped_dataset, {}, ak.num(events, axis=0), report)
+
+    daskres = DatasetDaskRunResult(prepped_dataset, {}, ak.num(events, axis=0), report)
+    dataset_analyzer = DatasetProcessor(
+        daskres, prepped_dataset.dataset_input.fill_name
+    )
+    for m in modules:
+        logger.info(f"Adding module {m.name} to dataset {dataset_name}")
+        test = m(events, dataset_analyzer)
+        events, dataset_analyzer = test
+
+    return daskres
 
 
 class Analyzer:
@@ -289,7 +379,10 @@ class Analyzer:
         modules = sortModules(m)
         return modules
 
-    def getDatasetFutures(self, dsprep: DatasetPreprocessed) -> DatasetDaskRunResult:
+    def getDatasetFutures(
+        self, dsprep: DatasetPreprocessed, delayed=True
+    ) -> DatasetDaskRunResult:
+        # return createFutureResult(self.modules, dsprep)
         dataset_name = dsprep.dataset_input.dataset_name
         logger.debug(f"Generating futures for dataset {dataset_name}")
         files = dsprep.getCoffeaDataset()["files"]
@@ -305,37 +398,22 @@ class Analyzer:
             known_base_form=maybe_base_form,
             persistent_cache=self.cache,
         ).events()
-        daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
-        dataset_analyzer = DatasetProcessor(daskres, dsprep.dataset_input.fill_name)
+
+        if delayed:
+            daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
+        else:
+            events = events.compute()
+            report = report.compute()
+            daskres = DatasetRunResult(dsprep, {}, ak.num(events, axis=0), report)
+
+        dataset_analyzer = DatasetProcessor(
+            daskres, dsprep.dataset_input.fill_name, delayed=delayed
+        )
         for m in self.modules:
             logger.info(f"Adding module {m.name} to dataset {dataset_name}")
             test = m(events, dataset_analyzer)
             events, dataset_analyzer = test
         return daskres
-
-    def execute(self, futures: Iterable[DatasetDaskRunResult], client: Client):
-        futures = list(futures)
-        logger.debug(f"Executing {len(futures)} analysis futures.")
-        dsk = {
-            x.getName(): [
-                x.dataset_preprocessed,
-                x.histograms,
-                x.raw_events_processed,
-                x.run_report,
-            ]
-            for x in futures
-        }
-
-        if client is None:
-            computed, *rest = dask.compute(dsk, scheduler="single-threaded")
-        else:
-            f = client.compute(dsk)
-            computed = client.gather(f)
-
-        return {
-            name: DatasetRunResult(prep, h, r, rep)
-            for name, (prep, h, r, rep) in computed.items()
-        }
 
 
 @dataclass

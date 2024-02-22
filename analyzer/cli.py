@@ -5,8 +5,12 @@ import sys
 from pathlib import Path
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import (DynamicCompleter, NestedCompleter,
-                                       PathCompleter, WordCompleter)
+from prompt_toolkit.completion import (
+    DynamicCompleter,
+    NestedCompleter,
+    PathCompleter,
+    WordCompleter,
+)
 from prompt_toolkit.history import FileHistory
 from rich import print
 from rich.console import Console
@@ -43,6 +47,7 @@ def handleRunAnalysis(args):
         args.samples,
         sample_manager,
         dask_schedd_address=args.scheduler_address,
+        delayed=not args.no_delayed,
     )
     ret.save(args.output)
     if args.print_after:
@@ -162,7 +167,7 @@ class ResultInspectionCli:
     def plot(self, dataset, hist, *ax_opts):
         if len(ax_opts) % 2:
             print("Incorrect ax_opts format")
-            return 
+            return
         a_opts = dict(
             zip(
                 ax_opts[::2],
@@ -216,7 +221,7 @@ class ResultInspectionCli:
         }
         self.completer = NestedCompleter.from_nested_dict(d)
 
-        self.plotter = Plotter(self.current_result,None)
+        self.plotter = Plotter(self.current_result, None)
 
     def help(self):
         print(f"Available commands are:")
@@ -334,9 +339,10 @@ def addSubparserRun(subparsers):
     )
 
     run_mode.add_argument(
-        "-y",
-        "--run-synchronous",
-        help="Do not use dask, instead run synchronously.",
+        "--no-delayed",
+        action="store_true",
+        default=False,
+        help="Do not use dask, instead run synchronously. Good for testing.",
     )
 
     subparser.add_argument(

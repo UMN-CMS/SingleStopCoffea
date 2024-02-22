@@ -39,6 +39,18 @@ class Style:
         op = data.get("alpha")
         return Style(color, op)
 
+
+    def keys(self):
+        return (
+            field.name
+            for field in fields(self)
+            if getattr(self, field.name) is not None
+        )
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+        
+
     def toDict(self):
         return dict(
             (field.name, getattr(self, field.name))
