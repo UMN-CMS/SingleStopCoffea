@@ -4,16 +4,15 @@ import pickle as pkl
 import re
 from pathlib import Path
 
+import analyzer.core as ac
 import hist
 import matplotlib.pyplot as plt
-
-import analyzer.core as ac
 from analyzer.datasets import SampleManager
 from analyzer.utils import accumulate
 
 from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio
 from .mplstyles import loadStyles
-from .plottables import createPlotObjects
+from .plottables import PlotObject, createPlotObjects
 
 
 class Plotter:
@@ -95,10 +94,10 @@ class Plotter:
     def plotPulls(self, target, hist_obs, hist_pred):
         ho = self.histos[target][hist_obs, ...]
         hp = self.histos[target][hist_pred, ...]
-        hopo = PlotObject(
+        hopo = PlotObject.fromHist(
             ho, self.sample_manager[hist_obs].getTitle(), self.sample_manager[hist_obs]
         )
-        hppo = PlotObject(
+        hppo = PlotObject.fromHist(
             hp,
             self.sample_manager[hist_pred].getTitle(),
             self.sample_manager[hist_pred],
@@ -114,10 +113,10 @@ class Plotter:
     def plotRatio(self, target, hist_obs, hist_pred):
         ho = self.histos[target][hist_obs, ...]
         hp = self.histos[target][hist_pred, ...]
-        hopo = PlotObject(
+        hopo = PlotObject.fromHist(
             ho, self.sample_manager[hist_obs].getTitle(), self.sample_manager[hist_obs]
         )
-        hppo = PlotObject(
+        hppo = PlotObject.fromHist(
             hp,
             self.sample_manager[hist_pred].getTitle(),
             self.sample_manager[hist_pred],
@@ -222,7 +221,7 @@ class Plotter:
             ret = []
             for x in hc.axes[0]:
                 realh = hc[{"dataset": x}]
-                po = PlotObject(realh, x, self.sample_manager[x].style)
+                po = PlotObject.fromHist(realh, x, self.sample_manager[x].style)
                 fig = plot2D(
                     po,
                     self.coupling,
