@@ -3,41 +3,42 @@ import sys
 sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
 from analyzer.plotting import simple_plot
-from analyzer.plotting.core_plots import *
 import warnings
 import itertools as it
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
 backgrounds = ["Skim_QCDInclusive2018"]
-compressed = [
-    f"signal_312_{p}" for p in ("2000_1900", "1200_1100", "1500_1400", "2000_1700")
-]
-uncompressed = [
-    f"signal_312_{p}" for p in ("2000_900", "1200_400", "1500_600", "1500_400")
-]
-both = compressed + uncompressed
+# compressed = [
+#     f"signal_312_{p}" for p in ("1500_1900", "1200_1100", "1500_1400", "2000_1700")
+# ]
+# uncompressed = [
+#     f"signal_312_{p}" for p in ("2000_900", "1200_400", "1500_600", "1500_400")
+# ]
+# both = compressed + uncompressed
 
-dense_2000 = [f"signal_312_2000_{p}" for p in (1900, 1700, 1600, 1500, 1300, 1200, 900)]
-dense_1500 = [
-    f"signal_312_1500_{p}" for p in (1450, 1350, 1300, 1200, 1100, 1000, 900, 600, 400)
-]
-dense_1200 = [f"signal_312_1200_{p}" for p in (1100, 1000, 900, 800, 700, 600, 400)]
+# dense_2000 = [f"signal_312_2000_{p}" for p in (1900, 1700, 1600, 1500, 1300, 1200, 900)]
+# dense_1500 = [
+#     f"signal_312_1500_{p}" for p in (1450, 1350, 1300, 1200, 1100, 1000, 900, 600, 400)
+# ]
+# dense_1200 = [f"signal_312_1200_{p}" for p in (1100, 1000, 900, 800, 700, 600, 400)]
 
-representative = [
-    f"signal_312_{p}"
-    for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
-]
+# representative = [
+#     f"signal_312_{p}"
+#     for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
+# ]
 
 plotter = Plotter(
-    "results/newanalyzer.pkl",
+    "myoutput.pkl",
     "figures",
-    default_backgrounds=["Skim_QCDInclusive2018"],
+    default_backgrounds=None,
     #default_axis_opts={"number_jets": Plotter.Split},
     coupling="312",
 )
-plotter("m14_m", ["signal_312_2000_1900"])
-plotter("m14_vs_m13", ["signal_312_2000_1900"])
+plotter("m14_m", ["signal_312_1500_400" , "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400_",normalize=True,ratio=True)
+plotter("m14_m", ["signal_312_1500_1100" , "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100_",normalize=True,ratio=True)
+plotter("m14_m", ["signal_312_1500_1400" , "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400_",normalize=True, ratio=True)
+#plotter("m14_vs_m13", ["signal_312_1500_1400_mg"])
 
 sys.exit()
 
