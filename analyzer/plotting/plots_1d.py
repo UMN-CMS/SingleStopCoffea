@@ -123,8 +123,8 @@ def drawRatio(
     ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
 
     unc = hinter.ratio_uncertainty(
-        numerator.variances,
-        denominator.variances,
+        numerator.values,
+        denominator.values,
         uncertainty_type=uncertainty_type,
     )
     x = numerator.axes[0].centers
