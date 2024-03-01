@@ -22,10 +22,11 @@ class ForbiddenDataset(Exception):
 
 
 @dataclass
-class AnalyzerSample:
-    name: str
-    setname: str
+class AnalyzerInput:
+    dataset_name: str
+    fill_name: str
     coffea_dataset: DatasetSpec
+    lumi_json: Optional[str] = None
 
 
 @dataclass
@@ -39,7 +40,6 @@ class Style:
         op = data.get("alpha")
         return Style(color, op)
 
-
     def keys(self):
         return (
             field.name
@@ -49,7 +49,6 @@ class Style:
 
     def __getitem__(self, key):
         return getattr(self, key)
-        
 
     def toDict(self):
         return dict(
@@ -92,6 +91,7 @@ class SampleSet:
     isdata: bool = False
     forbid: Optional[bool] = False
     mc_campaign: Optional[str] = None
+    lumi_json: Optional[str] = None
 
     @staticmethod
     def fromDict(data):
@@ -106,15 +106,19 @@ class SampleSet:
         isdata = data.get("isdata", False)
         forbid = data.get("forbid", None)
         mc_campaign = data.get("mc_campaign", None)
+        lumi_json = data.get("lumi_json", None)
         if not (x_sec and n_events and lumi) and not (derived_from or isdata):
             raise Exception(
                 f"Every sample must either have a complete weight description, or a derivation. While processing\n {name}"
             )
-        if isdata and mc_campaign:
-            raise Exception(
-                f"A data sample cannot have an MC campaign."
-            )
-            
+        if isdata:
+            if mc_campaign:
+                raise Exception(f"A data sample cannot have an MC campaign.")
+            if not lumi_json and not derived_from:
+                raise Exception(
+                    f"Data sample {name} does not have an associated lumi json"
+                )
+
         files = [SampleFile.fromDict(x) for x in data["files"]]
 
         style = data.get("style", {})
@@ -134,6 +138,8 @@ class SampleSet:
             style,
             isdata,
             forbid,
+            mc_campaign,
+            lumi_json,
         )
         return ss
 
@@ -151,6 +157,18 @@ class SampleSet:
             return self.derived_from.lumi
         else:
             return self.lumi
+
+    def isData(self):
+        if self.derived_from:
+            return self.derived_from.isData()
+        else:
+            return self.isdata
+
+    def getLumiJson(self):
+        if self.derived_from:
+            return self.derived_from.getLumiJson()
+        else:
+            return self.lumi_json
 
     def getXSec(self):
         if self.derived_from:
@@ -170,7 +188,7 @@ class SampleSet:
         if self.derived_from:
             w = self.derived_from.getWeight()
         else:
-            if self.isdata:
+            if self.isData():
                 w = 1
             else:
                 w = self.lumi * self.x_sec / self.n_events
@@ -178,14 +196,13 @@ class SampleSet:
             w = w * target_lumi / self.getLumi()
         return w
 
-    def getAnalyzerSamples(self, target_lumi=None):
-        return [
-            AnalyzerSample(
-                name=self.name,
-                setname=self.name,
-                coffea_dataset=self.toCoffeaDataset(),
-            )
-        ]
+    def getAnalyzerInput(self, setname=None):
+        return AnalyzerInput(
+            dataset_name=self.name,
+            fill_name=setname or self.name,
+            coffea_dataset=self.toCoffeaDataset(),
+            lumi_json=self.getLumiJson(),
+        )
 
     def totalEvents(self):
         return self.n_events
@@ -234,13 +251,9 @@ class SampleCollection:
     def getSets(self):
         return self.sets
 
-    def getAnalyzerSamples(self, target_lumi=None):
+    def getAnalyzerInput(self):
         return [
-            AnalyzerSample(
-                name=x.name,
-                setname=x.name if self.treat_separate else self.name,
-                coffea_dataset=x.toCoffeaDataset(),
-            )
+            x.getAnalyzerInput(None if self.treat_separate else self.name)
             for x in self.getSets()
         ]
 
@@ -309,8 +322,6 @@ class SampleManager:
         for x in it.chain(self.sets.values(), self.collections.values()):
             if isinstance(x.style, str):
                 x.style = self[x.style].style
-            
-        
 
 
 def createSampleAndCollectionTable(manager, re_filter=None):
@@ -336,6 +347,7 @@ def createSetTable(manager, re_filter=None):
     table = Table(title="Samples Sets")
     table.add_column("Name")
     table.add_column("Number Events")
+    table.add_column("Data/MC")
     table.add_column("X-Sec")
     table.add_column("Lumi")
     table.add_column("Number Files")
@@ -350,6 +362,7 @@ def createSetTable(manager, re_filter=None):
         table.add_row(
             s.name,
             f"{str(s.totalEvents())}",
+            "Data" if s.isData() else "MC",
             f"{xs:0.2g}" if xs else "N/A",
             f"{lumi:0.4g}" if lumi else "N/A",
             f"{len(s.files)}",
