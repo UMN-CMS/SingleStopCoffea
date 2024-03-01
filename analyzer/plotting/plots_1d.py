@@ -50,7 +50,7 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
     raw_vals = plot_object.values
     vals = np.append(raw_vals, raw_vals[-1])
     if yerr:
-        errs = plot_object.variances
+        errs = np.sqrt(plot_object.variances)
         if orient == "h":
             ax.errorbar(
                 x,
@@ -109,8 +109,8 @@ def drawRatio(
     ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
 
     unc = hinter.ratio_uncertainty(
-        numerator.variances,
-        denominator.variances,
+        numerator.values,
+        denominator.values,
         uncertainty_type=uncertainty_type,
     )
     x = numerator.axes[0].centers
