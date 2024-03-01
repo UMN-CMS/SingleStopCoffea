@@ -4,10 +4,11 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import hist
 import numpy as np
+import numpy.typing as npt
 
 
 class PlotAxis:
-    edges: np.typing.NDArray[Any]
+    edges: npt.NDArray[Any]
     title: Optional[str] = None
     unit: Optional[str] = None
 
@@ -46,9 +47,9 @@ class PlotAxis:
 
 @dataclass
 class PlotObject:
-    values: np.typing.NDArray[Any]
+    values: npt.NDArray[Any]
     axes: Tuple[PlotAxis]
-    variances: Optional[np.typing.NDArray[Any]] = None
+    variances: Optional[npt.NDArray[Any]] = None
 
     title: Optional[str] = None
     style: Optional[Dict[str, Any]] = None
