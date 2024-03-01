@@ -29,14 +29,16 @@ def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
     return fig
 
 
-def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi):
-    fig, ax = plt.subplots()
+def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None):
 
     hopo = plotobj_obs
     hppo = plotobj_pred
 
-    drawAs1DHist(ax, hopo, yerr=True, fill=False)
-    drawAs1DHist(ax, hppo, yerr=True, fill=False)
+    if not no_hists:
+        fig, ax = plt.subplots()
+
+        drawAs1DHist(ax, hopo, yerr=True, fill=False)
+        drawAs1DHist(ax, hppo, yerr=True, fill=False)
 
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     ab = ax.bottom_axes[0]
@@ -46,9 +48,12 @@ def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi):
     addEra(ax, lumi, era)
     addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
     addTitles1D(ax, hopo, top_pad=0.2)
-    fig.tight_layout()
-    return fig
-
+    
+    if no_hists:
+        return ax
+    else:
+        fig.tight_layout()
+        return fig
 
 def plot1D(
     signal_plobjs,
@@ -61,6 +66,8 @@ def plot1D(
     xlabel_override=None,
     add_label=None,
     top_pad=0.4,
+    ratio=False,
+    un_sig_objs = None,
 ):
     fig, ax = plt.subplots()
 
@@ -72,7 +79,10 @@ def plot1D(
             drawAsScatter(ax, o, yerr=True)
         elif sig_style == "hist":
             drawAs1DHist(ax, o, yerr=True, fill=False)
-
+    if ratio and un_sig_objs is not None:
+        plotRatio(un_sig_objs[0],un_sig_objs[1],coupling,lumi,no_hists=True,ax=ax)
+    elif ratio:
+        plotRatio(signal_plobjs[0],signal_plobjs[1],coupling,lumi,no_hists=True,ax=ax)
     ax.set_yscale(scale)
     hc = next(it.chain(signal_plobjs, background_plobjs))
     handles, labels = ax.get_legend_handles_labels()

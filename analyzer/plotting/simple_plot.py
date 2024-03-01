@@ -118,14 +118,14 @@ class Plotter:
         ho = self.histos[target][hist_obs]
         hp = self.histos[target][hist_pred]
         hopo = PlotObject.fromHist(
-            ho, self.sample_manager[hist_obs].getTitle(), self.sample_manager[hist_obs]
+            ho, self.sample_manager[hist_obs].title, self.sample_manager[hist_obs].style
         )
         hppo = PlotObject.fromHist(
             hp,
-            self.sample_manager[hist_pred].getTitle(),
-            self.sample_manager[hist_pred],
+            self.sample_manager[hist_pred].title,
+            self.sample_manager[hist_pred].style,
         )
-        fig = plotPulls(hppo, hopo, self.coupling, self.target_lumi)
+        fig = plotRatio(hppo, hopo, self.coupling, self.target_lumi)
         if self.outdir:
             fig.savefig(self.outdir / f"pull_{hist_obs}_{hist_pred}.pdf")
             plt.close(fig)
@@ -161,11 +161,13 @@ class Plotter:
         add_label=None,
         top_pad=0.4,
         xlabel_override=None,
+        ratio=False,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
+        unnormalized_background_plobjs = None
+        unnormalized_signal_plobjs = None
         if not scale:
             scale = "linear"
-
         if add_label is None and add_name:
             add_label = add_name.title()
         self.logger.info(f"Now plotting {hist_name}")
@@ -197,6 +199,8 @@ class Plotter:
                 add_label=add_label,
                 top_pad=top_pad,
                 scale=scale,
+                ratio=ratio,
+                un_sig_objs = unnormalized_signal_plobjs,
             )
             fig.tight_layout()
             if self.outdir:
