@@ -1,7 +1,9 @@
-import itertools as it
-from analyzer.core import analyzerModule, ModuleType
-import awkward as ak
 import gc
+import itertools as it
+
+import awkward as ak
+
+from analyzer.core import analyzerModule
 from analyzer.matching import object_matching
 
 
@@ -25,7 +27,7 @@ def createGoodChildren(gen_particles, children):
     return children
 
 
-@analyzerModule("good_gen", ModuleType.MainProducer, require_tags=["signal"])
+#@analyzerModule("good_gen", ModuleType.MainProducer, require_tags=["signal"])
 def goodGenParticles(events):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
 
@@ -58,10 +60,10 @@ def goodGenParticles(events):
     events["SignalQuarks"] = ak.concatenate(
         [ak.singletons(val) for val in [sb, xb, xd, xs]], axis=1
     )
-    return events
+    return events ,analyzer
 
 
-@analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"], after=["good_gen"])
+#@analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"], after=["good_gen"])
 def deltaRMatch(events):
     # ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
     matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
@@ -78,4 +80,4 @@ def deltaRMatch(events):
     events["matched_jets"] = matched_jets
     events["matched_dr"] = dr
     events["matched_jet_idx"] = idx_j
-    return events
+    return events ,analyzer

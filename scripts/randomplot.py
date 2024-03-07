@@ -29,6 +29,18 @@ representative = [
     for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
 ]
 
+plotter = Plotter(
+    "results/newanalyzer.pkl",
+    "figures",
+    default_backgrounds=["Skim_QCDInclusive2018"],
+    #default_axis_opts={"number_jets": Plotter.Split},
+    coupling="312",
+)
+plotter("m14_m", ["signal_312_2000_1900"])
+plotter("m14_vs_m13", ["signal_312_2000_1900"])
+
+sys.exit()
+
 
 plotter = Plotter(
     "analyzerout/chargino_reco.pkl",

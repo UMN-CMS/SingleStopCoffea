@@ -1,15 +1,19 @@
-from analyzer.core import analyzerModule, ModuleType
-from analyzer.math_funcs import angleToNPiToPi
-from .axes import *
-import awkward as ak
-from .objects import b_tag_wps
 import itertools as it
-from .utils import numMatching
+
+import awkward as ak
 import numpy as np
 
+from analyzer.core import analyzerModule
+from analyzer.math_funcs import angleToNPiToPi
 
-def makeIdxHist(ret, hmaker, idxs, name, axlabel):
-    ret[name] = hmaker(
+from .axes import *
+from .objects import b_tag_wps
+from .utils import numMatching
+
+
+def makeIdxHist(analyzer, idxs, name, axlabel):
+    analyzer.H(
+        name,
         hist.axis.IntCategory([0, 1, 2, 3, 4, 5, 6], name=name, label=axlabel),
         idxs,
         name=name,
@@ -17,17 +21,15 @@ def makeIdxHist(ret, hmaker, idxs, name, axlabel):
 
 
 @analyzerModule(
-    "reco_efficiency",
-    ModuleType.MainHist,
-    after=["chargino_hists", "combo_mass"],
-    require_tags=["signal"],
+    "reco_efficiency", categories="main", depends_on=["chargino_hists", "combo_mass"]
 )
-def recoEfficiency(events, hmaker):
+def recoEfficiency(events, analyzer):
     ret = {}
     gj = events.good_jets
     all_three_mask = ~ak.any(ak.is_none(events.matched_jet_idx[:, 1:4], axis=1), axis=1)
 
-    ret[f"m13_matching"] = hmaker(
+    analyzer.H(
+        f"m13_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -36,7 +38,8 @@ def recoEfficiency(events, hmaker):
         numMatching(events.matched_jet_idx[:, 1:4], ak.local_index(gj, axis=1)[:, 0:3]),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m13_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m13_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -48,7 +51,8 @@ def recoEfficiency(events, hmaker):
         name="Number of jets in this set that are also in the gen level matching",
         mask=all_three_mask,
     )
-    ret[f"m24_matching"] = hmaker(
+    analyzer.H(
+        f"m24_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -57,7 +61,8 @@ def recoEfficiency(events, hmaker):
         numMatching(events.matched_jet_idx[:, 1:4], ak.local_index(gj, axis=1)[:, 1:4]),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m24_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m24_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -69,7 +74,8 @@ def recoEfficiency(events, hmaker):
         name="Number of jets in this set that are also in the gen level matching",
         mask=all_three_mask,
     )
-    ret[f"m3_top_3_no_lead_b_matching"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -80,7 +86,8 @@ def recoEfficiency(events, hmaker):
         ),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m3_top_3_no_lead_b_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -93,7 +100,8 @@ def recoEfficiency(events, hmaker):
         mask=all_three_mask,
     )
 
-    ret[f"m3_top_2_plus_lead_b_matching"] = hmaker(
+    analyzer.H(
+        f"m3_top_2_plus_lead_b_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -104,7 +112,8 @@ def recoEfficiency(events, hmaker):
         ),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m3_top_2_plus_lead_b_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m3_top_2_plus_lead_b_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -116,7 +125,8 @@ def recoEfficiency(events, hmaker):
         name="Number of jets in this set that are also in the gen level matching",
         mask=all_three_mask,
     )
-    ret[f"m3_dr_switched_matching"] = hmaker(
+    analyzer.H(
+        f"m3_dr_switched_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -127,7 +137,8 @@ def recoEfficiency(events, hmaker):
         ),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m3_dr_switched_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m3_dr_switched_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -139,7 +150,8 @@ def recoEfficiency(events, hmaker):
         name="Number of jets in this set that are also in the gen level matching",
         mask=all_three_mask,
     )
-    ret[f"m3_top_3_no_lead_b_dr_cut_matching"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b_dr_cut_matching",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -150,7 +162,8 @@ def recoEfficiency(events, hmaker):
         ),
         name="Number of jets in this set that are also in the gen level matching",
     )
-    ret[f"m3_top_3_no_lead_b_dr_cut_matching_all_three"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b_dr_cut_matching_all_three",
         hist.axis.IntCategory(
             [0, 1, 2, 3],
             name="num_matched_chi",
@@ -165,8 +178,8 @@ def recoEfficiency(events, hmaker):
     return ret
 
 
-@analyzerModule("combo_mass", ModuleType.MainHist, after=["chargino_hists"])
-def combo_method(events, hmaker):
+@analyzerModule("combo_mass", depends_on=["chargino_hists"], categories="main")
+def combo_method(events, analyzer):
     ret = {}
     gj = events.good_jets
 
@@ -221,7 +234,8 @@ def combo_method(events, hmaker):
         jets_idx[just_b_mask][:, 0],
     )
 
-    ret[f"m3_top_3_no_lead_b_delta_r_cut"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b_delta_r_cut",
         makeAxis(
             60,
             0,
@@ -234,8 +248,7 @@ def combo_method(events, hmaker):
     )
 
     makeIdxHist(
-        ret,
-        hmaker,
+        analyzer,
         uncomp_idx,
         "m3_top_3_no_lead_b_delta_r_cut_idx",
         "m3_top_3_no_lead_b_delta_r_cut_idxs",
@@ -244,15 +257,14 @@ def combo_method(events, hmaker):
 
     # combos = ak.argcombinations(list(range(6)), 3, axis=0)
     # padmass = ak.pad_none(all_masses, len(combos), axis=1)
-    return ret
+    return events, analyzer
 
 
-@analyzerModule("chargino_hists", ModuleType.MainHist)
-def charginoRecoHistograms(events, hmaker):
+@analyzerModule("chargino_hists", categories="main")
+def charginoRecoHistograms(events, analyzer):
     ret = {}
     gj = events.good_jets
 
-    w = events.EventWeight
     idx = ak.local_index(gj, axis=1)
     med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
 
@@ -277,12 +289,14 @@ def charginoRecoHistograms(events, hmaker):
     m14_axis = makeAxis(60, 0, 3000, r"$m_{14}$ [GeV]")
     mchi_axis = makeAxis(60, 0, 3000, r"$m_{\chi}$ [GeV]")
 
-    ret[f"m3_top_3_no_lead_b"] = hmaker(
+    analyzer.H(
+        f"m3_top_3_no_lead_b",
         makeAxis(60, 0, 3000, r"mass of jets 1-3 without leading b", unit="gev"),
         uncomp_charg,
         name="mass of jets 1-3 without leading b",
     )
-    ret[f"m14_vs_m3_top_3_no_lead_b"] = hmaker(
+    analyzer.H(
+        f"m14_vs_m3_top_3_no_lead_b",
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
             makeAxis(60, 0, 3000, r"$m_{3 (no b)}$", unit="GeV"),
@@ -309,18 +323,16 @@ def charginoRecoHistograms(events, hmaker):
         [no_lead_idxs[:, 0:2], ak.singletons(lead_b_idx)], axis=1
     )
 
-    one, two = ak.unzip(ak.cartesian([no_lead_jets[:, 0:3], no_lead_jets[:, 0:3]]), 2)
+    one, two = ak.unzip(ak.cartesian([no_lead_jets[:, 0:3], no_lead_jets[:, 0:3]]))
     dr = one.delta_r(two)
     max_dr_no_lead_b = ak.max(dr, axis=1)
     one, two = ak.unzip(
-        ak.cartesian(
-            [gj[no_sublead_idxs[:, 0:3]], gj[no_sublead_idxs[:, 0:3]]], axis=1
-        ),
-        2,
+        ak.cartesian([gj[no_sublead_idxs[:, 0:3]], gj[no_sublead_idxs[:, 0:3]]], axis=1)
     )
     dr = one.delta_r(two)
     max_dr_no_sublead_b = ak.max(dr, axis=1)
     ratio = (max_dr_no_lead_b / max_dr_no_sublead_b) > 2
+
     decided = ak.where(ratio, comp_charg, uncomp_charg)
     decided_idxs = ak.where(ratio, comp_charg_idxs, uncomp_charg_idxs)
 
@@ -333,22 +345,25 @@ def charginoRecoHistograms(events, hmaker):
     )
 
     makeIdxHist(
-        ret,
-        hmaker,
+        analyzer,
         uncomp_charg_idxs,
         "m3_top_3_no_lead_b_idxs",
         "m3_top_3_no_lead_b_idxs",
     )
     makeIdxHist(
-        ret,
-        hmaker,
+        analyzer,
         comp_charg_idxs,
         "m3_top_2_plus_lead_b_idxs",
         "m3_top_2_plus_lead_b_idxs",
     )
-    makeIdxHist(ret, hmaker, decided_idxs, "m3_dr_switched_idxs", "m3_dr_switched_idxs")
+    #print(comp_charg_idxs)
+    #print(decided_idxs)
+    #makeIdxHist(
+    #    analyzer, decided_idxs, "m3_dr_switched_idxs", "m3_dr_switched_idxs"
+    #)
 
-    ret[f"m3_top_2_plus_lead_b"] = hmaker(
+    analyzer.H(
+        f"m3_top_2_plus_lead_b",
         makeAxis(
             60, 0, 3000, r"Mass of leading 2 $p_{T}$ Jets + leading b Jet", unit="GeV"
         ),
@@ -356,13 +371,15 @@ def charginoRecoHistograms(events, hmaker):
         name="m3_top_2_plus_lead_b",
     )
 
-    ret[f"m3_dr_switched"] = hmaker(
+    analyzer.H(
+        f"m3_dr_switched",
         makeAxis(60, 0, 3000, r"$\Delta R$>2 Switched Mass", unit="GeV"),
         comp_charg,
         name="m3_top_2_plus_lead_b_delta_r_switch",
     )
 
-    ret[f"m14_vs_m3_top_2_plus_lead_b"] = hmaker(
+    analyzer.H(
+        f"m14_vs_m3_top_2_plus_lead_b",
         [
             makeAxis(60, 0, 3000, r"$m_{4}$", unit="GeV"),
             makeAxis(
@@ -384,7 +401,8 @@ def charginoRecoHistograms(events, hmaker):
         label=r"$\frac{m_{\chi}}{m_{4}}$ [GeV]",
     )
 
-    ret[f"ratio_m14_vs_m3_top_2_plus_lead_b"] = hmaker(
+    analyzer.H(
+        f"ratio_m14_vs_m3_top_2_plus_lead_b",
         [
             makeAxis(
                 60,
@@ -404,7 +422,8 @@ def charginoRecoHistograms(events, hmaker):
         name="ratio_m14_vs_m3_top_2_plus_lead_b",
     )
 
-    ret[f"ratio_m14_vs_m3_top_3_no_lead_b"] = hmaker(
+    analyzer.H(
+        f"ratio_m14_vs_m3_top_3_no_lead_b",
         [
             makeAxis(
                 60,
@@ -424,17 +443,15 @@ def charginoRecoHistograms(events, hmaker):
         name="ratio_m3_top_3_no_lead_b",
     )
 
-    return ret
+    return events, analyzer
 
 
-@analyzerModule(
-    "stop_reco",
-    ModuleType.MainHist,
-)
-def stopreco(events, hmaker):
+@analyzerModule("stop_reco", categories="main")
+def stopreco(events, analyzer):
     ret = {}
     jets = events.good_jets[:, 0:4].sum()
-    ret[f"m14_vs_pt14"] = hmaker(
+    analyzer.H(
+        f"m14_vs_pt14",
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
             makeAxis(50, 0, 500, r"$pt_{14}$", unit="GeV"),
@@ -443,21 +460,18 @@ def stopreco(events, hmaker):
         name="m14 vs pt 14",
     )
 
-    padded_jets = ak.pad_none(events.good_jets, 6,axis=1)
+    padded_jets = ak.pad_none(events.good_jets, 6, axis=1)
 
-    top5sum = padded_jets[:,0:5].sum()
-    top6sum = padded_jets[:,0:6].sum()
+    top5sum = padded_jets[:, 0:5].sum()
+    top6sum = padded_jets[:, 0:6].sum()
 
+    fsrincluded = ak.where((top5sum.pt < jets.pt), top5sum.mass, jets.mass)
 
-
-    fsrincluded = ak.where((top5sum.pt < jets.pt) , top5sum.mass, jets.mass)
-
-
-    ret[f"m14_gt100_m15"] = hmaker(
+    analyzer.H(
+        "m14_gt100_m15",
         makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
         fsrincluded,
         name="m14 or maybe m15",
     )
 
-
-    return ret
+    return events, analyzer

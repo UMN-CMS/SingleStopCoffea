@@ -39,6 +39,7 @@
     - signal_312_2000_1700
     
 - name: signal_312_1000_400 
+  mc_campaign: 2018UL
   type: set
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   lumi: 59.8
@@ -49,9 +50,10 @@
   style:
     color: "#FF0C00"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_400.root
 
 - name: signal_312_1000_600
+  mc_campaign: 2018UL
   type: set
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   lumi: 59.8
@@ -62,9 +64,10 @@
   style:
     color: "#FF5500"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_600.root
 
 - name: signal_312_1000_900
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -75,9 +78,10 @@
   style:
     color: "#FFA900"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_900.root
 
 - name: signal_312_1200_400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -88,9 +92,10 @@
   style:
     color: "#0079C2"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_400.root
 
 - name: signal_312_1200_600
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -101,9 +106,10 @@
   style:
     color: "#C4FF01"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_600.root
 
 - name: signal_312_1200_1100
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1100\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -114,9 +120,10 @@
   style:
     color: "#FF1D00"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1100.root
 
 - name: signal_312_1300_400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -127,9 +134,10 @@
   style:
     color: "#00FF8B"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_400.root
 
 - name: signal_312_1300_600
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -140,9 +148,10 @@
   style:
     color: "#00FFE9"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_600.root
 
 - name: signal_312_1300_1200
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1400\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1200\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -153,9 +162,10 @@
   style:
     color: "#00A4FF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_1200.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_1200.root
 
 - name: signal_312_1400_400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1400\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -166,9 +176,10 @@
   style:
     color: "#004AFF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_400.root
 
 - name: signal_312_1400_600
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1400\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -179,9 +190,10 @@
   style:
     color: "#3F00FF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_600.root
 
 - name: signal_312_1400_1300
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1400\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1300\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -192,9 +204,10 @@
   style:
     color: "#8500FF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_1300.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_1300.root
 
 - name: signal_312_1500_400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -205,9 +218,10 @@
   style:
     color: "#DF00FF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_400.root
 
 - name: signal_312_1500_600
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -218,9 +232,10 @@
   style:
     color: "#FF00CA"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_600.root
 
 - name: signal_312_1500_900
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -231,9 +246,10 @@
   style:
     color: "#00AAA9"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_900.root
 
 - name: signal_312_1500_1400
+  mc_campaign: 2018UL
   type: set
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1400\\ \\mathrm{GeV}$"
   lumi: 59.8
@@ -244,9 +260,10 @@
   style:
     color: "#FFD201"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1400.root
 
 - name: signal_312_2000_400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -257,9 +274,10 @@
   style:
     color: "#21A785"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_400.root
 
 - name: signal_312_2000_600
+  mc_campaign: 2018UL
   type: set
   lumi: 59.8
   n_events: 10000
@@ -269,9 +287,10 @@
   style:
     color: "#48C06D"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_600.root
 
 - name: signal_312_2000_900
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 900\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -282,9 +301,10 @@
   style:
     color: "#83D34B"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_900.root
 
 - name: signal_312_2000_1400
+  mc_campaign: 2018UL
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1400\\ \\mathrm{GeV}$"
   type: set
   lumi: 59.8
@@ -295,9 +315,10 @@
   style:
     color: "#00C69C"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1400.root
 
 - name: signal_312_2000_1900
+  mc_campaign: 2018UL
   type: set
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1900\\ \\mathrm{GeV}$"
   lumi: 59.8
@@ -308,11 +329,12 @@
   style:
     color: "#FF7C00"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1900.root
 
 - name: signal_312_1000_100
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_100.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_100.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   x_sec: 480
@@ -320,8 +342,9 @@
   tags: 
     - signal
 - name: signal_312_1000_700
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_700.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_700.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
   x_sec: 480
@@ -329,8 +352,9 @@
   tags: 
     - signal
 - name: signal_312_1000_800
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_800.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_800.root
   n_events: 9900
   title: "$m_{\\tilde{t}} = 1000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 800\\ \\mathrm{GeV}$"
   x_sec: 480
@@ -338,8 +362,9 @@
   tags: 
     - signal
 - name: signal_312_1200_1000
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1000.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_1000.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1000\\ \\mathrm{GeV}$"
   x_sec: 210
@@ -347,8 +372,9 @@
   tags: 
     - signal
 - name: signal_312_1200_700
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_700.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_700.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
   x_sec: 210
@@ -356,8 +382,9 @@
   tags: 
     - signal
 - name: signal_312_1200_800
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_800.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_800.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 800\\ \\mathrm{GeV}$"
   x_sec: 210
@@ -365,8 +392,9 @@
   tags: 
     - signal
 - name: signal_312_1200_900
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_900.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_900.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 900\\ \\mathrm{GeV}$"
   x_sec: 210
@@ -374,8 +402,9 @@
   tags: 
     - signal
 - name: signal_312_1500_100
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_100.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_100.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -383,8 +412,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1000
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1000.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1000.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1000\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -392,8 +422,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1100
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1100.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1100.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1100\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -401,8 +432,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1200
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1200.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1200.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1200\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -410,8 +442,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1300
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1300.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1300.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1300\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -419,8 +452,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1350
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1350.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1350.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1350\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -428,8 +462,9 @@
   tags: 
     - signal
 - name: signal_312_1500_1450
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1450.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1500_1450.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1450\\ \\mathrm{GeV}$"
   x_sec: 73
@@ -437,8 +472,9 @@
   tags: 
     - signal
 - name: signal_312_2000_100
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_100.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_100.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   x_sec: 16
@@ -446,8 +482,9 @@
   tags: 
     - signal
 - name: signal_312_2000_1200
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1200.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1200.root
   n_events: 9900
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1200\\ \\mathrm{GeV}$"
   x_sec: 16
@@ -455,8 +492,9 @@
   tags: 
     - signal
 - name: signal_312_2000_1300
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1300.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1300.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1300\\ \\mathrm{GeV}$"
   x_sec: 16
@@ -464,8 +502,9 @@
   tags: 
     - signal
 - name: signal_312_2000_1500
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1500.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1500.root
   n_events: 10000
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1500\\ \\mathrm{GeV}$"
   x_sec: 16
@@ -474,8 +513,9 @@
     - signal
 
 - name: signal_312_2000_1600
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1600.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1600.root
   n_events: 9900
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1600\\ \\mathrm{GeV}$"
   x_sec: 16
@@ -484,12 +524,26 @@
     - signal
 
 - name: signal_312_2000_1700
+  mc_campaign: 2018UL
   files:
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1700.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_1700.root
   n_events: 9900
   title: "$m_{\\tilde{t}} = 2000\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 1700\\ \\mathrm{GeV}$"
   x_sec: 16
   lumi: 59.8
   tags: 
     - signal
+
+
+- name: signal_312_1500_400_MG
+  mc_campaign: 2018UL
+  files:
+  - file:NANOAOD-MadGraph-1500_400.root
+  n_events: 100
+  title: "$m_{\\tilde{t}} = 1500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  x_sec: 16
+  lumi: 59.8
+  tags: 
+    - signal
+
 

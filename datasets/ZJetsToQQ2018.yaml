@@ -7,6 +7,7 @@
 
 
 - name: ZJetsToQQ2018_HT-200To400
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 1012000
   n_events: 15002757
@@ -57,6 +58,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToQQ_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/2550000/5F3DEA14-1D28-504F-9965-487FFA4B3CE5.root
 
 - name: ZJetsToQQ2018_HT-400To600
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 114200
   n_events: 13930474
@@ -87,6 +89,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToQQ_HT-400to600_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/2550000/B4FB8465-14B1-0449-9C14-DD2CD637D2DE.root
 
 - name: ZJetsToQQ2018_HT-600To800
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 25340
   n_events: 12029507
@@ -137,6 +140,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToQQ_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/25510000/1A5F7210-2AE3-734E-AD98-5379B686775B.root
 
 - name: ZJetsToQQ2018_HT-800ToInf
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 12990
   n_events: 9681521

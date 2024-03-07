@@ -1,14 +1,17 @@
 import awkward as ak
-from analyzer.core import analyzerModule, ModuleType
-from analyzer.modules.axes import *
 import hist
 
+from analyzer.core import analyzerModule
+from analyzer.modules.axes import *
 
 
-@analyzerModule("dataset_category", ModuleType.Categories)
-def datasetCategory(events, data):
-    return (dataset_axis, data["CatDataset"])
+@analyzerModule("dataset_category", categories="axis_cat", depends_on=["objects"])
+def datasetCategory(events, analyzer):
+    analyzer.histogram_builder.addCategory(dataset_axis, analyzer.setname)
+    return events, analyzer
 
+
+<<<<<<< HEAD
 @analyzerModule("njets_category", ModuleType.Categories)
 def njetCategory(events,data):
     a = hist.axis.IntCategory([4, 5, 6], name="number_jets", label="NJets")

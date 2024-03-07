@@ -1,5 +1,6 @@
 - name: CR0b_Data2018
   derived_from: Data2018
+  n_events: 14560798
   forbid: false
   files:
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_0.root
@@ -10,7 +11,6 @@
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_5.root
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_6.root
   - root://cmsxrootd.fnal.gov//store/user/ckapsiak/SingleStop/Skims/CRSkim_2023_09_21/Data2018_7.root
-  n_events: 14560798
 
 - name: CR0b_QCDInclusive2018
   style: QCDInclusive2018

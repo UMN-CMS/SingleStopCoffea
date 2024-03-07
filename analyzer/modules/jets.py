@@ -1,19 +1,20 @@
-from analyzer.core import analyzerModule, ModuleType
-from analyzer.math_funcs import angleToNPiToPi
-from .axes import *
-import awkward as ak
-from .objects import b_tag_wps
 import itertools as it
+
+import awkward as ak
+import dask
+
+from analyzer.core import analyzerModule
+from analyzer.math_funcs import angleToNPiToPi
+
+from .axes import *
+from .objects import b_tag_wps
 from .utils import numMatching
 
 
-@analyzerModule("jet_hists", ModuleType.MainHist)
-def createJetHistograms(events, hmaker):
-    ret = {}
+@analyzerModule("jets", categories="main", depends_on=["objects", "event_level"])
+def createJetHistograms(events, analyzer):
     gj = events.good_jets
-    w = events.EventWeight
-
-    ret[f"h_njet"] = hmaker(nj_axis, ak.num(gj), name="njets")
+    analyzer.H(f"h_njet", nj_axis, ak.num(gj), name="njets")
     jet_combos = [(0, 4), (0, 3), (1, 4), (0, 2), (1, 3)]
     co = lambda x: it.combinations(x, 2)
 
@@ -22,7 +23,7 @@ def createJetHistograms(events, hmaker):
     for i, j in jet_combos:
         jets = gj[:, i:j].sum()
         masses[(i, j)] = jets.mass
-        ret[f"m{i+1}{j}_pt"] = hmaker(
+        analyzer.H(f"m{i+1}{j}_pt", 
             makeAxis(
                 100,
                 0,
@@ -34,14 +35,14 @@ def createJetHistograms(events, hmaker):
             name=f"Composite Jet {i+1} to Jet {j} $p_T$",
             description=f"$p_T$ of the sum of jets {i+1} to {j}",
         )
-        ret[f"m{i+1}{j}_eta"] = hmaker(
+        analyzer.H(f"m{i+1}{j}_eta", 
             makeAxis(20, -5, 5, f"$\eta ( \\sum_{{n={i+1}}}^{{{j}}} ) jet_{{n}}$"),
             jets.eta,
             name=rf"Composite Jet {i+1} to Jet {j} $\eta$",
             description=rf"$\eta$ of the sum of jets {i+1} to {j}",
         )
         mtitle = 4 if j - i == 4 else 3
-        ret[rf"m{i+1}{j}_m"] = hmaker(
+        analyzer.H(rf"m{i+1}{j}_m", 
             makeAxis(60, 0, 3000, f"$m_{{{mtitle}}}$", unit="GeV"),
             jets.mass,
             name=rf"Composite Jet {i+1} to Jet {j} mass",
@@ -53,7 +54,7 @@ def createJetHistograms(events, hmaker):
         p2_1, p2_2 = p2
         mtitle1 = 4 if p1_2 - p1_1 == 4 else 3
         mtitle2 = 4 if p2_2 - p2_1 == 4 else 3
-        ret[f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
+        analyzer.H(f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}", 
             [
                 makeAxis(
                     60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV", append_name="1"
@@ -66,7 +67,7 @@ def createJetHistograms(events, hmaker):
             name="Comp mass",
         )
 
-        ret[f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}"] = hmaker(
+        analyzer.H(f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}", 
             [
                 makeAxis(60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV"),
                 makeAxis(
@@ -81,19 +82,19 @@ def createJetHistograms(events, hmaker):
         )
 
     for i in range(0, 4):
-        ret[rf"pt_{i}"] = hmaker(
+        analyzer.H(rf"pt_{i}", 
             makeAxis(60, 0, 3000, f"$p_{{T, {i}}}$", unit="GeV"),
             gj[:, i].pt,
             name=f"$p_T$ of jet {i+1}",
             description=f"$p_T$ of jet {i+1} ",
         )
-        ret[f"eta_{i}"] = hmaker(
+        analyzer.H(f"eta_{i}", 
             makeAxis(20, 0, 5, f"$\eta_{{{i}}}$"),
             abs(gj[:, i].eta),
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
-        ret[f"phi_{i}"] = hmaker(
+        analyzer.H(f"phi_{i}", 
             makeAxis(50, 0, 4, f"$\phi_{{{i}}}$"),
             abs(gj[:, i].phi),
             name=rf"$\phi$ of jet {i+1}",
@@ -104,27 +105,26 @@ def createJetHistograms(events, hmaker):
     masks = {}
     for i, j in list(x for x in it.combinations(range(0, 5), 2) if x[0] != x[1]):
         mask = ak.num(gj, axis=1) > max(i, j)
-        w_mask = w[mask]
         masked_jets = gj[mask]
         d_eta = masked_jets[:, i].eta - masked_jets[:, j].eta
         d_r = masked_jets[:, i].delta_r(masked_jets[:, j])
         d_phi = masked_jets[:, i].phi - masked_jets[:, j].phi
         masks[(i, j)] = mask
-        ret[rf"d_eta_{i+1}_{j}"] = hmaker(
+        analyzer.H(rf"d_eta_{i+1}_{j}", 
             eta_axis,
             d_eta,
             mask=mask,
             name=rf"$\Delta \eta$ between jets {i+1} and {j}",
             description=rf"$\Delta \eta$ between jets {i+1} and {j}",
         )
-        ret[f"d_phi_{i+1}_{j}"] = hmaker(
+        analyzer.H(f"d_phi_{i+1}_{j}", 
             phi_axis,
             d_phi,
             mask=mask,
             name=rf"$\Delta \phi$ between jets {i+1} and {j}",
             description=rf"$\Delta \phi$ between jets {i+1} and {j}",
         )
-        ret[f"d_r_{i+1}_{j}"] = hmaker(
+        analyzer.H(f"d_r_{i+1}_{j}", 
             dr_axis,
             d_r,
             mask=mask,
@@ -136,7 +136,7 @@ def createJetHistograms(events, hmaker):
         mask = ak.num(gj, axis=1) > i
         masked_jets = gj[mask]
         htratio = masked_jets[:, i].pt / events.HT[mask]
-        ret[f"pt_ht_ratio_{i+1}"] = hmaker(
+        analyzer.H(f"pt_ht_ratio_{i+1}", 
             hist.axis.Regular(50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
             mask=mask,
@@ -147,7 +147,7 @@ def createJetHistograms(events, hmaker):
         mask = masks[p1] & masks[p2]
         p1_vals = gj[mask][:, p1[0]].phi - gj[mask][:, p1[1]].phi
         p2_vals = gj[mask][:, p2[0]].phi - gj[mask][:, p2[1]].phi
-        ret["d_phi_{}{}_vs_{}{}".format(*p1, *p2)] = hmaker(
+        analyzer.H("d_phi_{}{}_vs_{}{}".format(*p1, *p2), 
             [
                 hist.axis.Regular(
                     50, 0, 5, name="dp1", label=r"$\Delta \phi_{" + f"{p1}" + r"}$"
@@ -160,12 +160,12 @@ def createJetHistograms(events, hmaker):
             mask=mask,
             name=rf"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
         )
-    return ret
+    return events, analyzer
 
 
-@analyzerModule("other_region_mass_plots", ModuleType.MainHist)
-def otherRegionMassHists(events, hmaker):
-    ret = {}
+@analyzerModule("other_region_mass_plots", categories="main")
+def otherRegionMassHists(events, analyzer):
+    hmaker = analyzer.hmaker
     gj = events.good_jets
 
     jets = gj[:, 0:4].sum()
@@ -178,7 +178,7 @@ def otherRegionMassHists(events, hmaker):
     tight_dr_mask = tight_dr > 1
     sr_313_mask = sr_313_tight_mask & tight_dr_mask
 
-    ret[rf"313_m4_m"] = hmaker(
+    analyzer.H(rf"313_m4_m", 
         makeAxis(60, 0, 3000, f"$m_{{4}}$", unit="GeV"),
         jets.mass[sr_313_mask],
         name=rf"M4 in the 313 Region",
@@ -186,4 +186,4 @@ def otherRegionMassHists(events, hmaker):
         mask=sr_313_mask,
     )
 
-    return ret
+    return events, analyzer
