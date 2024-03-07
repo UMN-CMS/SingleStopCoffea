@@ -285,8 +285,10 @@ def drawRatio(
     ax, numerator, denominator, uncertainty_type="efficiency", hline_list=None, **kwargs
 ):
     hline_list = hline_list or []
+    print(ax)
+    print(type(numerator), type(denominator))
     nh, dh = numerator.hist, denominator.hist
-    an, ad = nh.axes[0], dh.axes[0]
+    an, ad = nh.axes[0:2], dh.axes[0:2]
     nv, dv = numerator.getValues(), denominator.getValues()
     ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
 
@@ -296,7 +298,7 @@ def drawRatio(
         uncertainty_type=uncertainty_type,
     )
 
-    x = numerator.getBinCenters()[0]
+    x = numerator.getBinCenters()[0:2]
     ax.errorbar(
         x,
         ratio,
@@ -307,6 +309,43 @@ def drawRatio(
     )
     return ax
 
+@magicPlot
+def drawRatio2D(
+    ax, numerator, denominator, uncertainty_type="efficiency", divider = None, add_color_bar = True, **kwargs
+):
+    nh, dh = numerator.hist, denominator.hist
+    nv, dv = numerator.getValues(), denominator.getValues()
+    ratio = np.divide(nv, dv, out=np.zeros_like(nv), where=dv != 0)
+    a1 = nh.axes[0]
+    a2 = nh.axes[1]
+    vals, e1, e2 = nh.to_numpy()
+    vals = ratio
+    ex = a1.centers
+    ey = a2.centers
+    vx, vy = np.meshgrid(ex, ey)
+    x = vx.ravel()
+    y = vy.ravel()
+    w = vals.T.ravel()
+    
+    unc = hinter.ratio_uncertainty(
+        numerator.getUncertainty(),
+        denominator.getUncertainty(),
+        uncertainty_type = uncertainty_type,
+    )
+
+    x1, x2 = numerator.getBinCenters()[0], numerator.getBinCenters()[1]
+    im = ax.hist2d(x, y, bins=[e1, e2], weights=w, **kwargs)
+    ax.set_xlabel(a1.label)
+    ax.set_ylabel(a2.label)
+    ax.quadmesh = im[3]
+    if divider is None:
+        divider = make_axes_locatable(ax)
+    if add_color_bar:
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = plt.colorbar(ax.quadmesh, cax=cax)
+        cax.get_yaxis().set_offset_position("left")
+        ax.cax = cax
+    return ax
 
 @magicPlot
 def drawPull(ax, pred, obs, uncertainty_type="poisson", hline_list=None, **kwargs):

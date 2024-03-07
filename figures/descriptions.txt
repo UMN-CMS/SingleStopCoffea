@@ -1,1 +1,1 @@
-mSoftDrop: p_T of leading AK8 jet
+mSoftDrop2D: p_T of leading AK8 jet

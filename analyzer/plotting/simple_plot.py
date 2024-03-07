@@ -15,7 +15,7 @@ import logging
 import logging.handlers
 from enum import Enum, auto
 from concurrent.futures import ProcessPoolExecutor, wait
-import multiprocess as mp
+#import multiprocess as mp
 import atexit
 
 
@@ -33,7 +33,7 @@ class _Split(object):
 
 class Plotter:
     Split = object.__new__(_Split)
-    queue = mp.Queue()
+    #queue = mp.Queue()
 
     def __init__(
         self,
@@ -58,12 +58,12 @@ class Plotter:
 
             atexit.register(self.finishRemaining)
 
-            handler = logging.handlers.QueueHandler(self.queue)
+            #handler = logging.handlers.QueueHandler(self.queue)
             handler.setLevel(logging.DEBUG)
             handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
-            self.ql = logging.handlers.QueueListener(self.queue, stream_handler)
-            self.ql.start()
-            atexit.register(lambda: self.ql.stop())
+            #self.ql = logging.handlers.QueueListener(self.queue, stream_handler)
+            #self.ql.start()
+            #atexit.register(lambda: self.ql.stop())
 
 
         self.logger.info("Creating plotter")

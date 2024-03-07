@@ -60,8 +60,6 @@ def simplePlot(
     with open(savedir / "descriptions.txt", "a") as f:
         f.write(f"{hist}: {h.description}\n")
     datasets = sorted(bkg_set) + sorted(sig_set)
-    print(datasets)
-    print(len(h.axes))
     hc = h[{"dataset": datasets}]
     if normalize:
         hc = getNormalized(hc, "dataset")
@@ -145,8 +143,9 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
-simplePlot('mSoftDrop', singlemuon, [], scale = 'log', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
+simplePlot('mSoftDrop2D', singlemuon, [], scale = 'linear', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
 
+'''
 pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}][{'dataset': 'DataSingleMuon2018'}]
@@ -204,6 +203,26 @@ addEra(ax, 59.8)
 
 fig.tight_layout()
 fig.savefig("figures/softDrop_Efficiency.pdf")
+plt.close(fig)
+'''
+
+softDrop2D_pass = histos['mSoftDrop2D'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
+softDrop2D_total = histos['mSoftDrop2D'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
+sdp2D_PO = PlotObject(softDrop2D_pass, r'm_{Soft Drop}', None)
+sdt2D_PO = PlotObject(softDrop2D_total, r'm_{Soft Drop}', None)
+
+#fig, ax = drawAs2DHist(sdp2D_PO) #, yerr=True, fill=False)
+#ax.set_yscale('log')
+#drawAs2DHist(sdt2D_PO) #, yerr=True, fill=False)
+#addAxesToHist(ax, num_bottom=2, bottom_pad=0)
+#ab = ax.bottom_axes[0]
+fig, ax = drawRatio2D(sdp2D_PO, sdt2D_PO)
+ax.set_ylabel("mSoftDrop")
+
+addEra(ax, 59.8)
+
+fig.tight_layout()
+fig.savefig("figures/softDrop2D_Efficiency.pdf")
 plt.close(fig)
 
 
