@@ -5,11 +5,11 @@ from analyzer.plotting.simple_plot import Plotter
 from analyzer.plotting import simple_plot
 import warnings
 import itertools as it
-import pickle 
+import pickle
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
-backgrounds = ["Skim_QCDInclusive2018"]
+# backgrounds = ["Skim_QCDInclusive2018"]
 # compressed = [
 #     f"signal_312_{p}" for p in ("1500_1900", "1200_1100", "1500_1400", "2000_1700")
 # ]
@@ -29,20 +29,20 @@ backgrounds = ["Skim_QCDInclusive2018"]
 #     for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
 # ]
 
-# plotter = Plotter(
-#     "myoutput.pkl",
-#     "figures",
-#     default_backgrounds=None,
-#     #default_axis_opts={"number_jets": Plotter.Split},
-#     coupling="312",
-# )
-# plotter("m14_m", ["signal_312_1500_400" , "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400_",normalize=True,ratio=True)
-# plotter("m14_m", ["signal_312_1500_1100" , "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100_",normalize=True,ratio=True)
-# plotter("m14_m", ["signal_312_1500_1400" , "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400_",normalize=True, ratio=True)
-with (open("myoutput.pkl", "rb")) as openfile:
-    objects = pickle.load(openfile)
-print(objects.results.keys())
-#plotter("m14_vs_m13", ["signal_312_1500_1400_mg"])
+plotter = Plotter(
+    "myoutput.pkl",
+    "figures",
+    default_backgrounds=None,
+    #default_axis_opts={"number_jets": Plotter.Split},
+    coupling="312",
+)
+list_of_samples = ["1500_400","1500_400_mg","1500_1100","1500_1100_mg","1500_1400","1500_1400_mg"]
+list_of_mass_points = ["400","1100","1400"]
+list_of_hists = ["m14_m","m14_pt","m14_eta","m13_m","m13_pt","m13_eta"]
+for j in list_of_hists:
+    for i in list_of_mass_points:
+        plotter(j, ["signal_312_1500_"+i, "signal_312_1500_"+i+"_mg"],add_label="Pythia vs MG (black)",add_name=i,normalize=True,ratio=True)
+print(plotter.histos.keys())
 
 sys.exit()
 
