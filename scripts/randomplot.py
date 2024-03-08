@@ -5,6 +5,7 @@ from analyzer.plotting.simple_plot import Plotter
 from analyzer.plotting import simple_plot
 import warnings
 import itertools as it
+import pickle 
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
@@ -28,16 +29,19 @@ backgrounds = ["Skim_QCDInclusive2018"]
 #     for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
 # ]
 
-plotter = Plotter(
-    "myoutput.pkl",
-    "figures",
-    default_backgrounds=None,
-    #default_axis_opts={"number_jets": Plotter.Split},
-    coupling="312",
-)
-plotter("m14_m", ["signal_312_1500_400" , "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400_",normalize=True,ratio=True)
-plotter("m14_m", ["signal_312_1500_1100" , "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100_",normalize=True,ratio=True)
-plotter("m14_m", ["signal_312_1500_1400" , "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400_",normalize=True, ratio=True)
+# plotter = Plotter(
+#     "myoutput.pkl",
+#     "figures",
+#     default_backgrounds=None,
+#     #default_axis_opts={"number_jets": Plotter.Split},
+#     coupling="312",
+# )
+# plotter("m14_m", ["signal_312_1500_400" , "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400_",normalize=True,ratio=True)
+# plotter("m14_m", ["signal_312_1500_1100" , "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100_",normalize=True,ratio=True)
+# plotter("m14_m", ["signal_312_1500_1400" , "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400_",normalize=True, ratio=True)
+with (open("myoutput.pkl", "rb")) as openfile:
+    objects = pickle.load(openfile)
+print(objects.results.keys())
 #plotter("m14_vs_m13", ["signal_312_1500_1400_mg"])
 
 sys.exit()
