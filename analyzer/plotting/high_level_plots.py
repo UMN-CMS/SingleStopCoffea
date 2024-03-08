@@ -44,6 +44,7 @@ def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None
     drawRatio(ab, hppo, hopo)
 
     ab.set_ylabel("Ratio")
+    ab.set_ylim(0,2)
     addEra(ax, lumi)
     addPrelim(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
     addTitles1D(ax, hopo, top_pad=0.2)
