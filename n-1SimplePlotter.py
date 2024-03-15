@@ -6,9 +6,9 @@ import hist as hst
 import matplotlib.pyplot as plt
 
 from analyzer.plotting.styles import *
-from analyzer.plotting.core_plots import *
+#from analyzer.plotting.core_plots import *
 from analyzer.plotting.simple_plot import *
-from analyzer.datasets import loadSamplesFromDirectory
+from analyzer.datasets import SampleManager #import loadSamplesFromDirectory
 
 from pathlib import Path
 
@@ -25,12 +25,13 @@ uncompressed = [f"signal_312_{p}" for p in ("2000_1400", "1200_400", "1500_900")
 both = compressed + uncompressed
 representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900")]
 
-manager = loadSamplesFromDirectory("datasets")
+manager = SampleManager.loadSamplesFromDirectory("datasets")
 
-file_name = "singlemuon_softdrop.pkl"
+file_name = "signal_312_1200_400.pkl"
 data = pkl.load(open(file_name, "rb"))
-histos = data["histograms"]
-lumi = data["target_lumi"]
+histos = data.results[file_name].histograms
+lumi = None
+#lumi = data["target_lumi"]
 
 def simplePlot(
     hist,
@@ -144,6 +145,8 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
 simplePlot('mSoftDrop2D', singlemuon, [], scale = 'linear', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
+
+simplePlot('mSoftDrop', [file_name], [], scale = 'linear', normalize=False, selection = {'dataset': 'signal_312_1200_400', 'HT1050': 0})
 
 '''
 pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]

@@ -9,7 +9,7 @@ import hist.intervals as hinter
 from . import static
 from dataclasses import dataclass
 from functools import partial, wraps
-from analyzer.datasets import Style, Dataset
+from analyzer.datasets import Style#, Dataset
 from typing import Optional, Dict, Any, Union, Tuple
 import itertools as it
 import hist

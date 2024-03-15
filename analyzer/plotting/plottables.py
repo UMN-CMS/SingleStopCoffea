@@ -7,7 +7,7 @@ import numpy as np
 
 
 class PlotAxis:
-    edges: np.typing.NDArray[Any]
+    edges: np._typing.NDArray[Any]
     title: Optional[str] = None
     unit: Optional[str] = None
 
@@ -46,14 +46,14 @@ class PlotAxis:
 
 @dataclass
 class PlotObject:
-    values: np.typing.NDArray[Any]
+    values: np._typing.NDArray[Any]
     axes: Tuple[PlotAxis]
-    variances: Optional[np.typing.NDArray[Any]] = None
+    variances: Optional[np._typing.NDArray[Any]] = None
 
     title: Optional[str] = None
     style: Optional[Dict[str, Any]] = None
 
-    mask: Optional[np.typing.NDArray[Any]] = None
+    mask: Optional[np._typing.NDArray[Any]] = None
 
     @staticmethod
     def fromHist(hist, title=None, style=None, mask=None):

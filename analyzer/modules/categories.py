@@ -178,6 +178,12 @@ def HTTriggerPlot(events, analyzer):
 	)
 	return events, analyzer
 
+@analyzerModule("pTOrHTTrigger", depends_on=['objects'], categories='cat_axis')
+def pTOrHTTrigger(events, analyzer):
+  triggers = (events.HLT.PFHT1050) | (events.HLT.AK8PFJet400_TrimMass30)
+  a = hist.axis.IntCategory([0, 1], name = 'triggers', label = 'triggers')
+  analyzer.histogram_builder.addCategory(a, triggers)
+  return events, analyzer
 
 '''
 @analyzerModule("nMinusOnePlots", ModuleType.MainHist)

@@ -1,5 +1,6 @@
 import logging
 import analyzer.utils as utils
+import coffea
 from coffea.dataset_tools.preprocess import DatasetSpec
 from analyzer.datasets import SampleCollection, SampleSet
 import coffea.dataset_tools as dst

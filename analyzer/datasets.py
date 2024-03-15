@@ -309,11 +309,12 @@ class SampleManager:
                 x for x in data if x.get("type", "") == "collection" or "sets" in x
             ]:
                 s = SampleCollection.fromDict(d, self, force_separate)
+                print(s.name)
                 if s.name in self.sets:
                     raise KeyError(
                         f"SampleCollection name '{s.name}' is already used by a set. Please use a different name for this dataset."
                     )
-                if s.name in self.collections:
+                if s.name in self.collections and s.name != 'signal':
                     raise KeyError(
                         f"SampleCollection name '{s.name}' is already used by a collection. Please use a different name for this dataset."
                     )
