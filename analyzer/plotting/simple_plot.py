@@ -2,18 +2,21 @@ import itertools as it
 import logging
 import pickle as pkl
 import re
+import numpy as np
 from pathlib import Path
 
 import analyzer.core as ac
 import hist
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from hist import Hist
+from analyzer.datasets import SampleManager
 import analyzer.datasets as ad
 from analyzer.utils import accumulate
 
 from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio
 from .mplstyles import loadStyles
-from .plottables import PlotObject, createPlotObjects
+from .plottables import PlotObject, createPlotObjects, PlotAxis
 from .utils import getNormalized
 
 
@@ -197,6 +200,7 @@ class Plotter:
         if normalize:
             unnormalized_signal_plobjs = createPlotObjects(
                 hc, "dataset", self.sample_manager, cat_filter="signal")
+            un_norm_hc = hc
             hc = getNormalized(hc, "dataset")
             
         background_plobjs = createPlotObjects(
@@ -250,6 +254,29 @@ class Plotter:
                 fig.tight_layout()
                 if self.outdir:
                     fig.savefig(self.outdir / f"{add_name}{hist_name}_{x}.pdf")
+                    plt.close(fig)
+                else:
+                    ret.append(fig)
+            if ratio:
+                ob1 = un_norm_hc.axes[0][0]
+                ob2 = un_norm_hc.axes[0][1]
+                realh1 = un_norm_hc[{"dataset": ob1}]
+                realh2 = un_norm_hc[{"dataset": ob2}]
+                nv = realh1.values()
+                dv = realh2.values()
+                ratio_histv = np.divide(nv,dv,out=np.ones_like(nv), where=dv != 0)
+                po_ratio = PlotObject.fromNumpy((ratio_histv,realh1.axes), title=ob1, style=self.sample_manager[x].style,axes=True)
+                fig = plot2D(
+                    po_ratio,
+                    self.coupling,
+                    self.target_lumi,
+                    sig_style=sig_style,
+                    add_label=add_label,
+                    scale=scale,
+                    ratio=ratio,
+                )
+                if self.outdir:
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{ob1}_pythia_v_mg_ratio.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)

@@ -70,13 +70,17 @@ class PlotObject:
         )
 
     @staticmethod
-    def fromNumpy(hist, variances=None, title=None, style=None, mask=None):
-        return PlotObject(
-            values=hist[0],
+    def fromNumpy(hist, variances=None, title=None, style=None, mask=None,axes=False):
+        if axes:
+            axes = tuple(PlotAxis.fromHist(a) for a in hist[1])
+        else:
             axes=tuple(
                 PlotAxis(a)
                 for a in (hist[1] if isinstance(hist[1], tuple) else [hist[1]])
             ),
+        return PlotObject(
+            values=hist[0],
+            axes=axes,
             variances=variances,
             title=title,
             style=style or {},
