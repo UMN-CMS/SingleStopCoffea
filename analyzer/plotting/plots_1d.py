@@ -2,6 +2,7 @@ import numpy as np
 
 import hist
 import hist.intervals as hinter
+import hist.basehist as hbhist
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -130,7 +131,7 @@ def drawRatio(
         x,
         ratio,
         yerr=unc,
-        marker="+",
+        marker=".",
         linestyle="none",
         **kwargs,
     )
