@@ -159,6 +159,9 @@ class PlotObject:
                 PlotAxis(a)
                 for a in (hist[1] if isinstance(hist[1], tuple) else [hist[1]])
             ),
+        return PlotObject(
+            values=hist[0],
+            axes=axes,
             variances=variances,
             **kwargs,
         )

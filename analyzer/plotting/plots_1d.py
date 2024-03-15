@@ -2,6 +2,7 @@ import numpy as np
 
 import hist
 import hist.intervals as hinter
+import hist.basehist as hbhist
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from .plottables import FillType
@@ -90,7 +91,14 @@ def drawRatio(
         uncertainty_type=uncertainty_type,
     )
     x = numerator.axes[0].centers
-    ax.errorbar(x, ratio, yerr=unc, marker="+", linestyle="none", **kwargs)
+    ax.errorbar(
+        x,
+        ratio,
+        yerr=unc,
+        marker=".",
+        linestyle="none",
+        **kwargs,
+    )
     return ax
 
 

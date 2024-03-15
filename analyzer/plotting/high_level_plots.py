@@ -106,6 +106,8 @@ def plot1D(
     )
     addTitles1D(ax, hc, top_pad=top_pad)
 
+    if "$p_T ( \sum_{n=1}^" in hc.axes[0].title:
+        ax.set_xlim(right=600)
     fig.tight_layout()
 
     return fig
@@ -119,6 +121,7 @@ def plot2D(
     sig_style="hist",
     scale="log",
     add_label=None,
+    ratio=False,
 ):
     fig, ax = plt.subplots()
 
@@ -134,4 +137,8 @@ def plot2D(
         color="white",
     )
     addTitles2D(ax, plot_obj)
+
+    if ratio and hasattr(ax, "cax"):
+        cax = ax.cax
+        cax.set_ylabel("Ratio (Pythia/MG)")
     return fig
