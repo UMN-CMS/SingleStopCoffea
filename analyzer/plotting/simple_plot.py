@@ -188,7 +188,6 @@ class Plotter:
         ratio=False,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
-        unnormalized_background_plobjs = None
         unnormalized_signal_plobjs = None
         if not scale:
             scale = "linear"
@@ -242,7 +241,7 @@ class Plotter:
             ret = []
             for x in hc.axes[0]:
                 realh = hc[{"dataset": x}]
-                po = PlotObject.fromHist(realh, x, self.sample_manager[x].style)
+                po = PlotObject.fromHist(realh, x, title=realh.axes[0][0], style=self.sample_manager[x].style)
                 fig = plot2D(
                     po,
                     self.coupling,
@@ -262,6 +261,8 @@ class Plotter:
                 ob2 = un_norm_hc.axes[0][1]
                 realh1 = un_norm_hc[{"dataset": ob1}]
                 realh2 = un_norm_hc[{"dataset": ob2}]
+                realh1/realh2
+                raise Exception
                 nv = realh1.values()
                 dv = realh2.values()
                 ratio_histv = np.divide(nv,dv,out=np.ones_like(nv), where=dv != 0)
