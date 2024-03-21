@@ -27,8 +27,8 @@ def createGoodChildren(gen_particles, children):
     return children
 
 
-#@analyzerModule("good_gen", ModuleType.MainProducer, require_tags=["signal"])
-def goodGenParticles(events):
+@analyzerModule("good_gen", categories="main", depends_on=["objects"])
+def goodGenParticles(events,analyzer):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
 
     def get(x):
@@ -60,7 +60,7 @@ def goodGenParticles(events):
     events["SignalQuarks"] = ak.concatenate(
         [ak.singletons(val) for val in [sb, xb, xd, xs]], axis=1
     )
-    return events ,analyzer
+    return events,analyzer
 
 
 #@analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"], after=["good_gen"])
