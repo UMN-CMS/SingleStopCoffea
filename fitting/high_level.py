@@ -12,101 +12,126 @@ import yaml
 
 import analyzer.file_utils as futil
 import analyzer.plotting as plotting
-from analyzer.plotting.mplstyles import loadStyles
 import gpytorch
 import hist
+import linear_operator
 import matplotlib.pyplot as plt
 import torch
+import uhi
+from analyzer.plotting.mplstyles import loadStyles
 from analyzer.plotting.utils import subplots_context
 from gpytorch.kernels import ScaleKernel as SK
 from rich.progress import Progress, track
+from matplotlib.patches import Polygon
+
 
 from . import models, regression
-from .plot_tools import createSlices, simpleGrid
+from .plot_tools import createSlices, simpleGrid, makeSquares, getPolyFromSquares
 
 torch.set_default_dtype(torch.float64)
 
 
-def makeDiagonistPlots(
-    pred_mean, pred_var, raw_test, raw_train, raw_hist, dirdata, save_dir
-):
-    def savePlot(fig, name, data=None):
+def saveDiagnosticPlots(plots, dirdata, save_dir):
+    for name, (fig, ax) in plots.items():
         data = data or {}
-        o = save_dir / name
-        dirdata.set(o, data)
+        o = (save_dir / name).with_extension(".pdf")
         fig.savefig(o)
 
-    all_pulls = (pred_mean - raw_test.outputs) / torch.sqrt(raw_test.variances)
-    all_x2 = (pred_mean - raw_test.outputs) ** 2 / raw_test.variances
+
+def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
+    ret = {}
+    if mask is not None:
+        squares = makeSquares(raw_test.X[mask], raw_test.E)
+        points = getPolyFromSquares(squares)
+    def addWindow(ax):
+        if mask is None:
+            return
+        else:
+            poly = Polygon(points, edgecolor="red", fill=False)
+            ax.add_patch(poly)
+
+    pred_mean = pred.Y
+    pred_variances = pred.V
+
+    all_x2 = (pred_mean - raw_test.Y) ** 2 / raw_test.V
     x2 = torch.sum(all_x2)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        simpleGrid(ax, raw_test.edges, raw_train.inputs, raw_train.outputs)
-        ax.set_title("Masked Inputs (Training)")
-        plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
-        savePlot(fig, "training_points.pdf")
+    fig, ax = plt.subplots(layout="tight")
+    simpleGrid(ax, raw_test.E, raw_train.X, raw_train.Y)
+    ax.set_title("Masked Inputs (Training)")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    addWindow(ax)
+    ret["training_points"] = (fig, ax)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        f = simpleGrid(ax, raw_test.edges, raw_test.inputs, pred_mean)
-        ax.set_title("GPR Mean Prediction")
-        plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
-        savePlot(fig, "gpr_mean.pdf")
+    fig, ax = plt.subplots(layout="tight")
+    f = simpleGrid(ax, raw_test.E, raw_test.X, pred_mean)
+    ax.set_title("GPR Mean Prediction")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    addWindow(ax)
+    ret["gpr_mean"] = (fig, ax)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        simpleGrid(ax, raw_test.edges, raw_test.inputs, raw_test.outputs)
-        ax.set_title("Observed Outputs")
-        savePlot(fig, "observed_outputs.pdf")
+    fig, ax = plt.subplots(layout="tight")
+    simpleGrid(ax, raw_test.E, raw_test.X, raw_test.Y)
+    ax.set_title("Observed Outputs")
+    addWindow(ax)
+    ret["observed_outputs"] = (fig, ax)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        f = simpleGrid(ax, raw_test.edges, raw_test.inputs, raw_test.variances)
-        ax.set_title("Observed Variances")
-        plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
-        savePlot(fig, "observed_variances.pdf")
+    fig, ax = plt.subplots(layout="tight")
+    f = simpleGrid(ax, raw_test.E, raw_test.X, raw_test.V)
+    ax.set_title("Observed Variances")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    addWindow(ax)
+    ret["observed_variances"] = (fig, ax)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        f = simpleGrid(ax, raw_test.edges, raw_test.inputs, pred_var)
-        ax.set_title("Pred Variances")
-        plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
-        savePlot(fig, "predicted_variances.pdf")
+    fig, ax = plt.subplots(layout="tight")
+    f = simpleGrid(ax, raw_test.E, raw_test.X, pred.V)
+    ax.set_title("Pred Variances")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    addWindow(ax)
+    ret["predicted_variances"] = (fig, ax)
 
-    with subplots_context(layout="tight") as (fig, ax):
-        f = simpleGrid(
-            ax,
-            raw_test.edges,
-            raw_test.inputs,
-            (raw_test.outputs - pred_mean) / torch.sqrt(raw_test.variances),
-        )
-        f.set_clim(-5, 5)
-        ax.set_title("Pulls")
-        plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
-        ax.cax.set_ylabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{p}}$")
-        savePlot(fig, "pulls.pdf")
-
-    import uhi
-
-    with subplots_context(layout="tight") as (fig, ax):
-        p = plotting.PlotObject.fromHist(
-            uhi.numpy_plottable.ensure_plottable_histogram(
-                np.histogram(all_pulls[torch.abs(all_pulls) < np.inf], bins=20)
-            )
-        )
-        plotting.drawAs1DHist(ax, p, yerr=False)
-        ax.set_xlabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{o}}$")
-        ax.set_ylabel("Count")
-        savePlot(fig, "pulls_hist.pdf")
-
-
-def makeSlicePlots(
-    pred_mean, pred_var, raw_test, raw_hist, window, dim, save_dir, dirdata
-):
-    pred_mean, _ = regression.pointsToGrid(raw_test.inputs, pred_mean, raw_test.edges)
-    pred_var, _ = regression.pointsToGrid(raw_test.inputs, pred_var, raw_test.edges)
-    obs_vals, _ = regression.pointsToGrid(
-        raw_test.inputs, raw_test.outputs, raw_test.edges
+    fig, ax = plt.subplots(layout="tight")
+    f = simpleGrid(
+        ax, raw_test.E, raw_test.X, (raw_test.Y - pred_mean) / torch.sqrt(pred.V)
     )
-    obs_vars, filled = regression.pointsToGrid(
-        raw_test.inputs, raw_test.variances, raw_test.edges
+    f.set_clim(-5, 5)
+    ax.set_title("Pulls")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    ax.cax.set_ylabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{p}}$")
+    addWindow(ax)
+    ret["pulls_pred"] = (fig, ax)
+
+    fig, ax = plt.subplots(layout="tight")
+    f = simpleGrid(
+        ax, raw_test.E, raw_test.X, (raw_test.Y - pred_mean) / torch.sqrt(raw_test.V)
     )
+    f.set_clim(-5, 5)
+    ax.set_title("Pulls")
+    plotting.addTitles2D(ax, plotting.PlotObject.fromHist(raw_hist))
+    ax.cax.set_ylabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{o}}$")
+    addWindow(ax)
+    ret["pulls_obs"] = (fig, ax)
+
+    fig, ax = plt.subplots(layout="tight")
+    all_pulls = (pred_mean - raw_test.Y) / torch.sqrt(pred.V)
+    p = plotting.PlotObject.fromHist(
+        uhi.numpy_plottable.ensure_plottable_histogram(
+            np.histogram(all_pulls[torch.abs(all_pulls) < np.inf], bins=20)
+        )
+    )
+    plotting.drawAs1DHist(ax, p, yerr=False)
+    ax.set_xlabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{p}}$")
+    ax.set_ylabel("Count")
+    ret["pulls_hist"] = (fig, ax)
+
+    return ret
+
+
+def makeSlicePlots(pred, test_data, hist, window, dim, save_dir, dirdata):
+    pred_mean, _ = regression.pointsToGrid(test_data.X, pred.Y, test_data.E)
+    pred_var, _ = regression.pointsToGrid(test_data.X, pred.V, test_data.E)
+    obs_vals, _ = regression.pointsToGrid(test_data.X, test_data.Y, test_data.E)
+    obs_vars, filled = regression.pointsToGrid(test_data.X, test_data.V, test_data.E)
 
     (save_dir / "slices" / f"along_{dim}").mkdir(parents=True, exist_ok=True)
 
@@ -115,14 +140,15 @@ def makeSlicePlots(
         pred_var.hist,
         obs_vals.hist,
         obs_vars.hist,
-        raw_test.edges,
+        test_data.E,
         filled,
         observed_title="CRData",
-        window_2d=window,
-        dim=dim,
+        mask_function=window,
+        just_window=True,
+        slice_dim=dim,
     ):
         plotting.addTitles1D(
-            ax, plotting.PlotObject.fromHist(raw_hist[{raw_hist.axes[dim].name: sum}])
+            ax, plotting.PlotObject.fromHist(hist[{hist.axes[dim].name: sum}])
         )
         o = (
             save_dir
@@ -136,8 +162,8 @@ def makeSlicePlots(
 
 
 def doCompleteRegression(
-    hist,
-    window,
+    inhist,
+    window_func,
     base_dir,
     subpath,
     common_data=None,
@@ -155,131 +181,165 @@ def doCompleteRegression(
     dirdat = futil.DirectoryData(base_dir)
     shutil.rmtree(save_dir, ignore_errors=True)
     save_dir.mkdir(parents=True, exist_ok=True)
-    (
-        (raw_train, raw_test),
-        (train, test),
-        centers_mask,
-        values_mask,
-        value_scale,
-    ) = regression.preprocessHistograms(hist, window, exclude_less=0.0001)
+    train_data = regression.makeRegressionData(
+        inhist[hist.rebin(rebin), hist.rebin(rebin)], window_func, exclude_less=0.001
+    )
+    test_data = regression.makeRegressionData(
+        inhist[hist.rebin(rebin), hist.rebin(rebin)], None, exclude_less=0.001
+    )
+    train_transform = regression.getNormalizationTransform(train_data)
+    test_transform = regression.getNormalizationTransform(test_data)
+    normalized_train_data = train_transform.transform(train_data)
+    normalized_test_data = test_transform.transform(test_data)
 
     with subplots_context() as (fig, ax):
         out = save_dir / "original.pdf"
-        plotting.drawAs2DHist(ax, plotting.PlotObject.fromHist(hist))
+        plotting.drawAs2DHist(ax, plotting.PlotObject.fromHist(inhist))
         fig.savefig(out)
         dirdat.set(out, common_data)
 
-    with subplots_context(1, 2) as (fig, ax):
+    with subplots_context(1, 2, figsize=(10, 5)) as (fig, ax):
         out = save_dir / "masked_area.pdf"
-        simpleGrid(ax[0], test.edges, test.inputs, test.outputs)
-        simpleGrid(ax[1], test.edges, train.inputs, train.outputs)
+        simpleGrid(ax[0], test_data.E, test_data.X, test_data.Y)
+        simpleGrid(ax[1], train_data.E, train_data.X, train_data.Y)
         fig.savefig(out)
         dirdat.set(out, common_data)
 
-    # model,likelihood = regression.createModel(train, kernel=None)
-    # model,likelihood = regression.createModel(train,
-    # kernel=SK(
-    #                                              gpytorch.kernels.RBFKernel(ard_num_dims=2) +
-    #                                              gpytorch.kernels.LinearKernel(ard_num_dims=2,num_dimensions=2)
-    #                                          ))
-    # model,likelihood = regression.createModel(train, kernel=SK(gpytorch.kernels.MaternKernel(ard_num_dims=2)))
-    # model,likelihood = regression.createModel(train, kernel=SK(gpytorch.kernels.PiecewisePolynomialKernel(ard_num_dims=2)))
-    # model,likelihood = regression.createModel(train, kernel=gpytorch.kernels.SpectralDeltaKernel(num_dims=2, ard_num_dims=2))
-    # model,likelihood = regression.createModel(train, model_maker= ExactProjGPModel )
-    # model,likelihood = regression.createModel(train, kernel=SK(models.MatrixRBF()))
-    # model,likelihood = regression.createModel(train, kernel=SK(models.PeakedRBF(ard_num_dims=2)))
 
-    # model,likelihood = regression.createModel(train, kernel=gpytorch.kernels.SpectralMixtureKernel(ard_num_dims=2, num_mixtures=8))
-    # model,likelihood = regression.createModel(train, kernel=SK(gpytorch.kernels.RQKernel(ard_num_dims=2)))
+
+    use_cuda = True 
+
+    if torch.cuda.is_available() and use_cuda:   
+        print("USING GPU")
+        train=regression.sendToGpu(normalized_train_data)
+    else:
+        train = normalized_train_data
+
     model, likelihood = regression.createModel(
-        train,
-        kernel=kernel,
-        # SK(models.GeneralRBF(ard_num_dims=2))
+        train, kernel=kernel, model_maker=model_maker
     )
+    if torch.cuda.is_available() and use_cuda:   
+        model = model.cuda()
+        likelihood = likelihood.cuda()
     # model,likelihood = regression.createModel(train, kernel=SK(models.GeneralRQ(ard_num_dims=2)))
-    model, likelihood = regression.optimizeHyperparams(
-        model, likelihood, train, bar=True, iterations=100
-    )
 
-    pred = regression.getPrediction(model, likelihood, test)
-    pred_mean = pred.mean * value_scale
-    pred_var = pred.variance * value_scale**2
-    chi2 = regression.getChi2Blinded(
-        raw_test.inputs, pred_mean, raw_test.outputs, raw_test.variances, window
+    with linear_operator.settings.max_cg_iterations(2000):
+        model, likelihood = regression.optimizeHyperparams(
+            model, likelihood, train, bar=False, iterations=400
+        )
+    print("Done training")
+    if torch.cuda.is_available() and use_cuda:   
+        model = model.cpu()
+        likelihood = likelihood.cpu()
+
+    params = list(model.named_parameters_and_constraints())
+    if False:
+        for name, param, constraint in params:
+            if constraint:
+                real_param = constraint.transform(param)
+            else:
+                real_param = param
+            print(
+                f"{name.replace('raw_',''):{max(len(x[0]) for x in params)+4}} {real_param.detach().numpy().round(3)}"
+            )
+
+
+    with linear_operator.settings.max_cg_iterations(2000), gpytorch.settings.debug(
+        False
+    ):
+        pred = regression.getPrediction(model, likelihood, normalized_test_data)
+
+    pred = test_transform.iTransform(
+        regression.DataValues(
+            normalized_test_data.X, pred.mean, pred.variance, normalized_test_data.E
+        )
     )
-    makeDiagonistPlots(
-        pred_mean,
-        pred_var,
-        raw_test,
-        raw_train,
-        hist,
-        dirdat,
-        save_dir,
-    )
-    makeSlicePlots(
-        pred_mean,
-        pred_var,
-        raw_test,
-        hist,
-        window,
-        0,
-        save_dir,
-        dirdat,
-    )
-    makeSlicePlots(pred_mean, pred_var, raw_test, hist, window, 1, save_dir, dirdat)
+    if window_func:
+        mask = regression.getBlindedMask(
+            pred.X, pred.Y, test_data.Y, test_data.V, window_func
+        )
+        bpred_mean = pred.Y[mask]
+        obs_mean = test_data.Y[mask]
+        obs_var = test_data.V[mask]
+        chi2 = torch.sum((obs_mean - bpred_mean) ** 2 / obs_var) / torch.count_nonzero(
+            mask
+        )
+        avg_pull = torch.sum(
+            torch.abs((obs_mean - bpred_mean)) / torch.sqrt(obs_var)
+        ) / torch.count_nonzero(mask)
+        print(f"Chi^2/bins = {chi2}")
+        print(f"Avg Abs pull = {avg_pull}")
+    else:
+        mask = None
+    diagnostic_plots = makeDiagnosticPlots(pred, test_data, train_data, inhist, mask)
+    saveDiagnosticPlots(diagnostic_plots, save_dir, dirdat)
+    makeSlicePlots(pred, test_data, inhist, window_func, 0, save_dir, dirdat)
+    makeSlicePlots(pred, test_data, inhist, window_func, 1, save_dir, dirdat)
 
     p = save_dir / "metadata.yaml"
+    torch.save(model.state_dict(), save_dir / "train_model.pth")
     with open(p, "w") as f:
         f.write(
             yaml.dump(
                 {
-                    "window": {"x": list(window[0]), "y": list(window[1])},
                     "chi2_blinded": float(chi2),
                 }
             )
         )
 
 
-def scan(hist):
-    x_iter = map(float, torch.arange(1100, 2000, 250))
-    x_size_iter = map(float, torch.arange(200, 400, 100))
-    y_iter = map(float, torch.arange(0.4, 0.7, 0.15))
-    y_size_iter = map(float, torch.arange(0.1, 0.3, 0.1))
-    for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter):
-        win = [(x, x + a), (y, y + b)]
-        path = f"w__{round(win[0][0],3)}_{round(win[0][1],3)}__{round(win[1][0],3)}_{round(win[1][1],3)}".replace(
-            ".", "p"
+def scan(hist, window_func_generator):
+    def mm(train_x, train_y, likelihood, kernel, **kwargs):
+        return models.InducingPointModel(
+            train_x, train_y, likelihood, kernel, inducing=train_x[::2]
         )
-        print(f"Now processing {win}")
+
+    NNRBF = models.wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
+    nnrbf = SK(NNRBF(odim=4,layer_sizes=(32,16)))
+
+    for name, wf in window_func_generator:
+        path = name
+        print(f"Now processing {name}")
         doCompleteRegression(
             hist,
-            win,
+            wf,
             "scan",
             path,
-            kernel=gpytorch.kernels.ScaleKernel(models.GeneralRBF(ard_num_dims=2)),
+            model_maker=mm,
+            kernel=nnrbf,
         )
         plt.close("all")
 
 
 def main():
-    from analyzer.datasets import SampleManager
     from analyzer.core import AnalysisResult
+    from analyzer.datasets import SampleManager
 
     res = AnalysisResult.fromFile("results/data_control.pkl")
     sample_manager = SampleManager()
     sample_manager.loadSamplesFromDirectory("datasets")
-    res.results["CR0b_Data2018"].histograms["h_njet"]
     bkg_name = "CR0b_Data2018"
     hists = res.getMergedHistograms(sample_manager)
     complete_hist = hists["ratio_m14_vs_m24"]
-    narrowed = hist
     orig = complete_hist[
         ..., hist.loc(1150) : hist.loc(3000), hist.loc(0.4) : hist.loc(1)
     ]
-    narrowed = orig[..., :: hist.rebin(2), :: hist.rebin(2)]
+    narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
     qcd_hist = narrowed[bkg_name, ...]
     qcd_hist = narrowed[bkg_name, ...]
-    scan(qcd_hist)
+
+    x_iter = map(float, torch.arange(1400, 2000, 250))
+    x_size_iter = map(float, torch.arange(100, 400, 100))
+    y_iter = map(float, torch.arange(0.5, 0.7, 0.15))
+    y_size_iter = map(float, torch.arange(0.05, 0.15, 0.05))
+    generator = (
+        (
+            f"E_{round(x)}_{round(y,2)}_{round(a)}_{round(b,2)}".replace(".", "p"),
+            regression.ellipseMasker(torch.tensor([x, y]), a, b),
+        )
+        for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter)
+    )
+    scan(qcd_hist, generator)
 
 
 if __name__ == "__main__":

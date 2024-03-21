@@ -149,7 +149,7 @@ class GeneralSpectralMixture(RotParamMixin, gpytorch.kernels.SpectralMixtureKern
         x2: torch.Tensor,
         diag: bool = False,
         last_dim_is_batch: bool = False,
-        **params
+        **params,
     ):
         n, num_dims = x1.shape[-2:]
 
@@ -335,6 +335,7 @@ class ExactPeakedGPModel(gpytorch.models.ExactGP):
 
 class PeakedMixin:
     is_stationary = False
+
     def __init__(self, *args, peak_prior=None, peak_constraint=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.register_parameter(
@@ -342,7 +343,7 @@ class PeakedMixin:
             parameter=torch.nn.Parameter(torch.tensor([0.1, 0.1], requires_grad=True)),
         )
         if peak_constraint is None:
-            peak_constraint = gpytorch.constraints.Interval(0.0,1.0)
+            peak_constraint = gpytorch.constraints.Interval(0.0, 1.0)
         self.register_constraint("raw_peak", peak_constraint)
         if peak_prior is not None:
             self.register_prior(
@@ -382,23 +383,29 @@ class PeakedSMK(PeakedMixin, gpytorch.kernels.SpectralMixtureKernel):
 
 
 class LargeFeatureExtractor(torch.nn.Sequential):
-    def __init__(self, idim=2, odim=2, layer_sizes=(1000,1000,100)):
+    def __init__(self, idim=2, odim=2, layer_sizes=(1000, 1000, 100)):
         super().__init__()
         for i in range(len(layer_sizes)):
-            p = layer_sizes[i-1] if i>0 else idim
+            p = layer_sizes[i - 1] if i > 0 else idim
             self.add_module(f"linear{i}", torch.nn.Linear(p, layer_sizes[i]))
             self.add_module(f"relu{i}", torch.nn.ReLU())
-        self.add_module(f"linear{len(layer_sizes)}", torch.nn.Linear(layer_sizes[-1], odim))
+        self.add_module(
+            f"linear{len(layer_sizes)}", torch.nn.Linear(layer_sizes[-1], odim)
+        )
 
 
 def wrapNN(cls_name, kernel):
-    def __init__(self, *args, feature_dim=2, **kwargs):
-        kernel.__init__(self, *args,**kwargs, ard_num_dim=feature_dim)
-        self.feature_extractor = LargeFeatureExtractor(odim=feature_dim)
+    def __init__(self, *args, odim=None, idim=None, layer_sizes=None, **kwargs):
+        kernel.__init__(self, *args, **kwargs, ard_num_dims=odim)
+        nnargs = dict(
+            x
+            for x in (("odim", odim), ("idim", idim), ("layer_sizes", layer_sizes))
+            if x[1] is not None
+        )
+        self.feature_extractor = LargeFeatureExtractor(**nnargs)
         self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1.0, 1.0)
 
     def forward(self, x1, x2, **params):
-        # We're first putting our data through a deep net (feature extractor)
         x1_, x2_ = (
             self.feature_extractor(x1),
             self.feature_extractor(x2),
@@ -407,6 +414,69 @@ def wrapNN(cls_name, kernel):
             self.scale_to_bounds(x1_),
             self.scale_to_bounds(x2_),
         )
-        return kernel.forward(self, x1_,x2_,**params)
+        return kernel.forward(self, x1_, x2_, **params)
 
     return type(cls_name, (kernel,), dict(__init__=__init__, forward=forward))
+
+
+class InducingPointModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y,  likelihood, kernel=None, inducing=None):
+        super().__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.base_covar_module = kernel
+        self.covar_module = gpytorch.kernels.InducingPointKernel(
+            self.base_covar_module,
+            inducing_points=inducing.clone(),
+            likelihood=likelihood,
+        )
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+
+class KISSModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y,  likelihood, kernel=None):
+        super().__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        grid_size = gpytorch.utils.grid.choose_grid_size(train_x,1.0)
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.GridInterpolationKernel(
+                kernel, grid_size=grid_size, num_dims=1
+            )
+        )
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+
+
+class PyroGPModel(gpytorch.models.PyroGP):
+    def __init__(self, train_x, train_y, likelihood, kernel=None, mean=None, num_inducing = None):
+        variational_distribution = gpytorch.variational.CholeskyVariationalDistribution(
+            num_inducing_points= num_inducing or train_y.numel(),
+        )
+        variational_strategy = gpytorch.variational.VariationalStrategy(
+            self, train_x, variational_distribution
+        )
+        super().__init__(
+            variational_strategy,
+            likelihood,
+            num_data=train_y.numel(),
+            name_prefix="simple_regression_model"
+        )
+        self.likelihood = likelihood
+        self.mean_module = mean or gpytorch.means.ConstantMean()
+        if kernel is None:
+            kernel = gpytorch.kernels.ScaleKernel(
+                gpytorch.kernels.RBFKernel(ard_num_dims=2)
+            )
+        self.covar_module = kernel
+
+    def forward(self, x):
+        mean = self.mean_module(x)  # Returns an n_data vec
+        covar = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean, covar)

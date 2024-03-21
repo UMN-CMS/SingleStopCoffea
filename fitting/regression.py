@@ -15,6 +15,7 @@ from analyzer.file_utils import DirectoryData
 from analyzer.plotting.utils import subplots_context
 from rich.progress import Progress, track
 from torch.masked import as_masked_tensor, masked_tensor
+import pyro
 
 from .models import ExactAnyKernelModel, ExactGPModel, ExactProjGPModel
 
@@ -254,9 +255,8 @@ def getPrediction(model, likelihood, test_data):
     return observed_pred
 
 
-def getBlindedMask(inputs, pred_mean, test_mean, test_var, window):
-    imask_x = (inputs[:, 0] > window[0][0]) & (inputs[:, 0] < window[0][1])
-    imask_y = (inputs[:, 1] > window[1][0]) & (inputs[:, 1] < window[1][1])
+def getBlindedMask(inputs, pred_mean, test_mean, test_var, mask_func):
+    imask_x,imask_y = mask_func(inputs[:,0], inputs[:,1])
     mask = imask_x & imask_y
     return mask
     pred_mean = pred_mean[mask]
