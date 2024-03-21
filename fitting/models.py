@@ -3,6 +3,7 @@ import sys
 
 import gpytorch
 import torch
+from gpytorch.variational import CholeskyVariationalDistribution, VariationalStrategy
 
 
 class GaussianMean(gpytorch.means.Mean):
@@ -30,6 +31,17 @@ class GaussianMean(gpytorch.means.Mean):
         e = torch.exp(-inner)
         ret = self.scale * e
         return ret
+
+
+class HeterogenousConstantMean(gpytorch.means.Mean):
+    def __init__(self, init, prior=None):
+        super().__init__()
+        self.register_parameter(name="values", parameter=torch.nn.Parameter(init))
+        if prior is not None:
+            self.register_prior("contant_prior", prior, "mean")
+
+    def forward(self, input):
+        return self.values
 
 
 class RotParamMixin:
@@ -71,17 +83,21 @@ class RotParamMixin:
 
 
 class RotMixin(RotParamMixin):
-    def forward(self, x1, x2, diag=False, **params):
+    def getDist(self, x1, x2, diag=False):
         diff = torch.unsqueeze(x1, dim=1) - x2
         m = self.getMatrix()
         d = torch.diag(1 / torch.squeeze(self.lengthscale) ** 2)
         real_mat = m.t() @ d @ m
         c = torch.einsum("abi,ij,abj->ab", diff, real_mat, diff)
-        covar = self.post_function(c)
         if diag:
-            return covar.diagonal()
+            return c.diagonal()
         else:
-            return covar
+            return c
+
+    def forward(self, x1, x2, diag=False, **params):
+        c = self.getDist(x1, x2, diag=diag)
+        covar = self.post_function(c)
+        return covar
 
 
 class GeneralRQ(RotMixin, gpytorch.kernels.RQKernel):
@@ -95,6 +111,35 @@ class GeneralRQ(RotMixin, gpytorch.kernels.RQKernel):
 class GeneralRBF(RotMixin, gpytorch.kernels.RBFKernel):
     def post_function(self, dist_mat):
         return gpytorch.kernels.rbf_kernel.postprocess_rbf(dist_mat)
+
+
+class GeneralMatern(RotMixin, gpytorch.kernels.MaternKernel):
+    def forward(self, x1, x2, diag=False, **params):
+        if (
+            x1.requires_grad
+            or x2.requires_grad
+            or (self.ard_num_dims is not None and self.ard_num_dims > 1)
+            or diag
+            or params.get("last_dim_is_batch", False)
+            or trace_mode.on()
+        ):
+            mean = x1.reshape(-1, x1.size(-1)).mean(0)[(None,) * (x1.dim() - 1)]
+            x1_ = (x1 - mean).div(self.lengthscale)
+            x2_ = (x2 - mean).div(self.lengthscale)
+            distance = self.getDist(x1_, x2_, diag=diag)
+            exp_component = torch.exp(-math.sqrt(self.nu * 2) * distance)
+            if self.nu == 0.5:
+                constant_component = 1
+            elif self.nu == 1.5:
+                constant_component = (math.sqrt(3) * distance).add(1)
+            elif self.nu == 2.5:
+                constant_component = (
+                    (math.sqrt(5) * distance).add(1).add(5.0 / 3.0 * distance**2)
+                )
+            return constant_component * exp_component
+        return MaternCovariance.apply(
+            x1, x2, self.lengthscale, self.nu, lambda x1, x2: self.getProduct(x1, x2)
+        )
 
 
 class GeneralSpectralMixture(RotParamMixin, gpytorch.kernels.SpectralMixtureKernel):
@@ -138,16 +183,15 @@ class GeneralSpectralMixture(RotParamMixin, gpytorch.kernels.SpectralMixtureKern
         real_mat = self.getMatrix()
         exp_val = torch.einsum("cabi,ij,cabj->cab", exp_diff, real_mat, exp_diff)
 
-
-        #print(self.mixture_means.shape)
+        # print(self.mixture_means.shape)
         # Compute the exponential and cosine terms
         exp_term = exp_val.mul_(-2 * math.pi**2)
-        #exp_term = exp_diff.pow_(2).mul_(-2 * math.pi**2)
+        # exp_term = exp_diff.pow_(2).mul_(-2 * math.pi**2)
         cos_term = cos_diff.mul_(2 * math.pi)
-        exp_term = torch.unsqueeze(exp_term,3)
-        cos_term = torch.unsqueeze(cos_term.sum(3),3)
-        #print(exp_term.shape)
-        #print(cos_term.shape)
+        exp_term = torch.unsqueeze(exp_term, 3)
+        cos_term = torch.unsqueeze(cos_term.sum(3), 3)
+        # print(exp_term.shape)
+        # print(cos_term.shape)
         res = exp_term.exp_() * cos_term.cos_()
 
         # Sum over mixtures
@@ -225,6 +269,50 @@ class ExactAnyKernelModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
+class InducingPointModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood, kernel=None, mean=None):
+        super().__init__(train_x, train_y, likelihood)
+        # self.mean_module = gpytorch.means.ConstantMean()
+        self.mean_module = mean or gpytorch.means.ConstantMean()
+        if kernel is None:
+            kernel = gpytorch.kernels.ScaleKernel(
+                gpytorch.kernels.RBFKernel(ard_num_dims=2)
+            )
+        self.covar_module = gpytorch.kernels.InducingPointKernel
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+
+class VariationalAnyKernelModel(gpytorch.models.ApproximateGP):
+    def __init__(self, inducing_points, kernel=None, mean=None):
+        variational_distribution = CholeskyVariationalDistribution(
+            inducing_points.size(0)
+        )
+        variational_strategy = VariationalStrategy(
+            self,
+            inducing_points,
+            variational_distribution,
+            learn_inducing_locations=True,
+        )
+        super().__init__(variational_strategy)
+        self.mean_module = mean or gpytorch.means.ConstantMean()
+        if kernel is None:
+            kernel = gpytorch.kernels.ScaleKernel(
+                gpytorch.kernels.RBFKernel(ard_num_dims=2)
+            )
+        self.covar_module = kernel
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+
 class ExactPeakedGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
         super().__init__(train_x, train_y, likelihood)
@@ -245,17 +333,16 @@ class ExactPeakedGPModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-class PeakedRBF(gpytorch.kernels.RBFKernel):
+class PeakedMixin:
     is_stationary = False
-
-    def __init__(self, peak_prior=None, peak_constraint=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, peak_prior=None, peak_constraint=None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.register_parameter(
             name="raw_peak",
             parameter=torch.nn.Parameter(torch.tensor([0.1, 0.1], requires_grad=True)),
         )
         if peak_constraint is None:
-            peak_constraint = gpytorch.constraints.Positive()
+            peak_constraint = gpytorch.constraints.Interval(0.0,1.0)
         self.register_constraint("raw_peak", peak_constraint)
         if peak_prior is not None:
             self.register_prior(
@@ -280,3 +367,46 @@ class PeakedRBF(gpytorch.kernels.RBFKernel):
 
     def forward(self, x1, x2, **params):
         return super().forward(x1 - self.peak, x2 - self.peak, **params)
+
+
+class PeakedGRBF(PeakedMixin, GeneralRBF):
+    pass
+
+
+class PeakedRBF(PeakedMixin, gpytorch.kernels.RBFKernel):
+    pass
+
+
+class PeakedSMK(PeakedMixin, gpytorch.kernels.SpectralMixtureKernel):
+    pass
+
+
+class LargeFeatureExtractor(torch.nn.Sequential):
+    def __init__(self, idim=2, odim=2, layer_sizes=(1000,1000,100)):
+        super().__init__()
+        for i in range(len(layer_sizes)):
+            p = layer_sizes[i-1] if i>0 else idim
+            self.add_module(f"linear{i}", torch.nn.Linear(p, layer_sizes[i]))
+            self.add_module(f"relu{i}", torch.nn.ReLU())
+        self.add_module(f"linear{len(layer_sizes)}", torch.nn.Linear(layer_sizes[-1], odim))
+
+
+def wrapNN(cls_name, kernel):
+    def __init__(self, *args, feature_dim=2, **kwargs):
+        kernel.__init__(self, *args,**kwargs, ard_num_dim=feature_dim)
+        self.feature_extractor = LargeFeatureExtractor(odim=feature_dim)
+        self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1.0, 1.0)
+
+    def forward(self, x1, x2, **params):
+        # We're first putting our data through a deep net (feature extractor)
+        x1_, x2_ = (
+            self.feature_extractor(x1),
+            self.feature_extractor(x2),
+        )
+        x1_, x2_ = (
+            self.scale_to_bounds(x1_),
+            self.scale_to_bounds(x2_),
+        )
+        return kernel.forward(self, x1_,x2_,**params)
+
+    return type(cls_name, (kernel,), dict(__init__=__init__, forward=forward))
