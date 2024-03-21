@@ -39,6 +39,8 @@ plotter = Plotter(
 list_of_samples = ["400","400_mg","1100","1100_mg","1400","1400_mg"]
 pt_hists = ['m14_pt','m13_pt','m24_pt','m12_pt','m23_pt',]
 list_of_mass_points = ["1400"]
+
+
 list_of_2d_hists = ['m14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 'm14_vs_m12', 'ratio_m14_vs_m12', 
                     'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 
                     'm24_vs_m12', 'ratio_m24_vs_m12', 'm24_vs_m23', 'ratio_m24_vs_m23', 'm12_vs_m23', 'ratio_m12_vs_m23','d_phi_01_vs_02', 
@@ -49,11 +51,14 @@ list_of_1d_hists = ['h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', 'm13_eta',
                     'eta_1', 'phi_1', 'pt_2', 'eta_2', 'phi_2', 'pt_3', 'eta_3', 'phi_3', 'd_eta_1_1', 'd_phi_1_1', 'd_r_1_1', 'd_eta_1_2', 'd_phi_1_2', 
                     'd_r_1_2', 'd_eta_1_3', 'd_phi_1_3', 'd_r_1_3', 'd_eta_1_4', 'd_phi_1_4', 'd_r_1_4', 'd_eta_2_2', 'd_phi_2_2', 'd_r_2_2', 'd_eta_2_3', 
                     'd_phi_2_3', 'd_r_2_3', 'd_eta_2_4', 'd_phi_2_4', 'd_r_2_4', 'd_eta_3_3', 'd_phi_3_3', 'd_r_3_3', 'd_eta_3_4', 'd_phi_3_4', 'd_r_3_4', 
-                    'd_eta_4_4', 'd_phi_4_4', 'd_r_4_4', 'pt_ht_ratio_1', 'pt_ht_ratio_2', 'pt_ht_ratio_3', 'pt_ht_ratio_4', 'pt_ht_ratio_5']
-for j in pt_hists:
-    plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400",normalize=True,ratio=True)
-    plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
-    plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400",normalize=True,ratio=True)
+                    'd_eta_4_4', 'd_phi_4_4', 'd_r_4_4', 'pt_ht_ratio_1', 'pt_ht_ratio_2', 'pt_ht_ratio_3', 'pt_ht_ratio_4', 'pt_ht_ratio_5','loose_bjet_pt', 
+                    'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
+                    'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
+                    'medium_b_m', 'medium_b_pt']
+for j in list_of_1d_hists:
+    plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="400",normalize=True,ratio=True)
+    plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
+    plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1400",normalize=True,ratio=True)
 
 # plotter('m14_pt', ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400",normalize=False,ratio=True)
 # plotter('m14_pt', ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100",normalize=False,ratio=True)
