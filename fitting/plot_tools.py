@@ -157,7 +157,6 @@ def createSlices(
 
         if len(in_win1) != 0:
             window = [torch.min(in_win1), torch.max(in_win2)]
-            print(window, torch.count_nonzero(in_win1))
         else:
             window = None
 

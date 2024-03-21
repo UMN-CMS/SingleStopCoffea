@@ -33,8 +33,7 @@ torch.set_default_dtype(torch.float64)
 
 def saveDiagnosticPlots(plots, dirdata, save_dir):
     for name, (fig, ax) in plots.items():
-        data = data or {}
-        o = (save_dir / name).with_extension(".pdf")
+        o = (save_dir / name).with_suffix(".pdf")
         fig.savefig(o)
 
 
@@ -225,7 +224,7 @@ def doCompleteRegression(
 
     with linear_operator.settings.max_cg_iterations(2000):
         model, likelihood = regression.optimizeHyperparams(
-            model, likelihood, train, bar=False, iterations=400
+            model, likelihood, train, bar=False, iterations=400, lr=0.05
         )
     print("Done training")
     if torch.cuda.is_available() and use_cuda:   
@@ -272,7 +271,7 @@ def doCompleteRegression(
     else:
         mask = None
     diagnostic_plots = makeDiagnosticPlots(pred, test_data, train_data, inhist, mask)
-    saveDiagnosticPlots(diagnostic_plots, save_dir, dirdat)
+    saveDiagnosticPlots(diagnostic_plots, dirdat, save_dir)
     makeSlicePlots(pred, test_data, inhist, window_func, 0, save_dir, dirdat)
     makeSlicePlots(pred, test_data, inhist, window_func, 1, save_dir, dirdat)
 
