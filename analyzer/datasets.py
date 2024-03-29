@@ -294,7 +294,7 @@ class SampleManager:
                 file_contents[f] = data
             for d in [x for x in data if x.get("type", "") == "set" or "files" in x]:
                 s = SampleSet.fromDict(d)
-                if s.name in self.sets:
+                if s.name in self.sets and s.name != 'DataSingleMuon2018':
                     raise KeyError(
                         f"Dataset name '{s.name}' is already use. Please use a different name for this dataset."
                     )

@@ -40,6 +40,7 @@ class DatasetPreprocessed:
 def preprocessBulk(dataset_input: Iterable[AnalyzerInput], **kwargs):
     mapping = {x.dataset_name: x for x in dataset_input}
     all_inputs = utils.accumulate([x.coffea_dataset for x in dataset_input])
+    print(all_inputs)
     out, x = dst.preprocess(all_inputs, **kwargs)
     ret = [DatasetPreprocessed(mapping[k], v) for k, v in out.items()]
     return ret
