@@ -15,8 +15,8 @@ sys.path.append(".")
 
 filebase = 'signal_312_'
 files = ['1200_400', '1200_900', '1200_1100', '1500_400', '1500_900', '1500_1400']
-#files = ['1500_400']
-outputDir = 'SoftDropPlots/PassesTriggers/'
+files = ['1500_400']
+outputDir = 'SoftDropPlots/'
 loadStyles()
 
 
@@ -24,11 +24,11 @@ for f in files:
 	path = filebase + f + '.pkl'
 	d = pickle.load(open(path, 'rb'))
 
-	mSoftDropHist = d.results[filebase + f].histograms['mSoftDrop'][{'dataset': filebase + f, 'HT1050': sum, 'pT400': sum, 'triggers': 1}]
-	mSoftDrop2DHist = d.results[filebase + f].histograms['mSoftDrop2D'][{'dataset': filebase + f, 'HT1050': sum, 'pT400': sum, 'triggers': 1}]
+	#mSoftDropHist = d.results[filebase + f].histograms['mSoftDrop'][{'dataset': filebase + f, 'HT1050': 0, 'pT400': sum}]
+	#mSoftDrop2DHist = d.results[filebase + f].histograms['mSoftDrop2D'][{'dataset': filebase + f, 'HT1050': 0, 'pT400': sum}]
 
-	#mSoftDropHist = d.results[filebase + f].histograms['mSoftDrop'][{'dataset': filebase + f, 'triggers': 1}]
-	#mSoftDrop2DHist = d.results[filebase + f].histograms['mSoftDrop2D'][{'dataset': filebase + f, 'triggers': 1}]
+	mSoftDropHist = d.results[filebase + f].histograms['mSoftDrop'][{'dataset': filebase + f, 'triggers': 1}]
+	mSoftDrop2DHist = d.results[filebase + f].histograms['mSoftDrop2D'][{'dataset': filebase + f, 'triggers': 1}]
 
 	softDrop1D_PO = PlotObject.fromHist(mSoftDropHist, title = r'm_{Soft Drop}')
 	softDrop2D_PO = PlotObject.fromHist(mSoftDrop2DHist, title = r'm_{Soft Drop}')
