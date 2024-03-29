@@ -10,20 +10,34 @@ import matplotlib.pyplot as plt
 from analyzer.datasets import SampleManager
 from analyzer.utils import accumulate
 
-from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio
-from .mplstyles import loadStyles
-from .plottables import PlotObject, createPlotObjects
+from analyzer.plotting.styles import *
+from analyzer.plotting.core_plots import *
+from analyzer.datasets import loadSamplesFromDirectory
+
+from pathlib import Path
+import logging
+import logging.handlers
+from enum import Enum, auto
+from concurrent.futures import ProcessPoolExecutor, wait
+import multiprocess as mp
+import atexit
+
+
+
+loadStyles()
+
+
+class _Split(object):
+    def __new__(cls):
+        return NoParam
+
+    def __reduce__(self):
+        return (_NoParamType, ())
 
 
 class Plotter:
-    def _createLogger(self):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
-        self.logger.addHandler(stream_handler)
-        self.logger.info("Creating plotter")
+    Split = object.__new__(_Split)
+    queue = mp.Queue()
 
     def __init__(
         self,
@@ -35,8 +49,25 @@ class Plotter:
         coupling="312",
         default_axis_opts=None,
     ):
-        loadStyles()
-        self._createLogger()
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.parallel = parallel
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
+        self.logger.addHandler(stream_handler)
+        if self.parallel:
+            self.pool = ProcessPoolExecutor(self.parallel)
+            self.futures = []
+
+            atexit.register(self.finishRemaining)
+
+            handler = logging.handlers.QueueHandler(self.queue)
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(logging.Formatter(f"[Plotter]: %(message)s"))
+            self.ql = logging.handlers.QueueListener(self.queue, stream_handler)
+            self.ql.start()
+            atexit.register(lambda: self.ql.stop())
 
         self.default_backgrounds = default_backgrounds or []
         self.default_axis_opts = default_axis_opts

@@ -1,4 +1,0 @@
-<<<<<<< HEAD
-mSoftDrop2D: p_T of leading AK8 jet
-=======
->>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency

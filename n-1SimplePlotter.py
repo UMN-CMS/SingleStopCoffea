@@ -6,14 +6,8 @@ import hist as hst
 import matplotlib.pyplot as plt
 
 from analyzer.plotting.styles import *
-<<<<<<< HEAD
-#from analyzer.plotting.core_plots import *
-from analyzer.plotting.simple_plot import *
-from analyzer.datasets import SampleManager #import loadSamplesFromDirectory
-=======
 from analyzer.plotting.core_plots import *
 from analyzer.datasets import loadSamplesFromDirectory
->>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 
 from pathlib import Path
 
@@ -32,11 +26,7 @@ representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900
 
 manager = SampleManager.loadSamplesFromDirectory("datasets")
 
-<<<<<<< HEAD
 file_name = "signal_312_1200_400.pkl"
-=======
-file_name = "singlemuon.pkl"
->>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 data = pkl.load(open(file_name, "rb"))
 histos = data.results[file_name].histograms
 lumi = None
@@ -70,6 +60,8 @@ def simplePlot(
     with open(savedir / "descriptions.txt", "a") as f:
         f.write(f"{hist}: {h.description}\n")
     datasets = sorted(bkg_set) + sorted(sig_set)
+    print(datasets)
+    print(len(h.axes))
     hc = h[{"dataset": datasets}]
     if normalize:
         hc = getNormalized(hc, "dataset")
@@ -153,23 +145,20 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
-<<<<<<< HEAD
 simplePlot('mSoftDrop2D', singlemuon, [], scale = 'linear', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
 
-simplePlot('mSoftDrop', [file_name], [], scale = 'linear', normalize=False, selection = {'dataset': 'signal_312_1200_400', 'HT1050': 0})
 
-'''
+simplePlot('mSoftDrop', singlemuon, [], scale = 'log', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
+
 pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}][{'dataset': 'DataSingleMuon2018'}]
 HT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
-=======
 
 pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}]
 pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
 HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}]
 HT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
->>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 
 ptp_PO = PlotObject(pT_pass, r'pT_1', '')
 ptt_PO = PlotObject(pT_total, r'pT_1', '')
@@ -201,7 +190,6 @@ addEra(ax, 59.8)
 fig.tight_layout()
 fig.savefig("figures/HT_Efficiency.pdf")
 plt.close(fig)
-<<<<<<< HEAD
 
 softDrop_pass = histos['mSoftDrop'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 softDrop_total = histos['mSoftDrop'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
@@ -221,156 +209,3 @@ addEra(ax, 59.8)
 fig.tight_layout()
 fig.savefig("figures/softDrop_Efficiency.pdf")
 plt.close(fig)
-'''
-
-softDrop2D_pass = histos['mSoftDrop2D'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
-softDrop2D_total = histos['mSoftDrop2D'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
-sdp2D_PO = PlotObject(softDrop2D_pass, r'm_{Soft Drop}', None)
-sdt2D_PO = PlotObject(softDrop2D_total, r'm_{Soft Drop}', None)
-
-#fig, ax = drawAs2DHist(sdp2D_PO) #, yerr=True, fill=False)
-#ax.set_yscale('log')
-#drawAs2DHist(sdt2D_PO) #, yerr=True, fill=False)
-#addAxesToHist(ax, num_bottom=2, bottom_pad=0)
-#ab = ax.bottom_axes[0]
-fig, ax = drawRatio2D(sdp2D_PO, sdt2D_PO)
-ax.set_ylabel("mSoftDrop")
-
-addEra(ax, 59.8)
-
-fig.tight_layout()
-fig.savefig("figures/softDrop2D_Efficiency.pdf")
-plt.close(fig)
-
-
-=======
->>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
-'''
-simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
-sys.exit(0)
-simplePlot("h_njet", compressed, add_name="compressed")
-simplePlot("h_njet", uncompressed, add_name="uncompressed")
-
-simplePlot("m14_vs_m3_top_3_no_lead_b", uncompressed)
-simplePlot("m14_vs_m3_top_2_plus_lead_b", compressed)
-
-simplePlot("medium_bdr", compressed, add_name="compressed")
-simplePlot("medium_bdr", uncompressed, add_name="uncompressed")
-
-simplePlot("medium_bb_eta", compressed, add_name="compressed")
-simplePlot("medium_bb_eta", uncompressed, add_name="uncompressed")
-
-simplePlot("medium_bb_phi", compressed, add_name="compressed")
-simplePlot("medium_bb_phi", uncompressed, add_name="uncompressed")
-
-
-
-
-simplePlot(
-    "chi_b_dr",
-    compressed,
-    [],
-    add_name="compressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-simplePlot(
-    "chi_b_eta",
-    compressed,
-    [],
-    add_name="compressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-simplePlot(
-    "chi_b_phi",
-    compressed,
-    [],
-    add_name="compressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-simplePlot(
-    "chi_b_dr",
-    uncompressed,
-    [],
-    add_name="uncompressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-simplePlot(
-    "chi_b_eta",
-    uncompressed,
-    [],
-    add_name="uncompressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-simplePlot(
-    "chi_b_phi",
-    uncompressed,
-    [],
-    add_name="uncompressed",
-    normalize=True,
-    scale="linear",
-    sig_style="hist",
-)
-
-simplePlot("HT", representative)
-
-simplePlot("m14_m", representative)
-simplePlot("m13_m", compressed, add_label="Compressed")
-simplePlot("m24_m", uncompressed, add_label="Uncompressed")
-
-simplePlot(
-    "m3_top_3_no_lead_b",
-    uncompressed,
-)
-simplePlot("m3_top_2_plus_lead_b", compressed)
-
-
-simplePlot("ratio_m14_vs_m3_top_3_no_lead_b", uncompressed)
-simplePlot("ratio_m14_vs_m3_top_2_plus_lead_b", compressed)
-
-simplePlot("lead_medium_bjet_ordinality", compressed, add_name="compressed")
-simplePlot("lead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
-
-simplePlot("sublead_medium_bjet_ordinality", compressed, add_name="compressed")
-simplePlot("sublead_medium_bjet_ordinality", uncompressed, add_name="uncompressed")
-
-simplePlot(
-    "num_top_3_jets_matched_chi_children", compressed, [], add_label="Compressed"
-)
-simplePlot("num_top_4_jets_matched_stop_children", representative, [])
-simplePlot(
-    "num_sub_3_jets_matched_chi_children", uncompressed, [], add_label="Uncompressed"
-)
-
-simplePlot(
-    "mstop_gen_matched",
-    compressed + uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-)
-simplePlot(
-    "mchi_gen_matched",
-    compressed + uncompressed,
-    [],
-    normalize=True,
-    scale="linear",
-)
-
-simplePlot("m14_vs_m24", uncompressed)
-simplePlot("m14_vs_m13", compressed)
-simplePlot("ratio_m14_vs_m24", uncompressed)
-simplePlot("ratio_m14_vs_m13", compressed)
-
-simplePlot("pt_1", representative)
-'''
