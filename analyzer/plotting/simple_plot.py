@@ -261,8 +261,6 @@ class Plotter:
                 ob2 = un_norm_hc.axes[0][1]
                 realh1 = un_norm_hc[{"dataset": ob1}]
                 realh2 = un_norm_hc[{"dataset": ob2}]
-                realh1/realh2
-                raise Exception
                 nv = realh1.values()
                 dv = realh2.values()
                 ratio_histv = np.divide(nv,dv,out=np.ones_like(nv), where=dv != 0)

@@ -258,7 +258,7 @@
   style:
     color: "#000000"
   files: 
-    - root://cmseos.fnal.gov////store/user/dmahon/condor/RPVSingleStopMCMadGraph/NANOAOD-ALL/NANOAOD-MadGraph-NNPDF31-1500_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMCMadGraph/NANOAOD-ALL/NANOAOD-MadGraph-NNPDF31-1500_400.root
 
 - name: signal_312_1500_600
   mc_campaign: 2018UL
@@ -320,7 +320,7 @@
   style:
     color: "#000000"
   files: 
-    - root://cmseos.fnal.gov////store/user/dmahon/condor/RPVSingleStopMCMadGraph/NANOAOD-ALL/NANOAOD-MadGraph-NNPDF31-1500_1400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMCMadGraph/NANOAOD-ALL/NANOAOD-MadGraph-NNPDF31-1500_1400.root
 
 - name: signal_312_2000_400
   mc_campaign: 2018UL

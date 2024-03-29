@@ -7,6 +7,7 @@ from analyzer.matching import object_matching
 
 
 def isGoodGenParticle(particle):
+    print(particle.pdgId)
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
         particle.hasFlags("fromHardProcessBeforeFSR")
         & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
@@ -26,6 +27,15 @@ def createGoodChildren(gen_particles, children):
     return children
 
 
+@analyzerModule("good_gen", categories="main")
+def goodGenParticles(events, analyzer):
+    ar = isGoodGenParticle(events.GenPart)
+    import numpy as np
+    good_gen = events.GenPart[ar]
+    num_of_particles = [len(i) for i in good_gen]
+    only_five = np.argwhere(np.array(num_of_particles) < 6).flatten()
+    print([i for i in good_gen[only_five].pdgId])
+    
 @analyzerModule("good_gen", categories="main", depends_on=["objects"])
 def goodGenParticles(events,analyzer):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
@@ -56,6 +66,7 @@ def goodGenParticles(events,analyzer):
             chi_s=good_gen[:, 5],
         )
     )
+    
     events["SignalQuarks"] = ak.concatenate(
         [ak.singletons(val) for val in (good_gen[:, i] for i in range(2, 6))], axis=1
     )
