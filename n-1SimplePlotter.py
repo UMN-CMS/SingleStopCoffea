@@ -6,9 +6,14 @@ import hist as hst
 import matplotlib.pyplot as plt
 
 from analyzer.plotting.styles import *
+<<<<<<< HEAD
 #from analyzer.plotting.core_plots import *
 from analyzer.plotting.simple_plot import *
 from analyzer.datasets import SampleManager #import loadSamplesFromDirectory
+=======
+from analyzer.plotting.core_plots import *
+from analyzer.datasets import loadSamplesFromDirectory
+>>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 
 from pathlib import Path
 
@@ -27,7 +32,11 @@ representative = [f"signal_312_{p}" for p in ("2000_1900", "1200_400", "1500_900
 
 manager = SampleManager.loadSamplesFromDirectory("datasets")
 
+<<<<<<< HEAD
 file_name = "signal_312_1200_400.pkl"
+=======
+file_name = "singlemuon.pkl"
+>>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 data = pkl.load(open(file_name, "rb"))
 histos = data.results[file_name].histograms
 lumi = None
@@ -144,6 +153,7 @@ singlemuon = ["DataSingleMuon2018"]
 #simplePlot('pT1', representative, backgrounds, scale = 'linear', normalize=True)
 #simplePlot('dRbb12', representative, backgrounds, scale = 'linear', normalize = True)
 #simplePlot('nJets', representative, backgrounds, scale = 'linear', normalize = True)
+<<<<<<< HEAD
 simplePlot('mSoftDrop2D', singlemuon, [], scale = 'linear', normalize=False, selection = {'pT400': sum, 'HT1050': sum})
 
 simplePlot('mSoftDrop', [file_name], [], scale = 'linear', normalize=False, selection = {'dataset': 'signal_312_1200_400', 'HT1050': 0})
@@ -153,17 +163,21 @@ pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon
 pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}][{'dataset': 'DataSingleMuon2018'}]
 HT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
+=======
 
-ptp_PO = PlotObject(pT_pass, r'pT_1', None)
-ptt_PO = PlotObject(pT_total, r'pT_1', None)
-htp_PO = PlotObject(HT_pass, r'HT', None)
-htt_PO = PlotObject(HT_total, r'HT', None)
+pT_pass = histos['pT1'][{'pT400': 1, 'HT1050': sum}]
+pT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
+HT_pass = histos['pT1'][{'pT400': sum, 'HT1050': 1}]
+HT_total = histos['pT1'][{'pT400': sum, 'HT1050': sum}]
+>>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 
-print(ptp_PO)
+ptp_PO = PlotObject(pT_pass, r'pT_1', '')
+ptt_PO = PlotObject(pT_total, r'pT_1', '')
+htp_PO = PlotObject(HT_pass, r'HT', '')
+htt_PO = PlotObject(HT_total, r'HT', '')
 
 fig, ax = drawAs1DHist(ptp_PO, yerr=True, fill=False)
-ax.set_yscale('log')
-drawAs1DHist(ax, ptt_PO, yerr=True, fill=False)
+drawas1DHist(ax, ptt_PO, yerr=True, fill=False)
 addAxesToHist(ax, num_bottom=1, bottom_pad=0)
 ab = ax.bottom_axes[0]
 drawRatio(ab, ptp_PO, ptt_PO)
@@ -176,8 +190,7 @@ fig.savefig("figures/pT_Efficiency.pdf")
 plt.close(fig)
 
 fig, ax = drawAs1DHist(htp_PO, yerr=True, fill=False)
-ax.set_yscale('log')
-drawAs1DHist(ax, htt_PO, yerr=True, fill=False)
+drawas1DHist(ax, htt_PO, yerr=True, fill=False)
 addAxesToHist(ax, num_bottom=1, bottom_pad=0)
 ab = ax.bottom_axes[0]
 drawRatio(ab, htp_PO, htt_PO)
@@ -188,6 +201,7 @@ addEra(ax, 59.8)
 fig.tight_layout()
 fig.savefig("figures/HT_Efficiency.pdf")
 plt.close(fig)
+<<<<<<< HEAD
 
 softDrop_pass = histos['mSoftDrop'][{'pT400': 1, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
 softDrop_total = histos['mSoftDrop'][{'pT400': sum, 'HT1050': sum}][{'dataset': 'DataSingleMuon2018'}]
@@ -229,6 +243,8 @@ fig.savefig("figures/softDrop2D_Efficiency.pdf")
 plt.close(fig)
 
 
+=======
+>>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 '''
 simplePlot("m14_vs_m13", compressed, sig_style="profile", add_label="Compressed")
 sys.exit(0)

@@ -62,7 +62,43 @@ def createEventLevelHistograms(events, analyzer):
     return events, analyzer
 
 
+<<<<<<< HEAD
 @analyzerModule("tag_hists", depends_on=["objects"])
+=======
+    for i in range(0, 5):
+        mask = ak.num(gj, axis=1) > i
+        masked_jets = gj[mask]
+        htratio = masked_jets[:, i].pt / events.HT[mask]
+        ret[f"pt_ht_ratio_{i+1}"] = hmaker(
+            hist.axis.Regular(50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
+            htratio,
+            mask=mask,
+            name=rf"Ratio of jet {i} $p_T$ to event HT",
+            description=rf"Ratio of jet {i} $p_T$ to event HT",
+        )
+    for p1, p2 in co(co(range(0, 4))):
+        mask = masks[p1] & masks[p2]
+        p1_vals = gj[mask][:, p1[0]].phi - gj[mask][:, p1[1]].phi
+        p2_vals = gj[mask][:, p2[0]].phi - gj[mask][:, p2[1]].phi
+        ret["d_phi_{}{}_vs_{}{}".format(*p1, *p2)] = hmaker(
+            [
+                hist.axis.Regular(
+                    50, 0, 5, name="dp1", label=r"$\Delta \phi_{" + f"{p1}" + r"}$"
+                ),
+                hist.axis.Regular(
+                    50, 0, 5, name="dp2", label=r"$\Delta \phi_{" + f"{p2}" + r"}$"
+                ),
+            ],
+            [p1_vals, p2_vals],
+            mask=mask,
+            name=rf"$\Delta \phi_{p1}$ vs $\Delta \phi_{p2}$",
+        )
+    return ret
+
+
+=======
+@analyzerModule("tag_hists", ModuleType.MainHist)
+>>>>>>> parent of 091d9c5... mSoftDrop trigger efficiency
 def createTagHistograms(events, hmaker):
     ret = {}
     gj = events.good_jets
