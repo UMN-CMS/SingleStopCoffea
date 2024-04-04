@@ -36,6 +36,9 @@ plotter = Plotter(
     #default_axis_opts={"number_jets": Plotter.Split},
     coupling="312",
 )
+
+print(plotter.histos.keys())
+input()
 list_of_samples = ["400","400_mg","1100","1100_mg","1400","1400_mg"]
 pt_hists = ['m14_pt','m13_pt','m24_pt','m12_pt','m23_pt',]
 list_of_mass_points = ["1400"]
@@ -55,7 +58,11 @@ list_of_1d_hists = ['h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', 'm13_eta',
                     'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
                     'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
                     'medium_b_m', 'medium_b_pt']
-for j in list_of_1d_hists:
+list_of_b_hists = ['loose_bjet_pt', 
+                    'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
+                    'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
+                    'medium_b_m', 'medium_b_pt']
+for j in list_of_b_hists:
     plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="400",normalize=True,ratio=True)
     plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
     plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1400",normalize=True,ratio=True)

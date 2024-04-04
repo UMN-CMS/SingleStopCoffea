@@ -99,6 +99,7 @@ def drawRatio(
         linestyle="none",
         **kwargs,
     )
+    ax.axhline(y=1,linestyle='--',linewidth='1')
     return ax
 
 

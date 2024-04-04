@@ -242,8 +242,8 @@ class Plotter:
                 po_ratio = PlotObject.fromNumpy((ratio_histv,realh1.axes), title=ob1, style=self.sample_manager[x].style,axes=True)
                 fig = plot2D(
                     po_ratio,
-                    self.coupling,
-                    self.target_lumi,
+                    coupling=self.coupling,
+                    lumi=self.target_lumi,
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
