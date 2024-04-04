@@ -7,11 +7,39 @@ from analyzer.matching import object_matching
 
 
 def isGoodGenParticle(particle):
-    print(particle.pdgId)
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
         particle.hasFlags("fromHardProcessBeforeFSR")
         & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
     )
+
+def isStop(particle):
+    stop1 = 1000006
+    stop2 = 1000002
+    return ((abs(particle.pdgId) == stop1) | (abs(particle.pdgId) == stop2))
+
+def isChi(particle):
+    return (abs(particle.pdgId) == 1000024)
+
+def isStrange(particle):
+    return(abs(particle.pdgId) == 3)
+
+def isDown(particle):
+    return(abs(particle.pdgId) == 1)
+
+def isChiBottom(particle_set):
+    chi = particle_set[isChi(particle_set)]
+    if chi.pdgId > 0:
+        return particle_set.pdgId == -5
+    else:
+        return particle_set.pdgId == 5
+
+def isStopBottom(particle_set):
+    chi = particle_set[isChi(particle_set)]
+    if chi.pdgId > 0:
+        return particle_set.pdgId == 5
+    else:
+        return particle_set.pdgId == -5
+
 
 
 def createGoodChildren(gen_particles, children):
@@ -30,7 +58,6 @@ def createGoodChildren(gen_particles, children):
 @analyzerModule("good_gen", categories="main")
 def goodGenParticles(events, analyzer):
     ar = isGoodGenParticle(events.GenPart)
-    import numpy as np
     good_gen = events.GenPart[ar]
     num_of_particles = [len(i) for i in good_gen]
     only_five = np.argwhere(np.array(num_of_particles) < 6).flatten()
@@ -58,18 +85,18 @@ def goodGenParticles(events,analyzer):
     sb = ak.flatten(ak.flatten(s_children[abs(s_children.pdgId) == 5]))
     events["SignalParticles"] = ak.zip(
         dict(
-            stop=good_gen[:, 0],
-            chi=good_gen[:, 1],
-            stop_b=good_gen[:, 2],
-            chi_b=good_gen[:, 3],
-            chi_d=good_gen[:, 4],
-            chi_s=good_gen[:, 5],
+            stop=stop,
+            chi=chi,
+            stop_b=stop_b,
+            chi_b=chi_b,
+            chi_d=chi_d,
+            chi_s=chi_s,
         )
     )
     
-    events["SignalQuarks"] = ak.concatenate(
-        [ak.singletons(val) for val in (good_gen[:, i] for i in range(2, 6))], axis=1
-    )
+    # events["SignalQuarks"] = ak.concatenate(
+    #     [ak.singletons(val) for val in (good_gen[:, i] for i in range(2, 6))], axis=1
+    # )
     return events, analyzer
 
 
@@ -91,3 +118,4 @@ def deltaRMatch(events, analyzer):
     events["matched_dr"] = dr
     events["matched_jet_idx"] = idx_j
     return events, analyzer
+
