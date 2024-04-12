@@ -241,11 +241,11 @@ class Plotter:
             ret = []
             for x in hc.axes[0]:
                 realh = hc[{"dataset": x}]
-                po = PlotObject.fromHist(realh, x, title=realh.axes[0][0], style=self.sample_manager[x].style)
+                po = PlotObject.fromHist(realh, title=realh.axes[0].name, style=self.sample_manager[x].style)
                 fig = plot2D(
                     po,
-                    self.coupling,
-                    self.target_lumi,
+                    coupling = self.coupling,
+                    lumi = self.target_lumi,
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
@@ -263,7 +263,8 @@ class Plotter:
                 realh2 = un_norm_hc[{"dataset": ob2}]
                 nv = realh1.values()
                 dv = realh2.values()
-                ratio_histv = np.divide(nv,dv,out=np.ones_like(nv), where=dv != 0)
+                ratio_histv = np.divide(dv-nv,realh1.variances(),out=np.zeros_like(nv), where=realh1.variances() != 0)
+
                 po_ratio = PlotObject.fromNumpy((ratio_histv,realh1.axes), title=ob1, style=self.sample_manager[x].style,axes=True)
                 fig = plot2D(
                     po_ratio,
@@ -272,10 +273,10 @@ class Plotter:
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
-                    ratio=ratio,
+                    zscore=ratio,
                 )
                 if self.outdir:
-                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{ob1}_pythia_v_mg_ratio.pdf")
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{ob1}_pythia_v_mg_zscore.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)
