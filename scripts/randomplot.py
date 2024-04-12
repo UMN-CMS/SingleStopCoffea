@@ -38,12 +38,6 @@ plotter = Plotter(
 )
 
 print(plotter.histos.keys())
-input()
-list_of_samples = ["400","400_mg","1100","1100_mg","1400","1400_mg"]
-pt_hists = ['m14_pt','m13_pt','m24_pt','m12_pt','m23_pt',]
-list_of_mass_points = ["1400"]
-
-
 list_of_2d_hists = ['m14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 'm14_vs_m12', 'ratio_m14_vs_m12', 
                     'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 
                     'm24_vs_m12', 'ratio_m24_vs_m12', 'm24_vs_m23', 'ratio_m24_vs_m23', 'm12_vs_m23', 'ratio_m12_vs_m23','d_phi_01_vs_02', 
@@ -62,7 +56,13 @@ list_of_b_hists = ['loose_bjet_pt',
                     'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
                     'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
                     'medium_b_m', 'medium_b_pt']
-for j in list_of_b_hists:
+list_of_1d_truth_hists = ['truth_stop_b_pt', 'truth_chi_b_pt', 'truth_chi_pt', 'truth_chi_s_pt', 'truth_chi_d_pt', 'truth_stop_b_phi', 
+                       'truth_chi_b_phi', 'truth_chi_phi', 'truth_chi_s_phi', 'truth_chi_d_phi','truth_stop_b_eta', 
+                       'truth_chi_b_eta', 'truth_chi_eta', 'truth_chi_s_eta', 'truth_chi_d_eta','truth_chi_chi_b_d_eta','truth_chi_chi_b_d_phi', 'truth_chi_chi_b_d_r',
+                       'truth_chi_stop_b_d_eta','truth_chi_stop_b_d_phi', 'truth_chi_stop_b_d_r']
+list_of_2d_truth_hists = ['truth_chi_pt_v_chi_b_pt', 'truth_chi_pt_v_stop_b_pt', 'truth_chi_eta_v_chi_b_eta',"truth_chi_eta_v_stop_b_eta",'truth_chi_phi_v_chi_b_phi',"truth_chi_phi_v_stop_b_phi"]
+
+for j in list_of_1d_truth_hists:
     plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="400",normalize=True,ratio=True)
     plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
     plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1400",normalize=True,ratio=True)
@@ -70,11 +70,10 @@ for j in list_of_b_hists:
 # plotter('m14_pt', ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400",normalize=False,ratio=True)
 # plotter('m14_pt', ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100",normalize=False,ratio=True)
 # plotter('m14_pt', ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400",normalize=False,ratio=True)
-# for j in list_of_2d_hists:
-#     plotter(j,["signal_312_1500_400","signal_312_1500_400_mg"],add_label=j,add_name="400",normalize=True,ratio=True)
-#     plotter(j,["signal_312_1500_1100","signal_312_1500_1100_mg"],add_label=j,add_name="1100",normalize=True,ratio=True)
-#     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
-print(plotter.histos.keys())
+for j in list_of_2d_truth_hists:
+    plotter(j,["signal_312_1500_400","signal_312_1500_400_mg"],add_label=j,add_name="400",normalize=True,ratio=True)
+    plotter(j,["signal_312_1500_1100","signal_312_1500_1100_mg"],add_label=j,add_name="1100",normalize=True,ratio=True)
+    plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 sys.exit()
 

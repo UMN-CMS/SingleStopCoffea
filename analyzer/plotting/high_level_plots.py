@@ -99,8 +99,6 @@ def plot1D(
     ax.legend(handles, labels, **extra_legend_args)
     if xlabel_override:
         ax.set_xlabel(xlabel_override)
-    if "$p_T ( \sum_{n=1}^" in hc.axes[0].title:
-        ax.set_xlim(right=600)
     fig.tight_layout()
     return fig
 
@@ -112,7 +110,7 @@ def plot2D(
     sig_style="hist",
     scale="log",
     add_label=None,
-    ratio=False,
+    zscore=False,
 ):
     fig, ax = plt.subplots()
 
@@ -129,7 +127,7 @@ def plot2D(
     )
     addTitles2D(ax, plot_obj)
 
-    if ratio and hasattr(ax, "cax"):
+    if zscore and hasattr(ax, "cax"):
         cax = ax.cax
-        cax.set_ylabel("Ratio (Pythia/MG)")
+        cax.set_ylabel("MG-Pythia/(Var[Pythia])")
     return fig

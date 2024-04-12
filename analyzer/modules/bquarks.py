@@ -62,7 +62,7 @@ def createBHistograms(events, analyzer):
         mask = ak.num(m_bjets, axis=1) > i
         analyzer.H(
             f"medium_b_{i}_pt",
-            makeAxis(50, 0, 800, f"$p_T$ of rank {i} medium b jet"),
+            makeAxis(100, 0, 800, f"$p_T$ of rank {i} medium b jet"),
             m_bjets[mask][:,i].pt,
             mask=mask,
             name=f"Medium BJet {i} $p_T$",

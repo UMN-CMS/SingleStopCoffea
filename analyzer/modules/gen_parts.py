@@ -5,6 +5,9 @@ import awkward as ak
 from analyzer.core import analyzerModule
 from analyzer.matching import object_matching
 
+from .axes import *
+from analyzer.math_funcs import angleToNPiToPi
+
 
 def isGoodGenParticle(particle):
     return particle.hasFlags("isLastCopy", "fromHardProcess") & ~(
@@ -39,8 +42,6 @@ def isStopBottom(particle_set):
         return particle_set.pdgId == 5
     else:
         return particle_set.pdgId == -5
-
-
 
 def createGoodChildren(gen_particles, children):
     # x = ak.singletons(gen_particles.children)
@@ -119,3 +120,165 @@ def deltaRMatch(events, analyzer):
     events["matched_jet_idx"] = idx_j
     return events, analyzer
 
+@analyzerModule("gen_hists", categories="main",depends_on=["good_gen"])
+def genHistograms(events, analyzer):
+    stop_b = events.SignalParticles.stop_b
+    chi_b = events.SignalParticles.chi_b
+    chi = events.SignalParticles.chi
+    chi_d = events.SignalParticles.chi_d
+    chi_s = events.SignalParticles.chi_s
+
+        
+    analyzer.H("truth_stop_b_pt", pt_axis, stop_b.pt, name="Gen stop-b $p_{T}$")
+    analyzer.H("truth_chi_b_pt", pt_axis, chi_b.pt, name="Gen chi-b $p_{T}$")
+    analyzer.H("truth_chi_pt", pt_axis, chi.pt, name="Gen chi $p_{T}$")
+    analyzer.H("truth_chi_s_pt", pt_axis, chi_s.pt, name="Gen chi-s $p_{T}$")
+    analyzer.H("truth_chi_d_pt", pt_axis, chi_d.pt, name="Gen chi-d $p_{T}$")
+
+    analyzer.H("truth_stop_b_phi", phi_axis, stop_b.phi, name="Gen stop-b $\\phi$")
+    analyzer.H("truth_chi_b_phi", phi_axis, chi_b.phi, name="Gen chi-b $\\phi$")
+    analyzer.H("truth_chi_phi", phi_axis, chi.phi, name="Gen chi $\phi$")
+    analyzer.H("truth_chi_s_phi", phi_axis, chi_s.phi, name="Gen chi-s $\\phi$")
+    analyzer.H("truth_chi_d_phi", phi_axis, chi_d.phi, name="Gen chi-d $\\phi$")
+
+    analyzer.H("truth_stop_b_eta", eta_axis, stop_b.eta, name="Gen stop-b $\\eta$")
+    analyzer.H("truth_chi_b_eta", eta_axis, chi_b.eta, name="Gen chi-b $\\eta$")
+    analyzer.H("truth_chi_eta", eta_axis, chi.eta, name="Gen chi $\\eta$")
+    analyzer.H("truth_chi_s_eta", eta_axis, chi_s.eta, name="Gen chi-s $\\eta$")
+    analyzer.H("truth_chi_d_eta", eta_axis, chi_d.eta, name="Gen chi-d $\\eta$")
+
+    d_eta = abs(chi.eta-chi_b.eta)
+    d_phi = abs(chi.phi-chi_b.phi)
+    d_r = chi.delta_r(chi_b)
+
+    d_eta2 = abs(chi.eta-stop_b.eta)
+    d_phi2 = abs(chi.phi-stop_b.phi)
+    d_r2 = chi.delta_r(stop_b)
+
+    analyzer.H(f"truth_chi_chi_b_d_eta", d_eta_axis, d_eta, name="Gen chi, chi-b $\Delta \eta$")
+    analyzer.H(f"truth_chi_chi_b_d_phi", d_phi_axis, d_phi, name="Gen chi, chi-b $\Delta \phi$")
+    analyzer.H(f"truth_chi_chi_b_d_r", dr_axis, d_r, name="Gen chi, chi-b $\Delta r$")
+
+    analyzer.H("truth_chi_stop_b_d_eta", d_eta_axis, d_eta2, name="Gen chi, stop-b $\Delta \eta$")
+    analyzer.H("truth_chi_stop_b_d_phi", d_phi_axis, d_phi2, name="Gen chi, stop-b $\Delta \phi$")
+    analyzer.H("truth_chi_stop_b_d_r", dr_axis, d_r2, name="Gen chi, stop-b $\Delta r$")
+
+    analyzer.H("truth_chi_pt_v_chi_b_pt",  
+        [
+            makeAxis(
+                50, 0, 1000, "Gen $\chi$ $p_{T}$", unit="GeV",
+            ),
+            makeAxis(
+                50, 0, 1000, "Gen $b_{\chi}$ $p_{T}$", unit="GeV",
+            ),
+        ],
+        [chi.pt, chi_b.pt],
+        name="truth_chi_pt_v_chi_b_pt",
+    )
+
+    analyzer.H("truth_chi_pt_v_stop_b_pt", 
+        [
+            makeAxis(
+                50, 0, 1000, "Gen $\chi$ $p_{T}$", unit="GeV",
+            ),
+            makeAxis(
+                50, 0, 1000, "Gen $b_{\\tilde{t}}$ $p_{T}$", unit="GeV",
+            ),
+        ],
+        [chi.pt, stop_b.pt],
+        name="truth_chi_pt_v_stop_b_pt",
+    )
+
+    analyzer.H("truth_chi_eta_v_chi_b_eta", 
+        [
+            makeAxis(
+                20, 0, 5, "Gen $\chi$ $|\eta|$",
+            ),
+            makeAxis(
+                20, 0, 5, "Gen $b_{\chi}$ $|\eta|$",
+            ),
+        ],
+        [abs(chi.eta), abs(chi_b.eta)],
+        name="truth_chi_eta_v_chi_b_eta",
+    )
+
+    analyzer.H("truth_chi_eta_v_stop_b_eta", 
+        [
+            makeAxis(
+                20, 0, 5, "Gen $\chi$ $\eta$",
+            ),
+            makeAxis(
+                20, 0, 5, "Gen $b_{\\tilde{t}}$ $|\eta|$",
+            ),
+        ],
+        [abs(chi.eta), abs(stop_b.eta)],
+        name="truth_chi_eta_v_stop_b_eta",
+    )
+
+    analyzer.H("truth_chi_phi_v_chi_b_phi", 
+        [
+            makeAxis(
+                20, 0, 4, "Gen $\chi$ $\phi$",
+            ),
+            makeAxis(
+                20, 0, 4, "Gen $b_{\chi}$ $\phi$",
+            ),
+        ],
+        [chi.phi, chi_b.phi],
+        name="truth_chi_phi_v_chi_b_phi",
+    )
+
+    analyzer.H("truth_chi_phi_v_stop_b_phi", 
+        [
+            makeAxis(
+                25, 0, 4, "Gen $\chi$ $\phi$",
+            ),
+            makeAxis(
+                25, 0, 4, "Gen $b_{\\tilde{t}}$ $\phi$",
+            ),
+        ],
+        [chi.phi, stop_b.phi],
+        name="truth_chi_phi_v_stop_b_phi",
+    )
+
+    # analyzer.H(
+    #     f"medium_bb_eta",
+    #     makeAxis(20, 0, 5, "$\\Delta \\eta$ between leading 2 medium b jets"),
+    #     mb_eta,
+    #     mask=mask,
+    #     name=rf"$\Delta \eta$ BB$",
+    #     description=rf"$\Delta \eta$ between leading 2 medium b jets",
+    # )
+    # analyzer.H(
+    #     f"medium_bb_phi",
+    #     makeAxis(25, 0, 4, "$\\Delta \\phi$ between leading medium b jets"),
+    #     mb_phi,
+    #     mask=mask,
+    #     name=rf"$\Delta \phi$ BB$",
+    #     description=rf"$\Delta \phi$ between leading 2 medium b jets",
+    # )
+    # analyzer.H(
+    #     f"medium_bdr",
+    #     makeAxis(20, 0, 5, "$\\Delta R$ between leading 2 medium b jets"),
+    #     mb_dr,
+    #     mask=mask,
+    #     name=rf"Medium BJet $\Delta R$",
+    #     description=rf"$\Delta R$ between leading 2 medium $p_T$ b jets",
+    # )
+    # inv = top2[:, 0 + top2[:, 1]
+    # analyzer.H(
+    #     f"medium_b_m",
+    #     makeAxis(60, 0, 3000, f"$m$ of leading 2 medium b jets", unit="GeV"),
+    #     inv.mass,
+    #     mask=mask,
+    #     name=rf"medbmass",
+    # )
+    # analyzer.H(
+    #     f"medium_b_pt",
+    #     makeAxis(20, 0, 1000, f"$p_T$ of leading 2 medium b jets", unit="GeV"),
+    #     inv.pt,
+    #     name=rf"medbpt",
+    #     mask=mask,
+    # )
+
+    return events, analyzer
