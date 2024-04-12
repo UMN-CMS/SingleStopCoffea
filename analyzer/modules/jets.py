@@ -32,7 +32,7 @@ def createJetHistograms(events, analyzer):
             makeAxis(
                 100,
                 0,
-                1500,
+                1000,
                 f"$p_T ( \\sum_{{n={i+1}}}^{{{j}}} jet_{{n}})$ ",
                 unit="GeV",
             ),
@@ -62,10 +62,10 @@ def createJetHistograms(events, analyzer):
         analyzer.H(f"m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}", 
             [
                 makeAxis(
-                    60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV", append_name="1"
+                    30, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV", append_name="1"
                 ),
                 makeAxis(
-                    60, 0, 3000, rf"$m_{{{mtitle2}}}$", unit="GeV", append_name="2"
+                    30, 0, 3000, rf"$m_{{{mtitle2}}}$", unit="GeV", append_name="2"
                 ),
             ],
             [masses[p1], masses[p2]],
@@ -74,9 +74,9 @@ def createJetHistograms(events, analyzer):
 
         analyzer.H(f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}", 
             [
-                makeAxis(60, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV"),
+                makeAxis(30, 0, 3000, rf"$m_{{{mtitle1}}}$", unit="GeV"),
                 makeAxis(
-                    50,
+                    30,
                     0,
                     1,
                     rf"$\frac{{m_{{ {mtitle2} }} }}{{ m_{{ {mtitle1} }} }}$",
@@ -88,32 +88,33 @@ def createJetHistograms(events, analyzer):
 
     for i in range(0, 4):
         analyzer.H(rf"pt_{i}", 
-            makeAxis(60, 0, 3000, f"$p_{{T, {i}}}$", unit="GeV"),
+            makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),
             gj[:, i].pt,
             name=f"$p_T$ of jet {i+1}",
             description=f"$p_T$ of jet {i+1} ",
         )
         analyzer.H(f"eta_{i}", 
-            makeAxis(20, 0, 5, f"$\eta_{{{i}}}$"),
+            makeAxis(20, 0, 5, f"$\eta_{{{i+1}}}$"),
             abs(gj[:, i].eta),
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
         analyzer.H(f"phi_{i}", 
-            makeAxis(50, 0, 4, f"$\phi_{{{i}}}$"),
+            makeAxis(50, 0, 4, f"$\phi_{{{i+1}}}$"),
             abs(gj[:, i].phi),
             name=rf"$\phi$ of jet {i+1}",
             description=rf"$\phi$ of jet {i+1}",
         )
+
 
     padded_jets = ak.pad_none(gj, 5, axis=1)
     masks = {}
     for i, j in list(x for x in it.combinations(range(0, 5), 2) if x[0] != x[1]):
         mask = ak.num(gj, axis=1) > max(i, j)
         masked_jets = gj[mask]
-        d_eta = masked_jets[:, i].eta - masked_jets[:, j].eta
-        d_r = masked_jets[:, i].delta_r(masked_jets[:, j])
-        d_phi = masked_jets[:, i].phi - masked_jets[:, j].phi
+        d_eta = abs(masked_jets[:, i].eta - masked_jets[:, j].eta)
+        d_r = abs(masked_jets[:, i].delta_r(masked_jets[:, j]))
+        d_phi = abs(masked_jets[:, i].phi - masked_jets[:, j].phi)
         masks[(i, j)] = mask
         analyzer.H(rf"d_eta_{i+1}_{j}", 
             eta_axis,
@@ -142,7 +143,7 @@ def createJetHistograms(events, analyzer):
         masked_jets = gj[mask]
         htratio = masked_jets[:, i].pt / events.HT[mask]
         analyzer.H(f"pt_ht_ratio_{i+1}", 
-            hist.axis.Regular(50, 0, 5, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
+            hist.axis.Regular(50, 0, 1, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
             mask=mask,
             name=rf"Ratio of jet {i} $p_T$ to event HT",
@@ -155,10 +156,10 @@ def createJetHistograms(events, analyzer):
         analyzer.H("d_phi_{}{}_vs_{}{}".format(*p1, *p2), 
             [
                 hist.axis.Regular(
-                    50, 0, 5, name="dp1", label=r"$\Delta \phi_{" + f"{p1}" + r"}$"
+                    25, 0, 5, name="dp1", label=r"$\Delta \\phi_{" + f"{p1}" + r"}$"
                 ),
                 hist.axis.Regular(
-                    50, 0, 5, name="dp2", label=r"$\Delta \phi_{" + f"{p2}" + r"}$"
+                    25, 0, 5, name="dp2", label=r"$\Delta \\phi_{" + f"{p2}" + r"}$"
                 ),
             ],
             [p1_vals, p2_vals],

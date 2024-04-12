@@ -121,7 +121,7 @@ def plot2D(
     sig_style="hist",
     scale="log",
     add_label=None,
-    ratio=False,
+    zscore=False,
 ):
     fig, ax = plt.subplots()
 
@@ -138,7 +138,7 @@ def plot2D(
     )
     addTitles2D(ax, plot_obj)
 
-    if ratio and hasattr(ax, "cax"):
+    if zscore and hasattr(ax, "cax"):
         cax = ax.cax
-        cax.set_ylabel("Ratio (Pythia/MG)")
+        cax.set_ylabel("MG-Pythia/(Var[Pythia])")
     return fig
