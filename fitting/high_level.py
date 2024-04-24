@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import itertools as it
 import math
@@ -7,26 +8,24 @@ import sys
 from collections import namedtuple
 from pathlib import Path
 
-import numpy as np
-import yaml
-
 import analyzer.file_utils as futil
 import analyzer.plotting as plotting
 import gpytorch
 import hist
 import linear_operator
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import uhi
+import yaml
 from analyzer.plotting.mplstyles import loadStyles
 from analyzer.plotting.utils import subplots_context
 from gpytorch.kernels import ScaleKernel as SK
-from rich.progress import Progress, track
 from matplotlib.patches import Polygon
-
+from rich.progress import Progress, track
 
 from . import models, regression
-from .plot_tools import createSlices, simpleGrid, makeSquares, getPolyFromSquares
+from .plot_tools import createSlices, getPolyFromSquares, makeSquares, simpleGrid
 
 torch.set_default_dtype(torch.float64)
 
@@ -42,6 +41,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
     if mask is not None:
         squares = makeSquares(raw_test.X[mask], raw_test.E)
         points = getPolyFromSquares(squares)
+
     def addWindow(ax):
         if mask is None:
             return
@@ -163,23 +163,16 @@ def makeSlicePlots(pred, test_data, hist, window, dim, save_dir, dirdata):
 def doCompleteRegression(
     inhist,
     window_func,
-    base_dir,
-    subpath,
-    common_data=None,
-    rebin=1,
+    dir_data,
     kernel=None,
     model_maker=None,
+    rebin=1,
 ):
-    common_data = common_data or {}
 
     torch.set_default_dtype(torch.float64)
+    save_dir = dir_data.directory
 
-    base_dir = Path(base_dir)
-    save_dir = base_dir / subpath
 
-    dirdat = futil.DirectoryData(base_dir)
-    shutil.rmtree(save_dir, ignore_errors=True)
-    save_dir.mkdir(parents=True, exist_ok=True)
     train_data = regression.makeRegressionData(
         inhist[hist.rebin(rebin), hist.rebin(rebin)], window_func, exclude_less=0.001
     )
@@ -195,57 +188,39 @@ def doCompleteRegression(
         out = save_dir / "original.pdf"
         plotting.drawAs2DHist(ax, plotting.PlotObject.fromHist(inhist))
         fig.savefig(out)
-        dirdat.set(out, common_data)
 
     with subplots_context(1, 2, figsize=(10, 5)) as (fig, ax):
         out = save_dir / "masked_area.pdf"
         simpleGrid(ax[0], test_data.E, test_data.X, test_data.Y)
         simpleGrid(ax[1], train_data.E, train_data.X, train_data.Y)
         fig.savefig(out)
-        dirdat.set(out, common_data)
 
+    use_cuda = True
 
-
-    use_cuda = True 
-
-    if torch.cuda.is_available() and use_cuda:   
+    if torch.cuda.is_available() and use_cuda:
         print("USING GPU")
-        train=regression.sendToGpu(normalized_train_data)
+        train = regression.sendToGpu(normalized_train_data)
     else:
         train = normalized_train_data
 
     model, likelihood = regression.createModel(
         train, kernel=kernel, model_maker=model_maker
     )
-    if torch.cuda.is_available() and use_cuda:   
+    if torch.cuda.is_available() and use_cuda:
         model = model.cuda()
         likelihood = likelihood.cuda()
-    # model,likelihood = regression.createModel(train, kernel=SK(models.GeneralRQ(ard_num_dims=2)))
 
     with linear_operator.settings.max_cg_iterations(2000):
         model, likelihood = regression.optimizeHyperparams(
-            model, likelihood, train, bar=False, iterations=400, lr=0.05
+            model, likelihood, train, bar=False, iterations=200, lr=0.05
         )
     print("Done training")
-    if torch.cuda.is_available() and use_cuda:   
+    if torch.cuda.is_available() and use_cuda:
         model = model.cpu()
         likelihood = likelihood.cpu()
 
     params = list(model.named_parameters_and_constraints())
-    if False:
-        for name, param, constraint in params:
-            if constraint:
-                real_param = constraint.transform(param)
-            else:
-                real_param = param
-            print(
-                f"{name.replace('raw_',''):{max(len(x[0]) for x in params)+4}} {real_param.detach().numpy().round(3)}"
-            )
-
-
-    with linear_operator.settings.max_cg_iterations(2000), gpytorch.settings.debug(
-        False
-    ):
+    with linear_operator.settings.max_cg_iterations(2000):
         pred = regression.getPrediction(model, likelihood, normalized_test_data)
 
     pred = test_transform.iTransform(
@@ -271,42 +246,40 @@ def doCompleteRegression(
     else:
         mask = None
     diagnostic_plots = makeDiagnosticPlots(pred, test_data, train_data, inhist, mask)
-    saveDiagnosticPlots(diagnostic_plots, dirdat, save_dir)
-    makeSlicePlots(pred, test_data, inhist, window_func, 0, save_dir, dirdat)
-    makeSlicePlots(pred, test_data, inhist, window_func, 1, save_dir, dirdat)
+    saveDiagnosticPlots(diagnostic_plots, dir_data, save_dir)
+    makeSlicePlots(pred, test_data, inhist, window_func, 0, save_dir, dir_data)
+    makeSlicePlots(pred, test_data, inhist, window_func, 1, save_dir, dir_data)
 
-    p = save_dir / "metadata.yaml"
     torch.save(model.state_dict(), save_dir / "train_model.pth")
-    with open(p, "w") as f:
-        f.write(
-            yaml.dump(
-                {
-                    "chi2_blinded": float(chi2),
-                }
-            )
-        )
+    dir_data.setGlobal(
+        {
+            "chi2_blinded": float(chi2),
+            "avg_abs_pull": float(avg_pull),
+            "model_string": str(model),
+        }
+    )
 
 
-def scan(hist, window_func_generator):
+def scan(hist, kernel, window_func_generator, base_dir):
+    base_dir = Path(base_dir)
+    inducing_ratio = 2
+
     def mm(train_x, train_y, likelihood, kernel, **kwargs):
         return models.InducingPointModel(
-            train_x, train_y, likelihood, kernel, inducing=train_x[::2]
+            train_x, train_y, likelihood, kernel, inducing=train_x[::inducing_ratio]
         )
 
-    NNRBF = models.wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
-    nnrbf = SK(NNRBF(odim=4,layer_sizes=(32,16)))
 
-    for name, wf in window_func_generator:
-        path = name
+    for name, wf, data in window_func_generator:
         print(f"Now processing {name}")
-        doCompleteRegression(
-            hist,
-            wf,
-            "scan",
-            path,
-            model_maker=mm,
-            kernel=nnrbf,
-        )
+
+        path = base_dir / name
+        shutil.rmtree(path, ignore_errors=True)
+        path.mkdir(parents=True, exist_ok=True)
+        dirdata = futil.DirectoryData(path)
+
+        dirdata.setGlobal({"window": data, "inducing_ratio": inducing_ratio})
+        doCompleteRegression(hist, wf, dirdata, model_maker=mm, kernel=kernel)
         plt.close("all")
 
 
@@ -331,14 +304,27 @@ def main():
     x_size_iter = map(float, torch.arange(100, 400, 100))
     y_iter = map(float, torch.arange(0.5, 0.7, 0.15))
     y_size_iter = map(float, torch.arange(0.05, 0.15, 0.05))
-    generator = (
+    generator = list(
         (
             f"E_{round(x)}_{round(y,2)}_{round(a)}_{round(b,2)}".replace(".", "p"),
             regression.ellipseMasker(torch.tensor([x, y]), a, b),
+            {"x": x, "y": y, "a": a, "b": b},
         )
         for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter)
     )
-    scan(qcd_hist, generator)
+
+    NNRBF = models.wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
+    nnrbf = SK(NNRBF(odim=2, layer_sizes=(256, 128, 16)))
+    grbf = SK(models.GeneralRBF(ard_num_dims=2))
+    kernels = {
+        #"nnrbf_256_128_16" : nnrbf,
+        "grbf" : grbf
+    }
+
+    p = Path("allscans")
+
+    for n,k in kernels.items():
+        scan(qcd_hist, k, generator, p/n)
 
 
 if __name__ == "__main__":

@@ -406,6 +406,10 @@ def wrapNN(cls_name, kernel):
         self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1.0, 1.0)
 
     def forward(self, x1, x2, **params):
+        #x1_, x2_ = (
+        #    self.scale_to_bounds(x1),
+        #    self.scale_to_bounds(x2),
+        #)
         x1_, x2_ = (
             self.feature_extractor(x1),
             self.feature_extractor(x2),

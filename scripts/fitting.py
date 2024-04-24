@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(".").resolve()))
+from analyzer.datasets import SampleManager
+from analyzer.core import AnalysisResult
+
+
 import pickle as pkl
 import uproot
 import matplotlib.pyplot as plt
@@ -8,7 +15,6 @@ import re
 import numpy as np
 from pathlib import Path
 import json
-import sys
 import argparse
 import re
 import gpytorch
@@ -16,7 +22,7 @@ from dataclasses import dataclass
 import dataclasses
 import torch
 from typing import Optional, Tuple, List, Union, Dict
-from analyzer.plotting.core_plots import (
+from analyzer.plotting import (
     loadStyles,
     PlotObject,
     drawPull,
@@ -26,8 +32,11 @@ from analyzer.plotting.core_plots import (
     addPrelim,
     addEra,
     drawAsScatter,
+    Plotter
 )
-from analyzer.plotting.simple_plot import Plotter
+
+
+
 
 loadStyles()
 
@@ -152,14 +161,14 @@ def getPrediction(model, points):
 def plotGaussianProcess(ax, model, min_bound=1050):
     ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
     mean, upper, lower, _ = getPrediction(model, torch.from_numpy(ls))
-    ax.plot(ls.ravel(), mean, label="Mean prediction", color="tab:orange")
+    ax.plot(ls.ravel(), mean, label="Background Prediction", color="tab:orange")
     ax.fill_between(
         ls.ravel(),
         lower,
         upper,
         alpha=0.3,
         color="tab:orange",
-        label=r"Mean$\pm 2\sigma$",
+        label=r"Background Prediction$\pm 2\sigma$",
     )
     return ax
 
@@ -182,15 +191,16 @@ def generatePulls(
         model, torch.from_numpy(bc.reshape(-1, 1))
     )
     h = np.histogram(bc, weights=mean_at_obs, bins=histogram.axes[0].edges)
-    pred = PlotObject((*h, variance_at_obs))
-    obs = PlotObject(histogram)
+    pred = PlotObject.fromNumpy(h, variances=variance_at_obs)
+    obs = PlotObject.fromHist(histogram, title="QCD Simulation + Signal")
 
-    fig, ax = drawAsScatter(obs, yerr=True)
+    fig,ax=plt.subplots()
+    drawAsScatter(ax, obs, yerr=True)
     plotGaussianProcess(ax, model, min_bound=min_bound)
     ax.tick_params(axis="x", labelbottom=False)
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     if sig_hist:
-        drawAs1DHist(ax, PlotObject(sig_hist, "Injected Signal"), yerr=True, fill=None)
+        drawAs1DHist(ax, PlotObject.fromHist(sig_hist, title="Injected Signal", style={"color" : "green", "linewidth" : 3}), yerr=True, fill=None)
     ax.set_yscale("linear")
     ab = ax.bottom_axes[0]
     drawPull(ab, pred, obs, hline_list=[-1, 0, 1])
@@ -207,7 +217,7 @@ def generatePulls(
         ab.axvline(window[1], color="red", linewidth=0.3, linestyle="-.")
     addEra(ax, 137)
     addPrelim(ax, additional_text=f"\n$\\lambda_{{312}}''$ ")
-    addTitles1D(ax, histogram, top_pad=0.2)
+    addTitles1D(ax, pred, top_pad=0.2)
     ax.legend()
     transform = ax.transAxes
     cs = chisqr(histogram.values(), histogram.variances(), mean_at_obs)
@@ -343,8 +353,13 @@ class GaussianProcessFitResult:
         return "__".join(all_parts).replace(".", "p")
 
 
+def makeIter(x):
+    if not isinstance(x,(list,tuple)):
+        return [x]
+    else:
+        return x
 def product(*args):
-    return it.product(*(x if x is not None else [None] for x in args))
+    return it.product(*(makeIter(x) if x is not None else [None] for x in args))
 
 
 def main():
@@ -352,7 +367,13 @@ def main():
     data = pkl.load(open(args.input, "rb"))
     plotdir = Path(args.plot_dir)
     root_output = uproot.recreate(args.output)
-    histos = data["histograms"]
+
+    sample_manager = SampleManager()
+    sample_manager.loadSamplesFromDirectory("datasets")
+
+    data = AnalysisResult.fromFile(args.input)
+    histos = data.getMergedHistograms(sample_manager)
+
     histogram_orig = histos[args.name]
     target = None
     sigh = None

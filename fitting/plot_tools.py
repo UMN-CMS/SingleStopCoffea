@@ -222,3 +222,18 @@ def simpleGrid(ax, edges, inx, iny):
     f = ax.pcolormesh(X, Y, Z)
     addColorbar(ax, f)
     return f
+
+def plotHist(ax, edges, vals):
+    def addColorbar(ax, vals):
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = plt.colorbar(vals, cax=cax)
+        cax.get_yaxis().set_offset_position("left")
+        ax.cax = cax
+
+    X, Y = np.meshgrid(*edges)
+    Z=vals
+    Z = np.ma.masked_where(~filled, Z)
+    f = ax.pcolormesh(X, Y, Z)
+    addColorbar(ax, f)
+    return f
