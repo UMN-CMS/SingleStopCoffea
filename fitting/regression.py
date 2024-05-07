@@ -129,7 +129,7 @@ def pointsToGrid(points_x, points_y, edges, set_unfilled=None):
     return ret, filled.hist.bool()
 
 
-def getNormalizationTransform(dv, scale=1) -> DataTransformation:
+def getNormalizationTransform(dv, scale=1.0) -> DataTransformation:
     X, Y, V, E = dv
 
     max_x, min_x = torch.max(X, axis=0).values, torch.min(X, axis=0).values
@@ -137,15 +137,18 @@ def getNormalizationTransform(dv, scale=1) -> DataTransformation:
     mean_y = torch.mean(Y)
     std_y = Y.std(dim=-1)
 
-    value_scale = max_y - min_y
     value_scale = std_y
+    value_scale = max_y - min_y
     input_scale = max_x - min_x
 
     transform_x = LinearTransform(scale * (max_x - min_x), min_x)
     #transform_y = LinearTransform(scale * value_scale, min_y)
-    transform_y = LinearTransform(scale * value_scale, mean_y)
+    transform_y = LinearTransform(scale * value_scale, min_y)
+
 
     return DataTransformation(transform_x, transform_y)
+
+
 
 
 def rectMasker(mask_region):
