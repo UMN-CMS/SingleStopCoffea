@@ -251,7 +251,7 @@ def optimizeHyperparams(
             loss = -mll(output, train_data.Y)
             loss.backward()
             optimizer.step()
-            scheduler.step(
+            scheduler.step()
             if bar:
                 progress.update(
                     task1,
