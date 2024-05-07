@@ -112,7 +112,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
     ret["pulls_obs"] = (fig, ax)
 
     fig, ax = plt.subplots(layout="tight")
-    all_pulls = (pred_mean - raw_test.Y) / torch.sqrt(pred.V)
+    all_pulls = (raw_test.Y - pred_mean) / torch.sqrt(pred.V)
     p = plotting.PlotObject.fromHist(
         uhi.numpy_plottable.ensure_plottable_histogram(
             np.histogram(all_pulls[torch.abs(all_pulls) < np.inf], bins=20)
@@ -316,9 +316,13 @@ def main():
     NNRBF = models.wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
     nnrbf = SK(NNRBF(odim=2, layer_sizes=(256, 128, 16)))
     grbf = SK(models.GeneralRBF(ard_num_dims=2))
+    rbf = SK(gpytorch.kernels.RBFKernel(ard_num_dims=2))
+    cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
-        #"nnrbf_256_128_16" : nnrbf,
-        "grbf" : grbf
+        "nnrbf_256_128_16" : nnrbf,
+        "grbf" : grbf,
+        "rbf" : rbf,
+        "cosine" : cosine
     }
 
     p = Path("allscans")

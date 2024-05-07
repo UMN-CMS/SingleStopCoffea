@@ -134,6 +134,7 @@ def getNormalizationTransform(dv, scale=1) -> DataTransformation:
 
     max_x, min_x = torch.max(X, axis=0).values, torch.min(X, axis=0).values
     max_y, min_y = torch.max(Y), torch.min(Y)
+    mean_y = torch.mean(Y)
     std_y = Y.std(dim=-1)
 
     value_scale = max_y - min_y
@@ -141,7 +142,8 @@ def getNormalizationTransform(dv, scale=1) -> DataTransformation:
     input_scale = max_x - min_x
 
     transform_x = LinearTransform(scale * (max_x - min_x), min_x)
-    transform_y = LinearTransform(scale * value_scale, min_y)
+    #transform_y = LinearTransform(scale * value_scale, min_y)
+    transform_y = LinearTransform(scale * value_scale, mean_y)
 
     return DataTransformation(transform_x, transform_y)
 
@@ -235,6 +237,8 @@ def optimizeHyperparams(
     likelihood.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=iterations/3, gamma=0.1)
+    
 
     context = Progress() if bar else contextlib.nullcontext()
 
@@ -247,6 +251,7 @@ def optimizeHyperparams(
             loss = -mll(output, train_data.Y)
             loss.backward()
             optimizer.step()
+            scheduler.step(
             if bar:
                 progress.update(
                     task1,
@@ -255,10 +260,11 @@ def optimizeHyperparams(
                 )
                 progress.refresh()
             else:
-                if i % (iterations // 10) == 0:
+                if (i % (iterations // 10) == 0 ) or i == iterations-1:
                     print(f"Iter {i}: Loss = {loss.item()}")
                     pass
                     # print(f"Covar is {output.covariance_matrix}")
+
 
     return model, likelihood
 
@@ -279,4 +285,4 @@ def getBlindedMask(inputs, pred_mean, test_mean, test_var, mask_func):
     test_mean = test_mean[mask]
     test_var = test_var[mask]
     num = torch.count_nonzero(mask)
-    return torch.sum((pred_mean - test_mean) ** 2 / test_var) / num
+    return torch.sum((test_mean - pred_mean) ** 2 / test_var) / num
