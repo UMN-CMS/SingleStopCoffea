@@ -142,13 +142,10 @@ def getNormalizationTransform(dv, scale=1.0) -> DataTransformation:
     input_scale = max_x - min_x
 
     transform_x = LinearTransform(scale * (max_x - min_x), min_x)
-    #transform_y = LinearTransform(scale * value_scale, min_y)
+    # transform_y = LinearTransform(scale * value_scale, min_y)
     transform_y = LinearTransform(scale * value_scale, min_y)
 
-
     return DataTransformation(transform_x, transform_y)
-
-
 
 
 def rectMasker(mask_region):
@@ -202,7 +199,7 @@ def makeRegressionData(
     flat_centers = torch.flatten(centers_grid, end_dim=1)
     flat_bin_values = torch.flatten(bin_values)
     flat_bin_vars = torch.flatten(bin_vars)
-    ret= DataValues(
+    ret = DataValues(
         flat_centers[torch.flatten(~centers_mask)],
         flat_bin_values[torch.flatten(~centers_mask)],
         flat_bin_vars[torch.flatten(~centers_mask)],
@@ -240,8 +237,9 @@ def optimizeHyperparams(
     likelihood.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=iterations/3, gamma=0.1)
-    
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=iterations / 3, gamma=0.1
+    )
 
     context = Progress() if bar else contextlib.nullcontext()
 
@@ -263,11 +261,10 @@ def optimizeHyperparams(
                 )
                 progress.refresh()
             else:
-                if (i % (iterations // 10) == 0 ) or i == iterations-1:
+                if (i % (iterations // 10) == 0) or i == iterations - 1:
                     print(f"Iter {i}: Loss = {loss.item()}")
                     pass
                     # print(f"Covar is {output.covariance_matrix}")
-
 
     return model, likelihood
 
