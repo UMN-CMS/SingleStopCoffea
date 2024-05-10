@@ -59,6 +59,7 @@ def createGoodChildren(gen_particles, children):
 @analyzerModule("good_gen", categories="main")
 def goodGenParticles(events, analyzer):
     ar = isGoodGenParticle(events.GenPart)
+    
     good_gen = events.GenPart[ar]
     num_of_particles = [len(i) for i in good_gen]
     only_five = np.argwhere(np.array(num_of_particles) < 6).flatten()
@@ -135,17 +136,19 @@ def genHistograms(events, analyzer):
     analyzer.H("truth_chi_s_pt", pt_axis, chi_s.pt, name="Gen chi-s $p_{T}$")
     analyzer.H("truth_chi_d_pt", pt_axis, chi_d.pt, name="Gen chi-d $p_{T}$")
 
-    analyzer.H("truth_stop_b_phi", phi_axis, stop_b.phi, name="Gen stop-b $\\phi$")
-    analyzer.H("truth_chi_b_phi", phi_axis, chi_b.phi, name="Gen chi-b $\\phi$")
-    analyzer.H("truth_chi_phi", phi_axis, chi.phi, name="Gen chi $\phi$")
-    analyzer.H("truth_chi_s_phi", phi_axis, chi_s.phi, name="Gen chi-s $\\phi$")
-    analyzer.H("truth_chi_d_phi", phi_axis, chi_d.phi, name="Gen chi-d $\\phi$")
+    analyzer.H("truth_stop_phi", phi_axis, stop.phi, name="Gen stop $\\phi$", mask=mask)
+    analyzer.H("truth_stop_b_phi", phi_axis, stop_b.phi, name="Gen stop-b $\\phi$", mask=mask)
+    analyzer.H("truth_chi_b_phi", phi_axis, chi_b.phi, name="Gen chi-b $\\phi$", mask=mask)
+    analyzer.H("truth_chi_phi", phi_axis, chi.phi, name="Gen chi $\phi$", mask=mask)
+    analyzer.H("truth_chi_s_phi", phi_axis, chi_s.phi, name="Gen chi-s $\\phi$", mask=mask)
+    analyzer.H("truth_chi_d_phi", phi_axis, chi_d.phi, name="Gen chi-d $\\phi$", mask=mask)
 
-    analyzer.H("truth_stop_b_eta", eta_axis, stop_b.eta, name="Gen stop-b $\\eta$")
-    analyzer.H("truth_chi_b_eta", eta_axis, chi_b.eta, name="Gen chi-b $\\eta$")
-    analyzer.H("truth_chi_eta", eta_axis, chi.eta, name="Gen chi $\\eta$")
-    analyzer.H("truth_chi_s_eta", eta_axis, chi_s.eta, name="Gen chi-s $\\eta$")
-    analyzer.H("truth_chi_d_eta", eta_axis, chi_d.eta, name="Gen chi-d $\\eta$")
+    analyzer.H("truth_stop_eta", eta_axis, stop.eta, name="Gen stop $\\eta$", mask=mask)
+    analyzer.H("truth_stop_b_eta", eta_axis, stop_b.eta, name="Gen stop-b $\\eta$", mask=mask)
+    analyzer.H("truth_chi_b_eta", eta_axis, chi_b.eta, name="Gen chi-b $\\eta$", mask=mask)
+    analyzer.H("truth_chi_eta", eta_axis, chi.eta, name="Gen chi $\\eta$", mask=mask)
+    analyzer.H("truth_chi_s_eta", eta_axis, chi_s.eta, name="Gen chi-s $\\eta$", mask=mask)
+    analyzer.H("truth_chi_d_eta", eta_axis, chi_d.eta, name="Gen chi-d $\\eta$", mask=mask)
 
     d_eta = abs(chi.eta-chi_b.eta)
     d_phi = abs(chi.phi-chi_b.phi)
@@ -155,13 +158,13 @@ def genHistograms(events, analyzer):
     d_phi2 = abs(chi.phi-stop_b.phi)
     d_r2 = chi.delta_r(stop_b)
 
-    analyzer.H(f"truth_chi_chi_b_d_eta", d_eta_axis, d_eta, name="Gen chi, chi-b $\Delta \eta$")
-    analyzer.H(f"truth_chi_chi_b_d_phi", d_phi_axis, d_phi, name="Gen chi, chi-b $\Delta \phi$")
-    analyzer.H(f"truth_chi_chi_b_d_r", dr_axis, d_r, name="Gen chi, chi-b $\Delta r$")
+    analyzer.H(f"truth_chi_chi_b_d_eta", d_eta_axis, d_eta, name="Gen chi, chi-b $\Delta \eta$", mask=mask)
+    analyzer.H(f"truth_chi_chi_b_d_phi", d_phi_axis, d_phi, name="Gen chi, chi-b $\Delta \phi$", mask=mask)
+    analyzer.H(f"truth_chi_chi_b_d_r", dr_axis, d_r, name="Gen chi, chi-b $\Delta r$", mask=mask)
 
-    analyzer.H("truth_chi_stop_b_d_eta", d_eta_axis, d_eta2, name="Gen chi, stop-b $\Delta \eta$")
-    analyzer.H("truth_chi_stop_b_d_phi", d_phi_axis, d_phi2, name="Gen chi, stop-b $\Delta \phi$")
-    analyzer.H("truth_chi_stop_b_d_r", dr_axis, d_r2, name="Gen chi, stop-b $\Delta r$")
+    analyzer.H("truth_chi_stop_b_d_eta", d_eta_axis, d_eta2, name="Gen chi, stop-b $\Delta \eta$", mask=mask)
+    analyzer.H("truth_chi_stop_b_d_phi", d_phi_axis, d_phi2, name="Gen chi, stop-b $\Delta \phi$", mask=mask)
+    analyzer.H("truth_chi_stop_b_d_r", dr_axis, d_r2, name="Gen chi, stop-b $\Delta r$", mask=mask)
 
     analyzer.H("truth_chi_pt_v_chi_b_pt",  
         [
@@ -174,6 +177,7 @@ def genHistograms(events, analyzer):
         ],
         [chi.pt, chi_b.pt],
         name="truth_chi_pt_v_chi_b_pt",
+        mask=mask,
     )
 
     analyzer.H("truth_chi_pt_v_stop_b_pt", 
@@ -187,6 +191,7 @@ def genHistograms(events, analyzer):
         ],
         [chi.pt, stop_b.pt],
         name="truth_chi_pt_v_stop_b_pt",
+        mask=mask,
     )
 
     analyzer.H("truth_chi_eta_v_chi_b_eta", 
@@ -200,6 +205,7 @@ def genHistograms(events, analyzer):
         ],
         [abs(chi.eta), abs(chi_b.eta)],
         name="truth_chi_eta_v_chi_b_eta",
+        mask=mask,
     )
 
     analyzer.H("truth_chi_eta_v_stop_b_eta", 
@@ -213,6 +219,7 @@ def genHistograms(events, analyzer):
         ],
         [abs(chi.eta), abs(stop_b.eta)],
         name="truth_chi_eta_v_stop_b_eta",
+        mask=mask,
     )
 
     analyzer.H("truth_chi_phi_v_chi_b_phi", 
@@ -226,6 +233,7 @@ def genHistograms(events, analyzer):
         ],
         [chi.phi, chi_b.phi],
         name="truth_chi_phi_v_chi_b_phi",
+        mask=mask,
     )
 
     analyzer.H("truth_chi_phi_v_stop_b_phi", 
@@ -239,6 +247,7 @@ def genHistograms(events, analyzer):
         ],
         [chi.phi, stop_b.phi],
         name="truth_chi_phi_v_stop_b_phi",
+        mask=mask,
     )
 
     # analyzer.H(
@@ -281,4 +290,24 @@ def genHistograms(events, analyzer):
     #     mask=mask,
     # )
 
+    return events, analyzer
+
+
+# @analyzerModule("delta_r", ModuleType.MainProducer,require_tags=["signal"], after=["good_gen"])
+def deltaRMatch(events):
+    # ret =  object_matching(events.SignalQuarks, events.good_jets, 0.3, None, False)
+    matched_jets, matched_quarks, dr, idx_j, idx_q, _ = object_matching(
+        events.good_jets, events.SignalQuarks, 0.2, 0.5, True
+    )
+    # print(f"IndexQ: {idx_q}")
+    # print(f"IndexJ: {idx_j}")
+    # print(f"MQ: {matched_quarks}")
+    # print(f"MJ: {matched_jets}")
+    # _, _, _, ridx_q, ridx_j, _ = object_matching(
+    #    events.SignalQuarks, events.good_jets, 0.3, 0.5, True
+    # )
+    events["matched_quarks"] = matched_quarks
+    events["matched_jets"] = matched_jets
+    events["matched_dr"] = dr
+    events["matched_jet_idx"] = idx_j
     return events, analyzer
