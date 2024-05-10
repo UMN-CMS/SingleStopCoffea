@@ -241,7 +241,7 @@ class Plotter:
             ret = []
             for x in hc.axes[0]:
                 realh = hc[{"dataset": x}]
-                po = PlotObject.fromHist(realh, title=realh.axes[0].name, style=self.sample_manager[x].style)
+                po = PlotObject.fromHist(realh, title=x, style=self.sample_manager[x].style)
                 fig = plot2D(
                     po,
                     coupling = self.coupling,
