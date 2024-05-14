@@ -43,8 +43,8 @@ def addTitles2D(ax, plot_object):
     axes = plot_object.axes
     x_unit = getattr(axes[0], "unit", None)
     y_unit = getattr(axes[1], "unit", None)
-    ax.set_xlabel(axes[0].title + (f" [{x_unit}]" if x_unit else ""))
-    ax.set_ylabel(axes[1].title + (f" [{y_unit}]" if y_unit else ""))
+    ax.set_xlabel(axes[0].title + (f" [{x_unit}]" if x_unit else ""), fontsize=24)
+    ax.set_ylabel(axes[1].title + (f" [{y_unit}]" if y_unit else ""), fontsize=24)
 
     if np.sum(np.ravel(plot_object.values)) < 20:
         zlab = "Normalized Events"
