@@ -137,13 +137,15 @@ def getNormalizationTransform(dv, scale=1.0) -> DataTransformation:
     mean_y = torch.mean(Y)
     std_y = Y.std(dim=-1)
 
+    #value_scale = max_y - min_y
+    #print(f"MaxScale is : {value_scale}")
     value_scale = std_y
-    value_scale = max_y - min_y
+    #print(f"Std is: {std_y}")
     input_scale = max_x - min_x
 
     transform_x = LinearTransform(scale * (max_x - min_x), min_x)
     # transform_y = LinearTransform(scale * value_scale, min_y)
-    transform_y = LinearTransform(scale * value_scale, min_y)
+    transform_y = LinearTransform(scale * value_scale, mean_y)
 
     return DataTransformation(transform_x, transform_y)
 
@@ -231,17 +233,18 @@ def createModel(train_data, kernel=None, model_maker=None, learn_noise=False, **
 
 
 def optimizeHyperparams(
-    model, likelihood, train_data, iterations=100, bar=True, lr=0.05
+    model, likelihood, train_data, iterations=100, bar=True, lr=0.05, get_evidence=False
 ):
     model.train()
     likelihood.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
     scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=iterations / 3, gamma=0.1
+        optimizer, step_size=iterations / 4, gamma=0.1
     )
 
     context = Progress() if bar else contextlib.nullcontext()
+    evidence = None
 
     with context as progress:
         if bar:
@@ -262,18 +265,21 @@ def optimizeHyperparams(
                 progress.refresh()
             else:
                 if (i % (iterations // 10) == 0) or i == iterations - 1:
-                    print(f"Iter {i}: Loss = {loss.item()}")
+                    print(f"Iter {i}: Loss = {round(loss.item(),4)}")
+                    evidence = float(loss.item())
                     pass
-                    # print(f"Covar is {output.covariance_matrix}")
 
-    return model, likelihood
+    if get_evidence:
+        return model, likelihood, evidence
+    else:
+        return model, likelihood
 
 
 def getPrediction(model, likelihood, test_data):
     model.eval()
     likelihood.eval()
-    with torch.no_grad(), gpytorch.settings.fast_computations():
-        observed_pred = likelihood(model(test_data.X), noise=test_data.V)
+    with torch.no_grad(), gpytorch.settings.fast_pred_var():
+        observed_pred = model(test_data.X)
     return observed_pred
 
 

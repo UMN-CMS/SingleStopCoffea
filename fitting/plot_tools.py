@@ -1,46 +1,50 @@
-from collections import namedtuple
-
-import numpy as np
+from collections import Counter, namedtuple
 
 import analyzer.plotting as plotting
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import numpy as np
 import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from collections import Counter
 
 from .regression import getPrediction, pointsToGrid
 
 Point = namedtuple("Point", "x y")
 Square = namedtuple("Square", "bl s")
 
-def makeSquares(points,edges):
-    e = torch.meshgrid(edges, indexing='ij')
-    e = torch.stack(e,axis=-1)
-    e = e[:-1,:-1]
-    d = torch.meshgrid(torch.diff(edges[0]),torch.diff(edges[1]), indexing='ij')
-    d = torch.stack(d,axis=-1)
-    d1 = d.clone() 
+
+def makeSquares(points, edges):
+    e = torch.meshgrid(edges, indexing="ij")
+    e = torch.stack(e, axis=-1)
+    e = e[:-1, :-1]
+    d = torch.meshgrid(torch.diff(edges[0]), torch.diff(edges[1]), indexing="ij")
+    d = torch.stack(d, axis=-1)
+    d1 = d.clone()
     d1[..., :] = 0
     d2 = d.clone()
-    d2[...,0] = 0
+    d2[..., 0] = 0
     d3 = d.clone()
-    d3[...,1] = 0  
-    e = torch.unsqueeze(e,axis=-2)
-    all_diffs = torch.stack((d,d1,d2,d3),axis=-2)
+    d3[..., 1] = 0
+    e = torch.unsqueeze(e, axis=-2)
+    all_diffs = torch.stack((d, d1, d2, d3), axis=-2)
     f = all_diffs + e
-    h,_ = pointsToGrid(points, torch.ones_like(points[:,0]), edges)
+    h, _ = pointsToGrid(points, torch.ones_like(points[:, 0]), edges)
     t = f[h.hist > 0]
     return t
 
+
 def getPolyFromSquares(squares):
-    l = list(tuple(round(y,4) for y in x) for x in torch.flatten(squares,0,1).tolist())
-    boundary_points = list(x for x,y in Counter(l).items() if y % 2 == 1)
+    l = list(
+        tuple(round(y, 4) for y in x) for x in torch.flatten(squares, 0, 1).tolist()
+    )
+    boundary_points = list(x for x, y in Counter(l).items() if y % 2 == 1)
     b = torch.tensor(boundary_points)
     center = b.mean(axis=0)
     diffs = b - center
-    angles = torch.atan2(diffs[:,1], diffs[:,0])
+    angles = torch.atan2(diffs[:, 1], diffs[:, 0])
     mask = torch.argsort(angles)
     return b[mask].tolist()
+
 
 def convexHull(points):
     e = 0.001
@@ -142,20 +146,24 @@ def createSlices(
     c0 = bin_edges[0][:-1] + torch.diff(bin_edges[0]) / 2
     c1 = bin_edges[1][:-1] + torch.diff(bin_edges[1]) / 2
     c = (c0, c1)
-    m1, m2 = mask_function(*torch.meshgrid(c, indexing="xy"))
-    mask = m1 & m2
-    mask = mask.T
+    if mask_function:
+        m1, m2 = mask_function(*torch.meshgrid(c, indexing="xy"))
+        mask = m1 & m2
+        mask = mask.T
+    else:
+        mask = None
     orth_ax = c[dim]
     main_ax = c[1 - dim]
     orth_e = bin_edges[dim]
     main_e = bin_edges[1 - dim]
     for i in range(num_slices):
         val = centers[i]
-        s_mask = mask.select(dim, i)
-        in_win1 = main_e[torch.cat((s_mask, torch.tensor([False])))]
-        in_win2 = main_e[torch.cat((torch.tensor([False]), s_mask))]
+        if mask_function:
+            s_mask = mask.select(dim, i)
+            in_win1 = main_e[torch.cat((s_mask, torch.tensor([False])))]
+            in_win2 = main_e[torch.cat((torch.tensor([False]), s_mask))]
 
-        if len(in_win1) != 0:
+        if mask_function and len(in_win1) != 0:
             window = [torch.min(in_win1), torch.max(in_win2)]
         else:
             window = None
@@ -205,7 +213,7 @@ def createSlices(
         yield val, fig, ax
 
 
-def simpleGrid(ax, edges, inx, iny):
+def simpleGrid(ax, edges, inx, iny, cmap="viridis"):
     def addColorbar(ax, vals):
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
@@ -219,9 +227,10 @@ def simpleGrid(ax, edges, inx, iny):
     Z = Z.hist.T
     filled = filled.T
     Z = np.ma.masked_where(~filled, Z)
-    f = ax.pcolormesh(X, Y, Z)
+    f = ax.pcolormesh(X, Y, Z, cmap=mpl.colormaps[cmap])
     addColorbar(ax, f)
     return f
+
 
 def plotHist(ax, edges, vals):
     def addColorbar(ax, vals):
@@ -232,7 +241,7 @@ def plotHist(ax, edges, vals):
         ax.cax = cax
 
     X, Y = np.meshgrid(*edges)
-    Z=vals
+    Z = vals
     Z = np.ma.masked_where(~filled, Z)
     f = ax.pcolormesh(X, Y, Z)
     addColorbar(ax, f)

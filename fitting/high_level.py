@@ -13,6 +13,7 @@ import analyzer.plotting as plotting
 import gpytorch
 import hist
 import linear_operator
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -46,7 +47,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
         if mask is None:
             return
         else:
-            poly = Polygon(points, edgecolor="red", fill=False)
+            poly = Polygon(points, edgecolor="darkorange", linewidth=3, fill=False)
             ax.add_patch(poly)
 
     pred_mean = pred.Y
@@ -91,7 +92,11 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
 
     fig, ax = plt.subplots(layout="tight")
     f = simpleGrid(
-        ax, raw_test.E, raw_test.X, (raw_test.Y - pred_mean) / torch.sqrt(pred.V)
+        ax,
+        raw_test.E,
+        raw_test.X,
+        (raw_test.Y - pred_mean) / torch.sqrt(pred.V),
+        cmap="seismic",
     )
     f.set_clim(-5, 5)
     ax.set_title("Pulls")
@@ -102,7 +107,11 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
 
     fig, ax = plt.subplots(layout="tight")
     f = simpleGrid(
-        ax, raw_test.E, raw_test.X, (raw_test.Y - pred_mean) / torch.sqrt(raw_test.V)
+        ax,
+        raw_test.E,
+        raw_test.X,
+        (raw_test.Y - pred_mean) / torch.sqrt(raw_test.V),
+        cmap="seismic",
     )
     f.set_clim(-5, 5)
     ax.set_title("Pulls")
@@ -143,7 +152,7 @@ def makeSlicePlots(pred, test_data, hist, window, dim, save_dir, dirdata):
         filled,
         observed_title="CRData",
         mask_function=window,
-        just_window=True,
+        just_window=window is not None,
         slice_dim=dim,
     ):
         plotting.addTitles1D(
@@ -172,7 +181,6 @@ def doCompleteRegression(
     torch.set_default_dtype(torch.float64)
     save_dir = dir_data.directory
 
-
     train_data = regression.makeRegressionData(
         inhist[hist.rebin(rebin), hist.rebin(rebin)], window_func, exclude_less=0.001
     )
@@ -180,9 +188,8 @@ def doCompleteRegression(
         inhist[hist.rebin(rebin), hist.rebin(rebin)], None, exclude_less=0.001
     )
     train_transform = regression.getNormalizationTransform(train_data)
-    test_transform = regression.getNormalizationTransform(test_data)
     normalized_train_data = train_transform.transform(train_data)
-    normalized_test_data = test_transform.transform(test_data)
+    normalized_test_data = train_transform.transform(test_data)
 
     with subplots_context() as (fig, ax):
         out = save_dir / "original.pdf"
@@ -204,15 +211,21 @@ def doCompleteRegression(
         train = normalized_train_data
 
     model, likelihood = regression.createModel(
-        train, kernel=kernel, model_maker=model_maker
+        train, kernel=kernel, model_maker=model_maker, learn_noise=True
     )
     if torch.cuda.is_available() and use_cuda:
         model = model.cuda()
         likelihood = likelihood.cuda()
 
     with linear_operator.settings.max_cg_iterations(2000):
-        model, likelihood = regression.optimizeHyperparams(
-            model, likelihood, train, bar=False, iterations=200, lr=0.05
+        model, likelihood, evidence = regression.optimizeHyperparams(
+            model,
+            likelihood,
+            train,
+            bar=False,
+            iterations=500,
+            lr=0.1,
+            get_evidence=True,
         )
     print("Done training")
     if torch.cuda.is_available() and use_cuda:
@@ -223,11 +236,17 @@ def doCompleteRegression(
     with linear_operator.settings.max_cg_iterations(2000):
         pred = regression.getPrediction(model, likelihood, normalized_test_data)
 
-    pred = test_transform.iTransform(
+    pred = train_transform.iTransform(
         regression.DataValues(
             normalized_test_data.X, pred.mean, pred.variance, normalized_test_data.E
         )
     )
+
+    data = {
+        "evidence": evidence,
+        "model_string": str(model),
+    }
+
     if window_func:
         mask = regression.getBlindedMask(
             pred.X, pred.Y, test_data.Y, test_data.V, window_func
@@ -241,6 +260,13 @@ def doCompleteRegression(
         avg_pull = torch.sum(
             torch.abs((obs_mean - bpred_mean)) / torch.sqrt(obs_var)
         ) / torch.count_nonzero(mask)
+
+        data.update(
+            {
+                "chi2_blinded": float(chi2),
+                "avg_abs_pull": float(avg_pull),
+            }
+        )
         print(f"Chi^2/bins = {chi2}")
         print(f"Avg Abs pull = {avg_pull}")
     else:
@@ -250,17 +276,21 @@ def doCompleteRegression(
     makeSlicePlots(pred, test_data, inhist, window_func, 0, save_dir, dir_data)
     makeSlicePlots(pred, test_data, inhist, window_func, 1, save_dir, dir_data)
 
-    torch.save(model.state_dict(), save_dir / "train_model.pth")
-    dir_data.setGlobal(
-        {
-            "chi2_blinded": float(chi2),
-            "avg_abs_pull": float(avg_pull),
-            "model_string": str(model),
-        }
+    save_data = dict(
+        train_data=train_data,
+        test_data=test_data,
+        prediction=pred,
+        model_state=model.state_dict(),
+        model=model,
     )
 
+    torch.save(save_data, save_dir / "train_model.pth")
+    # torch.save(model.state_dict(), save_dir / "train_model.pth")
 
-def scan(hist, kernel, window_func_generator, base_dir):
+    dir_data.setGlobal(data)
+
+
+def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
     base_dir = Path(base_dir)
     inducing_ratio = 2
 
@@ -269,9 +299,12 @@ def scan(hist, kernel, window_func_generator, base_dir):
             train_x, train_y, likelihood, kernel, inducing=train_x[::inducing_ratio]
         )
 
-
     for name, wf, data in window_func_generator:
-        print(f"Now processing {name}")
+        print("="*20)
+        if kernel_name:
+            print(f"KERNEL: {kernel_name}")
+        print(f"Now processing area {name}")
+
 
         path = base_dir / name
         shutil.rmtree(path, ignore_errors=True)
@@ -281,11 +314,14 @@ def scan(hist, kernel, window_func_generator, base_dir):
         dirdata.setGlobal({"window": data, "inducing_ratio": inducing_ratio})
         doCompleteRegression(hist, wf, dirdata, model_maker=mm, kernel=kernel)
         plt.close("all")
+        print("="*20)
 
 
 def main():
     from analyzer.core import AnalysisResult
     from analyzer.datasets import SampleManager
+
+    mpl.use("Agg")
 
     res = AnalysisResult.fromFile("results/data_control.pkl")
     sample_manager = SampleManager()
@@ -300,35 +336,49 @@ def main():
     qcd_hist = narrowed[bkg_name, ...]
     qcd_hist = narrowed[bkg_name, ...]
 
-    x_iter = map(float, torch.arange(1400, 2000, 250))
-    x_size_iter = map(float, torch.arange(100, 400, 100))
-    y_iter = map(float, torch.arange(0.5, 0.7, 0.15))
-    y_size_iter = map(float, torch.arange(0.05, 0.15, 0.05))
+    x_iter = map(float, [1200, 1500, 2000])
+    x_size_iter = map(float, [100, 150])
+    y_iter = map(float, [0.5, 0.7])
+    y_size_iter = map(float, [0.05, 0.07])
     generator = list(
         (
-            f"E_{round(x)}_{round(y,2)}_{round(a)}_{round(b,2)}".replace(".", "p"),
+            f"E_{round(x)}_{round(y,2)}_{round(a)}_{round(b,3)}".replace(".", "p"),
             regression.ellipseMasker(torch.tensor([x, y]), a, b),
             {"x": x, "y": y, "a": a, "b": b},
         )
         for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter)
     )
+    generator = generator + [("Complete", None, {})]
 
-    NNRBF = models.wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
-    nnrbf = SK(NNRBF(odim=2, layer_sizes=(256, 128, 16)))
+    nnrbf256 = SK(models.NNRBFKernel(odim=2, layer_sizes=(256, 128, 16)))
+    nnrbf1024 = SK(models.NNRBFKernel(odim=2, layer_sizes=(1024, 1024, 16)))
+    nnrbf32 = SK(models.NNRBFKernel(odim=2, layer_sizes=(32, 16)))
+    nnrbf16 = SK(models.NNRBFKernel(odim=2, layer_sizes=(16, 8)))
+
+    nnrq256 = SK(models.NNRQKernel(odim=2, layer_sizes=(256, 128, 16)))
+    nnrq32 = SK(models.NNRQKernel(odim=2, layer_sizes=(32, 16)))
+
     grbf = SK(models.GeneralRBF(ard_num_dims=2))
+    grq = SK(models.GeneralRQ(ard_num_dims=2))
     rbf = SK(gpytorch.kernels.RBFKernel(ard_num_dims=2))
     cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
-        "nnrbf_256_128_16" : nnrbf,
-        "grbf" : grbf,
-        "rbf" : rbf,
-        "cosine" : cosine
+        # "nnrbf_32_16": nnrbf32,
+        "grbf": grbf,
+        # "rbf": rbf,
+        # "nnrbf_1024_1024_16": nnrbf1024,
+        # "nnrbf_256_128_16": nnrbf256,
+        # "nnrbf_16_8": nnrbf16,
+        # "nnrq_32_16": nnrq32,
+        # "nnrq_256_128_16": nnrq256,
+        "grq": grq,
+        # "cosine" : cosine
     }
 
     p = Path("allscans")
 
-    for n,k in kernels.items():
-        scan(qcd_hist, k, generator, p/n)
+    for n, k in kernels.items():
+        scan(qcd_hist, k, generator, p / n, kernel_name=n)
 
 
 if __name__ == "__main__":

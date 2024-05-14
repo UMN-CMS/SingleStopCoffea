@@ -484,3 +484,6 @@ class PyroGPModel(gpytorch.models.PyroGP):
         mean = self.mean_module(x)  # Returns an n_data vec
         covar = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean, covar)
+
+NNRBFKernel = wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
+NNRQKernel = wrapNN("NNRQKernel", gpytorch.kernels.RQKernel)
