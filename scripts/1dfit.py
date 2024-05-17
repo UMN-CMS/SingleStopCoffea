@@ -192,6 +192,7 @@ def generatePulls(
     )
     h = np.histogram(bc, weights=mean_at_obs, bins=histogram.axes[0].edges)
     pred = PlotObject.fromNumpy(h, variances=variance_at_obs)
+    pred.axes[0].title=histogram.axes[0].label
     obs = PlotObject.fromHist(histogram, title="QCD Simulation + Signal")
 
     fig,ax=plt.subplots()

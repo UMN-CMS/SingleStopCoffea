@@ -406,10 +406,10 @@ def wrapNN(cls_name, kernel):
         self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1.0, 1.0)
 
     def forward(self, x1, x2, **params):
-        #x1_, x2_ = (
+        # x1_, x2_ = (
         #    self.scale_to_bounds(x1),
         #    self.scale_to_bounds(x2),
-        #)
+        # )
         x1_, x2_ = (
             self.feature_extractor(x1),
             self.feature_extractor(x2),
@@ -424,7 +424,7 @@ def wrapNN(cls_name, kernel):
 
 
 class InducingPointModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y,  likelihood, kernel=None, inducing=None):
+    def __init__(self, train_x, train_y, likelihood, kernel=None, inducing=None):
         super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
         self.base_covar_module = kernel
@@ -441,10 +441,10 @@ class InducingPointModel(gpytorch.models.ExactGP):
 
 
 class KISSModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y,  likelihood, kernel=None):
+    def __init__(self, train_x, train_y, likelihood, kernel=None):
         super().__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
-        grid_size = gpytorch.utils.grid.choose_grid_size(train_x,1.0)
+        grid_size = gpytorch.utils.grid.choose_grid_size(train_x, 1.0)
         self.covar_module = gpytorch.kernels.ScaleKernel(
             gpytorch.kernels.GridInterpolationKernel(
                 kernel, grid_size=grid_size, num_dims=1
@@ -457,20 +457,40 @@ class KISSModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-
 class PyroGPModel(gpytorch.models.PyroGP):
-    def __init__(self, train_x, train_y, likelihood, kernel=None, mean=None, num_inducing = None):
-        variational_distribution = gpytorch.variational.CholeskyVariationalDistribution(
-            num_inducing_points= num_inducing or train_y.numel(),
+    def __init__(
+        self,
+        train_x,
+        train_y,
+        likelihood,
+        kernel=None,
+        mean=None,
+        num_inducing=None,
+        inducing_points=None,
+    ):
+        # variational_distribution = gpytorch.variational.NaturalVariationalDistribution(
+        #     inducing_points.size(0)
+        # )
+        # variational_strategy = gpytorch.variational.CiqVariationalStrategy(
+        #     self,
+        #     inducing_points,
+        #     variational_distribution,
+        #     learn_inducing_locations=True,
+        # )
+        variational_distribution = CholeskyVariationalDistribution(
+            inducing_points.size(0)
         )
-        variational_strategy = gpytorch.variational.VariationalStrategy(
-            self, train_x, variational_distribution
+        variational_strategy = VariationalStrategy(
+            self,
+            inducing_points,
+            variational_distribution,
+            learn_inducing_locations=True,
         )
         super().__init__(
             variational_strategy,
             likelihood,
             num_data=train_y.numel(),
-            name_prefix="simple_regression_model"
+            name_prefix="simple_regression_model",
         )
         self.likelihood = likelihood
         self.mean_module = mean or gpytorch.means.ConstantMean()
@@ -485,5 +505,7 @@ class PyroGPModel(gpytorch.models.PyroGP):
         covar = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean, covar)
 
+
 NNRBFKernel = wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
 NNRQKernel = wrapNN("NNRQKernel", gpytorch.kernels.RQKernel)
+NNSMKernel = wrapNN("NNSMKernel", gpytorch.kernels.SpectralMixtureKernel)

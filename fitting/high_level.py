@@ -4,9 +4,13 @@ import itertools as it
 import math
 import pickle as pkl
 import shutil
+import random
 import sys
 from collections import namedtuple
 from pathlib import Path
+
+import numpy as np
+import yaml
 
 import analyzer.file_utils as futil
 import analyzer.plotting as plotting
@@ -15,10 +19,8 @@ import hist
 import linear_operator
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import uhi
-import yaml
 from analyzer.plotting.mplstyles import loadStyles
 from analyzer.plotting.utils import subplots_context
 from gpytorch.kernels import ScaleKernel as SK
@@ -47,7 +49,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
         if mask is None:
             return
         else:
-            poly = Polygon(points, edgecolor="darkorange", linewidth=3, fill=False)
+            poly = Polygon(points, edgecolor="green", linewidth=3, fill=False)
             ax.add_patch(poly)
 
     pred_mean = pred.Y
@@ -96,7 +98,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
         raw_test.E,
         raw_test.X,
         (raw_test.Y - pred_mean) / torch.sqrt(pred.V),
-        cmap="seismic",
+        cmap="coolwarm",
     )
     f.set_clim(-5, 5)
     ax.set_title("Pulls")
@@ -111,7 +113,7 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
         raw_test.E,
         raw_test.X,
         (raw_test.Y - pred_mean) / torch.sqrt(raw_test.V),
-        cmap="seismic",
+        cmap="coolwarm",
     )
     f.set_clim(-5, 5)
     ax.set_title("Pulls")
@@ -178,7 +180,6 @@ def doCompleteRegression(
     rebin=1,
 ):
 
-    torch.set_default_dtype(torch.float64)
     save_dir = dir_data.directory
 
     train_data = regression.makeRegressionData(
@@ -210,32 +211,37 @@ def doCompleteRegression(
     else:
         train = normalized_train_data
 
-    model, likelihood = regression.createModel(
-        train, kernel=kernel, model_maker=model_maker, learn_noise=True
-    )
-    if torch.cuda.is_available() and use_cuda:
-        model = model.cuda()
-        likelihood = likelihood.cuda()
+    lr = 0.05
+    ok = False
+    while not ok:
+        model, likelihood = regression.createModel(
+            train, kernel=kernel, model_maker=model_maker, learn_noise=False
+        )
+        if torch.cuda.is_available() and use_cuda:
+            model = model.cuda()
+            likelihood = likelihood.cuda()
 
-    with linear_operator.settings.max_cg_iterations(2000):
-        model, likelihood, evidence = regression.optimizeHyperparams(
+        try:
+            model, likelihood, evidence = regression.optimizeHyperparams(
             model,
             likelihood,
             train,
             bar=False,
-            iterations=500,
-            lr=0.1,
-            get_evidence=True,
-        )
+            iterations=800,
+            lr=0.05,
+            get_evidence=True)
+            ok=True
+        except linear_operator.utils.errors.NanError as e:
+            lr = lr + random.random()/100
+            print(f"CHOLESKY FAILED: retrying with lr={round(lr,3)}")
+            print(e)
+
     print("Done training")
     if torch.cuda.is_available() and use_cuda:
         model = model.cpu()
         likelihood = likelihood.cpu()
-
     params = list(model.named_parameters_and_constraints())
-    with linear_operator.settings.max_cg_iterations(2000):
-        pred = regression.getPrediction(model, likelihood, normalized_test_data)
-
+    pred = regression.getPrediction(model, likelihood, normalized_test_data)
     pred = train_transform.iTransform(
         regression.DataValues(
             normalized_test_data.X, pred.mean, pred.variance, normalized_test_data.E
@@ -299,12 +305,13 @@ def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
             train_x, train_y, likelihood, kernel, inducing=train_x[::inducing_ratio]
         )
 
+    i=0
     for name, wf, data in window_func_generator:
-        print("="*20)
+        i = i + 1
+        print("=" * 20)
         if kernel_name:
             print(f"KERNEL: {kernel_name}")
         print(f"Now processing area {name}")
-
 
         path = base_dir / name
         shutil.rmtree(path, ignore_errors=True)
@@ -314,7 +321,7 @@ def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
         dirdata.setGlobal({"window": data, "inducing_ratio": inducing_ratio})
         doCompleteRegression(hist, wf, dirdata, model_maker=mm, kernel=kernel)
         plt.close("all")
-        print("="*20)
+        print("=" * 20)
 
 
 def main():
@@ -330,7 +337,7 @@ def main():
     hists = res.getMergedHistograms(sample_manager)
     complete_hist = hists["ratio_m14_vs_m24"]
     orig = complete_hist[
-        ..., hist.loc(1150) : hist.loc(3000), hist.loc(0.4) : hist.loc(1)
+        ..., hist.loc(1000) : hist.loc(3000), hist.loc(0.35) : hist.loc(1.0)
     ]
     narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
     qcd_hist = narrowed[bkg_name, ...]
@@ -353,26 +360,40 @@ def main():
     nnrbf256 = SK(models.NNRBFKernel(odim=2, layer_sizes=(256, 128, 16)))
     nnrbf1024 = SK(models.NNRBFKernel(odim=2, layer_sizes=(1024, 1024, 16)))
     nnrbf32 = SK(models.NNRBFKernel(odim=2, layer_sizes=(32, 16)))
+    nnrbf32_16_8 = SK(models.NNRBFKernel(odim=2, layer_sizes=(32, 16, 8)))
+
+    nnrbf_1000_500_50 = SK(models.NNRBFKernel(odim=1, layer_sizes=(1000, 500, 50)))
+
     nnrbf16 = SK(models.NNRBFKernel(odim=2, layer_sizes=(16, 8)))
 
     nnrq256 = SK(models.NNRQKernel(odim=2, layer_sizes=(256, 128, 16)))
     nnrq32 = SK(models.NNRQKernel(odim=2, layer_sizes=(32, 16)))
 
+    nnsmk_8_8 = models.NNSMKernel(odim=2, layer_sizes=(8, 8), num_mixtures=4)
+    nnsmk_32_16_8 = models.NNSMKernel(odim=2, layer_sizes=(32, 16, 8), num_mixtures=4)
+    smk_4 = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2)
+
     grbf = SK(models.GeneralRBF(ard_num_dims=2))
     grq = SK(models.GeneralRQ(ard_num_dims=2))
+
     rbf = SK(gpytorch.kernels.RBFKernel(ard_num_dims=2))
+
     cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
-        # "nnrbf_32_16": nnrbf32,
         "grbf": grbf,
-        # "rbf": rbf,
+        "rbf": rbf,
+        "nnrbf_32_16_8": nnrbf32_16_8,
         # "nnrbf_1024_1024_16": nnrbf1024,
-        # "nnrbf_256_128_16": nnrbf256,
+        #"nnrbf_256_128_16": nnrbf256,
+        #"nnrbf_1000_500_50": nnrbf_1000_500_50,
         # "nnrbf_16_8": nnrbf16,
         # "nnrq_32_16": nnrq32,
         # "nnrq_256_128_16": nnrq256,
-        "grq": grq,
+        # "grq": grq,
         # "cosine" : cosine
+        #"nnsmk_32_16_8": nnsmk_32_16_8,
+        #"nnsmk_8_8": nnsmk_8_8,
+        # "smk_4": smk_4,
     }
 
     p = Path("allscans")

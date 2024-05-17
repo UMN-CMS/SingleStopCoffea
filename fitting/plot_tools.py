@@ -115,7 +115,7 @@ def generatePulls(ax, observed, model, observed_title="", mask=None, domain=None
 
     ab = ax.bottom_axes[0]
     plotting.drawPull(ab, model_obj, obs_obj, hline_list=[-1, 0, 1])
-    ab.set_ylim(-2, 2)
+    ab.set_ylim(-3, 3)
 
     # ls = np.linspace(min_bound, 3000, 2000).reshape(-1, 1)
     # mean_at_pred, upper_at_pred, lower_at_pred, variance_at_pred = getPrediction(
