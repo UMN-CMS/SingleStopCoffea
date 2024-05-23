@@ -1,0 +1,112 @@
+from pathlib import Path
+
+import numpy as np
+
+import gpytorch
+import linear_operator
+import torch
+import uproot
+from fitting.high_level import RegressionModel, fixMVN
+
+from .datacard import Channel, DataCard, Process, Systematic
+
+
+def getScaledEigenvecs(cov_mat, top=None):
+    linear_operator.utils.cholesky.psd_safe_cholesky(cov_mat)
+    vals, vecs = torch.linalg.eigh(cov_mat)
+    vals = vals.real
+    vecs = vecs.real
+    X = vecs @ torch.diag(torch.sqrt(vals))
+    assert torch.allclose(X @ X.T, cov_mat)
+    vals = torch.flip(vals, (0,))
+    vecs = torch.flip(vecs, (0,))
+    if top is not None:
+        eva = vals[:top]
+        eve = vecs[:top]
+    else:
+        eva = vals
+        eve = vecs
+
+    ret = eva * eve.T
+    return ret
+
+
+def tensorToHist(array):
+    a = array.numpy()
+    hist = (a, np.arange(0, a.shape[0] + 1))
+    return hist
+
+
+def createHists(regression_data, signal_data, root_file, num_bkg_systs=None):
+    cov_mat = regression_data.posterior_dist.covariance_matrix
+    mean = regression_data.posterior_dist.mean
+    ev = getScaledEigenvecs(cov_mat, top=num_bkg_systs).T
+
+    root_file["bkg_estimate"] = tensorToHist(mean)
+    print(signal_data.Y)
+    root_file["signal"] = tensorToHist(signal_data.Y)
+
+    for i, v in enumerate(ev):
+        h_up = tensorToHist(mean + v)
+        root_file[f"bkg_estimate_EVAR_{i}Up"] = h_up
+        h_down = tensorToHist(mean - v)
+        root_file[f"bkg_estimate_EVAR_{i}Down"] = h_down
+
+
+def createDatacard(regression_data, signal_data, output_dir, num_bkg_systs=None):
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    root_path = output_dir / "histograms.root"
+    root_file = uproot.recreate(root_path)
+
+    createHists(regression_data, signal_data, root_file, num_bkg_systs)
+
+    card = DataCard()
+
+    bkg = Process("BackgroundEstimate", False)
+    sig = Process("Signal", True)
+    b1 = Channel("SignalRegion")
+    card.addChannel(b1)
+    card.addProcess(sig)
+    card.addProcess(bkg)
+
+    card.setProcessRate(sig, b1, -1)
+    card.setProcessRate(bkg, b1, -1)
+
+    card.addShape(
+        bkg,
+        b1,
+        "histograms.root",
+        "bkg_estimate",
+        "bkg_estimate_$SYSTEMATIC",
+    )
+    card.addShape(sig, b1, "histograms.root", "signal", "")
+    card.addObservation(b1, "histograms.root", "bkg_estimate")
+    for i in range(0, num_bkg_systs):
+        s = Systematic(f"EVAR_{i}", "shape")
+        card.addSystematic(s)
+        card.setProcessSystematic(bkg, s, b1, 1)
+
+        s = Systematic(f"EVAR_{i}", "shape")
+        card.addSystematic(s)
+        card.setProcessSystematic(bkg, s, b1, 1)
+
+    with open(output_dir / "datacard.txt", "w") as f:
+        f.write(card.dumps())
+
+
+def main():
+    print("Starting")
+    import sys
+
+    path = Path(sys.argv[1]).absolute()
+    spath = Path(sys.argv[2]).absolute()
+    d = torch.load(path)
+    s = torch.load(spath)
+    pd = d.posterior_dist
+    sd = s
+    createDatacard(d, sd, "combineoutput/testout", None)
+
+
+if __name__ == "__main__":
+    main()

@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from .regression import getPrediction, pointsToGrid
+from .regression import getPrediction
+from .utils import pointsToGrid
 
 Point = namedtuple("Point", "x y")
 Square = namedtuple("Square", "bl s")

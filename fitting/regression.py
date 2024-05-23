@@ -1,176 +1,27 @@
 import contextlib
-import math
-import pickle as pkl
-import sys
 from collections import namedtuple
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Hashable,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from dataclasses import dataclass
 
 import gpytorch
-import hist
-import pyro
 import torch
-from analyzer.core import AnalysisResult
-from analyzer.datasets import SampleManager
-from analyzer.file_utils import DirectoryData
-from analyzer.plotting.utils import subplots_context
-from rich.progress import Progress, track
-from torch.masked import as_masked_tensor, masked_tensor
-
-from .models import ExactAnyKernelModel, ExactGPModel, ExactProjGPModel
-
-
-class LinearTransform:
-    def __init__(self, slope, intercept=None):
-        self.slope = torch.atleast_1d(slope)
-        if intercept is None:
-            self.intercept = torch.zeros_like(self.slope)
-        else:
-            self.intercept = torch.atleast_1d(intercept)
-
-    def transformData(self, *data):
-        if len(data) == 1:
-            data = data[0]
-            return (data - self.intercept) / self.slope
-        else:
-            ret = tuple(
-                (d - self.intercept[i]) / self.slope[i] for i, d in enumerate(data)
-            )
-            return ret
-
-    def iTransformData(self, *data):
-        if len(data) == 1:
-            data = data[0]
-            return (data * self.slope) + self.intercept
-        else:
-            return tuple(
-                (d * self.slope[i]) + self.intercept[i] for i, d in enumerate(data)
-            )
-
-    def transformVariances(self, v):
-        return v / self.slope**2
-
-    def iTransformVariances(self, v):
-        return v * self.slope**2
-
-    def __repr__(self):
-        return f"LinearTransform({self.slope}, {self.intercept})"
-
-    def toCuda(self):
-        return LinearTransform(self.slope.cuda(), self.intercept.cuda())
-
+from rich.progress import Progress
+from .models import ExactAnyKernelModel
 
 DataValues = namedtuple("DataValues", "X Y V E")
 
 
-def sendToGpu(dv):
-    return DataValues(dv.X.cuda(), dv.Y.cuda(), dv.V.cuda(), dv.E)
+@dataclass
+class DataValues:
+    X: torch.Tensor
+    Y: torch.Tensor
+    V: torch.Tensor
+    E: torch.Tensor
 
+    def toGpu(self):
+        return DataValues(self.X.cuda(), self.Y.cuda(), self.V.cuda(), self.E)
 
-def getFromGpu(dv):
-    return DataValues(dv.X.cpu(), dv.Y.cpu(), dv.V.cpu(), dv.E)
-
-
-class DataTransformation:
-    def __init__(self, transform_x, transform_y):
-        self.transform_x = transform_x
-        self.transform_y = transform_y
-
-    def transformX(self, edges, X):
-        return (
-            self.transform_x.transformData(*edges),
-            self.transform_x.transformData(X),
-        )
-
-    def transformY(self, Y, V):
-        return (
-            self.transform_y.transformData(Y),
-            self.transform_y.transformVariances(V),
-        )
-
-    def transform(self, dv: DataValues) -> DataValues:
-        E, X = self.transformX(dv.E, dv.X)
-        Y, V = self.transformY(dv.Y, dv.V)
-        return DataValues(X, Y, V, E)
-
-    def iTransformX(self, edges, X):
-        return (
-            self.transform_x.iTransformData(*edges),
-            self.transform_x.iTransformData(X),
-        )
-
-    def iTransformY(self, Y, V):
-        return (
-            self.transform_y.iTransformData(Y),
-            self.transform_y.iTransformVariances(V),
-        )
-
-    def iTransform(self, dv: DataValues) -> DataValues:
-        E, X = self.iTransformX(dv.E, dv.X)
-        Y, V = self.iTransformY(dv.Y, dv.V)
-        return DataValues(X, Y, V, E)
-
-    def __repr__(self):
-        return f"DataTransformation({self.transform_x}, {self.transform_y})"
-
-
-def pointsToGrid(points_x, points_y, edges, set_unfilled=None):
-    filled = torch.histogramdd(
-        points_x, bins=edges, weight=torch.full_like(points_y, True)
-    )
-    ret = torch.histogramdd(points_x, bins=edges, weight=points_y)
-    return ret, filled.hist.bool()
-
-
-def getNormalizationTransform(dv, scale=1.0) -> DataTransformation:
-    X, Y, V, E = dv
-
-    max_x, min_x = torch.max(X, axis=0).values, torch.min(X, axis=0).values
-    max_y, min_y = torch.max(Y), torch.min(Y)
-    mean_y = torch.mean(Y)
-    std_y = Y.std(dim=-1)
-
-    #value_scale = max_y - min_y
-    #print(f"MaxScale is : {value_scale}")
-    value_scale = std_y
-    #print(f"Std is: {std_y}")
-    input_scale = max_x - min_x
-
-    transform_x = LinearTransform(scale * (max_x - min_x), min_x)
-    # transform_y = LinearTransform(scale * value_scale, min_y)
-    transform_y = LinearTransform(scale * value_scale, mean_y)
-
-    return DataTransformation(transform_x, transform_y)
-
-
-def rectMasker(mask_region):
-    def inner(x1, x2):
-        a = (x1 > mask_region[0][0]) & (x1 < mask_region[0][1])
-        b = (x2 > mask_region[1][0]) & (x2 < mask_region[1][1])
-        return a, b
-
-    return inner
-
-
-def ellipseMasker(center, a, b):
-    def inner(x1, x2):
-        axes = torch.tensor([a, b])
-        stacked = torch.stack((x1, x2), axis=-1)
-        rel = ((stacked - center) ** 2) / axes**2
-        mask = (torch.select(rel, -1, 0) + torch.select(rel, -1, 1)) <= 1.0
-        return mask, mask
-
-    return inner
+    def fromGpu(self):
+        return DataValues(self.X.cpu(), self.Y.cpu(), self.V.cpu(), self.E)
 
 
 def makeRegressionData(
@@ -236,17 +87,24 @@ def createModel(train_data, kernel=None, model_maker=None, learn_noise=False, **
 
 
 def optimizeHyperparams(
-        model, likelihood, train_data, iterations=100, bar=True, lr=0.05, get_evidence=False,mll=None
+    model,
+    likelihood,
+    train_data,
+    iterations=100,
+    bar=True,
+    lr=0.05,
+    get_evidence=False,
+    mll=None,
 ):
     model.train()
     likelihood.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     if mll is None:
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-    #scheduler = torch.optim.lr_scheduler.StepLR(
+    # scheduler = torch.optim.lr_scheduler.StepLR(
     #    optimizer, step_size=iterations/3, gamma=0.5
-    #)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+    # )
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
 
     context = Progress() if bar else contextlib.nullcontext()
     evidence = None
@@ -264,7 +122,9 @@ def optimizeHyperparams(
             scheduler.step(loss)
             slr = scheduler.get_last_lr()[0]
             if slr < 1e-3 * lr:
-                print(f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}")
+                print(
+                    f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}"
+                )
                 evidence = float(loss.item())
                 break
             if bar:
@@ -276,7 +136,9 @@ def optimizeHyperparams(
                 progress.refresh()
             else:
                 if (i % (iterations // 10) == 0) or i == iterations - 1:
-                    print(f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}")
+                    print(
+                        f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}"
+                    )
                     evidence = float(loss.item())
                     pass
 
