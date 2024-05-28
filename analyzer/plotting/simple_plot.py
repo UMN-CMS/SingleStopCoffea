@@ -15,6 +15,7 @@ from .mplstyles import loadStyles
 from .plottables import PlotObject, createPlotObjects
 
 
+
 class Plotter:
     def _createLogger(self):
         self.logger = logging.getLogger(__name__)

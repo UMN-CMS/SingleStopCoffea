@@ -6,29 +6,11 @@ import gpytorch
 import linear_operator
 import torch
 import uproot
-from fitting.high_level import RegressionModel, fixMVN
+from fitting.high_level import RegressionModel
+from fitting.utils import getScaledEigenvecs, fixMVN
 
 from .datacard import Channel, DataCard, Process, Systematic
 
-
-def getScaledEigenvecs(cov_mat, top=None):
-    linear_operator.utils.cholesky.psd_safe_cholesky(cov_mat)
-    vals, vecs = torch.linalg.eigh(cov_mat)
-    vals = vals.real
-    vecs = vecs.real
-    X = vecs @ torch.diag(torch.sqrt(vals))
-    assert torch.allclose(X @ X.T, cov_mat)
-    vals = torch.flip(vals, (0,))
-    vecs = torch.flip(vecs, (0,))
-    if top is not None:
-        eva = vals[:top]
-        eve = vecs[:top]
-    else:
-        eva = vals
-        eve = vecs
-
-    ret = eva * eve.T
-    return ret
 
 
 def tensorToHist(array):
@@ -43,8 +25,9 @@ def createHists(regression_data, signal_data, root_file, num_bkg_systs=None):
     ev = getScaledEigenvecs(cov_mat, top=num_bkg_systs).T
 
     root_file["bkg_estimate"] = tensorToHist(mean)
-    print(signal_data.Y)
     root_file["signal"] = tensorToHist(signal_data.Y)
+
+    root_file["data_obs"] = tensorToHist(regression_data.test_data.Y)
 
     for i, v in enumerate(ev):
         h_up = tensorToHist(mean + v)
@@ -59,6 +42,8 @@ def createDatacard(regression_data, signal_data, output_dir, num_bkg_systs=None)
     root_path = output_dir / "histograms.root"
     root_file = uproot.recreate(root_path)
 
+    if num_bkg_systs is None:
+        num_bkg_systs = regression_data.test_data.Y.shape[0]
     createHists(regression_data, signal_data, root_file, num_bkg_systs)
 
     card = DataCard()
@@ -81,7 +66,9 @@ def createDatacard(regression_data, signal_data, output_dir, num_bkg_systs=None)
         "bkg_estimate_$SYSTEMATIC",
     )
     card.addShape(sig, b1, "histograms.root", "signal", "")
-    card.addObservation(b1, "histograms.root", "bkg_estimate")
+
+    card.addObservation(b1, "histograms.root", int(torch.sum(regression_data.test_data.Y)))
+
     for i in range(0, num_bkg_systs):
         s = Systematic(f"EVAR_{i}", "shape")
         card.addSystematic(s)
@@ -105,7 +92,7 @@ def main():
     s = torch.load(spath)
     pd = d.posterior_dist
     sd = s
-    createDatacard(d, sd, "combineoutput/testout", None)
+    createDatacard(d, sd, "combineoutput/testout", 100)
 
 
 if __name__ == "__main__":

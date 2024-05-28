@@ -27,3 +27,22 @@ def pointsToGrid(points_x, points_y, edges, set_unfilled=None):
     )
     ret = torch.histogramdd(points_x, bins=edges, weight=points_y)
     return ret, filled.hist.bool()
+
+def getScaledEigenvecs(cov_mat, top=None):
+    linear_operator.utils.cholesky.psd_safe_cholesky(cov_mat)
+    vals, vecs = torch.linalg.eigh(cov_mat)
+    vals = vals.real
+    vecs = vecs.real
+    X = vecs @ torch.diag(torch.sqrt(vals))
+    assert torch.allclose(X @ X.T, cov_mat)
+    vals = torch.flip(vals, (0,))
+    vecs = torch.flip(vecs, (0,))
+    if top is not None:
+        eva = vals[:top]
+        eve = vecs[:top]
+    else:
+        eva = vals
+        eve = vecs
+
+    ret = eva * eve.T
+    return ret

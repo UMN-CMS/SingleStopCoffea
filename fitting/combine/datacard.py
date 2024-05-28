@@ -73,9 +73,9 @@ class DataCard:
         self,
         channel: Channel,
         root_file,
-        shape_name,
+        value,
     ):
-        self.observations[channel] = (root_file, shape_name)
+        self.observations[channel] = (root_file, value)
 
     def constructHeader(self):
         lines = []
@@ -103,12 +103,21 @@ class DataCard:
             row = [x for x in row if x is not None]
             rows.append(row)
 
-        for channel, (root_file, shape_name) in self.observations.items():
-            row = ["shapes", "data_obs", channel.name, root_file, shape_name, ""]
-            row = [x for x in row if x is not None]
-            rows.append(row)
+        # for channel, (root_file, shape_name) in self.observations.items():
+        #    row = ["shapes", "data_obs", channel.name, root_file, shape_name, ""]
+        #    row = [x for x in row if x is not None]
+        #    rows.append(row)
 
         return formatLines(rows, separator="  ")
+
+    def constructObservations(self):
+        cols = [["bin", "observation"]]
+        for channel, (root_file, value) in self.observations.items():
+            cols.append([channel.name, value])
+        rows = list(zip(*cols))
+        lines = formatLines(rows, separator="  ")
+        return lines
+
 
     def constructSystematics(self):
         processes = enumerate(
@@ -148,6 +157,8 @@ class DataCard:
         lines = self.constructHeader()
         lines += [""] * 2
         lines += self.constructShapes()
+        lines += [""] * 2
+        lines += self.constructObservations()
         lines += [""] * 2
         lines += self.constructSystematics()
         output = "\n".join(lines) + "\n"

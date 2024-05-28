@@ -31,6 +31,7 @@ torch.set_default_dtype(torch.float64)
 class RegressionModel:
     input_data: hist.Hist
     window: Any
+    domain_mask: torch.Tensor
 
     train_data: torch.Tensor
     test_data: torch.Tensor
@@ -39,6 +40,13 @@ class RegressionModel:
 
     raw_posterior_dist: gpytorch.distributions.MultivariateNormal
     posterior_dist: gpytorch.distributions.MultivariateNormal
+
+@dataclass
+class SignalData:
+    signal_data: torch.Tensor
+    domain_mask: torch.Tensor = None
+    signal_hist: hist.Hist = None
+    signal_name: str = None
 
 
 def saveDiagnosticPlots(plots, dirdata, save_dir):
@@ -193,8 +201,11 @@ def doCompleteRegression(
     train_data = regression.makeRegressionData(
         inhist[hist.rebin(rebin), hist.rebin(rebin)], window_func, exclude_less=0.001
     )
-    test_data = regression.makeRegressionData(
-        inhist[hist.rebin(rebin), hist.rebin(rebin)], None, exclude_less=0.001
+    test_data, domain_mask = regression.makeRegressionData(
+        inhist[hist.rebin(rebin), hist.rebin(rebin)],
+        None,
+        exclude_less=0.001,
+        get_mask=True,
     )
     train_transform = transformations.getNormalizationTransform(train_data)
     normalized_train_data = train_transform.transform(train_data)
@@ -226,7 +237,7 @@ def doCompleteRegression(
                 likelihood,
                 train,
                 bar=False,
-                iterations=800,
+                iterations=400,
                 lr=lr,
                 get_evidence=True,
             )
@@ -291,16 +302,18 @@ def doCompleteRegression(
         print(f"Avg Abs pull = {avg_pull}")
     else:
         mask = None
-    diagnostic_plots = makeDiagnosticPlots(
-        pred_data, test_data, train_data, inhist, mask
-    )
-    saveDiagnosticPlots(diagnostic_plots, dir_data, save_dir)
-    makeSlicePlots(pred_data, test_data, inhist, window_func, 0, save_dir, dir_data)
-    makeSlicePlots(pred_data, test_data, inhist, window_func, 1, save_dir, dir_data)
+    if True:
+        diagnostic_plots = makeDiagnosticPlots(
+            pred_data, test_data, train_data, inhist, mask
+        )
+        saveDiagnosticPlots(diagnostic_plots, dir_data, save_dir)
+        makeSlicePlots(pred_data, test_data, inhist, window_func, 0, save_dir, dir_data)
+        makeSlicePlots(pred_data, test_data, inhist, window_func, 1, save_dir, dir_data)
 
     save_data = RegressionModel(
         input_data=inhist,
         window=window_func,
+        domain_mask=domain_mask,
         train_data=train_data,
         test_data=test_data,
         trained_model=model,
@@ -334,7 +347,9 @@ def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
         dirdata = futil.DirectoryData(path)
 
         if window:
-            dirdata.setGlobal({"window": window.toDict(), "inducing_ratio": inducing_ratio})
+            dirdata.setGlobal(
+                {"window": window.toDict(), "inducing_ratio": inducing_ratio}
+            )
         else:
             dirdata.setGlobal({"inducing_ratio": inducing_ratio})
         doCompleteRegression(hist, window, dirdata, model_maker=mm, kernel=kernel)
@@ -360,15 +375,20 @@ def main():
     narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
     qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
 
-    x_iter = map(float, [1200, 1500, 2000])
-    x_size_iter = map(float, [100, 150])
-    y_iter = map(float, [0.5, 0.7])
-    y_size_iter = map(float, [0.05, 0.07])
+    #x_iter = map(float, [1200, 1500, 2000])
+    #x_size_iter = map(float, [100, 150])
+    #y_iter = map(float, [0.5, 0.7])
+    #y_size_iter = map(float, [0.05, 0.07])
+    x_iter = map(float, [1420])
+    x_size_iter = map(float, [100])
+    y_iter = map(float, [0.6])
+    y_size_iter = map(float, [0.05])
     generator = [
         windowing.EllipseWindow([x, y], [a, b])
         for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter)
     ]
-    generator = generator + [None]
+    generator = generator #+ [None]
+    generator=[None]
 
     nnrbf256 = SK(models.NNRBFKernel(odim=2, layer_sizes=(256, 128, 16)))
     nnrbf1024 = SK(models.NNRBFKernel(odim=2, layer_sizes=(1024, 1024, 16)))
@@ -388,8 +408,8 @@ def main():
 
     shape = (256, 128, 64, 32, 16)
     nnrbf_large = SK(models.NNRBFKernel(odim=2, layer_sizes=shape))
-    nnrbf_tiny = SK(models.NNRBFKernel(odim=2, layer_sizes=(4,4)))
-    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000,1000,500,250,32)))
+    nnrbf_tiny = SK(models.NNRBFKernel(odim=2, layer_sizes=(4, 4)))
+    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000, 1000, 500, 250, 32)))
 
     grbf = SK(models.GeneralRBF(ard_num_dims=2))
     grq = SK(models.GeneralRQ(ard_num_dims=2))
@@ -398,12 +418,12 @@ def main():
 
     cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
-         "grbf": grbf,
-        # "rbf": rbf,
+        #"grbf": grbf,
+        "rbf": rbf,
         # "nnrbf_32_16_8": nnrbf32_16_8,
-        #"nnrbf_256_128_64_32_16": nnrbf_large,
-        #"nnrbf_huge": nnrbf_large,
-        #"nnrbf_4_4": nnrbf_tiny,
+        # "nnrbf_256_128_64_32_16": nnrbf_large,
+        # "nnrbf_huge": nnrbf_large,
+        # "nnrbf_4_4": nnrbf_tiny,
     }
 
     p = Path("allscans")

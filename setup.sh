@@ -19,15 +19,10 @@ fi
 env_configs[torch,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.11-cuda"
 
 env_configs[jaxenv,venv]="jaxenv"
-#env_configs[jaxenv,extras]="torch"
 env_configs[jaxenv,empty]="true"
 if nvidia-modprobe 2> /dev/null; then 
     env_configs[jaxenv,apptainer_flags]="--nv"
 fi
-
-#env_configs[jaxenv,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.10"
-#env_configs[jaxenv,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/fnallpc/fnallpc-docker:pytorch-2.0.0-cuda11.7-cudnn8-runtime-singularity"
-#env_configs[jaxenv,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/fnallpc/fnallpc-docker:tensorflow-2.12.0-gpu-singularity"
 env_configs[jaxenv,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:3.11-cuda"
 
 
@@ -132,11 +127,13 @@ function rcmode(){
     local config_name=$1
     local env=${env_configs[$config_name,venv]}
 
-    if [[ ! -d $env ]]; then
-        printf "Virtual environment does not exist, creating virtual environment\n"
-        create_venv "$1"
+    if [[ ! $env == "false" ]]; then
+        if [[ ! -d $env ]]; then
+            printf "Virtual environment does not exist, creating virtual environment\n"
+            create_venv "$1"
+        fi
+        activate_venv "$1"
     fi
-    activate_venv "$1"
 
     [ -z "$PS1" ] && return
 
