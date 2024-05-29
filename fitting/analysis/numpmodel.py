@@ -11,7 +11,7 @@ from numpyro.infer import HMC, MCMC, NUTS, SVI, Predictive, Trace_ELBO
 import torch
 from analyzer.core import AnalysisResult
 from analyzer.datasets import SampleManager
-from fitting.high_level import RegressionModel
+from fitting.high_level import RegressionModel,SignalData
 from fitting.regression import DataValues, makeRegressionData
 from fitting.utils import getScaledEigenvecs
 
@@ -35,21 +35,18 @@ def runMCMC(model, *args, **kwargs):
         adapt_step_size=True,
         adapt_mass_matrix=True,
     )
-    mcmc = MCMC(nuts_kernel, num_samples=800, num_warmup=400,num_chains=1)
+    mcmc = MCMC(nuts_kernel, num_samples=800, num_warmup=200,num_chains=1)
     mcmc.run(rng_key, *args, **kwargs)
     return mcmc
 
 
-def runMCMCOnDataset(signal_data, regression_data):
-    signal_data = makeRegressionData(sig_hist)
-    signal_data = DataValues(
-        signal_data.X[domain_mask],
-        signal_data.Y[domain_mask],
-        signal_data.V[domain_mask],
-        signal_data.E,
-    )
-    signal_dist = signal_data.Y
-    obs = real + 1 * signal_dist
+def runMCMCOnDataset(signal_data, regression_data, obs):
+    dm = regression_data.domain_mask
+    signal_dist = signal_data.signal_data.Y[dm]
+
+    sX = signal_data.signal_data.X[dm]
+    assert(torch.allclose(sX, regression_data.test_data.X))
+    pred_dist = regression_data.posterior_dist
     evars = getScaledEigenvecs(pred_dist.covariance_matrix)
 
     s = signal_dist.numpy()
@@ -68,17 +65,12 @@ def main():
     sample_manager.loadSamplesFromDirectory("datasets")
 
     reg_model = torch.load(Path(sys.argv[1]))
-    pred_dist = reg_model.posterior_dist
-    real = reg_model.test_data.Y
-    domain_mask = reg_model.domain_mask
-
-    sig_res = AnalysisResult.fromFile(sys.argv[2])
-    sighists = sig_res.getMergedHistograms(sample_manager)
-    sig_hist = sighists["ratio_m14_vs_m24"][
-        "signal_312_1500_900",
-        hist.loc(1000) : hist.loc(3000),
-        hist.loc(0.35) : hist.loc(1),
-    ]
+    sig_data = torch.load(Path(sys.argv[2]))
+    sd = sig_data.signal_data.Y[reg_model.domain_mask]
+    obs = reg_model.test_data.Y + 0 * sd
+    obs = reg_model.posterior_dist.mean + 0 * sd
+    mcmc = runMCMCOnDataset(sig_data, reg_model, obs )
+    mcmc.print_summary()
 
 
 if __name__ == "__main__":
