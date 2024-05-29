@@ -191,7 +191,7 @@ class SampleSet:
     forbid: Optional[bool] = False
     mc_campaign: Optional[str] = None
     lumi_json: Optional[str] = None
-    lumi_json: Optional[str] = None
+    required_modules: Optional[str] = None
     cms_dataset_regex: Optional[str] = None
 
     @staticmethod
@@ -209,6 +209,8 @@ class SampleSet:
         forbid = data.get("forbid", None)
         mc_campaign = data.get("mc_campaign", None)
         lumi_json = data.get("lumi_json", None)
+        required_modules = data.get("required_modules", None)
+
         sample_type = data.get("sample_type", None)
         cms_dataset = data.get("cms_dataset", None)
         if not (x_sec and n_events and lumi) and not (derived_from or isdata):
@@ -251,6 +253,7 @@ class SampleSet:
             mc_campaign=mc_campaign,
             lumi_json=lumi_json,
             cms_dataset_regex=cms_dataset,
+            required_modules=required_modules,
         )
         return ss
 
@@ -302,12 +305,15 @@ class SampleSet:
         with open(look_for, "w") as f:
             json.dump(replicas, f, indent=2)
 
-    def isForbidden(self):
+    def isForbidden(self,modules=None):
         if self.forbid is None:
             if self.derived_from is None:
                 return False
             else:
                 return self.derived_from.isForbidden()
+        elif self.forbid and (modules is not None and self.required_modules is not None):
+            if self.required_modules in modules:
+                return False
         else:
             return self.forbid
 
@@ -341,8 +347,8 @@ class SampleSet:
         else:
             return self.profile
 
-    def toCoffeaDataset(self, location_priority_regex=None, require_location=None):
-        if self.isForbidden():
+    def toCoffeaDataset(self, location_priority_regex=None, require_location=None, modules=None):
+        if self.isForbidden(modules):
             raise ForbiddenDataset(
                 f"Attempting to access the files for forbidden dataset {self.name}"
             )

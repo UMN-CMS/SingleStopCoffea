@@ -30,7 +30,7 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # ]
 
 plotter = Plotter(
-    "myoutput.pkl",
+    "2022d.pkl",
     "figures",
     default_backgrounds=None,
     #default_axis_opts={"number_jets": Plotter.Split},
