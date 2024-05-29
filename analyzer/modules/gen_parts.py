@@ -15,33 +15,6 @@ def isGoodGenParticle(particle):
         & ((abs(particle.pdgId) == 1) | (abs(particle.pdgId) == 3))
     )
 
-def isStop(particle):
-    stop1 = 1000006
-    stop2 = 1000002
-    return ((abs(particle.pdgId) == stop1) | (abs(particle.pdgId) == stop2))
-
-def isChi(particle):
-    return (abs(particle.pdgId) == 1000024)
-
-def isStrange(particle):
-    return(abs(particle.pdgId) == 3)
-
-def isDown(particle):
-    return(abs(particle.pdgId) == 1)
-
-def isChiBottom(particle_set):
-    chi = particle_set[isChi(particle_set)]
-    if chi.pdgId > 0:
-        return particle_set.pdgId == -5
-    else:
-        return particle_set.pdgId == 5
-
-def isStopBottom(particle_set):
-    chi = particle_set[isChi(particle_set)]
-    if chi.pdgId > 0:
-        return particle_set.pdgId == 5
-    else:
-        return particle_set.pdgId == -5
 
 def createGoodChildren(gen_particles, children):
     # x = ak.singletons(gen_particles.children)
@@ -55,22 +28,10 @@ def createGoodChildren(gen_particles, children):
         )
     return children
 
-
-@analyzerModule("good_gen", categories="main")
-def goodGenParticles(events, analyzer):
-    ar = isGoodGenParticle(events.GenPart)
-    
-    good_gen = events.GenPart[ar]
-    num_of_particles = [len(i) for i in good_gen]
-    only_five = np.argwhere(np.array(num_of_particles) < 6).flatten()
-    print([i for i in good_gen[only_five].pdgId])
     
 @analyzerModule("good_gen", categories="main", depends_on=["objects"])
 def goodGenParticles(events,analyzer):
     test = createGoodChildren(events.GenPart, events.GenPart.children)
-
-    def get(x):
-        return [y.pdgId for y in x[0]]
 
     events["GenPart", "good_children"] = test
     gg = events.GenPart[isGoodGenParticle(events.GenPart)]
@@ -85,14 +46,15 @@ def goodGenParticles(events,analyzer):
     xd = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 1]))
     xs = ak.flatten(ak.flatten(x_children[abs(x_children.pdgId) == 3]))
     sb = ak.flatten(ak.flatten(s_children[abs(s_children.pdgId) == 5]))
+
     events["SignalParticles"] = ak.zip(
         dict(
             stop=stop,
-            chi=chi,
-            stop_b=stop_b,
-            chi_b=chi_b,
-            chi_d=chi_d,
-            chi_s=chi_s,
+            chi=x,
+            stop_b=sb,
+            chi_b=xb,
+            chi_d=xd,
+            chi_s=xs,
         )
     )
     
@@ -123,11 +85,13 @@ def deltaRMatch(events, analyzer):
 
 @analyzerModule("gen_hists", categories="main",depends_on=["good_gen"])
 def genHistograms(events, analyzer):
+    stop = events.SignalParticles.stop
     stop_b = events.SignalParticles.stop_b
     chi_b = events.SignalParticles.chi_b
     chi = events.SignalParticles.chi
     chi_d = events.SignalParticles.chi_d
     chi_s = events.SignalParticles.chi_s
+    mask = ak.num(events.GenPart[isGoodGenParticle(events.GenPart)])<6
 
         
     analyzer.H("truth_stop_b_pt", pt_axis, stop_b.pt, name="Gen stop-b $p_{T}$")

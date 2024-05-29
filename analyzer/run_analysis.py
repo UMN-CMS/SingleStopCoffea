@@ -76,7 +76,6 @@ def runAnalysisOnSamples(
     """Run a collection of analysis modules on some samples."""
 
     import analyzer.modules
-
     cache = {}
     if dask_schedd_address:
         logger.info(f"Connecting client to scheduler at {dask_schedd_address}")
@@ -96,7 +95,6 @@ def runAnalysisOnSamples(
 
     analyzer = ac.Analyzer(modules, cache)
     samples = [sample_manager[x] for x in samples]
-
     all_sets = list(
         it.chain.from_iterable(
             makeIterable(
