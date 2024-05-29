@@ -56,6 +56,24 @@ def saveDiagnosticPlots(plots, dirdata, save_dir):
         fig.savefig(o)
 
 
+def makeSigBkgPlot(train_data, test_data, signal_data,window):
+    fig, ax = plt.subplots(1,2, figsize=(10, 5), layout="tight")
+    mask = regression.getBlindedMask(
+        test_data.X, test_data.Y, test_data.Y, test_data.V, window
+    )
+    squares = makeSquares(test_data.X[mask], test_data.E)
+    points = getPolyFromSquares(squares)
+    #plotting.drawAs2DHist(ax[0][1], plotting.PlotObject.fromHist(sig_hist))
+
+    simpleGrid(ax[0], train_data.E, train_data.X, train_data.Y)
+    simpleGrid(ax[1], signal_data.E, signal_data.X, signal_data.Y)
+    poly = mpl.patches.Polygon(points, edgecolor="red", fill=False)
+    ax[0].add_patch(poly)
+    poly = mpl.patches.Polygon(points, edgecolor="red", fill=False)
+    ax[1].add_patch(poly)
+    return {"sig_bkg": (fig, ax)}
+
+
 def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
     ret = {}
     if mask is not None:
@@ -323,12 +341,12 @@ def doCompleteRegression(
     )
     torch.save(save_data, save_dir / "train_model.pth")
     dir_data.setGlobal(data)
+    return save_data
 
 
-
-def createWindowForSignal(signal_data, axes=(100, 0.06)):
+def createWindowForSignal(signal_data, axes=(150, 0.05)):
     max_idx = torch.argmax(signal_data.Y)
-    max_x = signal_data.X[max_idx]
+    max_x = signal_data.X[max_idx].round(decimals=2)
     return windowing.EllipseWindow(max_x.tolist(), list(axes))
 
 
@@ -372,7 +390,11 @@ def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
             dir_data["window"] = window.toDict()
         dirdata.setGlobal(dir_data)
 
-        doCompleteRegression(bkg_hist, window, dirdata, model_maker=mm, kernel=kernel)
+        d = doCompleteRegression(bkg_hist, window, dirdata, model_maker=mm, kernel=kernel)
+
+        if signal_hist:
+            r = makeSigBkgPlot(d.train_data, d.test_data, signal_regression_data, window)
+            saveDiagnosticPlots(r, dirdata, dirdata.directory)
 
         plt.close("all")
         print("=" * 20)
@@ -404,7 +426,12 @@ def main():
     narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
     qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
 
-    signal_hist_names = ["signal_312_1500_600", "signal_312_2000_1400"]
+    signal_hist_names = [
+        "signal_312_1500_600",
+        "signal_312_2000_1400",
+        "signal_312_1500_900",
+        "signal_312_2000_900",
+    ]
     signals_to_scan = [(sn, signal_hists_complete[sn, ...]) for sn in signal_hist_names]
     signals_to_scan.append((None, None))
 
@@ -436,12 +463,12 @@ def main():
 
     cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
+        "rbf": rbf,
         "grbf": grbf,
-        #"rbf": rbf,
+        "nnrbf_huge": nnrbf_large,
+        "nnrbf_4_4": nnrbf_tiny,
         # "nnrbf_32_16_8": nnrbf32_16_8,
         # "nnrbf_256_128_64_32_16": nnrbf_large,
-        # "nnrbf_huge": nnrbf_large,
-        # "nnrbf_4_4": nnrbf_tiny,
     }
 
     p = Path("allscans")
