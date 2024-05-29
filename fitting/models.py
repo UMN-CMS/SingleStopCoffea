@@ -163,8 +163,10 @@ class GeneralSpectralMixture(RotParamMixin, gpytorch.kernels.SpectralMixtureKern
 
         # Expand x1 and x2 to account for the number of mixtures
         # Should make x1/x2 (... x k x n x d) for k mixtures
+        print(f"X1 shape is {x1.shape}")
         x1_ = x1.unsqueeze(-3)
         x2_ = x2.unsqueeze(-3)
+        print(f"X1_ shape is {x1_.shape}")
 
         # Compute distances - scaled by appropriate parameters
         x1_exp = x1_ * self.mixture_scales
@@ -178,6 +180,8 @@ class GeneralSpectralMixture(RotParamMixin, gpytorch.kernels.SpectralMixtureKern
 
         exp_diff = x1_exp_ - x2_exp_
         cos_diff = x1_cos_ - x2_cos_
+        print(diag)
+        print(exp_diff.shape)
 
         m = self.getMatrix()
         real_mat = self.getMatrix()
@@ -269,22 +273,6 @@ class ExactAnyKernelModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-class InducingPointModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood, kernel=None, mean=None):
-        super().__init__(train_x, train_y, likelihood)
-        # self.mean_module = gpytorch.means.ConstantMean()
-        self.mean_module = mean or gpytorch.means.ConstantMean()
-        if kernel is None:
-            kernel = gpytorch.kernels.ScaleKernel(
-                gpytorch.kernels.RBFKernel(ard_num_dims=2)
-            )
-        self.covar_module = gpytorch.kernels.InducingPointKernel
-
-    def forward(self, x):
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
 class VariationalAnyKernelModel(gpytorch.models.ApproximateGP):
@@ -507,5 +495,6 @@ class PyroGPModel(gpytorch.models.PyroGP):
 
 
 NNRBFKernel = wrapNN("NNRBFKernel", gpytorch.kernels.RBFKernel)
+NNGRBFKernel = wrapNN("NNGRBFKernel", GeneralRBF)
 NNRQKernel = wrapNN("NNRQKernel", gpytorch.kernels.RQKernel)
 NNSMKernel = wrapNN("NNSMKernel", gpytorch.kernels.SpectralMixtureKernel)

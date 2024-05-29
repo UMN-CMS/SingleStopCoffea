@@ -56,14 +56,14 @@ def saveDiagnosticPlots(plots, dirdata, save_dir):
         fig.savefig(o)
 
 
-def makeSigBkgPlot(train_data, test_data, signal_data,window):
-    fig, ax = plt.subplots(1,2, figsize=(10, 5), layout="tight")
+def makeSigBkgPlot(train_data, test_data, signal_data, window):
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5), layout="tight")
     mask = regression.getBlindedMask(
         test_data.X, test_data.Y, test_data.Y, test_data.V, window
     )
     squares = makeSquares(test_data.X[mask], test_data.E)
     points = getPolyFromSquares(squares)
-    #plotting.drawAs2DHist(ax[0][1], plotting.PlotObject.fromHist(sig_hist))
+    # plotting.drawAs2DHist(ax[0][1], plotting.PlotObject.fromHist(sig_hist))
 
     simpleGrid(ax[0], train_data.E, train_data.X, train_data.Y)
     simpleGrid(ax[1], signal_data.E, signal_data.X, signal_data.Y)
@@ -246,6 +246,9 @@ def doCompleteRegression(
         model, likelihood = regression.createModel(
             train, kernel=kernel, model_maker=model_maker, learn_noise=False
         )
+
+        if hasattr(model.covar_module, "initialize_from_data"):
+            model.covar_module.initialize_from_data(train.X,train.Y)
         if torch.cuda.is_available() and use_cuda:
             model = model.cuda()
             likelihood = likelihood.cuda()
@@ -256,17 +259,19 @@ def doCompleteRegression(
                 likelihood,
                 train,
                 bar=False,
-                iterations=400,
+                iterations=800,
                 lr=lr,
                 get_evidence=True,
             )
             if torch.cuda.is_available() and use_cuda:
                 model = model.cpu()
                 likelihood = likelihood.cpu()
+            print("Done with loop")
             raw_pred_dist = regression.getPrediction(
                 model, likelihood, normalized_test_data
             )
-            psd_pred_dist = fit_utils.fixMVN(raw_pred_dist)
+            with  gpytorch.settings.cholesky_max_tries(30):
+                psd_pred_dist = fit_utils.fixMVN(raw_pred_dist)
             raw_pred_dist = type(raw_pred_dist)(
                 psd_pred_dist.mean, psd_pred_dist.covariance_matrix.to_dense()
             )
@@ -390,10 +395,14 @@ def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
             dir_data["window"] = window.toDict()
         dirdata.setGlobal(dir_data)
 
-        d = doCompleteRegression(bkg_hist, window, dirdata, model_maker=mm, kernel=kernel)
+        d = doCompleteRegression(
+            bkg_hist, window, dirdata, model_maker=mm, kernel=kernel
+        )
 
         if signal_hist:
-            r = makeSigBkgPlot(d.train_data, d.test_data, signal_regression_data, window)
+            r = makeSigBkgPlot(
+                d.train_data, d.test_data, signal_regression_data, window
+            )
             saveDiagnosticPlots(r, dirdata, dirdata.directory)
 
         plt.close("all")
@@ -449,26 +458,36 @@ def main():
 
     nnsmk_8_8 = models.NNSMKernel(odim=2, layer_sizes=(8, 8), num_mixtures=4)
     nnsmk_32_16_8 = models.NNSMKernel(odim=2, layer_sizes=(32, 16, 8), num_mixtures=4)
-    smk_4 = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=4, ard_num_dims=2)
 
     shape = (256, 128, 64, 32, 16)
-    nnrbf_large = SK(models.NNRBFKernel(odim=2, layer_sizes=shape))
-    nnrbf_tiny = SK(models.NNRBFKernel(odim=2, layer_sizes=(4, 4)))
-    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000, 1000, 500, 250, 32)))
+    nnrbf_deep = SK(models.NNRBFKernel(odim=2, layer_sizes=shape))
+    nnrbf_tiny = SK(models.NNRBFKernel(odim=2, layer_sizes=(32,16,8)))
+    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000,500,10)))
 
-    grbf = SK(models.GeneralRBF(ard_num_dims=2))
+    nngrbf = SK(models.NNGRBFKernel(odim=2, layer_sizes=(32,16,4)))
+
+    nnsmk_tiny = models.NNSMKernel(odim=2, layer_sizes=(500,250,50),num_mixtures=4)
+
     grq = SK(models.GeneralRQ(ard_num_dims=2))
 
     rbf = SK(gpytorch.kernels.RBFKernel(ard_num_dims=2))
 
-    cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
+    grbf = SK(models.GeneralRBF(ard_num_dims=2))
+    gsmk=models.GeneralSpectralMixture(ard_num_dims=2, num_mixtures=4)
+
+    smk = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=12, ard_num_dims=2)
+
     kernels = {
-        "rbf": rbf,
-        "grbf": grbf,
-        "nnrbf_huge": nnrbf_large,
-        "nnrbf_4_4": nnrbf_tiny,
+        #"rbf": rbf,
+        #"smk": smk,
+        "grq": grq,
+        #"nngrf" : nngrbf,
+        #"nnsmk_tiny": nnsmk_tiny,
+        #"nnrbf_deep": nnrbf_deep,
+        #"nnrbf_huge": nnrbf_huge,
+        #"nnrbf_tiny": nnrbf_tiny,
         # "nnrbf_32_16_8": nnrbf32_16_8,
-        # "nnrbf_256_128_64_32_16": nnrbf_large,
+        #"nnrbf_256_128_64_32_16": nnrbf_large,
     }
 
     p = Path("allscans")

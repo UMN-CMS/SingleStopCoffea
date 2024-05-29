@@ -85,6 +85,9 @@ def createModel(train_data, kernel=None, model_maker=None, learn_noise=False, **
         model = model_maker(train_data.X, train_data.Y, likelihood, **kwargs)
     return model, likelihood
 
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
 def optimizeHyperparams(
     model,
@@ -101,10 +104,13 @@ def optimizeHyperparams(
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     if mll is None:
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-    # scheduler = torch.optim.lr_scheduler.StepLR(
-    #    optimizer, step_size=iterations/3, gamma=0.5
-    # )
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
+
+
+    print(f"step_size={iterations//3}")
+    scheduler = torch.optim.lr_scheduler.StepLR(
+       optimizer, step_size=iterations//3, gamma=0.1
+    )
+    #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
 
     context = Progress() if bar else contextlib.nullcontext()
     evidence = None
@@ -119,14 +125,18 @@ def optimizeHyperparams(
 
             loss.backward()
             optimizer.step()
-            scheduler.step(loss)
-            slr = scheduler.get_last_lr()[0]
-            if slr < 1e-3 * lr:
-                print(
-                    f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}"
-                )
-                evidence = float(loss.item())
-                break
+            #scheduler.step(loss)
+            scheduler.step()
+
+            #slr = get_lr(optimizer)
+            slr= scheduler.get_last_lr()[0]
+
+            #if slr < 1e-3 * lr:
+            #    print(
+            #        f"Iter {i} (lr={slr}): Loss = {round(loss.item(),4)}"
+            #    )
+            #    evidence = float(loss.item())
+            #    break
             if bar:
                 progress.update(
                     task1,
@@ -137,7 +147,7 @@ def optimizeHyperparams(
             else:
                 if (i % (iterations // 10) == 0) or i == iterations - 1:
                     print(
-                        f"Iter {i} (lr={scheduler.get_last_lr()}): Loss = {round(loss.item(),4)}"
+                        f"Iter {i} (lr={slr}): Loss = {round(loss.item(),4)}"
                     )
                     evidence = float(loss.item())
                     pass
