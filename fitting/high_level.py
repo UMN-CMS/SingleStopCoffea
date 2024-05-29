@@ -41,6 +41,7 @@ class RegressionModel:
     raw_posterior_dist: gpytorch.distributions.MultivariateNormal
     posterior_dist: gpytorch.distributions.MultivariateNormal
 
+
 @dataclass
 class SignalData:
     signal_data: torch.Tensor
@@ -324,7 +325,14 @@ def doCompleteRegression(
     dir_data.setGlobal(data)
 
 
-def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
+
+def createWindowForSignal(signal_data, axes=(100, 0.06)):
+    max_idx = torch.argmax(signal_data.Y)
+    max_x = signal_data.X[max_idx]
+    return windowing.EllipseWindow(max_x.tolist(), list(axes))
+
+
+def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
     base_dir = Path(base_dir)
     inducing_ratio = 2
 
@@ -334,25 +342,38 @@ def scan(hist, kernel, window_func_generator, base_dir, kernel_name=""):
         )
 
     i = 0
-    for window in window_func_generator:
+    for signal_name, signal_hist in signals:
         i = i + 1
+
         print("=" * 20)
+        print(f"Signal is: {signal_name}")
         if kernel_name:
             print(f"KERNEL: {kernel_name}")
+
+        if signal_hist:
+            signal_regression_data = regression.makeRegressionData(signal_hist)
+            window = createWindowForSignal(signal_regression_data)
+            sd = SignalData(signal_regression_data, None, signal_hist, signal_name)
+        else:
+            window = None
+
         print(f"Now processing area {window.toString() if window else 'NoWindow'}")
 
-        path = base_dir / (window.toString() if window else "NoWnidow")
+        path = base_dir / (window.toString() if window else "NoWindow")
         shutil.rmtree(path, ignore_errors=True)
         path.mkdir(parents=True, exist_ok=True)
-        dirdata = futil.DirectoryData(path)
 
+        if signal_hist:
+            torch.save(sd, path / "signal_data.pth")
+
+        dirdata = futil.DirectoryData(path)
+        dir_data = {"inducing_ratio": inducing_ratio, "signal": signal_name or "None"}
         if window:
-            dirdata.setGlobal(
-                {"window": window.toDict(), "inducing_ratio": inducing_ratio}
-            )
-        else:
-            dirdata.setGlobal({"inducing_ratio": inducing_ratio})
-        doCompleteRegression(hist, window, dirdata, model_maker=mm, kernel=kernel)
+            dir_data["window"] = window.toDict()
+        dirdata.setGlobal(dir_data)
+
+        doCompleteRegression(bkg_hist, window, dirdata, model_maker=mm, kernel=kernel)
+
         plt.close("all")
         print("=" * 20)
 
@@ -364,31 +385,28 @@ def main():
     mpl.use("Agg")
 
     res = AnalysisResult.fromFile("results/data_control.pkl")
+    sig = AnalysisResult.fromFile("results/everything.pkl")
+
     sample_manager = SampleManager()
     sample_manager.loadSamplesFromDirectory("datasets")
     bkg_name = "CR0b_Data2018"
     hists = res.getMergedHistograms(sample_manager)
+    sig_hists = sig.getMergedHistograms(sample_manager)
     complete_hist = hists["ratio_m14_vs_m24"]
+    signal_hists_complete = sig_hists["ratio_m14_vs_m24"][
+        ..., hist.loc(1000) : hist.loc(3000), hist.loc(0.35) : hist.loc(1.0)
+    ]
+
     orig = complete_hist[
         ..., hist.loc(1000) : hist.loc(3000), hist.loc(0.35) : hist.loc(1.0)
     ]
+
     narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
     qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
 
-    #x_iter = map(float, [1200, 1500, 2000])
-    #x_size_iter = map(float, [100, 150])
-    #y_iter = map(float, [0.5, 0.7])
-    #y_size_iter = map(float, [0.05, 0.07])
-    x_iter = map(float, [1420])
-    x_size_iter = map(float, [100])
-    y_iter = map(float, [0.6])
-    y_size_iter = map(float, [0.05])
-    generator = [
-        windowing.EllipseWindow([x, y], [a, b])
-        for x, a, y, b in it.product(x_iter, x_size_iter, y_iter, y_size_iter)
-    ]
-    generator = generator #+ [None]
-    generator=[None]
+    signal_hist_names = ["signal_312_1500_600", "signal_312_2000_1400"]
+    signals_to_scan = [(sn, signal_hists_complete[sn, ...]) for sn in signal_hist_names]
+    signals_to_scan.append((None, None))
 
     nnrbf256 = SK(models.NNRBFKernel(odim=2, layer_sizes=(256, 128, 16)))
     nnrbf1024 = SK(models.NNRBFKernel(odim=2, layer_sizes=(1024, 1024, 16)))
@@ -418,8 +436,8 @@ def main():
 
     cosine = SK(gpytorch.kernels.CosineKernel(ard_num_dims=2))
     kernels = {
-        #"grbf": grbf,
-        "rbf": rbf,
+        "grbf": grbf,
+        #"rbf": rbf,
         # "nnrbf_32_16_8": nnrbf32_16_8,
         # "nnrbf_256_128_64_32_16": nnrbf_large,
         # "nnrbf_huge": nnrbf_large,
@@ -427,9 +445,8 @@ def main():
     }
 
     p = Path("allscans")
-
     for n, k in kernels.items():
-        scan(qcd_hist, k, generator, p / n, kernel_name=n)
+        doEstimationForSignals(signals_to_scan, qcd_hist, k, p / n, kernel_name=n)
 
 
 if __name__ == "__main__":
