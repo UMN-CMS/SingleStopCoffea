@@ -357,7 +357,7 @@ def createWindowForSignal(signal_data, axes=(150, 0.05)):
 
 def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
     base_dir = Path(base_dir)
-    inducing_ratio = 2
+    inducing_ratio = 1
 
     def mm(train_x, train_y, likelihood, kernel, **kwargs):
         return models.InducingPointModel(
@@ -480,14 +480,14 @@ def main():
     kernels = {
         #"rbf": rbf,
         #"smk": smk,
-        "grq": grq,
+        #"grq": grq,
         #"nngrf" : nngrbf,
         #"nnsmk_tiny": nnsmk_tiny,
         #"nnrbf_deep": nnrbf_deep,
         #"nnrbf_huge": nnrbf_huge,
         #"nnrbf_tiny": nnrbf_tiny,
         # "nnrbf_32_16_8": nnrbf32_16_8,
-        #"nnrbf_256_128_64_32_16": nnrbf_large,
+        "nnrbf_256_128_64_32_16": nnrbf_deep,
     }
 
     p = Path("allscans")

@@ -68,7 +68,7 @@ def main():
     sig_data = torch.load(Path(sys.argv[2]))
     sd = sig_data.signal_data.Y[reg_model.domain_mask]
     obs = reg_model.test_data.Y + 0 * sd
-    obs = reg_model.posterior_dist.mean + 0 * sd
+    #obs = reg_model.posterior_dist.mean + 0 * sd
     mcmc = runMCMCOnDataset(sig_data, reg_model, obs )
     mcmc.print_summary()
 
