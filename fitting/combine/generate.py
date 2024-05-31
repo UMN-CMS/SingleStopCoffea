@@ -6,11 +6,10 @@ import gpytorch
 import linear_operator
 import torch
 import uproot
-from fitting.high_level import RegressionModel
-from fitting.utils import getScaledEigenvecs, fixMVN
+from fitting.high_level import RegressionModel, SignalData
+from fitting.utils import fixMVN, getScaledEigenvecs
 
 from .datacard import Channel, DataCard, Process, Systematic
-
 
 
 def tensorToHist(array):
@@ -20,14 +19,15 @@ def tensorToHist(array):
 
 
 def createHists(regression_data, signal_data, root_file, num_bkg_systs=None):
+    bm = regression_data.domain_mask
     cov_mat = regression_data.posterior_dist.covariance_matrix
     mean = regression_data.posterior_dist.mean
     ev = getScaledEigenvecs(cov_mat, top=num_bkg_systs).T
 
     root_file["bkg_estimate"] = tensorToHist(mean)
-    root_file["signal"] = tensorToHist(signal_data.Y)
+    root_file["signal"] = tensorToHist(signal_data.Y[bm])
 
-    root_file["data_obs"] = tensorToHist(regression_data.test_data.Y)
+    root_file["data_obs"] = tensorToHist(regression_data.test_data.Y + 0 * signal_data.Y[bm])
 
     for i, v in enumerate(ev):
         h_up = tensorToHist(mean + v)
@@ -67,13 +67,11 @@ def createDatacard(regression_data, signal_data, output_dir, num_bkg_systs=None)
     )
     card.addShape(sig, b1, "histograms.root", "signal", "")
 
-    card.addObservation(b1, "histograms.root", int(torch.sum(regression_data.test_data.Y)))
+    card.addObservation(
+        b1, "histograms.root", "data_obs", int(torch.sum(regression_data.test_data.Y))
+    )
 
     for i in range(0, num_bkg_systs):
-        s = Systematic(f"EVAR_{i}", "shape")
-        card.addSystematic(s)
-        card.setProcessSystematic(bkg, s, b1, 1)
-
         s = Systematic(f"EVAR_{i}", "shape")
         card.addSystematic(s)
         card.setProcessSystematic(bkg, s, b1, 1)
@@ -91,7 +89,7 @@ def main():
     d = torch.load(path)
     s = torch.load(spath)
     pd = d.posterior_dist
-    sd = s
+    sd = s.signal_data
     createDatacard(d, sd, "combineoutput/testout", 100)
 
 
