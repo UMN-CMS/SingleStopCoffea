@@ -1,30 +1,29 @@
+import numpyro
+import numpyro.distributions as ndist
+import numpyro.infer as ninf
+numpyro.set_host_device_count(8)
+numpyro.set_platform("cpu")
+
 import concurrent.futures
+import multiprocessing as mp
 import pickle
 from pathlib import Path
 
+import arviz as az
 import hist
 import jax
 import jax.numpy as jnp
-import numpyro
-import numpyro.distributions as ndist
-
-from pyro.infer import Predictive
-import pyro.infer  as pinf
 import pyro.distributions as pdist
-
-from jax import random
-from numpyro.infer as ninf
-
+import pyro.infer as pinf
 import torch
-
 from analyzer.core import AnalysisResult
 from analyzer.datasets import SampleManager
-
 from fitting.high_level import RegressionModel, SignalData
 from fitting.regression import DataValues, makeRegressionData
 from fitting.utils import getScaledEigenvecs
+from jax import random
+from pyro.infer import Predictive
 
-import multiprocessing as mp
 
 def statModelPyro(bkg_mean, bkg_transform, signal_dist, observed=None):
     r = pyro.sample("rate", pdist.Uniform(-20, 20))
@@ -45,9 +44,10 @@ def runMCMCPyro(model, *args, **kwargs):
         adapt_mass_matrix=True,
         jit_compile=True,
     )
-    mcmc = pinf.MCMC(nuts_kernel, num_samples=800, warmup_steps=400,num_chains=1)
+    mcmc = pinf.MCMC(nuts_kernel, num_samples=800, warmup_steps=400, num_chains=1)
     mcmc.run(*args, **kwargs)
     return mcmc
+
 
 def runMCMCOnDatasetPyro(signal_data, regression_data, obs):
     dm = regression_data.domain_mask
@@ -60,6 +60,7 @@ def runMCMCOnDatasetPyro(signal_data, regression_data, obs):
 
     mcmc = runMCMC(statModel, m, ev, s, observed=o)
     return mcmc
+
 
 def runSVIOnDatasetPyro(signal_data, regression_data, obs):
     dm = regression_data.domain_mask
@@ -77,7 +78,7 @@ def runSVIOnDatasetPyro(signal_data, regression_data, obs):
     initial_lr = 0.1
     gamma = 0.01  # final learning rate will be gamma * initial_lr
     lrd = gamma ** (1 / num_steps)
-    adam = pyro.optim.ClippedAdam({'lr': initial_lr, 'lrd': lrd})
+    adam = pyro.optim.ClippedAdam({"lr": initial_lr, "lrd": lrd})
     elbo = pyro.infer.Trace_ELBO()
 
     svi = pyro.infer.SVI(pyro_model, guide, adam, elbo)
@@ -86,10 +87,11 @@ def runSVIOnDatasetPyro(signal_data, regression_data, obs):
     for step in range(num_steps):  # Consider running for more steps.
         loss = svi.step()
         losses.append(loss)
-        if step % ( num_steps // 10) == 0:
+        if step % (num_steps // 10) == 0:
             print("Elbo loss: {:0.3f}".format(loss))
     predictive = Predictive(conditioned, guide=guide, num_samples=1000)
     return predictive
+
 
 def statModelNumpyro(bkg_mean, bkg_transform, signal_dist, observed=None):
     r = numpyro.sample("rate", ndist.Uniform(-20, 20))
@@ -110,7 +112,13 @@ def runMCMCNumpyro(model, *args, **kwargs):
         adapt_step_size=True,
         adapt_mass_matrix=True,
     )
-    mcmc = ninf.MCMC(nuts_kernel, num_samples=800, num_warmup=200)
+    mcmc = ninf.MCMC(
+        nuts_kernel,
+        num_samples=800,
+        num_warmup=200,
+        num_chains=1,
+        chain_method="parallel",
+    )
     mcmc.run(rng_key, *args, **kwargs)
     return mcmc
 
@@ -129,13 +137,24 @@ def runMCMCOnDatasetNumpyro(signal_data, regression_data, obs):
     ev = evars.numpy()
     m = pred_dist.mean.numpy()
 
-    mcmc = runMCMC(statModel, m, ev, s, observed=o)
-    return mcmc
+    mcmc = runMCMCNumpyro(statModelNumpyro, m, ev, s, observed=o)
+    posterior_predictive = ninf.Predictive(statModelNumpyro, mcmc.get_samples())(
+        random.PRNGKey(1), m, ev, s, observed=o
+    )
+    prior = ninf.Predictive(statModelNumpyro, num_samples=1000)(
+        random.PRNGKey(2), m, ev, s, observed=o
+    )
+
+    inference_data = az.from_numpyro(
+        mcmc,
+        prior=prior,
+        posterior_predictive=posterior_predictive,
+    )
+    return mcmc, inference_data
 
 
 def f(x):
-    print(x)
-    return runMCMCOnDataset(*x)
+    return runMCMCOnDatasetNumpyro(*x)
 
 
 def main():
@@ -144,31 +163,40 @@ def main():
     sample_manager = SampleManager()
     sample_manager.loadSamplesFromDirectory("datasets")
 
+    model = statModelNumpyro
+    runner = runMCMCOnDatasetNumpyro
+
     reg_model = torch.load(Path(sys.argv[1]))
     sig_data = torch.load(Path(sys.argv[2]))
+
     sd = sig_data.signal_data.Y[reg_model.domain_mask]
     obs = reg_model.test_data.Y + 0 * sd
-    mcmc = runMCMCOnDataset(sig_data, reg_model, obs)
-    mcmc.print_summary()
-    pickle.dump(mcmc, open("testmcmc.pkl", "wb"))
     rates = [0, 0.5, 1.0, 4.0]
     if False:
         results = {}
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            for r, mc in zip(
+            for r, (mc,infd) in zip(
                 rates,
                 executor.map(
                     f,
-                    [(sig_data, reg_model, reg_model.test_data.Y + i * sd) for i in rates],
+                    [
+                        (sig_data, reg_model, reg_model.test_data.Y + i * sd)
+                        for i in rates
+                    ],
                 ),
             ):
-                results[r] = mc
-        pickle.dump(mc, open("testmcmc.pkl", "wb"))
+                results[r] ={}
+                results[r]["mcmc"] = mc
+                results[r]["inference_data"] = infd
+        pickle.dump(results, open("testmcmc.pkl", "wb"))
+    else:
+        mcmc, inference_data = runner(sig_data, reg_model, obs)
+        results = {"data": mcmc, "inference_data": inference_data}
+        pickle.dump(results, open("testmcmc.pkl", "wb"))
 
 
 if __name__ == "__main__":
     print(jax.devices("cpu"))
-    #numpyro.set_platform('cpu')
-    #jax.default_device = jax.devices("cpu")[0]
-    #mp.set_start_method('spawn')
+    # jax.default_device = jax.devices("cpu")[0]
+    mp.set_start_method('spawn')
     main()

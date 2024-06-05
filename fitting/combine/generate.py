@@ -27,9 +27,10 @@ def createHists(regression_data, signal_data, root_file, num_bkg_systs=None):
     root_file["bkg_estimate"] = tensorToHist(mean)
     root_file["signal"] = tensorToHist(signal_data.Y[bm])
 
-    root_file["data_obs"] = tensorToHist(regression_data.test_data.Y + 0 * signal_data.Y[bm])
+    root_file["data_obs"] = tensorToHist(regression_data.test_data.Y + 2 * signal_data.Y[bm])
 
     for i, v in enumerate(ev):
+        #print(f"Magnitude is {torch.abs(v).max()}")
         h_up = tensorToHist(mean + v)
         root_file[f"bkg_estimate_EVAR_{i}Up"] = h_up
         h_down = tensorToHist(mean - v)
@@ -71,6 +72,7 @@ def createDatacard(regression_data, signal_data, output_dir, num_bkg_systs=None)
         b1, "histograms.root", "data_obs", int(torch.sum(regression_data.test_data.Y))
     )
 
+
     for i in range(0, num_bkg_systs):
         s = Systematic(f"EVAR_{i}", "shape")
         card.addSystematic(s)
@@ -90,7 +92,8 @@ def main():
     s = torch.load(spath)
     pd = d.posterior_dist
     sd = s.signal_data
-    createDatacard(d, sd, "combineoutput/testout", 100)
+
+    createDatacard(d, sd, "combineoutput/testout", int(pd.mean.size(0)))
 
 
 if __name__ == "__main__":

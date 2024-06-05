@@ -33,10 +33,13 @@ def getScaledEigenvecs(cov_mat, top=None):
     vals, vecs = torch.linalg.eigh(cov_mat)
     vals = vals.real
     vecs = vecs.real
+
     X = vecs @ torch.diag(torch.sqrt(vals))
     assert torch.allclose(X @ X.T, cov_mat)
+
     vals = torch.flip(vals, (0,))
     vecs = torch.flip(vecs, (0,))
+
     if top is not None:
         eva = vals[:top]
         eve = vecs[:top]
