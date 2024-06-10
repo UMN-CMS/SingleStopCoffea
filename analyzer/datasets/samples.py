@@ -205,12 +205,12 @@ class SampleSet:
         return w
 
     def getAnalyzerInput(
-        self, setname=None, prefer_location=None, require_location=None
+        self, setname=None, prefer_location=None, require_location=None, modules=None
     ):
         return AnalyzerInput(
             dataset_name=self.name,
             fill_name=setname or self.name,
-            coffea_dataset=self.toCoffeaDataset(prefer_location, require_location),
+            coffea_dataset=self.toCoffeaDataset(prefer_location, require_location, modules=modules),
             profile=self.getProfile(),
             lumi_json=self.getLumiJson(),
         )
@@ -262,12 +262,13 @@ class SampleCollection:
     def getSets(self):
         return self.sets
 
-    def getAnalyzerInput(self, prefer_location=None, require_location=None):
+    def getAnalyzerInput(self, prefer_location=None, require_location=None,modules=None):
         return [
             x.getAnalyzerInput(
                 None if self.treat_separate else self.name,
                 prefer_location,
                 require_location,
+                modules,
             )
             for x in self.getSets()
         ]
