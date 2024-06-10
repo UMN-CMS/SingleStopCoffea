@@ -1,4 +1,5 @@
 import logging
+import uproot
 from typing import (
     Any,
     Callable,
@@ -15,7 +16,7 @@ from typing import (
 import awkward as ak
 import dask
 from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
-from distributed import Client, get_client, rejoin, secede
+from distributed import Client, get_client, rejoin, secede, progress
 
 from .events import getEvents
 from .inputs import DatasetPreprocessed
@@ -61,7 +62,8 @@ def createFutureResult(modules, prepped_dataset):
         uproot_options=dict(
             allow_read_errors_with_report=True,
             use_threads=False,
-        ),
+            handler=uproot.XRootDSource,
+            ),
         known_base_form=maybe_base_form,
     ).events()
     daskres = DatasetDaskRunResult(prepped_dataset, {}, ak.num(events, axis=0), report)

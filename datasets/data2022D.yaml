@@ -5,6 +5,7 @@
   forbid: true
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
   required_modules: cr_selection
+  n_events: 101352671
   files: 
     - root://cmsxrootd.fnal.gov//store/data/Run2022D/JetMET/NANOAOD/ReRecoNanoAODv11-v1/50000/6ec1ff82-f9a5-4acd-a139-223a7d67f72e.root
     - root://cmsxrootd.fnal.gov//store/data/Run2022D/JetMET/NANOAOD/ReRecoNanoAODv11-v1/2540000/cb9bd4cd-9ae9-4e52-b02a-1a523734cb21.root
