@@ -382,7 +382,13 @@ class SampleSet:
             w = w * target_lumi / self.getLumi()
         return w
 
+<<<<<<< HEAD
     def getAnalyzerInput(self, setname=None, **kwargs):
+=======
+    def getAnalyzerInput(
+        self, setname=None, prefer_location=None, require_location=None, modules=None
+    ):
+>>>>>>> faddaa6 (WIP: Run 3 plots, accidentally removed module requirement for forbidden datasets.)
         return AnalyzerInput(
             dataset_name=self.name,
             fill_name=setname or self.name,
@@ -438,7 +444,7 @@ class SampleCollection:
     def getSets(self):
         return self.sets
 
-    def getAnalyzerInput(self, **kwargs):
+    def getAnalyzerInput(self,**kwargs):
         return [
             x.getAnalyzerInput(
                 None if self.treat_separate else self.name,
