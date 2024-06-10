@@ -2,6 +2,9 @@ from functools import singledispatch
 from typing import Any, Dict, Optional, Set, Tuple, Union
 from  .inputs import DatasetPreprocessed,AnalyzerInput
 
+from analyzer.datasets import AnalyzerInput, SampleManager
+from  .inputs import DatasetPreprocessed
+import uproot
 from coffea.nanoevents import BaseSchema, NanoAODSchema, NanoEventsFactory
 
 
@@ -12,6 +15,7 @@ def getEvents(arg, known_form=None, cache=None):
         schemaclass=NanoAODSchema,
         uproot_options=dict(
             allow_read_errors_with_report=True,
+            handler=uproot.XRootDSource,
         ),
         known_base_form=known_form,
         persistent_cache=cache,

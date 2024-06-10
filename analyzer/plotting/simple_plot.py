@@ -56,12 +56,11 @@ class Plotter:
                 [input_data] if isinstance(input_data, str) else list(input_data)
             )
             results = [pkl.load(open(f, "rb")) for f in filenames]
-
         self.target_lumi = (
             target_lumi
             or self.sample_manager.getSet(list(results[0].results.keys())[0]).getLumi()
         )
-
+    
         self.histos = accumulate(
             [
                 f.getMergedHistograms(self.sample_manager, self.target_lumi)
@@ -198,7 +197,7 @@ class Plotter:
         hc = hist[{"dataset": bkg_set + sig_set}]
         if normalize:
             unnormalized_signal_plobjs = createPlotObjects(
-                hc, "dataset", self.sample_manager, cat_filter="signal")
+                hc, "dataset", self.sample_manager, cat_filter=lambda x: re.search("signal", x))
             un_norm_hc = hc
             hc = getNormalized(hc, "dataset")
             
@@ -215,7 +214,6 @@ class Plotter:
             cat_filter=lambda x: re.search("signal", x),
         )
         if len(hist.axes) == 2:
-            print(len(signal_plobjs))
             fig = plot1D(
                 signal_plobjs,
                 background_plobjs,

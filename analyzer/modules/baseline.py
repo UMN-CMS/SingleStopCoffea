@@ -57,15 +57,15 @@ def createSelection(events, analyzer):
 def createCRSelection(events, analyzer):
     selection = analyzer.selection
     good_jets = events.good_jets
-    fat_jets = events.FatJet
+    # fat_jets = events.FatJet
     good_muons = events.good_muons
     good_electrons = events.good_electrons
     loose_b = events.loose_bs
-    med_b = events.med_bs
-    tight_b = events.tight_bs
-    tight_top = events.tight_tops
+    # med_b = events.med_bs
+    # tight_b = events.tight_bs
+    # tight_top = events.tight_tops
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
-    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+    # top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     if "HLT" in events.fields:
         selection.add("hlt", (events.HLT.PFHT1050 | events.HLT.AK8PFJet360_TrimMass30))
     selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))

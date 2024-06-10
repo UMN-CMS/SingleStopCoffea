@@ -1,4 +1,5 @@
 import logging
+import uproot
 import analyzer.utils as utils
 from coffea.dataset_tools.preprocess import DatasetSpec
 import coffea.dataset_tools as dst
@@ -35,7 +36,7 @@ class DatasetPreprocessed:
 
     @staticmethod
     def fromDatasetInput(dataset_input, **kwargs):
-        out, x = dst.preprocess(dataset_input.coffea_dataset, save_form=False, **kwargs)
+        out, x = dst.preprocess(dataset_input.coffea_dataset, save_form=False, uproot_options=dict(handler=uproot.XRootDSource), **kwargs)
         return DatasetPreprocessed(dataset_input, out[dataset_input.dataset_name])
 
     def getCoffeaDataset(self) -> DatasetSpec:
@@ -45,6 +46,6 @@ class DatasetPreprocessed:
 def preprocessBulk(dataset_input: Iterable[AnalyzerInput], **kwargs):
     mapping = {x.dataset_name: x for x in dataset_input}
     all_inputs = utils.accumulate([x.coffea_dataset for x in dataset_input])
-    out, x = dst.preprocess(all_inputs, **kwargs)
+    out, x = dst.preprocess(all_inputs, uproot_options=dict(handler=uproot.XRootDSource), **kwargs)
     ret = [DatasetPreprocessed(mapping[k], v) for k, v in out.items()]
     return ret

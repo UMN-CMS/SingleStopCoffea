@@ -30,11 +30,10 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # ]
 
 plotter = Plotter(
-    "2022d.pkl",
-    "figures",
+    "run3_2022d1.pkl",
+    "figures2022d2",
     default_backgrounds=None,
-    #default_axis_opts={"number_jets": Plotter.Split},
-    coupling="312",
+    coupling="cr",
 )
 
 print(plotter.histos.keys())
@@ -49,10 +48,7 @@ list_of_1d_hists = ['h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', 'm13_eta',
                     'eta_1', 'phi_1', 'pt_2', 'eta_2', 'phi_2', 'pt_3', 'eta_3', 'phi_3', 'd_eta_1_1', 'd_phi_1_1', 'd_r_1_1', 'd_eta_1_2', 'd_phi_1_2', 
                     'd_r_1_2', 'd_eta_1_3', 'd_phi_1_3', 'd_r_1_3', 'd_eta_1_4', 'd_phi_1_4', 'd_r_1_4', 'd_eta_2_2', 'd_phi_2_2', 'd_r_2_2', 'd_eta_2_3', 
                     'd_phi_2_3', 'd_r_2_3', 'd_eta_2_4', 'd_phi_2_4', 'd_r_2_4', 'd_eta_3_3', 'd_phi_3_3', 'd_r_3_3', 'd_eta_3_4', 'd_phi_3_4', 'd_r_3_4', 
-                    'd_eta_4_4', 'd_phi_4_4', 'd_r_4_4', 'pt_ht_ratio_1', 'pt_ht_ratio_2', 'pt_ht_ratio_3', 'pt_ht_ratio_4', 'pt_ht_ratio_5','loose_bjet_pt', 
-                    'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
-                    'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
-                    'medium_b_m', 'medium_b_pt']
+                    'd_eta_4_4', 'd_phi_4_4', 'd_r_4_4', 'pt_ht_ratio_1', 'pt_ht_ratio_2', 'pt_ht_ratio_3', 'pt_ht_ratio_4', 'pt_ht_ratio_5']
 list_of_b_hists = ['loose_bjet_pt', 
                     'loose_nb', 'loose_b_0_pt', 'loose_b_1_pt', 'loose_b_2_pt', 'loose_b_3_pt', 'loose_bb_eta', 'loose_bb_phi', 'loose_bdr', 'medium_bjet_pt', 
                     'medium_nb', 'medium_b_0_pt', 'medium_b_1_pt', 'medium_b_2_pt', 'medium_b_3_pt', 'medium_bb_eta', 'medium_bb_phi', 'medium_bdr', 
@@ -62,19 +58,28 @@ list_of_1d_truth_hists = ['truth_stop_pt','truth_stop_eta','truth_stop_phi','tru
                        'truth_chi_b_eta', 'truth_chi_eta', 'truth_chi_s_eta', 'truth_chi_d_eta','truth_chi_chi_b_d_eta','truth_chi_chi_b_d_phi', 'truth_chi_chi_b_d_r',
                        'truth_chi_stop_b_d_eta','truth_chi_stop_b_d_phi', 'truth_chi_stop_b_d_r']
 list_of_2d_truth_hists = ['truth_chi_pt_v_chi_b_pt', 'truth_chi_pt_v_stop_b_pt', 'truth_chi_eta_v_chi_b_eta',"truth_chi_eta_v_stop_b_eta",'truth_chi_phi_v_chi_b_phi',"truth_chi_phi_v_stop_b_phi"]
+list_of_2022d_hists = ['HT', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', 'm13_eta', 'm13_m', 'm24_pt', 'm24_eta', 'm24_m', 'm12_pt', 
+                       'm12_eta', 'm12_m', 'm23_pt', 'm23_eta', 'm23_m', 'm14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 
+                       'm14_vs_m12', 'ratio_m14_vs_m12', 'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 
+                       'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 'm24_vs_m12', 'ratio_m24_vs_m12', 'm24_vs_m23', 
+                       'ratio_m24_vs_m23', 'm12_vs_m23', 'ratio_m12_vs_m23', 'pt_0', 'eta_0', 'phi_0', 'pt_1', 'eta_1', 'phi_1', 'pt_2', 
+                       'eta_2', 'phi_2', 'pt_3', 'eta_3', 'phi_3', 'd_eta_1_1', 'd_phi_1_1', 'd_r_1_1', 'd_eta_1_2', 'd_phi_1_2', 'd_r_1_2', 
+                       'd_eta_1_3', 'd_phi_1_3', 'd_r_1_3', 'd_eta_1_4', 'd_phi_1_4', 'd_r_1_4', 'd_eta_2_2', 'd_phi_2_2', 'd_r_2_2', 
+                       'd_eta_2_3', 'd_phi_2_3', 'd_r_2_3', 'd_eta_2_4', 'd_phi_2_4', 'd_r_2_4', 'd_eta_3_3', 'd_phi_3_3', 'd_r_3_3', 
+                       'd_eta_3_4', 'd_phi_3_4', 'd_r_3_4', 'd_eta_4_4', 'd_phi_4_4', 'd_r_4_4', 'pt_ht_ratio_1', 'pt_ht_ratio_2', 
+                       'pt_ht_ratio_3', 'pt_ht_ratio_4', 'pt_ht_ratio_5'] 
+# for j in list_of_1d_hists:
+#     plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="400",normalize=True,ratio=True)
+#     plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
+#     plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1400",normalize=True,ratio=True)
+# for j in list_of_2d_hists:
+#     plotter(j,["signal_312_1500_400","signal_312_1500_400_mg"],add_label=j,add_name="400",normalize=True,ratio=True)
+#     plotter(j,["signal_312_1500_1100","signal_312_1500_1100_mg"],add_label=j,add_name="1100",normalize=True,ratio=True)
+#     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
-for j in list_of_1d_hists:
-    plotter(j, ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="400",normalize=True,ratio=True)
-    plotter(j, ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1100",normalize=True,ratio=True)
-    plotter(j, ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label=j+"\nPythia vs MG (black)",add_name="1400",normalize=True,ratio=True)
-
-# plotter('m14_pt', ["signal_312_1500_400", "signal_312_1500_400_mg"],add_label="Pythia vs MG (black)",add_name="400",normalize=False,ratio=True)
-# plotter('m14_pt', ["signal_312_1500_1100", "signal_312_1500_1100_mg"],add_label="Pythia vs MG (black)",add_name="1100",normalize=False,ratio=True)
-# plotter('m14_pt', ["signal_312_1500_1400", "signal_312_1500_1400_mg"],add_label="Pythia vs MG (black)",add_name="1400",normalize=False,ratio=True)
-for j in list_of_2d_hists:
-    plotter(j,["signal_312_1500_400","signal_312_1500_400_mg"],add_label=j,add_name="400",normalize=True,ratio=True)
-    plotter(j,["signal_312_1500_1100","signal_312_1500_1100_mg"],add_label=j,add_name="1100",normalize=True,ratio=True)
-    plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
+for j in list_of_2022d_hists:
+    plotter(j, ["Data2022DTemp1"], add_label=j, normalize=True)
+plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 
 sys.exit()
 

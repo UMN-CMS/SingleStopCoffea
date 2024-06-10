@@ -30,3 +30,13 @@ share/python-wheels/
 auto-save-list
 tramp
 .\#*
+
+figures*/
+coffeaenv/
+compressed/
+analyzer_resources/
+.local/
+.private/
+*.log
+.bash_eternal_history
+.condor_config
