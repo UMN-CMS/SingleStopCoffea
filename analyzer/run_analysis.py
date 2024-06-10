@@ -99,7 +99,7 @@ def runAnalysisOnSamples(
         it.chain.from_iterable(
             makeIterable(
                 x.getAnalyzerInput(
-                    require_location=require_location, prefer_location=prefer_location
+                    require_location=require_location, prefer_location=prefer_location,modules=modules
                 )
             )
             for x in samples
