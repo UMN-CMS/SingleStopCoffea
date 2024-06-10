@@ -64,8 +64,6 @@ def createEventLevelHistograms(events, analyzer):
 @analyzerModule("tag_hists", depends_on=["objects"])
 def createTagHistograms(events, hmaker):
     ret = {}
-    gj = events.good_jets
-    w = events.EventWeight
     for name, wp in it.product(("tops", "bs", "Ws"), ("loose", "med", "tight")):
         ret[f"{name}_{wp}"] = hmaker(
             tencountaxis,

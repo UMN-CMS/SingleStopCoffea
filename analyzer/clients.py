@@ -81,7 +81,6 @@ def createLPCCondorCluster(configuration):
     logger.info(f"Transfering input files: \n{transfer_input_files}")
     s = SCHEDD()
     # print(s)
-
     cluster = LPCCondorCluster(
         ship_env=False,
         image=apptainer_container,
@@ -94,9 +93,9 @@ def createLPCCondorCluster(configuration):
         ),
         **kwargs,
     )
-    cluster.scale(jobs=workers)
+    # cluster.scale(jobs=workers)
     # print(cluster)
-    # cluster.adapt(minimum=workers, maximum=workers)
+    cluster.adapt(minimum=1, maximum=workers)
 
     return cluster
 

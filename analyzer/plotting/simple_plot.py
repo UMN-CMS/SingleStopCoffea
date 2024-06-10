@@ -61,12 +61,11 @@ class Plotter:
                 [input_data] if isinstance(input_data, str) else list(input_data)
             )
             results = [pkl.load(open(f, "rb")) for f in filenames]
-
         self.target_lumi = (
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].getLumi()
         )
-
+    
         self.histos = accumulate(
             [
                 f.getMergedHistograms(self.sample_manager, self.target_lumi)

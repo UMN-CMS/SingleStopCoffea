@@ -145,14 +145,15 @@ def createBBptSelection(events, analyzer):
 def createCRSelection(events, analyzer):
     selection = analyzer.selection
     good_jets = events.good_jets
-    fat_jets = events.FatJet
+    # fat_jets = events.FatJet
     good_muons = events.good_muons
     good_electrons = events.good_electrons
     loose_b = events.loose_bs
-    med_b = events.med_bs
-    tight_b = events.tight_bs
+    # med_b = events.med_bs
+    # tight_b = events.tight_bs
+    # tight_top = events.tight_tops
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
-    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+    # top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])

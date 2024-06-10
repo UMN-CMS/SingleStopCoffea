@@ -15,7 +15,7 @@ import analyzer.datasets as ds
 import dask
 from analyzer.file_utils import compressDirectory
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client
+from dask.distributed import Client, progress
 from rich.console import Console
 from rich.progress import (
     Progress,

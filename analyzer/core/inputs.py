@@ -1,5 +1,6 @@
 import copy
 import logging
+import uproot
 from dataclasses import dataclass
 import itertools as it
 from typing import (
