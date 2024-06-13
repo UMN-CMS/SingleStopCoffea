@@ -19,6 +19,10 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+coffeaenv/
+*.log
+.local
+.bash_eternal_history
 
 *~
 *.root
