@@ -3,7 +3,7 @@ import itertools as it
 import matplotlib.pyplot as plt
 
 from .annotations import addEra, addPrelim
-from .plots_1d import addTitles1D, drawAs1DHist, drawPull, drawRatio
+from .plots_1d import addTitles1D, drawAs1DHist, drawPull, drawRatio, drawAsScatter
 from .plots_2d import addTitles2D, drawAs2DHist
 from .utils import addAxesToHist
 
@@ -30,8 +30,9 @@ def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
 
 def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None):
 
-    hopo = plotobj_obs
     hppo = plotobj_pred
+    hopo = plotobj_obs
+    
 
     if not no_hists:
         fig, ax = plt.subplots()
@@ -45,9 +46,9 @@ def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None
 
     ab.set_ylabel("Ratio")
     ab.set_ylim(0,2)
-    addEra(ax, lumi)
-    addPrelim(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addTitles1D(ax, hopo, top_pad=0.2)
+    #addEra(ax, lumi)
+    #addPrelim(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
+    #addTitles1D(ax, hopo, top_pad=0.2)
     
     if no_hists:
         return ax
@@ -66,7 +67,8 @@ def plot1D(
     add_label=None,
     top_pad=0.4,
     ratio=False,
-    un_sig_objs = None,
+    energy='13 TeV',
+    control_region=False,
 ):
     fig, ax = plt.subplots()
 
@@ -78,17 +80,22 @@ def plot1D(
             drawAsScatter(ax, o, yerr=True)
         elif sig_style == "hist":
             drawAs1DHist(ax, o, yerr=True, fill=False)
-    if ratio and un_sig_objs is not None:
-        plotRatio(un_sig_objs[0],un_sig_objs[1],coupling,lumi,no_hists=True,ax=ax)
-    elif ratio:
+    if ratio:
         plotRatio(signal_plobjs[0],signal_plobjs[1],coupling,lumi,no_hists=True,ax=ax)
     ax.set_yscale(scale)
-    addEra(ax, lumi)
-    addPrelim(
-        ax,
-        additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-        + (add_label or ""),
-    )
+    addEra(ax, lumi, energy=energy)
+    if control_region:
+        addPrelim(
+            ax,
+            additional_text=f"\nCR Selection\n"
+            + (add_label or ""),
+        )
+    else:
+        addPrelim(
+            ax,
+            additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
+            + (add_label or ""),
+        )
     hc = next(it.chain(signal_plobjs, background_plobjs))
     addTitles1D(ax, hc, top_pad=top_pad)
     handles, labels = ax.get_legend_handles_labels()
@@ -111,23 +118,41 @@ def plot2D(
     scale="log",
     add_label=None,
     zscore=False,
+    energy='13 Tev',
+    control_region=False,
 ):
     fig, ax = plt.subplots()
 
     drawAs2DHist(ax, plot_obj)
-    addEra(ax, lumi)
+    addEra(ax, lumi, energy=energy)
     pos = "in"
-    addPrelim(
+    
+    if zscore:
+        objtitle = ""
+    else:
+        objtitle = plot_obj.title
+
+    if control_region:
+        addPrelim(
         ax,
-        additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-        + (f"{add_label}," if add_label else "")
-        + f"{plot_obj.title}",
+        additional_text=f"\nCR Selection\n"
+        + (f"{add_label}" if add_label else "")
+        + f", {objtitle}",
         pos=pos,
         color="white",
     )
+    else:
+        addPrelim(
+            ax,
+            additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
+            + (f"{add_label}," if add_label else "")
+            + f"{objtitle}",
+            pos=pos,
+            color="white",
+        )
     addTitles2D(ax, plot_obj)
 
     if zscore and hasattr(ax, "cax"):
         cax = ax.cax
-        cax.set_ylabel("MG-Pythia/(Var[Pythia])")
+        cax.set_ylabel("(2022D-2018)/(Var[2018])")
     return fig

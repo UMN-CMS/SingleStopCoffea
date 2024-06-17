@@ -89,8 +89,9 @@ class PlotObject:
 
 
 def createPlotObjects(hist, cat_axis, manager, cat_filter=None):
-    other_axes = [a for a in hist.axes if a.name != cat_axis]
-    titles = [a.label for a in other_axes]
+    # TODO: What are these two lines for?
+    #other_axes = [a for a in hist.axes if a.name != cat_axis]
+    #titles = [a.label for a in other_axes]
     ret = [
         PlotObject.fromHist(hist[{cat_axis: n}], manager[n].title, manager[n].style)
         for n in hist.axes[cat_axis]
