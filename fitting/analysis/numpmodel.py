@@ -116,7 +116,7 @@ def runMCMCNumpyro(model, *args, **kwargs):
         nuts_kernel,
         num_samples=800,
         num_warmup=200,
-        num_chains=1,
+        num_chains=4,
         chain_method="parallel",
     )
     mcmc.run(rng_key, *args, **kwargs)
@@ -138,11 +138,13 @@ def runMCMCOnDatasetNumpyro(signal_data, regression_data, obs):
     m = pred_dist.mean.numpy()
 
     mcmc = runMCMCNumpyro(statModelNumpyro, m, ev, s, observed=o)
+
     posterior_predictive = ninf.Predictive(statModelNumpyro, mcmc.get_samples())(
-        random.PRNGKey(1), m, ev, s, observed=o
+        random.PRNGKey(1), m, ev, s
     )
+
     prior = ninf.Predictive(statModelNumpyro, num_samples=1000)(
-        random.PRNGKey(2), m, ev, s, observed=o
+        random.PRNGKey(2), m, ev, s
     )
 
     inference_data = az.from_numpyro(
