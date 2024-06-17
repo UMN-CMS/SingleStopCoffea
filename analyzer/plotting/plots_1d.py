@@ -10,7 +10,6 @@ from .plottables import FillType
 
 def drawAsScatter(ax, p, yerr=True, **kwargs):
     style = p.style
-
     x = p.axes[0].centers
     ed = p.axes[0].flat_edges
     y = p.values()
@@ -21,6 +20,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
     if yerr:
         e_start = ed[1:]
         e_end = ed[:-1]
+        width = e_start-e_end
 
         if p.variances() is None:
             raise ValueError(f"Plot object does not have variance")
@@ -30,8 +30,22 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
             e_start = e_start[p.mask]
             e_end = e_end[p.mask]
 
-        ax.errorbar(x, y, yerr=var, fmt="none", **style, **kwargs)
-        ax.hlines(y, e_start, e_end, label=p.title, **style)
+        ax.errorbar(
+            x,
+            y,
+            yerr=var,
+            linestyle="none",
+            marker='.',
+            label=p.title,
+            **style,
+            **kwargs,
+        )
+        # ax.hlines(
+        #     y,
+        #     e_start,
+        #     e_end,
+        #     **style,
+        # )
     else:
         ax.scatter(x, y, label=p.title, marker="+", **style, **kwargs)
     return ax
@@ -79,7 +93,7 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
 
 
 def drawRatio(
-    ax, numerator, denominator, uncertainty_type="poisson", hline_list=None, **kwargs
+    ax, numerator, denominator, uncertainty_type="poisson-ratio", hline_list=None, **kwargs
 ):
     hline_list = hline_list or []
     nv, dv = numerator.values(), denominator.values()

@@ -164,6 +164,8 @@ class Plotter:
         top_pad=0.4,
         xlabel_override=None,
         ratio=False,
+        energy='13 TeV',
+        control_region=False,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
         unnormalized_signal_plobjs = None
@@ -201,7 +203,8 @@ class Plotter:
                 top_pad=top_pad,
                 scale=scale,
                 ratio=ratio,
-                un_sig_objs = unnormalized_signal_plobjs,
+                energy=energy,
+                control_region=control_region,
             )
             fig.tight_layout()
             if self.outdir:
@@ -223,6 +226,7 @@ class Plotter:
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
+                    control_region=control_region,
                 )
                 fig.tight_layout()
                 if self.outdir:
@@ -238,7 +242,6 @@ class Plotter:
                 nv = realh1.values()
                 dv = realh2.values()
                 ratio_histv = np.divide(dv-nv,realh1.variances(),out=np.zeros_like(nv), where=realh1.variances() != 0)
-
                 po_ratio = PlotObject.fromNumpy((ratio_histv,realh1.axes), title=ob1, style=self.sample_manager[x].style,axes=True)
                 fig = plot2D(
                     po_ratio,
@@ -248,9 +251,11 @@ class Plotter:
                     add_label=add_label,
                     scale=scale,
                     zscore=ratio,
+                    control_region=control_region,
+                    energy=energy,
                 )
                 if self.outdir:
-                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{ob1}_pythia_v_mg_zscore.pdf")
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_2018_2022d_zscore.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)

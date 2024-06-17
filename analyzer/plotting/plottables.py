@@ -163,7 +163,9 @@ class PlotObject:
             values=hist[0],
             axes=axes,
             variances=variances,
-            **kwargs,
+            title=title,
+            style=style or {},
+            mask=mask,
         )
 
     def compat(self, other):
