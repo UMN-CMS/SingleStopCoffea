@@ -37,6 +37,7 @@ class Plotter:
         dataset_dir="datasets",
         coupling="312",
         default_axis_opts=None,
+        non_scaled_histos=False,
     ):
         loadStyles()
         self._createLogger()
@@ -44,8 +45,10 @@ class Plotter:
         self.default_backgrounds = default_backgrounds or []
         self.default_axis_opts = default_axis_opts
 
+        profile_repo = ad.ProfileRepo()
+        profile_repo.loadFromDirectory("profiles")
         self.sample_manager = ad.SampleManager()
-        self.sample_manager.loadSamplesFromDirectory(dataset_dir)
+        self.sample_manager.loadSamplesFromDirectory(dataset_dir,profile_repo=profile_repo)
 
         if isinstance(input_data, ac.AnalysisResult):
             results = [input_data]
@@ -65,7 +68,8 @@ class Plotter:
                 for f in results
             ]
         )
-
+        if non_scaled_histos:
+            self.non_scaled_histos = accumulate([f.getNonScaledHistograms() for f in results])
         self.coupling = coupling
 
         used_samples = set(it.chain.from_iterable(x.results.keys() for x in results))

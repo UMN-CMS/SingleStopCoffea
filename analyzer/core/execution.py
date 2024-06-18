@@ -35,6 +35,7 @@ def execute(futures: Iterable[DatasetDaskRunResult], client: Client):
         x.getName(): [
             x.dataset_preprocessed,
             x.histograms,
+            x.non_scaled_histograms,
             x.raw_events_processed,
             x.run_report,
         ]
@@ -43,8 +44,8 @@ def execute(futures: Iterable[DatasetDaskRunResult], client: Client):
     computed, *rest = dask.compute(dsk)
 
     return {
-        name: DatasetRunResult(prep, h, r, rep)
-        for name, (prep, h, r, rep) in computed.items()
+        name: DatasetRunResult(prep, h, nsh, r, rep)
+        for name, (prep, h, nsh, r, rep) in computed.items()
     }
 
 
@@ -116,11 +117,11 @@ class Analyzer:
             events = events[lmask(events.run, events.luminosityBlock)]
 
         if delayed:
-            daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)
+            daskres = DatasetDaskRunResult(dsprep, {}, {}, ak.num(events, axis=0), report)
         else:
             events = events.compute(scheduler="synchronous")
             report = report.compute(scheduler="single-threaded")
-            daskres = DatasetRunResult(dsprep, {}, ak.num(events, axis=0), report)
+            daskres = DatasetRunResult(dsprep, {}, {}, ak.num(events, axis=0), report)
 
         dataset_analyzer = DatasetProcessor(
             daskres, dsprep.dataset_input.fill_name, dsprep.dataset_input.profile, delayed=delayed

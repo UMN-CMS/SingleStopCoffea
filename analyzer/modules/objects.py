@@ -9,7 +9,7 @@ def makeCutSet(x, s, args):
 @analyzerModule("objects", categories="base_objects")
 def createObjects(events, analyzer):
     good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.4)]
-    fat_jets = events.FatJet[(events.FatJet.pt > 30) & (abs(events.FatJet.eta) < 2.4)]
+    #fat_jets = events.FatJet[(events.FatJet.pt > 30) & (abs(events.FatJet.eta) < 2.4)]
     #loose_top, med_top, tight_top = makeCutSet(
     #    fat_jets, fat_jets.particleNet_TvsQCD, [0.58, 0.80, 0.97]
     #)
