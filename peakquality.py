@@ -11,10 +11,7 @@ def _L2_norm(values):
     sum_of_squares = np.sum(np.power(values, 2))
     return np.sqrt(sum_of_squares)
 
-def s_over_root_b(sample_manager, file_name, background_name, signal_name, xvar, true_mass):#, plot=False):
-    a = AnalysisResult.fromFile("")
-    hists = a.getMergedHistograms(sample_manager)
-
+def s_over_root_b(hists, background_name, signal_name, xvar, true_mass):#, plot=False):
     signal_hist = hists[xvar][signal_name, ...]
     background_hist = hists[xvar][background_name, ...]
     signal_data = signal_hist.to_numpy()[0]
