@@ -20,11 +20,13 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
     if yerr:
         e_start = ed[1:]
         e_end = ed[:-1]
-        width = e_start-e_end
 
         if p.variances() is None:
             raise ValueError(f"Plot object does not have variance")
-        var = np.sqrt(p.variances())
+        unc = np.sqrt(p.variances)
+        # for i,val in enumerate(y):
+        #     print(f"Value: {val} ± {unc[i]}")
+        # input()
         if p.mask is not None:
             var = var[p.mask]
             e_start = e_start[p.mask]
@@ -33,10 +35,11 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
         ax.errorbar(
             x,
             y,
-            yerr=var,
+            yerr=unc,
             linestyle="none",
             marker='.',
             label=p.title,
+            ecolor='black',
             **style,
             **kwargs,
         )
@@ -98,12 +101,16 @@ def drawRatio(
     hline_list = hline_list or []
     nv, dv = numerator.values(), denominator.values()
     ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
-
+    # print(numerator.values)
+    # print(denominator.values)
+    # print(ratio)
     unc = hinter.ratio_uncertainty(
         numerator.values,
         denominator.values,
         uncertainty_type=uncertainty_type,
     )
+    # print(unc)
+    # input()
     x = numerator.axes[0].centers
     ax.errorbar(
         x,

@@ -102,6 +102,7 @@ class DatasetRunResult:
         weight = sample.getWeight(target_lumi)
         reweighted = sample.n_events / self.raw_events_processed
         final_weight = reweighted * weight
+        print(self.histograms['h_njet'].sum())
         return {name: h * final_weight for name, h in self.histograms.items()}
 
     def merge(self, other: DatasetRunResult) -> DatasetRunResult:

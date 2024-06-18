@@ -9,8 +9,6 @@ import analyzer.core as ac
 import hist
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from hist import Hist
-from analyzer.datasets import SampleManager
 import analyzer.datasets as ad
 from analyzer.utils import accumulate
 
@@ -85,7 +83,7 @@ class Plotter:
             > 1
         ):
             raise ValueError(
-                "The underlying sampels have different luminosities, and you are not performing scaling"
+                "The underlying samples have different luminosities, and you are not performing scaling"
             )
 
         if outdir:
