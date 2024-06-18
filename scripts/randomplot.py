@@ -3,6 +3,7 @@ import sys
 sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
 import warnings
+from matplotlib import pyplot as plt
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
@@ -27,14 +28,46 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # ]
 
 plotter = Plotter(
-    ['run3_2022D_ak8pf420.pkl','2018dataonly.pkl','qcd_cr.pkl'],
-    "figures_ratio_test",
-    default_backgrounds=['QCDInclusive2018'],
+    ['run3_2022D_ak8pf420.pkl','2018dataonly.pkl'],
+    "figures2018_2022D_normalized_59lm",
+    default_backgrounds=None,
     target_lumi=59.83,
     coupling="cr",
 )
 
 print(plotter.histos.keys())
+# print(plotter.non_scaled_histos.keys())
+# fig = plt.figure()
+# h,labels = plotter.non_scaled_histos['N-1']
+# h.plot1d()
+# plt.ylabel("N Passed Events")
+# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
+# plt.yscale('log')
+# fig.tight_layout()
+# fig.savefig('figures_temp/nminus1.pdf')
+# plt.close(fig)
+
+# fig = plt.figure()
+# h,labels = plotter.non_scaled_histos['cutflow']
+# h.plot1d()
+# plt.ylabel("N Passed Events")
+# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
+# plt.yscale('log')
+# fig.tight_layout()
+# fig.savefig('figures_temp/cutflow.pdf')
+# plt.close(fig)
+
+# fig = plt.figure('')
+# h,labels = plotter.non_scaled_histos['honecut']
+# h.plot1d()
+# plt.ylabel("N Passed Events")
+# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
+# plt.yscale('log')
+# fig.tight_layout()
+# fig.savefig('figures_temp/onecut.pdf')
+# plt.close(fig)
+
+input()
 
 list_of_2d_hists = ['m14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 'm14_vs_m12', 'ratio_m14_vs_m12', 
                     'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 
@@ -74,7 +107,7 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 for j in list_of_2022d_hists:
-    plotter(j, ["Data2018","Data2022DTemp"], add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
+    plotter(j, ["Data2018","Data2022DTemp"], normalize=True, add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
 #plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 
 sys.exit()

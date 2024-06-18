@@ -51,6 +51,7 @@ class ResultModification:
 class DatasetDaskRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, dah.Hist]
+    non_scaled_histograms: Dict[str, list]
     run_report: dak.Array
 
     def getName(self):
@@ -62,6 +63,7 @@ class DatasetRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, hist.Hist]
     processed_chunks: Chunk
+    non_scaled_histograms: Dict[str, list]
 
     @property
     def raw_events_processed(self):
@@ -102,7 +104,6 @@ class DatasetRunResult:
         weight = sample.getWeight(target_lumi)
         reweighted = sample.n_events / self.raw_events_processed
         final_weight = reweighted * weight
-        print(self.histograms['h_njet'].sum())
         return {name: h * final_weight for name, h in self.histograms.items()}
 
     def merge(self, other: DatasetRunResult) -> DatasetRunResult:
@@ -181,6 +182,9 @@ class AnalysisResult:
             else:
                 updated_results[dataset_name] = results
         return AnalysisResult(updated_results, self.module_list)
+    
+    def getNonScaledHistograms(self):
+        return utils.accumulate([x.getNonScaledHistograms() for x in self.results.values()])
 
 
 @dataclass

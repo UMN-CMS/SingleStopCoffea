@@ -39,6 +39,7 @@ class Plotter:
         coupling="312",
         year=2018,
         default_axis_opts=None,
+        non_scaled_histos=False,
     ):
         loadStyles()
         self._createLogger()
@@ -70,7 +71,8 @@ class Plotter:
                 for f in results
             ]
         )
-
+        if non_scaled_histos:
+            self.non_scaled_histos = accumulate([f.getNonScaledHistograms() for f in results])
         self.coupling = coupling
 
         used_samples = set(it.chain.from_iterable(x.results.keys() for x in results))

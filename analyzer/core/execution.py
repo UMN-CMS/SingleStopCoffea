@@ -57,7 +57,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
             x.getName(): [
                 x.dataset_preprocessed,
                 x.histograms,
-                x.run_report,
+                x.non_scaled_histograms,
+            x.run_report,
             ]
             for x, _ in futures
         },
@@ -66,8 +67,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
     computed, *rest = dask.compute(dsk, retries=3)
 
     ret = {
-        name: DatasetRunResult(prep, h, getProcessedChunks(rep))
-        for name, (prep, h, rep) in computed["main"].items()
+        name: DatasetRunResult(prep, h, nsh, getProcessedChunks(rep))
+        for name, (prep, h, nsh, rep) in computed["main"].items()
     }
 
     return ret
@@ -88,8 +89,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
 #     computed, *rest = compute(dsk, optimize_graph=False)
 #
 #     return {
-#         name: DatasetRunResult(prep, h, r, rep)
-#         for name, (prep, h, r, rep) in computed.items()
+#         name: DatasetRunResult(prep, h, r, nsh, rep)
+#         for name, (prep, h, nsh, r, rep) in computed.items()
 #     }
 
 @dask.delayed
@@ -163,7 +164,7 @@ class Analyzer:
             lmask = getLumiMask(lumi_json)
             events = events[lmask(events.run, events.luminosityBlock)]
 
-        daskres = DatasetDaskRunResult(dsprep, {}, report)
+        daskres = DatasetDaskRunResult(dsprep, {}, {}, report)
         dataset_analyzer = DatasetProcessor(
             daskres,
             dsprep.dataset_input.dataset_name,
