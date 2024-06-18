@@ -9,8 +9,6 @@ import analyzer.core as ac
 import hist
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from hist import Hist
-from analyzer.datasets import SampleManager
 import analyzer.datasets as ad
 from analyzer.utils import accumulate
 
@@ -85,7 +83,7 @@ class Plotter:
             > 1
         ):
             raise ValueError(
-                "The underlying sampels have different luminosities, and you are not performing scaling"
+                "The underlying samples have different luminosities, and you are not performing scaling"
             )
 
         if outdir:
@@ -197,10 +195,11 @@ class Plotter:
         self.logger.info(f"Now plotting {hist_name}")
         add_name = add_name + "_" if add_name else ""
         hc = hist[{"dataset": bkg_set + sig_set}]
+        un_norm_hc = hc
+
         if normalize:
             # unnormalized_signal_plobjs = createPlotObjects(
             #     hc, "dataset", self.sample_manager, cat_filter=lambda x: ((re.search("signal", x)) or (re.search("Data",x))))
-            un_norm_hc = hc
             hc = getNormalized(hc, "dataset")
         background_plobjs = createPlotObjects(
             hc,

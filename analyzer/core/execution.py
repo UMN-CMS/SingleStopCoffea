@@ -62,7 +62,7 @@ def createFutureResult(modules, prepped_dataset):
         uproot_options=dict(
             allow_read_errors_with_report=True,
             use_threads=False,
-            handler=uproot.XRootDSource,
+            timeout=120,
             ),
         known_base_form=maybe_base_form,
     ).events()

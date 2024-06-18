@@ -2,10 +2,7 @@ import sys
 
 sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
-from analyzer.plotting import simple_plot
 import warnings
-import itertools as it
-import pickle
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
@@ -30,10 +27,10 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # ]
 
 plotter = Plotter(
-    "run3_2022D_2018.pkl",
-    "figures2018_2022D_test",
-    default_backgrounds=None,
-    target_lumi=10,
+    ['run3_2022D_ak8pf420.pkl','2018dataonly.pkl','qcd_cr.pkl'],
+    "figures_ratio_test",
+    default_backgrounds=['QCDInclusive2018'],
+    target_lumi=59.83,
     coupling="cr",
 )
 
@@ -77,7 +74,7 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 for j in list_of_2022d_hists:
-    plotter(j, ["Data2018","Data2022DTemp"], add_label=j, normalize=True,ratio=True,sig_style='scatter',energy='13.6 and 13 TeV',control_region=True)
+    plotter(j, ["Data2018","Data2022DTemp"], add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
 #plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 
 sys.exit()
