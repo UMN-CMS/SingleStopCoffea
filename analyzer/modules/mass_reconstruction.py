@@ -291,7 +291,7 @@ def charginoRecoHistograms(events, analyzer):
 
     analyzer.H(
         f"m3_top_3_no_lead_b",
-        makeAxis(60, 0, 3000, r"mass of jets 1-3 without leading b", unit="gev"),
+        makeAxis(60, 0, 3000, r"mass of jets 1-3 without leading b", unit="GeV"),
         uncomp_charg,
         name="mass of jets 1-3 without leading b",
     )
