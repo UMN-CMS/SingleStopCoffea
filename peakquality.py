@@ -12,8 +12,8 @@ def _L2_norm(values):
     return np.sqrt(sum_of_squares)
 
 def s_over_root_b(hists, background_name, signal_name, xvar, true_mass):#, plot=False):
-    signal_hist = hists[xvar][signal_name, ...]
-    background_hist = hists[xvar][background_name, ...]
+    signal_hist = hists[xvar]
+    background_hist = hists[xvar]
     signal_data = signal_hist.to_numpy()[0]
     background_data, edges = background_hist.to_numpy()
     bin_centers = (edges[:-1] + edges[1:])/2
