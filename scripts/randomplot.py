@@ -4,6 +4,7 @@ sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
 import warnings
 from matplotlib import pyplot as plt
+import json
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
@@ -27,48 +28,66 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 #     for p in ("2000_1900", "1200_400", "1500_900", "1500_1400", "1200_1100", "2000_900")
 # ]
 
+# plotter = Plotter(
+#     ['run3_2022D_ak8pf420.pkl','2018dataonly.pkl'],
+#     "figurestempdelete",
+#     default_backgrounds=None,
+#     target_lumi=59.83,
+#     coupling="cr",
+# )
+
+
+directory='figurestestsamedata'
+sample_names = ["Data2018-2","Data2022DTemp-2"]
 plotter = Plotter(
-    ['run3_2022D_ak8pf420.pkl','2018dataonly.pkl'],
-    "figures2018_2022D_normalized_59lm",
+    ['nobnolepnjet100nohighpt.pkl'],
+    directory,
     default_backgrounds=None,
     target_lumi=59.83,
     coupling="cr",
+    non_scaled_histos=True,
 )
 
-print(plotter.histos.keys())
-# print(plotter.non_scaled_histos.keys())
-# fig = plt.figure()
-# h,labels = plotter.non_scaled_histos['N-1']
-# h.plot1d()
-# plt.ylabel("N Passed Events")
-# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
-# plt.yscale('log')
-# fig.tight_layout()
-# fig.savefig('figures_temp/nminus1.pdf')
-# plt.close(fig)
-
-# fig = plt.figure()
-# h,labels = plotter.non_scaled_histos['cutflow']
-# h.plot1d()
-# plt.ylabel("N Passed Events")
-# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
-# plt.yscale('log')
-# fig.tight_layout()
-# fig.savefig('figures_temp/cutflow.pdf')
-# plt.close(fig)
-
-# fig = plt.figure('')
-# h,labels = plotter.non_scaled_histos['honecut']
-# h.plot1d()
-# plt.ylabel("N Passed Events")
-# plt.xticks(plt.gca().get_xticks(), labels, rotation=45)
-# plt.yscale('log')
-# fig.tight_layout()
-# fig.savefig('figures_temp/onecut.pdf')
-# plt.close(fig)
-
+for key,value in plotter.non_scaled_histos_labels.items():
+    plotter.non_scaled_histos_labels[key] = list(dict.fromkeys(value))
+labels = plotter.non_scaled_histos_labels
+print(labels['N-1'])
+print(plotter.non_scaled_histos['N-1'][{"dataset": 'Data2018-2'}])
+print(plotter.non_scaled_histos['N-1'][{"dataset": 'Data2022DTemp-2'}])
 input()
+def cutflowPlot(histogram_name,percent=False):
+    fig = plt.figure()
+    for name in sample_names:
+        h = plotter.non_scaled_histos[histogram_name][{"dataset": name}]
+        if histogram_name != 'N-1':
+            h = h[1:]
+        if percent:
+            h = h/h[0]
+        h.plot1d(label=name)
+    
+    if percent:
+        plt.ylabel("Normalized Passed Events")
+        plt.ylim()
+    else:
+        plt.ylabel("N Passed Events")
+        plt.yscale('log')
+    print(plt.gca().get_xticks())
+    # plt.xticks(plt.gca().get_xticks(), labels[histogram_name][1:], rotation=45)
+    plt.legend()
+    fig.tight_layout()
 
+    if percent:
+        fig.savefig(f'{directory}/{histogram_name}p.pdf')
+    else:
+        fig.savefig(f'{directory}/{histogram_name}.pdf')
+    plt.close(fig)
+
+cutflowPlot('cutflow',True)
+cutflowPlot('cutflow')
+cutflowPlot('onecut')
+cutflowPlot('N-1')
+raise Exception
+print(plotter.histos.keys())
 list_of_2d_hists = ['m14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 'm14_vs_m12', 'ratio_m14_vs_m12', 
                     'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 
                     'm24_vs_m12', 'ratio_m24_vs_m12', 'm24_vs_m23', 'ratio_m24_vs_m23', 'm12_vs_m23', 'ratio_m12_vs_m23','d_phi_01_vs_02', 
@@ -107,7 +126,7 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 for j in list_of_2022d_hists:
-    plotter(j, ["Data2018","Data2022DTemp"], normalize=True, add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
+    plotter(j, sample_names, normalize=False, add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
 #plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 
 sys.exit()

@@ -38,7 +38,8 @@ class ResultModification:
 class DatasetDaskRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, dah.Hist]
-    non_scaled_histograms: Dict[str, list]
+    non_scaled_histograms: Dict[str, dah.Hist]
+    non_scaled_histograms_labels: Dict[str, list]
     raw_events_processed: Any
     run_report: dak.Array
 
@@ -50,7 +51,8 @@ class DatasetDaskRunResult:
 class DatasetRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, hist.Hist]
-    non_scaled_histograms: Dict[str, list]
+    non_scaled_histograms: Dict[str, hist.Hist]
+    non_scaled_histograms_labels: Dict[str, list]
     raw_events_processed: int
     dataset_run_report: ak.Array
 
@@ -63,6 +65,9 @@ class DatasetRunResult:
     
     def getNonScaledHistograms(self):
         return {name: l for name, l in self.non_scaled_histograms.items()}
+    
+    def getNonScaledHistogramsLabels(self):
+        return {name: l for name, l in self.non_scaled_histograms_labels.items()}
 
     def update(self, other):
         if self.dataset_preprocessed != other.dataset_preprocessed:
@@ -84,12 +89,20 @@ def mergeAndWeightResults(results, sample_manager, target_lumi=None):
         [x.getScaledHistograms(sample_manager, target_lumi) for x in results]
     )
 
+def mergeResults(results):
+    return utils.accumulate(
+        [x.getNonScaledHistograms() for x in results])
+
+def mergeLabels(results):
+    return utils.accumulate(
+        [x.getNonScaledHistogramsLabels() for x in results]
+    )
 
 @dataclass
 class AnalysisResult:
     # modifications: List[ResultModification]
     results: Dict[str, DatasetRunResult]
-
+    
     def save(self, output_file):
         path = Path(output_file)
         parent = path.parent
@@ -108,9 +121,12 @@ class AnalysisResult:
 
     def getMergedHistograms(self, sample_manager, target_lumi=None):
         return mergeAndWeightResults(self.results.values(), sample_manager, target_lumi)
-    
+        
     def getNonScaledHistograms(self):
-        return utils.accumulate([x.getNonScaledHistograms() for x in self.results.values()])
+        return mergeResults(self.results.values())
+    
+    def getNonScaledHistogramsLabels(self):
+        return mergeLabels(self.results.values())
 
 
 @dataclass
