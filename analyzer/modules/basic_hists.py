@@ -4,6 +4,12 @@ import awkward as ak
 
 from analyzer.core import analyzerModule
 from analyzer.math_funcs import angleToNPiToPi
+from analyzer.core.processor import DatasetProcessor
+import hist
+from hist import Hist
+import numpy as np
+import dask_awkward as dak
+import hist.dask as hda
 
 from .axes import *
 from .utils import numMatching
@@ -76,3 +82,39 @@ def createTagHistograms(events, hmaker):
             ak.num(events[f"{name}_wp{wp}"], axis=1),
             name=f"Number of wp{wp} {name}",
         )
+
+@analyzerModule("cutflow",categories="post_selection")
+def createCutflowHistogram(events,analyzer):
+
+    def cutflowHist(nevents,masks,name,size):
+
+        if not analyzer.delayed:
+            h = hist.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
+            h.fill(analyzer.setname,np.arange(size, dtype=int), weight=nevents)
+
+        else:
+            h = hda.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
+            setattr(h, "name", name)
+            for i, weight in enumerate(masks, 1):
+                h.fill(
+                    analyzer.setname,
+                    dak.full_like(weight, i, dtype=int), weight=weight
+                )
+            h.fill(analyzer.setname,dak.zeros_like(weight, dtype=int))
+
+        return h
+
+    selection = analyzer.selection
+    nminusone = selection.nminusone(*selection.names).result()
+    cutflow = selection.cutflow(*selection.names).result()
+
+    size = len(cutflow.labels)
+    n1hist = cutflowHist(nminusone.nev,nminusone.masks,name='N-1',size=size)
+    hcutflow = cutflowHist(cutflow.nevcutflow,cutflow.maskscutflow,name='cutflow',size=size)
+    honecut = cutflowHist(cutflow.nevonecut,cutflow.masksonecut,name='onecut',size=size)
+
+    analyzer.add_non_scaled_hist(key='N-1',hist=n1hist,labels=nminusone.labels)
+    analyzer.add_non_scaled_hist(key='cutflow',hist=hcutflow,labels=cutflow.labels)
+    analyzer.add_non_scaled_hist(key='onecut',hist=honecut,labels=cutflow.labels)
+
+    return events,analyzer

@@ -51,7 +51,8 @@ class ResultModification:
 class DatasetDaskRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, dah.Hist]
-    non_scaled_histograms: Dict[str, list]
+    non_scaled_histograms: Dict[str, dah.Hist]
+    non_scaled_histograms_labels: Dict[str, list]
     run_report: dak.Array
 
     def getName(self):
@@ -63,7 +64,8 @@ class DatasetRunResult:
     dataset_preprocessed: DatasetPreprocessed
     histograms: Dict[str, hist.Hist]
     processed_chunks: Chunk
-    non_scaled_histograms: Dict[str, list]
+    non_scaled_histograms: Dict[str, hist.Hist]
+    non_scaled_histograms_labels: Dict[str, list]
 
     @property
     def raw_events_processed(self):
@@ -135,6 +137,14 @@ def mergeAndWeightResults(
         [x.getScaledHistograms(sample_manager, target_lumi) for x in results]
     )
 
+def mergeResults(results):
+    return utils.accumulate(
+        [x.getNonScaledHistograms() for x in results])
+
+def mergeLabels(results):
+    return utils.accumulate(
+        [x.getNonScaledHistogramsLabels() for x in results]
+    )
 
 @dataclass
 class AnalysisResult:
@@ -184,7 +194,10 @@ class AnalysisResult:
         return AnalysisResult(updated_results, self.module_list)
     
     def getNonScaledHistograms(self):
-        return utils.accumulate([x.getNonScaledHistograms() for x in self.results.values()])
+        return mergeResults(self.results.values())
+    
+    def getNonScaledHistogramsLabels(self):
+        return mergeLabels(self.results.values())
 
 
 @dataclass

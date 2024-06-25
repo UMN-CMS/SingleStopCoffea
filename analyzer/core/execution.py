@@ -58,7 +58,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
                 x.dataset_preprocessed,
                 x.histograms,
                 x.non_scaled_histograms,
-            x.run_report,
+                x.non_scaled_histograms_labels,
+                x.run_report,
             ]
             for x, _ in futures
         },
@@ -67,8 +68,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
     computed, *rest = dask.compute(dsk, retries=3)
 
     ret = {
-        name: DatasetRunResult(prep, h, nsh, getProcessedChunks(rep))
-        for name, (prep, h, nsh, rep) in computed["main"].items()
+        name: DatasetRunResult(prep, h, nsh, nshl, getProcessedChunks(rep))
+        for name, (prep, h, nsh, nshl, rep) in computed["main"].items()
     }
 
     return ret
@@ -89,8 +90,8 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
 #     computed, *rest = compute(dsk, optimize_graph=False)
 #
 #     return {
-#         name: DatasetRunResult(prep, h, r, nsh, rep)
-#         for name, (prep, h, nsh, r, rep) in computed.items()
+#         name: DatasetRunResult(prep, h, r, nsh, nshl, rep)
+#         for name, (prep, h, nsh, nshl, r, rep) in computed.items()
 #     }
 
 @dask.delayed
@@ -110,7 +111,7 @@ def createFutureResult(modules, prepped_dataset):
         ),
         known_base_form=maybe_base_form,
     ).events()
-    daskres = DatasetDaskRunResult(prepped_dataset, {}, ak.num(events, axis=0), report)
+    daskres = DatasetDaskRunResult(prepped_dataset, {}, {}, {}, ak.num(events, axis=0), report)
     dataset_analyzer = DatasetProcessor(
         daskres, prepped_dataset.dataset_input.fill_name
     )
@@ -164,7 +165,7 @@ class Analyzer:
             lmask = getLumiMask(lumi_json)
             events = events[lmask(events.run, events.luminosityBlock)]
 
-        daskres = DatasetDaskRunResult(dsprep, {}, {}, report)
+        daskres = DatasetDaskRunResult(dsprep, {}, {}, {}, report)
         dataset_analyzer = DatasetProcessor(
             daskres,
             dsprep.dataset_input.dataset_name,

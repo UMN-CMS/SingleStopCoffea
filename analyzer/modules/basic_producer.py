@@ -7,6 +7,6 @@ from analyzer.core import analyzerModule
 def addEventLevelVars(events, analyzer):
     ht = ak.sum(events.good_jets.pt, axis=1)
     events["HT"] = ht
-    return events ,analyzer
+    return events, analyzer
 
 

@@ -64,7 +64,7 @@ class Plotter:
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].getLumi()
         )
-    
+
         self.histos = accumulate(
             [
                 f.getMergedHistograms(self.sample_manager, self.target_lumi)
@@ -72,7 +72,18 @@ class Plotter:
             ]
         )
         if non_scaled_histos:
-            self.non_scaled_histos = accumulate([f.getNonScaledHistograms() for f in results])
+            self.non_scaled_histos = accumulate(
+                [
+                    f.getNonScaledHistograms() 
+                    for f in results
+                ]
+            )
+            self.non_scaled_histos_labels = accumulate(
+                [
+                    f.getNonScaledHistogramsLabels()
+                    for f in results
+                ]
+            )
         self.coupling = coupling
 
         used_samples = set(it.chain.from_iterable(x.results.keys() for x in results))
