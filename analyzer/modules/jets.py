@@ -49,7 +49,7 @@ def createJetHistograms(events, analyzer):
         )
         mtitle = 4 if j - i == 4 else 3
         analyzer.H(rf"m{i+1}{j}_m", 
-            makeAxis(60, 0, 3000, f"$m_{{{mtitle}}}$", unit="GeV"),
+            makeAxis(120, 0, 3000, f"$m_{{{mtitle}}}$", unit="GeV"),
             jets.mass,
             name=rf"Composite Jet {i+1} to Jet {j} mass",
             description=rf"Mass of the sum of jets {i+1} to {j}",
