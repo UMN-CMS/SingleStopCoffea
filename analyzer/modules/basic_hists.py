@@ -109,7 +109,8 @@ def createCutflowHistogram(events,analyzer):
     cutflow = selection.cutflow(*selection.names).result()
 
     size = len(cutflow.labels)
-    n1hist = cutflowHist(nminusone.nev,nminusone.masks,name='N-1',size=size)
+    nminusonesize = len(nminusone.labels)
+    n1hist = cutflowHist(nminusone.nev,nminusone.masks,name='N-1',size=nminusonesize)
     hcutflow = cutflowHist(cutflow.nevcutflow,cutflow.maskscutflow,name='cutflow',size=size)
     honecut = cutflowHist(cutflow.nevonecut,cutflow.masksonecut,name='onecut',size=size)
 
