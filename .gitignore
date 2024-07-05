@@ -52,3 +52,4 @@ analyzer_resources/
 *.log
 .bash_eternal_history
 .condor_config
+.inspect_cli_history
