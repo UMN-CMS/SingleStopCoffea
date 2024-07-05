@@ -112,21 +112,18 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
 
 
 def drawRatio(
-    ax, numerator, denominator, uncertainty_type="poisson-ratio", hline_list=None, **kwargs
+    ax, numerator, denominator, uncertainty_type="poisson-ratio", hline_list=None, weights=None, **kwargs
 ):
     hline_list = hline_list or []
-    nv, dv = numerator.values(), denominator.values()
-    ratio = np.divide(nv, dv, out=np.ones_like(nv), where=dv != 0)
-    # print(numerator.values)
-    # print(denominator.values)
-    # print(ratio)
+    nv, dv = numerator.values, denominator.values
+    with np.errstate(divide='ignore',invalid='ignore'):
+        ratio = np.divide(nv, dv, out=np.ones_like(nv), where=(dv != 0))
+    
     unc = hinter.ratio_uncertainty(
-        numerator.values,
-        denominator.values,
+        nv/weights[0],
+        dv/weights[1],
         uncertainty_type=uncertainty_type,
-    )
-    # print(unc)
-    # input()
+    )*(weights[0]/weights[1])
     x = numerator.axes[0].centers
     ax.errorbar(
         x,

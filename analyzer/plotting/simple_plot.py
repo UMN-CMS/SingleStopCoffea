@@ -71,6 +71,7 @@ class Plotter:
                 for f in results
             ]
         )
+        self.sample_manager.weights=self.sample_manager.weights[::-1]
         if non_scaled_histos:
             self.non_scaled_histos = accumulate(
                 [
@@ -195,7 +196,8 @@ class Plotter:
             n: createPlotObject(n, h, self.sample_manager)
             for n, h in hist_dict.items()
             if n in sig_set
-        }
+        }        
+        self.sample_manager.weights_normalized = self.sample_manager.weights.copy()
         if normalize:
             signal_plobjs = {n: h.normalize() for n, h in signal_plobjs.items()}
             background_plobjs = {n: h.normalize() for n, h in background_plobjs.items()}
@@ -216,6 +218,7 @@ class Plotter:
                 ratio=ratio,
                 energy=energy,
                 control_region=control_region,
+                weights=self.sample_manager.weights_normalized,
             )
             fig.tight_layout()
             if self.outdir:

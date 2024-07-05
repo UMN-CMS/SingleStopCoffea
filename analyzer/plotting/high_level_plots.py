@@ -29,12 +29,11 @@ def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
     return fig
 
 
-def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None):
+def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, weights=None, no_hists=False, ax=None):
 
     hppo = plotobj_pred
     hopo = plotobj_obs
     
-
     if not no_hists:
         fig, ax = plt.subplots()
 
@@ -43,7 +42,7 @@ def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, no_hists=False, ax=None
 
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     ab = ax.bottom_axes[0]
-    drawRatio(ab, hppo, hopo)
+    drawRatio(ab, numerator=hppo, denominator=hopo, weights=weights)
 
     ab.set_ylabel("Ratio")
     ab.set_ylim(0,2)
@@ -70,6 +69,7 @@ def plot1D(
     ratio=False,
     energy='13 TeV',
     control_region=False,
+    weights=None,
 ):
     fig, ax = plt.subplots()
 
@@ -82,7 +82,9 @@ def plot1D(
         elif sig_style == "hist":
             drawAs1DHist(ax, o, yerr=True, fill=False)
     if ratio:
-        plotRatio(signal_plobjs[0],signal_plobjs[1],coupling,lumi,no_hists=True,ax=ax)
+        if weights is None:
+            weights = [1,1]
+        plotRatio(signal_plobjs[0],signal_plobjs[1],coupling,lumi,no_hists=True,ax=ax,weights=weights)
     ax.set_yscale(scale)
     addEra(ax, lumi, era, energy=energy)
     if control_region:
