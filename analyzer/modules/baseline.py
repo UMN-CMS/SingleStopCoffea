@@ -12,7 +12,6 @@ Applies the following selection:
 - 2 medium bjets, at least one of which is tight
 - delta_R(med_bjets[0],med_bjets[1]) > 1
     """
-
     selection = analyzer.selection
     good_jets = events.good_jets
     fat_jets = events.FatJet
@@ -38,6 +37,34 @@ Applies the following selection:
     selection.add("1tightbjet", (ak.num(tight_b) >= 1))
     # selection.add("jet_dr", ((top_two_dr < 4) & (top_two_dr > 2)).to_numpy())
     selection.add("b_dr", (med_dr > 1))
+    return events, analyzer
+
+
+@analyzerModule("flavor_bg_sculpting", categories="selection", depends_on=["objects"])
+def createSelection(events, analyzer):
+    """Extra selection.
+Applies the following selection:
+- m3_top_3_no_lead_b > 0.9 * m14
+    """
+
+    b_tag_wps = [0.0490, 0.2783, 0.7100] #THIS SHOULD BE REFERENCED CORRECTLY! fix
+    selection = analyzer.selection
+    good_jets = events.good_jets
+
+    idx = ak.local_index(good_jets, axis=1)
+    med_bjet_mask = good_jets.btagDeepFlavB > b_tag_wps[1]
+
+    t_lead_b_idx = idx[med_bjet_mask]
+    lead_b_idx = t_lead_b_idx[:, 0]
+
+    no_lead_idxs = idx[idx != lead_b_idx]
+    no_lead_jets = good_jets[no_lead_idxs]
+    uncomp_charg = (no_lead_jets[:, 0:3].sum()).mass
+    top_4_jets = good_jets[:, 0:4].sum()
+    m14 = top_4_jets.mass
+
+    selection.add("highlysculpted", (uncomp_charg > 0.9 * m14))
+    
     return events, analyzer
 
 
