@@ -203,9 +203,9 @@ def combo_method(events, analyzer):
         [one[:, :, np.newaxis], two[:, :, np.newaxis], three[:, :, np.newaxis]], axis=2
     )
 
-    cross_jets = ak.cartesian([jets, jets], axis=2)
+    cross_jets = ak.argcartesian([jets, jets], axis=2)
     one, two = ak.unzip(cross_jets)
-    max_delta_rs = ak.max(one.delta_r(two), axis=2)
+    max_delta_rs = ak.max(jets[one].delta_r(jets[two]), axis=2)
 
     dr_mask = max_delta_rs < 2
     lead_b_mask = (
@@ -254,6 +254,65 @@ def combo_method(events, analyzer):
         "m3_top_3_no_lead_b_delta_r_cut_idxs",
     )
     events["matching_algos", "top_3_no_lead_b_dr_cut"] = uncomp_idx
+
+    # combos = ak.argcombinations(list(range(6)), 3, axis=0)
+    # padmass = ak.pad_none(all_masses, len(combos), axis=1)
+    return events, analyzer
+
+
+@analyzerModule("cat_combo_mass", depends_on=["chargino_hists"], categories="main")
+def cat_combo_methods(events, analyzer):
+    ret = {}
+    gj = events.good_jets
+
+    idx = ak.local_index(gj, axis=1)
+    med_bjet_mask = gj.btagDeepFlavB > b_tag_wps[1]
+
+    lead_b_idx = idx[med_bjet_mask][:, 0]
+    sublead_b_idx = idx[med_bjet_mask][:, 1]
+    lead_b_mask = ak.local_index(gj, axis=1) == lead_b_idx
+    sublead_b_mask = ak.local_index(gj, axis=1) == sublead_b_idx
+
+    tol = 3
+
+    gj_no_lead_b = gj[~lead_b_mask]
+    gj_no_sublead_b = gj[~sublead_b_mask]
+
+    cross_jets_no_lead_b = ak.cartesian([gj_no_lead_b[:, 0:3], gj_no_lead_b[:, 0:3]])
+    delta_rs_no_lead_b = cross_jets_no_lead_b["0"].delta_r(cross_jets_no_lead_b["1"])
+    delta_rs_no_lead_b = delta_rs_no_lead_b[delta_rs_no_lead_b > 0]
+    max_delta_rs_no_lead_b = ak.max(delta_rs_no_lead_b, axis=1)
+
+    cross_jets_no_sublead_b = ak.cartesian([gj_no_sublead_b[:, 0:3], gj_no_sublead_b[:, 0:3]])
+    delta_rs_no_sublead_b = cross_jets_no_sublead_b["0"].delta_r(cross_jets_no_sublead_b["1"])
+    delta_rs_no_sublead_b = delta_rs_no_sublead_b[delta_rs_no_sublead_b > 0]
+    max_delta_rs_no_sublead_b = ak.max(delta_rs_no_sublead_b, axis=1)
+
+    no_lead_b_in_m3_mask = ((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b) > tol)
+    gj_masked = ak.where(no_lead_b_in_m3_mask, gj_no_lead_b[:, 0:3], gj_no_sublead_b[:, 0:3])
+
+    uncomp_mass_1 = gj_masked.sum().mass
+
+    analyzer.H(
+        f"m3_top_3_no_lead_b_delta_r_cut",
+        makeAxis(
+            60,
+            0,
+            3000,
+            r"mass of jets 1-3 without leading b, $\Delta R < 2$",
+            unit="GeV",
+        ),
+        uncomp_mass_1,
+        name="mass of jets 1-3 without leading b dr cut",
+    )
+
+    # makeIdxHist(
+    #     analyzer,
+    #     uncomp_idx,
+    #     "m3_top_3_no_lead_b_delta_r_cut_idx",
+    #     "m3_top_3_no_lead_b_delta_r_cut_idxs",
+    # )
+    # events["matching_algos", "top_3_no_lead_b_dr_cut"] = uncomp_idx
 
     # combos = ak.argcombinations(list(range(6)), 3, axis=0)
     # padmass = ak.pad_none(all_masses, len(combos), axis=1)
