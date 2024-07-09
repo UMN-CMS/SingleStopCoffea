@@ -207,7 +207,7 @@ def combo_method(events, analyzer):
     one, two = ak.unzip(cross_jets)
     max_delta_rs = ak.max(one.delta_r(two), axis=2)
 
-    dr_mask = max_delta_rs < 4
+    dr_mask = max_delta_rs < 2
     lead_b_mask = (
         (jets_idx[:, :, 0] == lead_b_idx)
         | (jets_idx[:, :, 1] == lead_b_idx)
