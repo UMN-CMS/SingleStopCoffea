@@ -273,7 +273,11 @@ def cat_combo_methods(events, analyzer):
     lead_b_mask = ak.local_index(gj, axis=1) == lead_b_idx
     sublead_b_mask = ak.local_index(gj, axis=1) == sublead_b_idx
 
-    tol = 3
+    m14 = gj[:, 0:4].sum().mass
+
+    # m3_top_3_no_lead_b unless dRMax(3 others without lead b) / dRMax(3 others without sublead b) > 2
+    # (to be optimized), in which case, put the leading b in m3.
+    tol1 = 1.25
 
     gj_no_lead_b = gj[~lead_b_mask]
     gj_no_sublead_b = gj[~sublead_b_mask]
@@ -288,10 +292,25 @@ def cat_combo_methods(events, analyzer):
     delta_rs_no_sublead_b = delta_rs_no_sublead_b[delta_rs_no_sublead_b > 0]
     max_delta_rs_no_sublead_b = ak.max(delta_rs_no_sublead_b, axis=1)
 
-    no_lead_b_in_m3_mask = ((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b) > tol)
-    gj_masked = ak.where(no_lead_b_in_m3_mask, gj_no_lead_b[:, 0:3], gj_no_sublead_b[:, 0:3])
+    # print((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b))
 
-    uncomp_mass_1 = gj_masked.sum().mass
+    no_lead_b_in_m3_mask = ((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b) > tol1)
+    uncomp_charg_jets_1 = ak.where(no_lead_b_in_m3_mask, gj_no_lead_b[:, 0:3], gj_no_sublead_b[:, 0:3])
+
+    uncomp_charg_mass_1 = uncomp_charg_jets_1.sum().mass
+
+    analyzer.H(
+        f"max_delta_rs_no_lead_b_over_no_sublead_b",
+        makeAxis(
+            50,
+            0,
+            10,
+            rf"max_delta_rs_no_lead_b divided by max_delta_rsno_sublead_b",
+            unit="GeV",
+        ),
+        max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b,
+        name="max_delta_rs_no_lead_b divided by max_delta_rsno_sublead_b",
+    )
 
     analyzer.H(
         f"m3_top_3_no_lead_b_delta_r_cut",
@@ -299,13 +318,78 @@ def cat_combo_methods(events, analyzer):
             60,
             0,
             3000,
-            r"mass of jets 1-3 without leading b, $\Delta R < 2$",
+            rf"mass of jets 1-3 without leading b if $\Delta R$ ratio < {tol1}",
             unit="GeV",
         ),
-        uncomp_mass_1,
+        uncomp_charg_mass_1,
         name="mass of jets 1-3 without leading b dr cut",
     )
 
+    analyzer.H(
+        f"m14_vs_m3_top_3_no_lead_b_delta_r_cut",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, rf"mass of jets 1-3 without leading b if $\Delta R$ ratio < {tol1}", unit="GeV"),
+        ],
+        [m14, uncomp_charg_mass_1],
+        name="$m_{14}$ vs Mass of Jets 1-3 Without Leading B",
+    )
+
+
+    # Reserve the subleading 3 jets for m3 as we do now unless dRMax(m3) > 3, in which case, see if swapping
+    # j5 for j4 gives dRMan(m3) < 3. If not, see if j6 works. If none do, default back to j4.
+    tol2 = 1.25
+    gj234 = gj[:, 1:4]
+    padded_gj = ak.pad_none(gj, 6)
+    mask_235 = ak.is_none(padded_gj, axis=1)[:, 4]
+    mask_235 = mask_235[:, np.newaxis]
+    mask_236 = ak.is_none(padded_gj, axis=1)[:, 5]
+    mask_236 = mask_236[:, np.newaxis]
+    gj235 = ak.where(mask_235, padded_gj[:, [1,2,3]], padded_gj[:, [1,2,4]])
+    gj236 = ak.where(mask_236, padded_gj[:, [1,2,3]], padded_gj[:, [1,2,5]])
+
+    cross_jets_234 = ak.cartesian([gj234[:, 0:3], gj234[:, 0:3]])
+    cross_jets_235 = ak.cartesian([gj235[:, 0:3], gj235[:, 0:3]])
+    cross_jets_236 = ak.cartesian([gj236[:, 0:3], gj236[:, 0:3]])
+    delta_rs_234 = cross_jets_234["0"].delta_r(cross_jets_234["1"])
+    delta_rs_235 = cross_jets_235["0"].delta_r(cross_jets_235["1"])
+    delta_rs_236 = cross_jets_236["0"].delta_r(cross_jets_236["1"])
+    max_delta_rs_234 = ak.max(delta_rs_234, axis=1)
+    max_delta_rs_235 = ak.max(delta_rs_235, axis=1)
+    max_delta_rs_236 = ak.max(delta_rs_236, axis=1)
+
+    drmask_234 = (max_delta_rs_234 < tol2)
+    drmask_234 = drmask_234[:, np.newaxis]
+    drmask_235 = (max_delta_rs_235 < tol2)
+    drmask_235 = drmask_235[:, np.newaxis]
+    drmask_236 = (max_delta_rs_236 < tol2)
+    drmask_236 = drmask_236[:, np.newaxis]
+
+    uncomp_charg_jets_2 = ak.where(drmask_234, gj234, ak.where(drmask_235, gj235, ak.where(drmask_236, gj236, gj234)))
+    uncomp_charg_mass_2 = uncomp_charg_jets_2.sum().mass
+
+    analyzer.H(
+        f"m3_234_235_236_delta_r_cut",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"the j4 j5 j6 one. $\Delta R < {tol1}$",
+            unit="GeV",
+        ),
+        uncomp_charg_mass_2,
+        name="x",
+    )
+
+    analyzer.H(
+        f"m14_vs_m3_234_235_236_delta_r_cut",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, rf"the j4 j5 j6 one. $\Delta R < {tol2}$", unit="GeV"),
+        ],
+        [m14, uncomp_charg_mass_2],
+        name=rf"m14_vs_m3_234_235_236_delta_r_cut$",
+    )
     # makeIdxHist(
     #     analyzer,
     #     uncomp_idx,
@@ -350,7 +434,7 @@ def charginoRecoHistograms(events, analyzer):
 
     analyzer.H(
         f"m3_top_3_no_lead_b",
-        makeAxis(120, 0, 3000, r"mass of jets 1-3 without leading b", unit="GeV"),
+        makeAxis(60, 0, 3000, r"mass of jets 1-3 without leading b", unit="GeV"),
         uncomp_charg,
         name="mass of jets 1-3 without leading b",
     )
