@@ -277,7 +277,7 @@ def cat_combo_methods(events, analyzer):
 
     # m3_top_3_no_lead_b unless dRMax(3 others without lead b) / dRMax(3 others without sublead b) > 2
     # (to be optimized), in which case, put the leading b in m3.
-    tol1 = 1.25
+    tol1 = 1
 
     gj_no_lead_b = gj[~lead_b_mask]
     gj_no_sublead_b = gj[~sublead_b_mask]
@@ -295,7 +295,7 @@ def cat_combo_methods(events, analyzer):
     # print((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b))
 
     no_lead_b_in_m3_mask = ((max_delta_rs_no_lead_b / max_delta_rs_no_sublead_b) > tol1)
-    uncomp_charg_jets_1 = ak.where(no_lead_b_in_m3_mask, gj_no_lead_b[:, 0:3], gj_no_sublead_b[:, 0:3])
+    uncomp_charg_jets_1 = ak.where(no_lead_b_in_m3_mask, gj_no_sublead_b[:, 0:3], gj_no_lead_b[:, 0:3])
 
     uncomp_charg_mass_1 = uncomp_charg_jets_1.sum().mass
 
@@ -390,16 +390,64 @@ def cat_combo_methods(events, analyzer):
         [m14, uncomp_charg_mass_2],
         name=rf"m14_vs_m3_234_235_236_delta_r_cut$",
     )
-    # makeIdxHist(
-    #     analyzer,
-    #     uncomp_idx,
-    #     "m3_top_3_no_lead_b_delta_r_cut_idx",
-    #     "m3_top_3_no_lead_b_delta_r_cut_idxs",
-    # )
-    # events["matching_algos", "top_3_no_lead_b_dr_cut"] = uncomp_idx
+    
+    # Reserve the leading b for m3. Then the other two are the leading 2 of the remaining jets.
+    comp_charg_mass_1 = ak.flatten(gj_no_lead_b[:, :2].sum() + gj[lead_b_mask]).mass
+    analyzer.H(
+        f"m3_lead_b_and_other_two_lead",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_lead_b_and_other_two_lead",
+            unit="GeV",
+        ),
+        comp_charg_mass_1,
+        name="m3_lead_b_and_other_two_lead",
+    )
+    analyzer.H(
+        f"m14_vs_m3_lead_b_and_other_two_lead",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, rf"m3_lead_b_and_other_two_lead", unit="GeV"),
+        ],
+        [m14, comp_charg_mass_1],
+        name=rf"m14_vs_m3_lead_b_and_other_two_lead",
+    )
 
-    # combos = ak.argcombinations(list(range(6)), 3, axis=0)
-    # padmass = ak.pad_none(all_masses, len(combos), axis=1)
+    # Reserve the leading b among jets 4, 5, and 6 as the other m4 jet. If none are b’s, go to 3,
+    # then 2. m3 is then the leading 3 remaining.
+    padded_idx = ak.pad_none(idx, 6)
+    padded_med_bjet_mask_reordered = ak.fill_none(ak.pad_none(med_bjet_mask, 6), False)[:, [3,4,5,2,1]]
+    b_idx_reordered = padded_idx[:, [3,4,5,2,1]]
+
+    inter = ak.mask(b_idx_reordered, padded_med_bjet_mask_reordered)
+    inter_mask = ak.drop_none(inter)[:, 0]
+
+    gj_sans_specific_b = gj[(idx != inter_mask)]
+    comp_charg_mass_2 = gj_sans_specific_b[:, :3].sum().mass
+    analyzer.H(
+        f"m3_comp_alg_2",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_comp_alg_2",
+            unit="GeV",
+        ),
+        comp_charg_mass_2,
+        name="\'Reserve the leading b among jets 4, 5, and 6...\'",
+    )
+    analyzer.H(
+        f"m14_vs_m3_comp_alg_2",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, rf"m3_comp_alg_2", unit="GeV"),
+        ],
+        [m14, comp_charg_mass_2],
+        name=rf"m14_vs_m3_comp_alg_2",
+    )
+
     return events, analyzer
 
 
