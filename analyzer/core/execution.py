@@ -111,7 +111,7 @@ def createFutureResult(modules, prepped_dataset):
         ),
         known_base_form=maybe_base_form,
     ).events()
-    daskres = DatasetDaskRunResult(prepped_dataset, {}, {}, {}, ak.num(events, axis=0), report)
+    daskres = DatasetDaskRunResult(prepped_dataset, {}, {}, {}, report)
     dataset_analyzer = DatasetProcessor(
         daskres, prepped_dataset.dataset_input.fill_name
     )
