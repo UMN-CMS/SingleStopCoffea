@@ -6,8 +6,6 @@
   profile: 2022
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
   required_modules: cr_selection
-  tags: 
-    - signal
   style:
     color: "#FFD201"
   n_events: 101352671
