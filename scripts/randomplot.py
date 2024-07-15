@@ -36,10 +36,10 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # )
 
 
-directory='figures_2018-2_2022D-2_without_b_cut_and_lep_cut'
+directory='figures_2018-2_2022D-2_ht-1200-cut_no-single-jet-trigger'
 sample_names = ["Data2018-2","Data2022DTemp-2"]
 plotter = Plotter(
-    ['2018-2_2022D-2_without_b_cut_and_lep_cut.pkl'],
+    ['2018-2_2022D-2_ht-1200-cut_no-single-jet-trigger.pkl'],
     directory,
     default_backgrounds=None,
     target_lumi=59.83,
@@ -57,10 +57,8 @@ def cutflowPlot(histogram_name,percent=False):
         if percent:
             h = h/h[0]
         h.plot1d(label=name)
-    
     if percent:
         plt.ylabel("Normalized Passed Events")
-        plt.ylim()
     else:
         plt.ylabel("N Passed Events")
         plt.yscale('log')
@@ -124,8 +122,8 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 for j in plotter.histos.keys():
-    plotter(j, sample_names, normalize=False, add_label=j, ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
-    plotter(j, sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, sig_style='scatter',energy='13 and 13.6 TeV',control_region=True)
+    plotter(j, sample_names, normalize=False, add_label=j, ratio=True,energy='13 and 13.6 TeV',control_region=True)
+    plotter(j, sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True,energy='13 and 13.6 TeV',control_region=True)
     
 #plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 
