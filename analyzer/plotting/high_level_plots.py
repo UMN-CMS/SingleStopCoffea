@@ -45,9 +45,9 @@ def plotRatio(plotobj_pred, plotobj_obs, coupling, lumi, weights=None, no_hists=
     drawRatio(ab, numerator=hppo, denominator=hopo, weights=weights)
 
     ab.set_ylabel("Ratio")
-    ab.set_ylim(0,2)
-    addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addTitles1D(ax, hopo, top_pad=0.2)
+    ab.set_ylim(0.6,1.3)
+    #addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
+    #addTitles1D(ax, hopo, top_pad=0.2)
     
     if no_hists:
         return ax

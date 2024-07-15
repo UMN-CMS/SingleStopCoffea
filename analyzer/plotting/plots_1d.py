@@ -55,7 +55,6 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
             linestyle="none",
             marker='.',
             label=p.title,
-            ecolor='black',
             **style,
             **kwargs,
         )
@@ -114,14 +113,16 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
 def drawRatio(
     ax, numerator, denominator, uncertainty_type="poisson-ratio", hline_list=None, weights=None, **kwargs
 ):
+    ax.axhline(y=1,linestyle='--',linewidth='1',color='k')
     hline_list = hline_list or []
     nv, dv = numerator.values, denominator.values
+    n, d = nv/weights[0], dv/weights[1]
     with np.errstate(divide='ignore',invalid='ignore'):
         ratio = np.divide(nv, dv, out=np.ones_like(nv), where=(dv != 0))
-    
+
     unc = hinter.ratio_uncertainty(
-        nv/weights[0],
-        dv/weights[1],
+        n.astype(int),
+        d.astype(int),
         uncertainty_type=uncertainty_type,
     )*(weights[0]/weights[1])
     x = numerator.axes[0].centers
@@ -129,11 +130,13 @@ def drawRatio(
         x,
         ratio,
         yerr=unc,
-        marker=".",
+        marker="_",
         linestyle="none",
+        ecolor='r',
+        elinewidth=0.1,
+        capsize=2.5,
         **kwargs,
     )
-    ax.axhline(y=1,linestyle='--',linewidth='1')
     return ax
 
 
