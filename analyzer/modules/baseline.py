@@ -158,10 +158,11 @@ def createCRSelection(events, analyzer):
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-        selection.add("hlt", hlt)
+        selection.add('hlt',hlt)
+    selection.add('ht1200', (events.HT >= 1200))
     selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
     selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))
     selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)))
     selection.add("0looseb", (ak.num(loose_b) == 0))
-
+    
     return events, analyzer
