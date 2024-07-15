@@ -16,7 +16,7 @@ def tiny(events, analyzer):
     return events,analyzer
 
 
-@analyzerModule("jets", categories="main", depends_on=["objects", "event_level"])
+@analyzerModule("jets", categories="main", depends_on=["objects"])
 def createJetHistograms(events, analyzer):
     gj = events.good_jets
     analyzer.H(f"h_njet", nj_axis, ak.num(gj), name="njets")
