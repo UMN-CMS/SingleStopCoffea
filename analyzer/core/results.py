@@ -108,6 +108,12 @@ class DatasetRunResult:
         final_weight = reweighted * weight
         sample_manager.weights.append(final_weight)
         return {name: h * final_weight for name, h in self.histograms.items()}
+    
+    def getNonScaledHistograms(self):
+        return {name: h for name, h in self.non_scaled_histograms.items()}
+    
+    def getNonScaledHistogramsLabels(self):
+        return {name: h for name, h in self.non_scaled_histograms_labels.items()}
 
     def merge(self, other: DatasetRunResult) -> DatasetRunResult:
         if (
@@ -195,10 +201,28 @@ class AnalysisResult:
         return AnalysisResult(updated_results, self.module_list)
     
     def getNonScaledHistograms(self):
-        return mergeResults(self.results.values())
+        r = utils.accumulate(
+            [
+                {
+                    v.dataset_preprocessed.dataset_input.fill_name: v.getNonScaledHistograms()
+                }
+                for k, v in self.results.items()
+            ]
+        )
+        keys = list(it.chain.from_iterable(x.keys() for x in r.values()))
+        return {key: {k: r[k][key] for k in r if key in r[k]} for key in keys}
     
     def getNonScaledHistogramsLabels(self):
-        return mergeLabels(self.results.values())
+        r = utils.accumulate(
+            [
+                {
+                    v.dataset_preprocessed.dataset_input.fill_name: v.getNonScaledHistogramsLabels()
+                }
+                for k, v in self.results.items()
+            ]
+        )
+        keys = list(it.chain.from_iterable(x.keys() for x in r.values()))
+        return {key: {k: r[k][key] for k in r if key in r[k]} for key in keys}
 
 
 @dataclass

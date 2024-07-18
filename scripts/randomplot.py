@@ -4,6 +4,7 @@ sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
 import warnings
 from matplotlib import pyplot as plt
+import analyzer
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
@@ -36,10 +37,10 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # )
 
 
-directory='figures_2018-2_2022D-2_ht-1200-cut_no-single-jet-trigger'
-sample_names = ["Data2018-2","Data2022DTemp-2"]
+directory='figures_test2018-4_2022D-4'
+sample_names = ["Data2018-4","Data2022DTemp-4"]
 plotter = Plotter(
-    ['2018-2_2022D-2_ht-1200-cut_no-single-jet-trigger.pkl'],
+    ['2018-4.pkl','2022D-4.pkl'],
     directory,
     default_backgrounds=None,
     target_lumi=59.83,
@@ -47,13 +48,10 @@ plotter = Plotter(
     non_scaled_histos=True,
 )
 
-for key,value in plotter.non_scaled_histos_labels.items():
-    plotter.non_scaled_histos_labels[key] = list(dict.fromkeys(value))
-
 def cutflowPlot(histogram_name,percent=False):
     fig = plt.figure()
     for name in sample_names:
-        h = plotter.non_scaled_histos[histogram_name][{"dataset": name}][1:]
+        h = plotter.non_scaled_histos[histogram_name][name][1:]
         if percent:
             h = h/h[0]
         h.plot1d(label=name)
@@ -63,10 +61,10 @@ def cutflowPlot(histogram_name,percent=False):
         plt.ylabel("N Passed Events")
         plt.yscale('log')
     if histogram_name != 'N-1':
-        h_labels = plotter.non_scaled_histos_labels[histogram_name][1:]
+        h_labels = plotter.non_scaled_histos_labels[histogram_name][sample_names[0]][1:]
     else:
         h_labels = list()
-        for label in plotter.non_scaled_histos_labels[histogram_name][1:]:
+        for label in plotter.non_scaled_histos_labels[histogram_name][sample_names[0]][1:]:
             h_labels.append(label.replace("N","All"))
     plt.xticks(plt.gca().get_xticks(), h_labels, rotation=45)
     plt.legend()
@@ -78,12 +76,13 @@ def cutflowPlot(histogram_name,percent=False):
         fig.savefig(f'{directory}/{histogram_name}.pdf')
     plt.close(fig)
 
+
 cutflowPlot('cutflow',True)
+
 cutflowPlot('cutflow')
 cutflowPlot('onecut')
 cutflowPlot('N-1')
 
-print(plotter.histos.keys())
 list_of_2d_hists = ['m14_vs_m13', 'ratio_m14_vs_m13', 'm14_vs_m24', 'ratio_m14_vs_m24', 'm14_vs_m12', 'ratio_m14_vs_m12', 
                     'm14_vs_m23', 'ratio_m14_vs_m23', 'm13_vs_m24', 'ratio_m13_vs_m24', 'm13_vs_m12', 'ratio_m13_vs_m12', 'm13_vs_m23', 'ratio_m13_vs_m23', 
                     'm24_vs_m12', 'ratio_m24_vs_m12', 'm24_vs_m23', 'ratio_m24_vs_m23', 'm12_vs_m23', 'ratio_m12_vs_m23','d_phi_01_vs_02', 
@@ -121,9 +120,10 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1100","signal_312_1500_1100_mg"],add_label=j,add_name="1100",normalize=True,ratio=True)
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
+print(plotter.histos.keys())
 for j in plotter.histos.keys():
-    plotter(j, sample_names, normalize=False, add_label=j, ratio=True,energy='13 and 13.6 TeV',control_region=True)
-    plotter(j, sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True,energy='13 and 13.6 TeV',control_region=True)
+    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13 and 13.6 TeV',control_region=True)
+    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13 and 13.6 TeV',control_region=True)
     
 #plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
 

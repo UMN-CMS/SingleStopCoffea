@@ -115,26 +115,25 @@ def drawRatio(
 ):
     ax.axhline(y=1,linestyle='--',linewidth='1',color='k')
     hline_list = hline_list or []
-    nv, dv = numerator.values, denominator.values
+    nv, dv = numerator.values(), denominator.values()
     n, d = nv/weights[0], dv/weights[1]
     with np.errstate(divide='ignore',invalid='ignore'):
         ratio = np.divide(nv, dv, out=np.ones_like(nv), where=(dv != 0))
-
+    
     unc = hinter.ratio_uncertainty(
         n.astype(int),
         d.astype(int),
         uncertainty_type=uncertainty_type,
     )*(weights[0]/weights[1])
+
     x = numerator.axes[0].centers
+
     ax.errorbar(
         x,
         ratio,
         yerr=unc,
         marker="_",
         linestyle="none",
-        ecolor='r',
-        elinewidth=0.1,
-        capsize=2.5,
         **kwargs,
     )
     return ax

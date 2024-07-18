@@ -86,36 +86,36 @@ def createTagHistograms(events, hmaker):
 @analyzerModule("cutflow",categories="post_selection")
 def createCutflowHistogram(events,analyzer):
 
-    def cutflowHist(nevents,masks,name,size):
+    # def cutflowHist(nevents,masks,name,size):
 
-        if not analyzer.delayed:
-            h = hist.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
-            h.fill(analyzer.setname,np.arange(size, dtype=int), weight=nevents)
+    #     if not analyzer.delayed:
+    #         h = hist.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
+    #         h.fill(analyzer.setname,np.arange(size, dtype=int), weight=nevents)
 
-        else:
-            h = hda.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
-            setattr(h, "name", name)
-            for i, weight in enumerate(masks, 1):
-                h.fill(
-                    analyzer.setname,
-                    dak.full_like(weight, i, dtype=int), weight=weight
-                )
-            h.fill(analyzer.setname,dak.zeros_like(weight, dtype=int))
+    #     else:
+    #         h = hda.Hist(dataset_axis,hist.axis.Integer(0, size, name=name))
+    #         setattr(h, "name", name)
+    #         for i, weight in enumerate(masks, 1):
+    #             h.fill(
+    #                 analyzer.setname,
+    #                 dak.full_like(weight, i, dtype=int), weight=weight
+    #             )
+    #         h.fill(analyzer.setname,dak.zeros_like(weight, dtype=int))
 
-        return h
+    #     return h
 
     selection = analyzer.selection
-    nminusone = selection.nminusone(*selection.names).result()
-    cutflow = selection.cutflow(*selection.names).result()
+    n1hist, n1labels = selection.nminusone(*selection.names).yieldhist()
+    honecut, hcutflow, cutflow_labels = selection.cutflow(*selection.names).yieldhist()
 
-    size = len(cutflow.labels)
-    nminusonesize = len(nminusone.labels)
-    n1hist = cutflowHist(nminusone.nev,nminusone.masks,name='N-1',size=nminusonesize)
-    hcutflow = cutflowHist(cutflow.nevcutflow,cutflow.maskscutflow,name='cutflow',size=size)
-    honecut = cutflowHist(cutflow.nevonecut,cutflow.masksonecut,name='onecut',size=size)
+    # size = len(cutflow.labels)
+    # nminusonesize = len(nminusone.labels)
+    # n1hist = cutflowHist(nminusone.nev,nminusone.masks,name='N-1',size=nminusonesize)
+    # hcutflow = cutflowHist(cutflow.nevcutflow,cutflow.maskscutflow,name='cutflow',size=size)
+    # honecut = cutflowHist(cutflow.nevonecut,cutflow.masksonecut,name='onecut',size=size)
 
-    analyzer.add_non_scaled_hist(key='N-1',hist=n1hist,labels=nminusone.labels)
-    analyzer.add_non_scaled_hist(key='cutflow',hist=hcutflow,labels=cutflow.labels)
-    analyzer.add_non_scaled_hist(key='onecut',hist=honecut,labels=cutflow.labels)
+    analyzer.add_non_scaled_hist(key='N-1',hist=n1hist,labels=n1labels)
+    analyzer.add_non_scaled_hist(key='cutflow',hist=hcutflow,labels=cutflow_labels)
+    analyzer.add_non_scaled_hist(key='onecut',hist=honecut,labels=cutflow_labels)
 
     return events,analyzer

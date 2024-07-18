@@ -71,7 +71,7 @@ class Plotter:
                 for f in results
             ]
         )
-        self.sample_manager.weights=self.sample_manager.weights[::-1]
+        
         if non_scaled_histos:
             self.non_scaled_histos = accumulate(
                 [
@@ -99,7 +99,6 @@ class Plotter:
             raise ValueError(
                 "The underlying samples have different luminosities, and you are not performing scaling"
             )
-
         if outdir:
             self.outdir = Path(outdir)
             self.outdir.mkdir(exist_ok=True, parents=True)
@@ -150,7 +149,6 @@ class Plotter:
         self,
         hist_name,
         *args,
-        add_name=None,
         axis_opts=None,
         **kwargs,
     ):
@@ -180,7 +178,6 @@ class Plotter:
         control_region=False,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
-        unnormalized_signal_plobjs = None
         if not scale:
             scale = "linear"
         if add_label is None and add_name:
@@ -199,9 +196,11 @@ class Plotter:
         }        
         self.sample_manager.weights_normalized = self.sample_manager.weights.copy()
         if normalize:
+            for i,o in enumerate(signal_plobjs.values()):
+                self.sample_manager.weights_normalized[i] *= 1/o.sum()
             signal_plobjs = {n: h.normalize() for n, h in signal_plobjs.items()}
             background_plobjs = {n: h.normalize() for n, h in background_plobjs.items()}
-
+        
         r = next(iter(signal_plobjs.values()))
         if len(r.axes) == 1:
             fig = plot1D(
@@ -249,27 +248,30 @@ class Plotter:
                 else:
                     ret.append(fig)
             if ratio:
-                ob1 = un_norm_hc.axes[0][0]
-                ob2 = un_norm_hc.axes[0][1]
-                realh1 = un_norm_hc[{"dataset": ob1}]
-                realh2 = un_norm_hc[{"dataset": ob2}]
-                nv = realh1.values()
-                dv = realh2.values()
-                ratio_histv = np.divide(dv-nv,realh1.variances(),out=np.zeros_like(nv), where=realh1.variances() != 0)
-                po_ratio = PlotObject.fromNumpy((ratio_histv,realh1.axes), title=ob1, style=self.sample_manager[x].style,axes=True)
+                keys = list(signal_plobjs.keys())
+                ob1 = signal_plobjs[keys[0]]
+                ob2 = signal_plobjs[keys[1]]
+                zscorename = f'({keys[0]}-{keys[1]})/Var[{keys[0]}]'
+                varone = ob1.variances()
+                one=ob1.values()
+                two=ob2.values()
+                ratio_histv = np.divide(one-two,np.sqrt(varone),out=np.zeros_like(one), where=varone != 0)
+                ob1.update_values(ratio_histv)
                 fig = plot2D(
-                    po_ratio,
+                    ob1,
                     coupling=self.coupling,
                     lumi=self.target_lumi,
+                    era='',
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
                     zscore=ratio,
                     control_region=control_region,
                     energy=energy,
+                    zscorename=zscorename,
                 )
                 if self.outdir:
-                    fig.savefig(self.outdir / f"{add_name}{hist_name}_2018_2022d_zscore.pdf")
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_zscore.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)

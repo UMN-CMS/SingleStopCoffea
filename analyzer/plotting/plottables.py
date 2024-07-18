@@ -103,6 +103,9 @@ class PlotObject:
             return self.__values[cuts]
         else:
             return self.__values
+    
+    def update_values(self,new_values):
+        self.__values = new_values
 
     def sum(self, flow=False):
         return np.sum(self.values(flow))
@@ -159,13 +162,8 @@ class PlotObject:
                 PlotAxis(a)
                 for a in (hist[1] if isinstance(hist[1], tuple) else [hist[1]])
             ),
-        return PlotObject(
-            values=hist[0],
-            axes=axes,
             variances=variances,
-            title=title,
-            style=style or {},
-            mask=mask,
+            **kwargs,
         )
 
     def compat(self, other):

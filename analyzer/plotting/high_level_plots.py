@@ -72,7 +72,7 @@ def plot1D(
     weights=None,
 ):
     fig, ax = plt.subplots()
-
+    
     for o in background_plobjs:
         drawAs1DHist(ax, o, yerr=False)
     for o in signal_plobjs:
@@ -81,10 +81,11 @@ def plot1D(
             drawAsScatter(ax, o, yerr=True)
         elif sig_style == "hist":
             drawAs1DHist(ax, o, yerr=True, fill=False)
+    plobjslist = list(signal_plobjs)
     if ratio:
         if weights is None:
             weights = [1,1]
-        plotRatio(signal_plobjs[0],signal_plobjs[1],coupling,lumi,no_hists=True,ax=ax,weights=weights)
+        plotRatio(plobjslist[0],plobjslist[1],coupling,lumi,no_hists=True,ax=ax,weights=weights)
     ax.set_yscale(scale)
     addEra(ax, lumi, era, energy=energy)
     if control_region:
@@ -139,6 +140,7 @@ def plot2D(
     zscore=False,
     energy='13 Tev',
     control_region=False,
+    zscorename='',
 ):
     fig, ax = plt.subplots()
 
@@ -173,5 +175,5 @@ def plot2D(
 
     if zscore and hasattr(ax, "cax"):
         cax = ax.cax
-        cax.set_ylabel("(2022D-2018)/(Var[2018])")
+        cax.set_ylabel(zscorename)
     return fig
