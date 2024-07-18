@@ -336,9 +336,9 @@ def cat_combo_methods(events, analyzer):
     )
 
 
-    # Reserve the subleading 3 jets for m3 as we do now unless dRMax(m3) > 3, in which case, see if swapping
-    # j5 for j4 gives dRMan(m3) < 3. If not, see if j6 works. If none do, default back to j4.
-    tol2 = 1.25
+    # Reserve the subleading 3 jets for m3 as we do now unless dRMax(m3) > tol, in which case, see if swapping
+    # j5 for j4 gives dRMan(m3) < tol. If not, see if j6 works. If none do, default back to j4.
+    tol2 = 2
     gj234 = gj[:, 1:4]
     padded_gj = ak.pad_none(gj, 6)
     mask_235 = ak.is_none(padded_gj, axis=1)[:, 4]
@@ -357,7 +357,7 @@ def cat_combo_methods(events, analyzer):
     max_delta_rs_234 = ak.max(delta_rs_234, axis=1)
     max_delta_rs_235 = ak.max(delta_rs_235, axis=1)
     max_delta_rs_236 = ak.max(delta_rs_236, axis=1)
-
+    
     drmask_234 = (max_delta_rs_234 < tol2)
     drmask_234 = drmask_234[:, np.newaxis]
     drmask_235 = (max_delta_rs_235 < tol2)
@@ -495,7 +495,12 @@ def charginoRecoHistograms(events, analyzer):
         [m14, uncomp_charg],
         name="$m_{14}$ vs Mass of Jets 1-3 Without Leading B",
     )
-
+    analyzer.H(
+        f"m3_top_3_no_lead_b_pt_diff",
+        makeAxis(40, -400, 400, r"pt(charg)-pt(m4 w/o charg)", unit="GeV"),
+        no_lead_jets[:, 0:3].sum().pt - ak.ravel(gj[ak.singletons(lead_b_idx)].pt),
+        name="pt(charg)-pt(m4 w/o charg)",
+    )
     # ret[f"m3_top_3_no_b_unless_dR_charg_gt_2"] = hmaker(
     #    mchi_axis,
     #    ak.where(
