@@ -10,6 +10,8 @@ from .axes import *
 from .objects import b_tag_wps
 from .utils import numMatching
 
+from coffea.ml_tools.torch_wrapper import torch_wrapper
+from analyzer.matching import object_matching
 
 def makeIdxHist(analyzer, idxs, name, axlabel):
     analyzer.H(
@@ -640,6 +642,57 @@ def charginoRecoHistograms(events, analyzer):
     )
 
     return events, analyzer
+
+
+class jetAssignmentNN(torch_wrapper):
+    def prepare_awkward(self,events):
+
+        awk = self.get_awkward_lib(events)
+        #jets = ak.flatten(events.good_jets)
+        jets = events.good_jets
+        m3 = jets[:,1:4].sum()
+        m4 = jets[:,0:4].sum()
+
+        imap = {
+            "features": {
+                "jetOrdinality":	ak.local_index(jets),
+                "jetPT": 		jets.pt,
+                "jetEta": 		jets.eta,
+                "jetPhi": 		jets.phi,
+                "jetBScore": 		jets.btagDeepFlavB,
+                "m3M": 			m3.mass,
+                "m3PT": 		m3.pt,
+                "m3Eta": 		m3.eta,
+                "m3Phi": 		m3.phi,
+                "m4M": 			m4.mass,
+                "m4PT":			m4.pt,
+                "m4Eta":		m4.eta,
+                "m4Phi":		m4.phi,
+            }
+        }
+
+        return(),{
+            "features": awk.values_astype(imap["features"],"float32")
+        }
+    
+@analyzerModule("jetAssignmentNN")
+def addNNScores(events, analyzer):
+    model = jetAssignmentNN("jetMatcherNN.pt")
+    scores = model(events)
+    print(scores)
+    events["NNStopProb"]  = scores[:,0]
+    events["NNChiProb"]   = scores[:,1]
+    events["NNOtherProb"] = scores[:,2] 
+    return events
+    analyzer.H(
+        f"m14_vs_m3NN",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(50, 0, 500, r"$pt_{14}$", unit="GeV"),
+        ],
+        [jets.mass, jets.pt],
+        name="m14 vs pt 14",
+    )
 
 
 @analyzerModule("stop_reco", categories="main")
