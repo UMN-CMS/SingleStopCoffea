@@ -1,10 +1,11 @@
 from analyzer.cli import runCli
+from analyzer.cli import main
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from . import setup_logging
+# from . import setup_logging
 
 class Net(nn.Module):
         def __init__(self):
