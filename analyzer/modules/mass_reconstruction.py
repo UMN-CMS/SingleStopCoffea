@@ -13,6 +13,13 @@ from .utils import numMatching
 from coffea.ml_tools.torch_wrapper import torch_wrapper
 from analyzer.matching import object_matching
 
+import pickle
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
 def makeIdxHist(analyzer, idxs, name, axlabel):
     analyzer.H(
         name,
@@ -21,7 +28,16 @@ def makeIdxHist(analyzer, idxs, name, axlabel):
         name=name,
     )
 
-
+# class Net(nn.Module):
+#         def __init__(self):
+#             super(Net,self).__init__()
+#             self.fc1 = nn.Linear(13,13)
+#             self.fc2 = nn.Linear(13,3)
+#         def forward(self,x):
+#             x = F.relu(self.fc1(x))
+#             x = F.softmax(self.fc2(x),dim=1)
+#             return x
+        
 @analyzerModule(
     "reco_efficiency", categories="main", depends_on=["chargino_hists", "delta_r"]
 )
@@ -452,6 +468,96 @@ def cat_combo_methods(events, analyzer):
 
     return events, analyzer
 
+
+@analyzerModule("NN_mass", categories="main")
+def NN_mass_reco(events, analyzer):
+
+    # class Net(nn.Module):
+    #     def __init__(self):
+    #         super(Net,self).__init__()
+    #         self.fc1 = nn.Linear(13,13)
+    #         self.fc2 = nn.Linear(13,3)
+    #     def forward(self,x):
+    #         x = F.relu(self.fc1(x))
+    #         x = F.softmax(self.fc2(x),dim=1)
+    #         return x
+
+    jets = events.good_jets
+    flat_jets = ak.flatten(jets)
+
+    m3 = jets[:,1:4].sum()
+    m4 = jets[:,0:4].sum()
+
+    ones = ak.ones_like(jets.pt)
+
+    imap = {
+        "features": {
+            "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
+            "jetPT": 		flat_jets.pt,
+            "jetEta": 		flat_jets.eta,
+            "jetPhi": 		flat_jets.phi,
+            "jetBScore": 	flat_jets.btagDeepFlavB,
+            "m3M": 			ak.flatten(ones * m3.mass),
+            "m3PT": 		ak.flatten(ones * m3.pt),
+            "m3Eta": 		ak.flatten(ones * m3.eta),
+            "m3Phi": 		ak.flatten(ones * m3.phi),
+            "m4M": 			ak.flatten(ones * m4.mass),
+            "m4PT":			ak.flatten(ones * m4.pt),
+            "m4Eta":		ak.flatten(ones * m4.eta),
+            "m4Phi":	    ak.flatten(ones * m4.phi)
+        }
+    }
+
+    model = torch.load("jetMatcherNN.pt")
+
+    net_input = ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()], axis=1)
+    net_input = ak.to_numpy(net_input)
+    net_input = torch.Tensor(net_input)
+    scl = open('scaler.pkl', 'rb')
+    scaler = pickle.load(scl)
+    net_input = scaler.transform(net_input)
+
+    outputs = model(torch.Tensor(net_input)).detach().numpy()
+
+    stop_probs = outputs[:,0]
+    charg_probs = outputs[:,1]
+    other_probs = outputs[:,2]
+
+    high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.8, ak.num(jets))
+    top_3_charg_scores = ak.sort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
+    top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
+
+    top_3_charg_score_sum = jets[top_3_idx].sum()
+    m3_top_3_nn_charg_score = top_3_charg_score_sum.mass
+    m3_high_nn_charg_score = jets[high_charg_score_mask].sum().mass
+
+    analyzer.H(
+        f"m3_top_3_nn_charg_score",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_top_3_nn_charg_score",
+            unit="GeV",
+        ),
+        m3_top_3_nn_charg_score,
+        name="\'Mass of sum of highest-scoring jets according to chargino jet NN classifier\'",
+    )
+
+    analyzer.H(
+        f"m3_high_nn_charg_score",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_high_nn_charg_score",
+            unit="GeV",
+        ),
+        m3_high_nn_charg_score,
+        name="\'Mass of sum of all jets with chargino score above 0.8\'",
+    )
+
+    return events, analyzer
 
 @analyzerModule("chargino_hists", categories="main")
 def charginoRecoHistograms(events, analyzer):
