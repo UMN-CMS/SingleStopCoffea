@@ -1,7 +1,10 @@
 import collections
+import copy
+import datetime
 import importlib.resources as ir
 import itertools as it
 import logging
+import pickle
 import shutil
 import tempfile
 from pathlib import Path
@@ -14,6 +17,16 @@ from analyzer.file_utils import compressDirectory
 from dask.diagnostics import ProgressBar
 from dask.distributed import Client
 from rich.console import Console
+from rich.progress import (
+    Progress,
+    BarColumn,
+    MofNCompleteColumn,
+    TextColumn,
+    SpinnerColumn,
+)
+from functools import partial
+from .configuration import getConfiguration
+from analyzer.file_utils import pickleWithParents
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +54,7 @@ def createPackageArchive(zip_path=None, archive_type="zip"):
     temp_analyzer = shutil.copytree(
         analyzer_path,
         trimmed_path,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*~"),
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*~", "**/site-packages/*analyzer*"),
     )
     package_path = shutil.make_archive(
         temp_path / "analyzer",
@@ -56,64 +69,133 @@ def createPackageArchive(zip_path=None, archive_type="zip"):
 
 def transferAnalyzerToClient(client):
     analyzer_path = Path(ir.files(analyzer))
-    p = str(compressDirectory(analyzer_path, "compressed", name="analyzer", archive_type="zip"))
+    compression_path = (
+        Path(getConfiguration()["ENV_LOCAL_APPLICATION_DATA"]) / "compressed/"
+    )
+    p = str(
+        compressDirectory(
+            analyzer_path, "compressed", name=compression_path, archive_type="zip"
+        )
+    )
     logger.info(f"Transfer file {p} to workers.")
     client.upload_file(p)
 
 
-def runAnalysisOnSamples(
-    modules,
-    samples,
-    sample_manager,
-    dask_schedd_address=None,
-    dataset_directory="datasets",
-    step_size=75000,
-    delayed=True,
-    no_execute=False,
-    require_location=None,
-    prefer_location=None,
-):
-    """Run a collection of analysis modules on some samples."""
-
-    import analyzer.modules
-
-    cache = {}
+def createClient(dask_schedd_address, transfer_analyzer=True):
+    logger.info(f"Scheduler address is {dask_schedd_address}")
     if dask_schedd_address:
         logger.info(f"Connecting client to scheduler at {dask_schedd_address}")
         client = Client(dask_schedd_address)
-        transferAnalyzerToClient(client)
+        if transfer_analyzer:
+            transferAnalyzerToClient(client)
     else:
         client = None
         logger.info("No scheduler address provided, running locally")
-    sample_manager = ds.SampleManager()
-    sample_manager.loadSamplesFromDirectory("datasets")
-    logger.info(f"Creating analyzer using {len(modules)} modules")
-    analyzer = ac.Analyzer(modules, cache)
-    samples = [sample_manager[x] for x in samples]
+    return client
 
+
+def createPreprocessedSamples(
+    sample_manager,
+    samples,
+    step_size=150000,
+    require_location=None,
+    prefer_location=None,
+):
+    samples = [sample_manager[x] for x in samples]
     all_sets = list(
         it.chain.from_iterable(
             makeIterable(
                 x.getAnalyzerInput(
-                    require_location=require_location, prefer_location=prefer_location
+                    require_location=require_location,
+                    prefer_location=prefer_location,
                 )
             )
             for x in samples
         )
     )
     logger.info(f"Preprocessing {len(all_sets)} ")
-    with ProgressBar():
+    with Progress(TextColumn("{task.description}"), BarColumn()) as p:
+        t = p.add_task("Preprocessing Files", total=None)
         dataset_preps = ac.preprocessBulk(all_sets, step_size=step_size)
-    logger.info(f"Preprocessed data in to {len(dataset_preps)} set")
-    if delayed:
-        futures = [analyzer.getDatasetFutures(x) for x in dataset_preps]
-        if no_execute:
-            return futures
-        logger.info(f"Generated {len(futures)} analysis futures")
-        with ProgressBar():
-            ret = ac.execute(futures, client)
-    else:
-        results = [analyzer.getDatasetFutures(x, delayed=False) for x in dataset_preps]
-        ret = {x.getName(): x for x in results}
-    ret = ac.AnalysisResult(ret)
+    return dataset_preps
+
+
+def patchPreprocessed(
+    sample_manager,
+    preprocessed_inputs,
+    step_size=75000,
+    file_retrieval_kwargs=None,
+):
+    if file_retrieval_kwargs is None:
+        file_retrieval_kwargs = {}
+    datasets = {
+        p.dataset_input.dataset_name: p for p in copy.deepcopy(preprocessed_inputs)
+    }
+    missing_dict = {}
+    for n, prepped in datasets.items():
+        x = prepped.missingCoffeaDataset(**file_retrieval_kwargs)
+        logger.info(f"Found {len(x[n]['files'])} files missing from dataset {n}")
+        if x[n]["files"]:
+            missing_dict.update(x)
+    # logger.info(f"Processing the following missing data:\n{missing_dict}")
+    with Progress(TextColumn("{task.description}"), BarColumn()) as p:
+        t = p.add_task("Running", total=None)
+        new = ac.inputs.preprocessRaw(missing_dict, step_size=step_size)
+    for n, v in new.items():
+        datasets[n] = datasets[n].addCoffeaChunks({n: v})
+    return list(datasets.values())
+
+
+def runModulesOnDatasets(
+    modules,
+    prepped_datasets,
+    client=None,
+    skim_save_path=None,
+    file_retrieval_kwargs=None,
+):
+    import analyzer.modules
+
+    config_path = Path(getConfiguration()["APPLICATION_DATA"])
+    path = config_path / "argparse_cache" / f"modules.pkl"
+    pickleWithParents(path, list(analyzer.core.org.modules))
+
+    if file_retrieval_kwargs is None:
+        file_retrieval_kwargs = {}
+
+    cache = {}
+    analyzer = ac.Analyzer(modules, cache)
+    futures = []
+    with Progress(
+        TextColumn("{task.description}"), BarColumn(), MofNCompleteColumn()
+    ) as p:
+        t = p.add_task("Preparing Datasets", total=len(prepped_datasets))
+        tasks = [
+            (p.add_task(x.dataset_name, total=len(analyzer.modules), visible=False), x)
+            for x in prepped_datasets
+        ]
+        for task, prepped in tasks:
+            p.advance(t, 1)
+            futures.append(
+                analyzer.getDatasetFutures(
+                    prepped,
+                    skim_save_path=skim_save_path,
+                    prog_bar_updater=partial(p.update, task),
+                    file_retrieval_kwargs=file_retrieval_kwargs,
+                )
+            )
+
+    logger.info(f"Generated {len(futures)} analysis futures")
+    with Progress(TextColumn("{task.description}"), BarColumn()) as p:
+        t = p.add_task("Running Analysis", total=None)
+        ret = ac.execute(futures, client)
+    ret = ac.AnalysisResult(ret, modules)
     return ret
+
+
+def patchResult(result, **kwargs):
+    modules = result.module_list
+    missing_datasets = {
+        k: v.getMissingDataset() for k, v in result.results.items() if v.getBadChunks()
+    }
+    ret = runModulesOnDatasets(modules, list(missing_datasets.values()), **kwargs)
+    return result.merge(ret)
