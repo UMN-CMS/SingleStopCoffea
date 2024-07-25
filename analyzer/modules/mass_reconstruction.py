@@ -469,50 +469,51 @@ def cat_combo_methods(events, analyzer):
     return events, analyzer
 
 
-class jetAssignmentNN(torch_wrapper):
-    def prepare_awkward(self,events):
-        ak = self.get_awkward_lib(events)
-        jets = events.good_jets
-        flat_jets = ak.flatten(jets)
+# class jetAssignmentNN(torch_wrapper):
+#     def prepare_awkward(self,events):
+#         ak = self.get_awkward_lib(events)
+#         jets = events.good_jets
+#         flat_jets = ak.flatten(jets)
 
-        m3 = jets[:,1:4].sum()
-        m4 = jets[:,0:4].sum()
+#         m3 = jets[:,1:4].sum()
+#         m4 = jets[:,0:4].sum()
 
-        ones = ak.ones_like(jets.pt)
+#         ones = ak.ones_like(jets.pt)
 
-        imap = {
-            "features": {
-                "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
-                "jetPT": 		    flat_jets.pt,
-                "jetEta": 		    flat_jets.eta,
-                "jetPhi": 		    flat_jets.phi,
-                "jetBScore":    	flat_jets.btagDeepFlavB,
-                "m3M": 			    ak.flatten(ones * m3.mass),
-                "m3PT": 		    ak.flatten(ones * m3.pt),
-                "m3Eta": 		    ak.flatten(ones * m3.eta),
-                "m3Phi": 	        ak.flatten(ones * m3.phi),
-                "m4M": 			    ak.flatten(ones * m4.mass),
-                "m4PT":		        ak.flatten(ones * m4.pt),
-                "m4Eta":		    ak.flatten(ones * m4.eta),
-                "m4Phi":	        ak.flatten(ones * m4.phi)
-            }
-        }
+#         imap = {
+#             "features": {
+#                 "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
+#                 "jetPT": 		    flat_jets.pt,
+#                 "jetEta": 		    flat_jets.eta,
+#                 "jetPhi": 		    flat_jets.phi,
+#                 "jetBScore":    	flat_jets.btagDeepFlavB,
+#                 "m3M": 			    ak.flatten(ones * m3.mass),
+#                 "m3PT": 		    ak.flatten(ones * m3.pt),
+#                 "m3Eta": 		    ak.flatten(ones * m3.eta),
+#                 "m3Phi": 	        ak.flatten(ones * m3.phi),
+#                 "m4M": 			    ak.flatten(ones * m4.mass),
+#                 "m4PT":		        ak.flatten(ones * m4.pt),
+#                 "m4Eta":		    ak.flatten(ones * m4.eta),
+#                 "m4Phi":	        ak.flatten(ones * m4.phi)
+#             }
+#         }
 
-        retmap = {
-            "features": ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()])
-        }
+#         retmap = {
+#             "features": ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()])
+#         }
 
-        return(),{
-            "features": ak.values_astype(retmap["features"],"float32")
-        }
+#         return(),{
+#             "features": ak.values_astype(retmap["features"],"float32")
+#         }
     
 
-@analyzerModule("NN_mass2", categories="main")
-def NN_mass_reco_2(events, analyzer):
-    model = jetAssignmentNN("jetmatcherNN.pt")
-    dask_results = jetAssignmentNN(events)
+# @analyzerModule("NN_mass2", categories="main")
+# def NN_mass_reco_2(events, analyzer):
+#     model = jetAssignmentNN("jetmatcherNN.pt")
+#     dask_results = jetAssignmentNN(events)
     
 
+b_tag_wps = [0.0490, 0.2783, 0.7100]
 
 @analyzerModule("NN_mass", categories="main")
 def NN_mass_reco(events, analyzer):
@@ -556,50 +557,50 @@ def NN_mass_reco(events, analyzer):
     model = torch.load("jetMatcherNN.pt")
 
     intermediate = [x[:, np.newaxis] for x in imap['features'].values()]
-    net_input = np.hstack(np.array([[1, 2], [3, 4]]))
-    # net_input = torch.Tensor(net_input)
-    # scl = open('scaler.pkl', 'rb')
-    # scaler = pickle.load(scl)
-    # net_input = scaler.transform(net_input)
+    net_input = np.hstack(intermediate)
+    net_input = torch.Tensor(net_input)
+    scl = open('scaler.pkl', 'rb')
+    scaler = pickle.load(scl)
+    net_input = scaler.transform(net_input)
 
-    # outputs = model(torch.Tensor(net_input)).detach().numpy()
+    outputs = model(torch.Tensor(net_input)).detach().numpy()
 
-    # # stop_probs = outputs[:,0]
-    # # charg_probs = outputs[:,1]
-    # # other_probs = outputs[:,2]
+    # stop_probs = outputs[:,0]
+    # charg_probs = outputs[:,1]
+    # other_probs = outputs[:,2]
 
-    # high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.8, ak.num(jets))
-    # top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
+    high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.8, ak.num(jets))
+    top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
 
-    # top_3_charg_score_sum = jets[top_3_idx].sum()
-    # m3_top_3_nn_charg_score = top_3_charg_score_sum.mass
-    # m3_high_nn_charg_score = jets[high_charg_score_mask].sum().mass
+    top_3_charg_score_sum = jets[top_3_idx].sum()
+    m3_top_3_nn_charg_score = top_3_charg_score_sum.mass
+    m3_high_nn_charg_score = jets[high_charg_score_mask].sum().mass
 
-    # analyzer.H(
-    #     f"m3_top_3_nn_charg_score",
-    #     makeAxis(
-    #         60,
-    #         0,
-    #         3000,
-    #         rf"m3_top_3_nn_charg_score",
-    #         unit="GeV",
-    #     ),
-    #     m3_top_3_nn_charg_score,
-    #     name="\'Mass of sum of highest-scoring jets according to chargino jet NN classifier\'",
-    # )
+    analyzer.H(
+        f"m3_top_3_nn_charg_score",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_top_3_nn_charg_score",
+            unit="GeV",
+        ),
+        m3_top_3_nn_charg_score,
+        name="\'Mass of sum of highest-scoring jets according to chargino jet NN classifier\'",
+    )
 
-    # analyzer.H(
-    #     f"m3_high_nn_charg_score",
-    #     makeAxis(
-    #         60,
-    #         0,
-    #         3000,
-    #         rf"m3_high_nn_charg_score",
-    #         unit="GeV",
-    #     ),
-    #     m3_high_nn_charg_score,
-    #     name="\'Mass of sum of all jets with chargino score above 0.8\'",
-    # )
+    analyzer.H(
+        f"m3_high_nn_charg_score",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_high_nn_charg_score",
+            unit="GeV",
+        ),
+        m3_high_nn_charg_score,
+        name="\'Mass of sum of all jets with chargino score above 0.8\'",
+    )
 
     return events, analyzer
 
