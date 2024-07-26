@@ -469,105 +469,58 @@ def cat_combo_methods(events, analyzer):
     return events, analyzer
 
 
-# class jetAssignmentNN(torch_wrapper):
-#     def prepare_awkward(self,events):
-#         ak = self.get_awkward_lib(events)
-#         jets = events.good_jets
-#         flat_jets = ak.flatten(jets)
+scl = open('scaler.pkl', 'rb')
+scaler = pickle.load(scl)
 
-#         m3 = jets[:,1:4].sum()
-#         m4 = jets[:,0:4].sum()
 
-#         ones = ak.ones_like(jets.pt)
+class jetAssignmentNN(torch_wrapper):
+    def prepare_awkward(self,events):
+        # ak = self.get_awkward_lib(events)
+        jets = events.good_jets
+        flat_jets = ak.flatten(jets)
 
-#         imap = {
-#             "features": {
-#                 "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
-#                 "jetPT": 		    flat_jets.pt,
-#                 "jetEta": 		    flat_jets.eta,
-#                 "jetPhi": 		    flat_jets.phi,
-#                 "jetBScore":    	flat_jets.btagDeepFlavB,
-#                 "m3M": 			    ak.flatten(ones * m3.mass),
-#                 "m3PT": 		    ak.flatten(ones * m3.pt),
-#                 "m3Eta": 		    ak.flatten(ones * m3.eta),
-#                 "m3Phi": 	        ak.flatten(ones * m3.phi),
-#                 "m4M": 			    ak.flatten(ones * m4.mass),
-#                 "m4PT":		        ak.flatten(ones * m4.pt),
-#                 "m4Eta":		    ak.flatten(ones * m4.eta),
-#                 "m4Phi":	        ak.flatten(ones * m4.phi)
-#             }
-#         }
+        m3 = jets[:,1:4].sum()
+        m4 = jets[:,0:4].sum()
 
-#         retmap = {
-#             "features": ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()])
-#         }
+        ones = ak.ones_like(jets.pt)
 
-#         return(),{
-#             "features": ak.values_astype(retmap["features"],"float32")
-#         }
-    
-
-# @analyzerModule("NN_mass2", categories="main")
-# def NN_mass_reco_2(events, analyzer):
-#     model = jetAssignmentNN("jetmatcherNN.pt")
-#     dask_results = jetAssignmentNN(events)
+        imap = {
+            "features": {
+                "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
+                "jetPT": 		    flat_jets.pt - ak.mean(flat_jets.pt),
+                "jetEta": 		    flat_jets.eta,
+                "jetPhi": 		    flat_jets.phi,
+                "jetBScore":    	flat_jets.btagDeepFlavB,
+                "m3M": 			    ak.flatten(ones * m3.mass),
+                "m3PT": 		    ak.flatten(ones * m3.pt),
+                "m3Eta": 		    ak.flatten(ones * m3.eta),
+                "m3Phi": 	        ak.flatten(ones * m3.phi),
+                "m4M": 			    ak.flatten(ones * m4.mass),
+                "m4PT":		        ak.flatten(ones * m4.pt),
+                "m4Eta":		    ak.flatten(ones * m4.eta),
+                "m4Phi":	        ak.flatten(ones * m4.phi)
+            }
+        }
+        
+        imap_concat = ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()], axis=1)
+        imap_scaled = (imap_concat - scaler.mean_) / scaler.scale_
+        retmap = {
+            "features": [imap_scaled]
+        }
+        return (ak.values_astype(retmap["features"],"float32")),{}
     
 
 b_tag_wps = [0.0490, 0.2783, 0.7100]
 
 @analyzerModule("NN_mass", categories="main")
 def NN_mass_reco(events, analyzer):
-
-    # class Net(nn.Module):
-    #     def __init__(self):
-    #         super(Net,self).__init__()
-    #         self.fc1 = nn.Linear(13,13)
-    #         self.fc2 = nn.Linear(13,3)
-    #     def forward(self,x):
-    #         x = F.relu(self.fc1(x))
-    #         x = F.softmax(self.fc2(x),dim=1)
-    #         return x
-
     jets = events.good_jets
-    flat_jets = ak.flatten(jets)
+    model = jetAssignmentNN("traced_model.pkl")
+    outputs = model(events)
 
-    m3 = jets[:,1:4].sum()
-    m4 = jets[:,0:4].sum()
-
-    ones = ak.ones_like(jets.pt)
-
-    imap = {
-        "features": {
-            "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
-            "jetPT": 		    flat_jets.pt,
-            "jetEta": 		    flat_jets.eta,
-            "jetPhi": 		    flat_jets.phi,
-            "jetBScore":    	flat_jets.btagDeepFlavB,
-            "m3M": 			    ak.flatten(ones * m3.mass),
-            "m3PT": 		    ak.flatten(ones * m3.pt),
-            "m3Eta": 		    ak.flatten(ones * m3.eta),
-            "m3Phi": 	        ak.flatten(ones * m3.phi),
-            "m4M": 			    ak.flatten(ones * m4.mass),
-            "m4PT":		        ak.flatten(ones * m4.pt),
-            "m4Eta":		    ak.flatten(ones * m4.eta),
-            "m4Phi":	        ak.flatten(ones * m4.phi)
-        }
-    }
-
-    model = torch.load("jetMatcherNN.pt")
-
-    intermediate = [x[:, np.newaxis] for x in imap['features'].values()]
-    net_input = np.hstack(intermediate)
-    net_input = torch.Tensor(net_input)
-    scl = open('scaler.pkl', 'rb')
-    scaler = pickle.load(scl)
-    net_input = scaler.transform(net_input)
-
-    outputs = model(torch.Tensor(net_input)).detach().numpy()
-
-    # stop_probs = outputs[:,0]
-    # charg_probs = outputs[:,1]
-    # other_probs = outputs[:,2]
+    stop_probs = outputs[:,0]
+    charg_probs = outputs[:,1]
+    other_probs = outputs[:,2]
 
     high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.8, ak.num(jets))
     top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
