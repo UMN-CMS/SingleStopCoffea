@@ -487,7 +487,7 @@ class jetAssignmentNN(torch_wrapper):
         imap = {
             "features": {
                 "jetOrdinality":    ak.flatten(ak.local_index(jets, axis=1)),
-                "jetPT": 		    flat_jets.pt - ak.mean(flat_jets.pt),
+                "jetPT": 		    flat_jets.pt - 2,
                 "jetEta": 		    flat_jets.eta,
                 "jetPhi": 		    flat_jets.phi,
                 "jetBScore":    	flat_jets.btagDeepFlavB,
@@ -504,10 +504,7 @@ class jetAssignmentNN(torch_wrapper):
         
         imap_concat = ak.concatenate([x[:, np.newaxis] for x in imap['features'].values()], axis=1)
         imap_scaled = (imap_concat - scaler.mean_) / scaler.scale_
-        retmap = {
-            "features": [imap_scaled]
-        }
-        return (ak.values_astype(retmap["features"],"float32")),{}
+        return (ak.values_astype(imap_scaled, "float32"),),{}
     
 
 b_tag_wps = [0.0490, 0.2783, 0.7100]
@@ -515,14 +512,14 @@ b_tag_wps = [0.0490, 0.2783, 0.7100]
 @analyzerModule("NN_mass", categories="main")
 def NN_mass_reco(events, analyzer):
     jets = events.good_jets
-    model = jetAssignmentNN("traced_model.pkl")
+    model = jetAssignmentNN("traced_model.pt")
     outputs = model(events)
 
     stop_probs = outputs[:,0]
     charg_probs = outputs[:,1]
     other_probs = outputs[:,2]
 
-    high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.8, ak.num(jets))
+    high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.95, ak.num(jets))
     top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
 
     top_3_charg_score_sum = jets[top_3_idx].sum()
