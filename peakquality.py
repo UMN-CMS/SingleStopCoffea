@@ -19,7 +19,7 @@ def gaussian(x, *p):
     
 def s_over_root_b(hists, hists_background, xvar, true_mass, window_width=-1):
     signal_hist = hists[xvar]
-    background_hist = hists_background[xvar]
+    background_hist = hists_background[xvar]["Skim_QCDInclusive2018"]
     signal_data = signal_hist.to_numpy()[0]
     background_data, edges = background_hist.to_numpy()
     bin_centers = (edges[:-1] + edges[1:])/2
@@ -32,7 +32,10 @@ def s_over_root_b(hists, hists_background, xvar, true_mass, window_width=-1):
 
 def significance_2D(hists, hists_background, xvar):
     signal_hist = hists[xvar]
-    background_hist = hists_background[xvar]
+    print(hists_background)
+    print("-")
+    print(hists_background[xvar])
+    background_hist = hists_background[xvar]["Skim_QCDInclusive2018"]
     signal_data = signal_hist.to_numpy()[0]
     background_data, edges_x, edges_y = background_hist.to_numpy()
 

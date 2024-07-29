@@ -515,16 +515,22 @@ def NN_mass_reco(events, analyzer):
     model = jetAssignmentNN("traced_model.pt")
     outputs = model(events)
 
+    m14 = jets[:, 0:4].sum().mass
+
     stop_probs = outputs[:,0]
     charg_probs = outputs[:,1]
     other_probs = outputs[:,2]
 
     high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.95, ak.num(jets))
-    top_3_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
+    highest_3_charg_score_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
+    highest_stop_score_idx = ak.argsort(ak.unflatten(outputs[:,0], ak.num(jets)), axis=1)[:, -1]
 
-    top_3_charg_score_sum = jets[top_3_idx].sum()
+    top_3_charg_score_sum = jets[highest_3_charg_score_idx].sum()
     m3_top_3_nn_charg_score = top_3_charg_score_sum.mass
     m3_high_nn_charg_score = jets[high_charg_score_mask].sum().mass
+
+    stop_jets = jets[ak.singletons(highest_stop_score_idx)]
+    m4_nn = ak.flatten((top_3_charg_score_sum + stop_jets).mass)
 
     analyzer.H(
         f"m3_top_3_nn_charg_score",
@@ -552,6 +558,25 @@ def NN_mass_reco(events, analyzer):
         name="\'Mass of sum of all jets with chargino score above 0.8\'",
     )
 
+    analyzer.H(
+        f"m14_vs_m3_top_3_nn_charg_score",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
+        ],
+        [m14, m3_top_3_nn_charg_score],
+        name="$m_{14}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
+    )
+    
+    analyzer.H(
+        f"m4nn_vs_m3_top_3_nn_charg_score",
+        [
+            makeAxis(60, 0, 3000, r"$m_{4 (NN)}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
+        ],
+        [m4_nn, m3_top_3_nn_charg_score],
+        name="$m_{4 (NN)}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
+    )
     return events, analyzer
 
 @analyzerModule("chargino_hists", categories="main")
