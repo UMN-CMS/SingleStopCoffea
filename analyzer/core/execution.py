@@ -68,7 +68,7 @@ def execute(futures: Iterable[Tuple[DatasetDaskRunResult, Any]], client: Client)
     computed, *rest = dask.compute(dsk, retries=3)
 
     ret = {
-        name: DatasetRunResult(prep, h, nsh, nshl, getProcessedChunks(rep))
+        name: DatasetRunResult(prep, h, getProcessedChunks(rep), nsh, nshl)
         for name, (prep, h, nsh, nshl, rep) in computed["main"].items()
     }
 

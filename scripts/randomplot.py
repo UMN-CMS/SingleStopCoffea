@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # )
 
 
-directory='figures_test2018-4_2022D-4'
+directory='figures_2018-4_2022D-4'
 sample_names = ["Data2018-4","Data2022DTemp-4"]
 plotter = Plotter(
     ['2018-4.pkl','2022D-4.pkl'],
@@ -46,6 +46,7 @@ plotter = Plotter(
     target_lumi=59.83,
     coupling="cr",
     non_scaled_histos=True,
+    year="2018/2022",
 )
 
 def cutflowPlot(histogram_name,percent=False):
@@ -122,10 +123,8 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 
 print(plotter.histos.keys())
 for j in plotter.histos.keys():
-    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13 and 13.6 TeV',control_region=True)
-    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13 and 13.6 TeV',control_region=True)
-    
-#plotter('h_njet', ["Data2022DTemp1"], add_label='h_njet')
+    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13/13.6 TeV',control_region=True)
+    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13/13.6 TeV',control_region=True)
 
 sys.exit()
 

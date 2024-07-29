@@ -99,7 +99,7 @@ class SampleFile:
         return self.object_path
 
     def getFile(
-        self, require_location=None, location_priority_regex=None, require_protocol=None
+        self, require_location=None, location_priority_regex=None, require_protocol=None, **kwargs
     ):
         if location_priority_regex and require_location:
             location_priority_regex = None
@@ -382,19 +382,14 @@ class SampleSet:
             w = w * target_lumi / self.getLumi()
         return w
 
-<<<<<<< HEAD
     def getAnalyzerInput(self, setname=None, **kwargs):
-=======
-    def getAnalyzerInput(
-        self, setname=None, prefer_location=None, require_location=None, modules=None
-    ):
->>>>>>> faddaa6 (WIP: Run 3 plots, accidentally removed module requirement for forbidden datasets.)
         return AnalyzerInput(
             dataset_name=self.name,
             fill_name=setname or self.name,
             files={f.cmsLocation(): f for f in self.files},
             profile=self.getProfile(),
             lumi_json=self.getLumiJson(),
+            required_modules=self.required_modules,
         )
 
     def totalEvents(self):

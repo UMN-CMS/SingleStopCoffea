@@ -160,7 +160,7 @@ def runModulesOnDatasets(
 
     if file_retrieval_kwargs is None:
         file_retrieval_kwargs = {}
-
+    file_retrieval_kwargs["modules"] = modules
     cache = {}
     analyzer = ac.Analyzer(modules, cache)
     futures = []

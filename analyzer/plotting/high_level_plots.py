@@ -114,12 +114,6 @@ def plot1D(
     if xlabel_override:
         ax.set_xlabel(xlabel_override)
 
-    addEra(ax, lumi, era)
-    addCmsInfo(
-        ax,
-        additional_text=f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-        + (add_label or ""),
-    )
     addTitles1D(ax, hc, top_pad=top_pad)
 
     if "$p_T ( \sum_{n=1}^" in hc.axes[0].title:
@@ -143,22 +137,57 @@ def plot2D(
     zscorename='',
 ):
     fig, ax = plt.subplots()
-
-    drawAs2DHist(ax, plot_obj)
-    addEra(ax, lumi, era, energy=energy)
-    pos = "in"
     
+    energy_map = {"2016": "13 TeV", "2017": "13 TeV", "2018": "13 TeV", 
+                  "2022": "13.6 TeV", "2023": "13.6 TeV", "2024": "13.6 TeV"}
+    actual_era = era
+    actual_energy = energy
+
     if zscore:
-        objtitle = ""
+        from matplotlib.colors import TwoSlopeNorm
+        from matplotlib.colors import LinearSegmentedColormap
+
+        objtitle = "Z-Score"
+        color_min    = "#ff0342" # red
+        color_center = "#440154" # purple
+        color_max    = "#fde725" # yellow
+        cmap = LinearSegmentedColormap.from_list(
+            "cmap_name",
+            [color_min, color_center, color_max]
+        )
+        drawAs2DHist(ax, plot_obj,cmap=cmap,norm=TwoSlopeNorm(0))
     else:
         objtitle = plot_obj.title
+        drawAs2DHist(ax, plot_obj)
+
+        if "/" in era:
+            split_eras = era.split("/")
+        else:
+            split_eras = []
+        
+        for single_era in split_eras:
+            if single_era in plot_obj.title:
+                actual_era = single_era
+                break
+            else:
+                actual_era = era
+        
+        if "/" in actual_era:
+                actual_energy=energy
+        else:
+            actual_energy = energy_map[actual_era]
+    
+    addEra(ax, lumi, actual_era, energy=actual_energy)
+    pos = "in"
+    
+    
 
     if control_region:
         addCmsInfo(
         ax,
         additional_text=f"\nCR Selection\n"
         + (f"{add_label}" if add_label else "")
-        + f", {objtitle}",
+        + (f", {objtitle}"),
         pos=pos,
         color="white",
     )

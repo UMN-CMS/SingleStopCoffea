@@ -229,21 +229,21 @@ class Plotter:
 
         elif len(r.axes) == 2:
             ret = []
-            for n, realh in hist_dict.items():
-                po = createPlotObject(n, realh, self.sample_manager)
+            for obj in signal_plobjs.values():
                 fig = plot2D(
-                    po,
-                    self.coupling,
-                    self.target_lumi,
-                    "",
+                    obj,
+                    coupling=self.coupling,
+                    lumi=self.target_lumi,
+                    era=self.year,
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
+                    energy=energy,
                     control_region=control_region,
                 )
                 fig.tight_layout()
                 if self.outdir:
-                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{n}.pdf")
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{obj.title}.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)
@@ -251,17 +251,18 @@ class Plotter:
                 keys = list(signal_plobjs.keys())
                 ob1 = signal_plobjs[keys[0]]
                 ob2 = signal_plobjs[keys[1]]
-                zscorename = f'({keys[0]}-{keys[1]})/Var[{keys[0]}]'
+
+                zscorename = f'({keys[0]}-{keys[1]})/Std[{keys[0]}]'
                 varone = ob1.variances()
                 one=ob1.values()
                 two=ob2.values()
-                ratio_histv = np.divide(one-two,np.sqrt(varone),out=np.zeros_like(one), where=varone != 0)
+                ratio_histv = np.divide((one-two), np.sqrt(varone), out=np.zeros_like(one), where=varone != 0)
                 ob1.update_values(ratio_histv)
                 fig = plot2D(
                     ob1,
                     coupling=self.coupling,
                     lumi=self.target_lumi,
-                    era='',
+                    era=self.year,
                     sig_style=sig_style,
                     add_label=add_label,
                     scale=scale,
@@ -275,5 +276,5 @@ class Plotter:
                     plt.close(fig)
                 else:
                     ret.append(fig)
-            if not self.outdir:
-                return ret
+                if not self.outdir:
+                    return ret

@@ -124,10 +124,14 @@ class DatasetRunResult:
         if self.processed_chunks.intersection(other.processed_chunks):
             raise ValueError()
         new_hists = utils.accumulate([self.histograms, other.histograms])
+        new_non_scaled_hists = utils.accumulate([self.non_scaled_histograms, other.non_scaled_histograms])
+        new_non_scaled_hists_labels = utils.accumulate([self.non_scaled_histograms_labels, other.non_scaled_histograms_labels])
         result = DatasetRunResult(
             self.dataset_preprocessed,
             new_hists,
             self.processed_chunks | other.processed_chunks,
+            new_non_scaled_hists,
+            new_non_scaled_hists_labels,
         )
         return result
 
