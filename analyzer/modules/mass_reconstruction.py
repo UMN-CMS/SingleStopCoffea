@@ -27,15 +27,6 @@ def makeIdxHist(analyzer, idxs, name, axlabel):
         name=name,
     )
 
-# class Net(nn.Module):
-#         def __init__(self):
-#             super(Net,self).__init__()
-#             self.fc1 = nn.Linear(13,13)
-#             self.fc2 = nn.Linear(13,3)
-#         def forward(self,x):
-#             x = F.relu(self.fc1(x))
-#             x = F.softmax(self.fc2(x),dim=1)
-#             return x
         
 @analyzerModule(
     "reco_efficiency", categories="main", depends_on=["chargino_hists", "delta_r"]
@@ -544,7 +535,7 @@ def NN_mass_reco(events, analyzer):
         m3_top_3_nn_charg_score,
         name="\'Mass of sum of highest-scoring jets according to chargino jet NN classifier\'",
     )
-
+    
     analyzer.H(
         f"m3_high_nn_charg_score",
         makeAxis(
@@ -557,7 +548,7 @@ def NN_mass_reco(events, analyzer):
         m3_high_nn_charg_score,
         name="\'Mass of sum of all jets with chargino score above 0.8\'",
     )
-
+    print("before ones that aren't working")
     analyzer.H(
         f"m14_vs_m3_top_3_nn_charg_score",
         [
@@ -567,7 +558,7 @@ def NN_mass_reco(events, analyzer):
         [m14, m3_top_3_nn_charg_score],
         name="$m_{14}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
     )
-    
+    print("middle")
     analyzer.H(
         f"m4nn_vs_m3_top_3_nn_charg_score",
         [
@@ -577,6 +568,7 @@ def NN_mass_reco(events, analyzer):
         [m4_nn, m3_top_3_nn_charg_score],
         name="$m_{4 (NN)}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
     )
+    print("surely it gets here")
     return events, analyzer
 
 @analyzerModule("chargino_hists", categories="main")
