@@ -503,37 +503,62 @@ b_tag_wps = [0.0490, 0.2783, 0.7100]
 @analyzerModule("NN_mass", categories="main")
 def NN_mass_reco(events, analyzer):
     jets = events.good_jets
-    model = jetAssignmentNN("traced_model.pt")
-    outputs = model(events)
+    model_1500_900 = jetAssignmentNN("traced_model.pt")
+    model_uncomp = jetAssignmentNN("jetMatcherNN_100_strat_newcuts_traced.pt")
+    outputs_1500_900 = model_1500_900(events)
+    outputs_uncomp = model_uncomp(events)
 
     m14 = jets[:, 0:4].sum().mass
 
-    stop_probs = outputs[:,0]
-    charg_probs = outputs[:,1]
-    other_probs = outputs[:,2]
+    # just 1500_900
+    high_charg_score_mask_1500_900 = ak.unflatten(outputs_1500_900[:,1] > 0.95, ak.num(jets))
+    highest_3_charg_score_idx_1500_900 = ak.argsort(ak.unflatten(outputs_1500_900[:,1], ak.num(jets)), axis=1)[:, -3:]
+    highest_stop_score_idx_1500_900 = ak.argsort(ak.unflatten(outputs_1500_900[:,0], ak.num(jets)), axis=1)[:, -1]
 
-    high_charg_score_mask = ak.unflatten(outputs[:,1] > 0.95, ak.num(jets))
-    highest_3_charg_score_idx = ak.argsort(ak.unflatten(outputs[:,1], ak.num(jets)), axis=1)[:, -3:]
-    highest_stop_score_idx = ak.argsort(ak.unflatten(outputs[:,0], ak.num(jets)), axis=1)[:, -1]
+    top_3_charg_score_sum_1500_900 = jets[highest_3_charg_score_idx_1500_900].sum()
+    m3_top_3_nn_charg_score_1500_900 = top_3_charg_score_sum_1500_900.mass
+    m3_high_nn_charg_score_1500_900 = jets[high_charg_score_mask_1500_900].sum().mass
 
-    top_3_charg_score_sum = jets[highest_3_charg_score_idx].sum()
-    m3_top_3_nn_charg_score = top_3_charg_score_sum.mass
-    m3_high_nn_charg_score = jets[high_charg_score_mask].sum().mass
+    stop_jets_1500_900 = jets[ak.singletons(highest_stop_score_idx_1500_900)]
+    m4_nn = ak.flatten((top_3_charg_score_sum_1500_900 + stop_jets_1500_900).mass)
 
-    stop_jets = jets[ak.singletons(highest_stop_score_idx)]
-    m4_nn = ak.flatten((top_3_charg_score_sum + stop_jets).mass)
+    # full uncompressed model
+    high_charg_score_mask_uncomp = ak.unflatten(outputs_uncomp[:,1] > 0.95, ak.num(jets))
+    highest_3_charg_score_idx_uncomp = ak.argsort(ak.unflatten(outputs_uncomp[:,1], ak.num(jets)), axis=1)[:, -3:]
+    highest_stop_score_idx_uncomp = ak.argsort(ak.unflatten(outputs_uncomp[:,0], ak.num(jets)), axis=1)[:, -1]
 
+    top_3_charg_score_sum_uncomp = jets[highest_3_charg_score_idx_uncomp].sum()
+    m3_top_3_nn_charg_score_uncomp = top_3_charg_score_sum_uncomp.mass
+    m3_high_nn_charg_score_uncomp = jets[high_charg_score_mask_uncomp].sum().mass
+
+    stop_jets_uncomp = jets[ak.singletons(highest_stop_score_idx_uncomp)]
+    m4_nn = ak.flatten((top_3_charg_score_sum_uncomp + stop_jets_uncomp).mass)
+    
+    # hists
     analyzer.H(
-        f"m3_top_3_nn_charg_score",
+        f"m3_top_3_nn_charg_score_1500900",
         makeAxis(
             60,
             0,
             3000,
-            rf"m3_top_3_nn_charg_score",
+            rf"m3_top_3_nn_charg_score_1500_900",
             unit="GeV",
         ),
-        m3_top_3_nn_charg_score,
-        name="\'Mass of sum of highest-scoring jets according to chargino jet NN classifier\'",
+        m3_top_3_nn_charg_score_1500_900,
+        name="\'Mass of sum of highest-scoring jets according to chargino jet small NN classifier\'",
+    )
+
+    analyzer.H(
+        f"m3_top_3_nn_charg_score_uncomp",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_top_3_nn_charg_score_uncomp",
+            unit="GeV",
+        ),
+        m3_top_3_nn_charg_score_uncomp,
+        name="\'Mass of sum of highest-scoring jets according to chargino jet big NN classifier\'",
     )
     
     analyzer.H(
@@ -545,30 +570,27 @@ def NN_mass_reco(events, analyzer):
             rf"m3_high_nn_charg_score",
             unit="GeV",
         ),
-        m3_high_nn_charg_score,
+        m3_high_nn_charg_score_uncomp,
         name="\'Mass of sum of all jets with chargino score above 0.8\'",
     )
-    print("before ones that aren't working")
     analyzer.H(
         f"m14_vs_m3_top_3_nn_charg_score",
         [
             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
             makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
         ],
-        [m14, m3_top_3_nn_charg_score],
+        [m14, m3_top_3_nn_charg_score_uncomp],
         name="$m_{14}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
     )
-    print("middle")
     analyzer.H(
         f"m4nn_vs_m3_top_3_nn_charg_score",
         [
             makeAxis(60, 0, 3000, r"$m_{4 (NN)}$", unit="GeV"),
             makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
         ],
-        [m4_nn, m3_top_3_nn_charg_score],
+        [m4_nn, m3_top_3_nn_charg_score_uncomp],
         name="$m_{4 (NN)}$ vs Mass of sum of highest-scoring jets according to chargino jet NN classifier",
     )
-    print("surely it gets here")
     return events, analyzer
 
 @analyzerModule("chargino_hists", categories="main")
