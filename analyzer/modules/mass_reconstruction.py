@@ -504,7 +504,7 @@ b_tag_wps = [0.0490, 0.2783, 0.7100]
 def NN_mass_reco(events, analyzer):
     jets = events.good_jets
     model_1500_900 = jetAssignmentNN("traced_model.pt")
-    model_uncomp = jetAssignmentNN("jetMatcherNN_100_strat_newcuts_traced.pt")
+    model_uncomp = jetAssignmentNN("jetMatcherNN_cut_point5_traced.pt")
     outputs_1500_900 = model_1500_900(events)
     outputs_uncomp = model_uncomp(events)
 
