@@ -32,11 +32,12 @@ def s_over_root_b(hists, hists_background, xvar, true_mass, window_width=-1):
 
 def significance_2D(hists, hists_background, xvar):
     signal_hist = hists[xvar]
-    print(hists_background)
-    print("-")
-    print(hists_background[xvar]["Skim_QCDInclusive2018"])
+    # print(hists_background)
+    # print("-")
+    # print(hists_background[xvar]["Skim_QCDInclusive2018"])
     background_hist = hists_background[xvar]["Skim_QCDInclusive2018"]
     signal_data = signal_hist.to_numpy()[0]
+    # print(signal_data)
     background_data, edges_x, edges_y = background_hist.to_numpy()
 
     sum_term = np.add(signal_data, background_data) # S+B
