@@ -54,9 +54,13 @@ class DatasetDaskRunResult:
     non_scaled_histograms: Dict[str, dah.Hist]
     non_scaled_histograms_labels: Dict[str, list]
     run_report: dak.Array
+    cut_list: List[str]
 
     def getName(self):
         return self.dataset_preprocessed.dataset_input.dataset_name
+    
+    def set_cut_list(self, cut_list):
+        self.cut_list = cut_list
 
 
 @dataclass
@@ -66,6 +70,7 @@ class DatasetRunResult:
     processed_chunks: Chunk
     non_scaled_histograms: Dict[str, hist.Hist]
     non_scaled_histograms_labels: Dict[str, list]
+    cut_list: List[str]
 
     @property
     def raw_events_processed(self):
