@@ -60,6 +60,12 @@ class Plotter:
                 [input_data] if isinstance(input_data, str) else list(input_data)
             )
             results = [pkl.load(open(f, "rb")) for f in filenames]
+
+        self.cut_list_dict = {}
+        for i in results:
+            for j in i.results.keys():
+                self.cut_list_dict[j] = i.results[j].cut_list
+
         self.target_lumi = (
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].getLumi()
@@ -200,7 +206,7 @@ class Plotter:
                 self.sample_manager.weights_normalized[i] *= 1/o.sum()
             signal_plobjs = {n: h.normalize() for n, h in signal_plobjs.items()}
             background_plobjs = {n: h.normalize() for n, h in background_plobjs.items()}
-        
+
         r = next(iter(signal_plobjs.values()))
         if len(r.axes) == 1:
             fig = plot1D(
@@ -218,6 +224,7 @@ class Plotter:
                 energy=energy,
                 control_region=control_region,
                 weights=self.sample_manager.weights_normalized,
+                cut_list = self.cut_list_dict,
             )
             fig.tight_layout()
             if self.outdir:
@@ -229,7 +236,7 @@ class Plotter:
 
         elif len(r.axes) == 2:
             ret = []
-            for obj in signal_plobjs.values():
+            for key,obj in signal_plobjs.items():
                 fig = plot2D(
                     obj,
                     coupling=self.coupling,
@@ -240,6 +247,7 @@ class Plotter:
                     scale=scale,
                     energy=energy,
                     control_region=control_region,
+                    cut_list={key:self.cut_list_dict[key]}
                 )
                 fig.tight_layout()
                 if self.outdir:
@@ -270,6 +278,7 @@ class Plotter:
                     control_region=control_region,
                     energy=energy,
                     zscorename=zscorename,
+                    cut_list=self.cut_list_dict,
                 )
                 if self.outdir:
                     fig.savefig(self.outdir / f"{add_name}{hist_name}_zscore.pdf")
