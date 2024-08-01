@@ -27,6 +27,8 @@ class HistogramBuilder:
         )
         if event_weights:
             weights = event_weights.weight()
+        else:
+            weights = None
         if not isinstance(data, list):
             data = [data]
 

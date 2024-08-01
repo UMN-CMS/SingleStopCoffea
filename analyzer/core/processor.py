@@ -64,14 +64,21 @@ class DatasetProcessor:
         name=None,
         description=None,
         auto_expand=True,
+        **kwargs
     ):
         name = name or key
+        if "event_weights" in kwargs:
+            # print(f"hist {name} using event weights {kwargs['event_weights']}")
+            ev = kwargs["event_weights"]
+        else:
+            ev = self.weights
+
         if key not in self.histograms:
             self.histograms[key] = self.histogram_builder.createHistogram(
                 axis, name, description, delayed=self.delayed
             )
         self.histogram_builder.fillHistogram(
-            self.histograms[key], data, mask, event_weights=self.weights
+            self.histograms[key], data, mask, event_weights=ev
         )
 
     def H(self, *args, **kwargs):

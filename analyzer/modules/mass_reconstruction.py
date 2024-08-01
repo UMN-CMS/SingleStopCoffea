@@ -1,6 +1,7 @@
 import itertools as it
 
 import awkward as ak
+import dask_awkward as dak
 import numpy as np
 
 from analyzer.core import analyzerModule
@@ -551,13 +552,11 @@ def NN_mass_reco(events, analyzer):
     )
 
     # full uncompressed model
-    high_charg_score_mask_uncomp = ak.unflatten(outputs_uncomp[:,1] > 0.95, ak.num(jets))
     highest_3_charg_score_idx_uncomp = ak.argsort(ak.unflatten(outputs_uncomp[:,1], ak.num(jets)), axis=1)[:, -3:]
     highest_stop_score_idx_uncomp = ak.argsort(ak.unflatten(outputs_uncomp[:,0], ak.num(jets)), axis=1)[:, -1]
 
     top_3_charg_score_sum_uncomp = jets[highest_3_charg_score_idx_uncomp].sum()
     m3_top_3_nn_charg_score_uncomp = top_3_charg_score_sum_uncomp.mass
-    m3_high_nn_charg_score_uncomp = jets[high_charg_score_mask_uncomp].sum().mass
 
     stop_jets_uncomp = jets[ak.singletons(highest_stop_score_idx_uncomp)]
     m4_nn_uncomp = ak.flatten((top_3_charg_score_sum_uncomp + stop_jets_uncomp).mass)
@@ -582,6 +581,62 @@ def NN_mass_reco(events, analyzer):
         ],
         [m14, m3_top_3_nn_charg_score_uncomp],
         name="m14_vs_m3_top_3_nn_charg_score_uncomp",
+    )
+
+    threshold_count = 50
+    threshold_vals = np.linspace(0, 1, 50).reshape((50, 1))
+
+    # for M events with J total jets and N threshold values {n1, n2, ... nN},
+    # the following code gives an N by M array
+    # [ [n1, n1, ... , n1]
+    #   [n2, n2, ... , n2]
+    #   ...
+    #   [nN, nN, ... , nN] ]
+    # and an N by J array of the same format
+    events_shape = ak.ones_like(jets[:, 0].pt)
+    jets_shape = ak.ones_like(ak.flatten(jets.pt))
+    threshold_arr_events_shape = np.multiply(events_shape, threshold_vals)
+    threshold_arr_jets_shape = np.multiply(jets_shape, threshold_vals)
+
+    flat_jets = ak.flatten(jets)
+    flat_jets_reshaped = ak.broadcast_arrays(flat_jets, threshold_arr_jets_shape)[0]
+    nJets_reshaped = ak.broadcast_arrays(ak.num(jets), threshold_arr_events_shape)[0]
+    # nJets_reshaped gives [ak.num(jets)] * threshold_count
+
+    # turns all noncompliant jets to NoneType 
+    # row 1 is the jets that pass the first threshold, etc.
+    # until row N is a bunch of Nones (since the final threshold is 1)
+    masked_jets = ak.mask(flat_jets_reshaped, outputs_uncomp[:,1] > threshold_vals)
+    
+    # do not ask me why this works. i forgot it the moment i typed it out. it is an abomination.
+    # if you ask me why this works i will say "i forgot" and then we'll both be sad
+    masked_jets_reshaped = ak.drop_none(ak.unflatten(masked_jets, ak.flatten(nJets_reshaped), axis=1))
+    nChargJets_arr = ak.num(masked_jets_reshaped, axis=2)
+    recoChargMass_arr = masked_jets_reshaped.sum().mass
+
+    flat_thresholds_arr = ak.flatten(threshold_arr_events_shape)
+    flat_nChargJets_arr = ak.flatten(nChargJets_arr)
+    flat_recomass_arr = ak.flatten(recoChargMass_arr)
+
+    analyzer.H(
+        f"threshold_vs_nChargJets",
+        [
+            makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
+            makeAxis(6, 0, 6, r"nCharginoJets", unit="number"),
+        ],
+        [flat_thresholds_arr, flat_nChargJets_arr],
+        name=f"nChargJets vs threshold",
+        event_weights=None
+    )
+    analyzer.H(
+        f"threshold_vs_mCharg",
+        [
+            makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
+            makeAxis(60, 0, 3000, r"reconstructed charg mass", unit="number"),
+        ],
+        [flat_thresholds_arr, flat_recomass_arr],
+        name=f"chargino mass vs threshold",
+        event_weights=None
     )
 
     # model trained on 0.4 < (mass ratio) < 0.75
