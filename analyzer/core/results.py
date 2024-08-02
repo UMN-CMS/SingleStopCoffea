@@ -131,12 +131,14 @@ class DatasetRunResult:
         new_hists = utils.accumulate([self.histograms, other.histograms])
         new_non_scaled_hists = utils.accumulate([self.non_scaled_histograms, other.non_scaled_histograms])
         new_non_scaled_hists_labels = utils.accumulate([self.non_scaled_histograms_labels, other.non_scaled_histograms_labels])
+        new_cut_lists = utils.accumulate([self.cut_list, other.cut_list])
         result = DatasetRunResult(
             self.dataset_preprocessed,
             new_hists,
             self.processed_chunks | other.processed_chunks,
             new_non_scaled_hists,
             new_non_scaled_hists_labels,
+            new_cut_lists,
         )
         return result
 

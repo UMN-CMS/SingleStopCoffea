@@ -37,10 +37,10 @@ warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 # )
 
 
-directory='figures_2018-4_2022D-4'
-sample_names = ["Data2018-4","Data2022DTemp-4"]
+directory='figures_2018_2022D'
+sample_names = ["Data2018","Data2022DTemp"]
 plotter = Plotter(
-    ['2018-4.pkl','2022D-4.pkl'],
+    ['analyzer-2018.pkl','analyzer-2022.pkl'],
     directory,
     default_backgrounds=None,
     target_lumi=59.83,
@@ -67,6 +67,7 @@ def cutflowPlot(histogram_name,percent=False):
         h_labels = list()
         for label in plotter.non_scaled_histos_labels[histogram_name][sample_names[0]][1:]:
             h_labels.append(label.replace("N","All"))
+    h_labels = list(dict.fromkeys(h_labels))[:-1]
     plt.xticks(plt.gca().get_xticks(), h_labels, rotation=45)
     plt.legend()
     fig.tight_layout()
