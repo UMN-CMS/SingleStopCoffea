@@ -425,6 +425,31 @@ def cat_combo_methods(events, analyzer):
         name=rf"m14_vs_m3_lead_b_and_other_two_lead",
     )
 
+    # Remove the sublead b.
+    m3_top_3_no_sublead_b = gj_no_sublead_b[:, :3].sum().mass
+    analyzer.H(
+        f"m3_top_3_no_sublead_b",
+        makeAxis(
+            60,
+            0,
+            3000,
+            rf"m3_top_3_no_sublead_b",
+            unit="GeV",
+        ),
+        m3_top_3_no_sublead_b,
+        name="m3_top_3_no_sublead_b",
+    )
+    analyzer.H(
+        f"m14_vs_m3_top_3_no_sublead_b",
+        [
+            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, rf"m3_top_3_no_sublead_b", unit="GeV"),
+        ],
+        [m14, m3_top_3_no_sublead_b],
+        name=rf"m14_vs_m3_top_3_no_sublead_b",
+    )
+
+
     # Reserve the leading b among jets 4, 5, and 6 as the other m4 jet. If none are b’s, go to 3,
     # then 2. m3 is then the leading 3 remaining.
     padded_idx = ak.pad_none(idx, 6)
@@ -583,61 +608,63 @@ def NN_mass_reco(events, analyzer):
         name="m14_vs_m3_top_3_nn_charg_score_uncomp",
     )
 
-    threshold_count = 50
-    threshold_vals = np.linspace(0, 1, 50).reshape((50, 1))
+    ## DEVIN'S REQUESTED THRESHOLD PLOTS
+    ## commented out because it crashes the analyzer when running over the background lmao
 
-    # for M events with J total jets and N threshold values {n1, n2, ... nN},
-    # the following code gives an N by M array
-    # [ [n1, n1, ... , n1]
-    #   [n2, n2, ... , n2]
-    #   ...
-    #   [nN, nN, ... , nN] ]
-    # and an N by J array of the same format
-    events_shape = ak.ones_like(jets[:, 0].pt)
-    jets_shape = ak.ones_like(ak.flatten(jets.pt))
-    threshold_arr_events_shape = np.multiply(events_shape, threshold_vals)
-    threshold_arr_jets_shape = np.multiply(jets_shape, threshold_vals)
+    # threshold_count = 50
+    # threshold_vals = np.linspace(0, 1, 50).reshape((50, 1))
 
-    flat_jets = ak.flatten(jets)
-    flat_jets_reshaped = ak.broadcast_arrays(flat_jets, threshold_arr_jets_shape)[0]
-    nJets_reshaped = ak.broadcast_arrays(ak.num(jets), threshold_arr_events_shape)[0]
-    # nJets_reshaped gives [ak.num(jets)] * threshold_count
+    # # for M events with J total jets and N threshold values {n1, n2, ... nN},
+    # # the following code gives an N by M array
+    # # [ [n1, n1, ... , n1]
+    # #   [n2, n2, ... , n2]
+    # #   ...
+    # #   [nN, nN, ... , nN] ]
+    # # and an N by J array of the same format
+    # events_shape = ak.ones_like(jets[:, 0].pt)
+    # jets_shape = ak.ones_like(ak.flatten(jets.pt))
+    # threshold_arr_events_shape = np.multiply(events_shape, threshold_vals)
+    # threshold_arr_jets_shape = np.multiply(jets_shape, threshold_vals)
 
-    # turns all noncompliant jets to NoneType 
-    # row 1 is the jets that pass the first threshold, etc.
-    # until row N is a bunch of Nones (since the final threshold is 1)
-    masked_jets = ak.mask(flat_jets_reshaped, outputs_uncomp[:,1] > threshold_vals)
+    # flat_jets = ak.flatten(jets)
+    # flat_jets_reshaped = ak.broadcast_arrays(flat_jets, threshold_arr_jets_shape)[0]
     
-    # do not ask me why this works. i forgot it the moment i typed it out. it is an abomination.
-    # if you ask me why this works i will say "i forgot" and then we'll both be sad
-    masked_jets_reshaped = ak.drop_none(ak.unflatten(masked_jets, ak.flatten(nJets_reshaped), axis=1))
-    nChargJets_arr = ak.num(masked_jets_reshaped, axis=2)
-    recoChargMass_arr = masked_jets_reshaped.sum().mass
+    # # nJets_reshaped gives [ak.num(jets)] * threshold_count
+    # # masked_jets turns all noncompliant jets to NoneType 
+    # # row 1 is the jets that pass the first threshold, etc.
+    # # until row N is a bunch of Nones (since the final threshold is 1)
+    # # **do not ask me why this works. i forgot it the moment i typed it out. it is an abomination.**
+    # # **if you ask me why this works, i'll say "i forgot" - and then we'll both be sad**
+    # masked_jets = ak.mask(flat_jets_reshaped, outputs_uncomp[:,1] > threshold_vals)
+    # nJets_reshaped = ak.broadcast_arrays(ak.num(jets), threshold_arr_events_shape)[0]
+    # masked_jets_reshaped = ak.drop_none(ak.unflatten(masked_jets, ak.flatten(nJets_reshaped), axis=1))
+    # nChargJets_arr = ak.num(masked_jets_reshaped, axis=2)
+    # recoChargMass_arr = masked_jets_reshaped.sum().mass
 
-    flat_thresholds_arr = ak.flatten(threshold_arr_events_shape)
-    flat_nChargJets_arr = ak.flatten(nChargJets_arr)
-    flat_recomass_arr = ak.flatten(recoChargMass_arr)
+    # flat_thresholds_arr = ak.flatten(threshold_arr_events_shape)
+    # flat_nChargJets_arr = ak.flatten(nChargJets_arr)
+    # flat_recomass_arr = ak.flatten(recoChargMass_arr)
 
-    analyzer.H(
-        f"threshold_vs_nChargJets",
-        [
-            makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
-            makeAxis(6, 0, 6, r"nCharginoJets", unit="number"),
-        ],
-        [flat_thresholds_arr, flat_nChargJets_arr],
-        name=f"nChargJets vs threshold",
-        event_weights=None
-    )
-    analyzer.H(
-        f"threshold_vs_mCharg",
-        [
-            makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
-            makeAxis(60, 0, 3000, r"reconstructed charg mass", unit="number"),
-        ],
-        [flat_thresholds_arr, flat_recomass_arr],
-        name=f"chargino mass vs threshold",
-        event_weights=None
-    )
+    # analyzer.H(
+    #     f"threshold_vs_nChargJets",
+    #     [
+    #         makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
+    #         makeAxis(6, 0, 6, r"nCharginoJets", unit="number"),
+    #     ],
+    #     [flat_thresholds_arr, flat_nChargJets_arr],
+    #     name=f"nChargJets vs threshold",
+    #     event_weights=None
+    # )
+    # analyzer.H(
+    #     f"threshold_vs_mCharg",
+    #     [
+    #         makeAxis(threshold_count, 0, 1, r"threshold", unit="GeV"),
+    #         makeAxis(60, 0, 3000, r"reconstructed charg mass", unit="number"),
+    #     ],
+    #     [flat_thresholds_arr, flat_recomass_arr],
+    #     name=f"chargino mass vs threshold",
+    #     event_weights=None
+    # )
 
     # model trained on 0.4 < (mass ratio) < 0.75
     high_charg_score_mask_0point4 = ak.unflatten(outputs_0point4[:,1] > 0.95, ak.num(jets))
@@ -953,57 +980,6 @@ def charginoRecoHistograms(events, analyzer):
     )
 
     return events, analyzer
-
-
-# class jetAssignmentNN(torch_wrapper):
-#     def prepare_awkward(self,events):
-
-#         awk = self.get_awkward_lib(events)
-#         #jets = ak.flatten(events.good_jets)
-#         jets = events.good_jets
-#         m3 = jets[:,1:4].sum()
-#         m4 = jets[:,0:4].sum()
-
-#         imap = {
-#             "features": {
-#                 "jetOrdinality":	ak.local_index(jets),
-#                 "jetPT": 		jets.pt,
-#                 "jetEta": 		jets.eta,
-#                 "jetPhi": 		jets.phi,
-#                 "jetBScore": 		jets.btagDeepFlavB,
-#                 "m3M": 			m3.mass,
-#                 "m3PT": 		m3.pt,
-#                 "m3Eta": 		m3.eta,
-#                 "m3Phi": 		m3.phi,
-#                 "m4M": 			m4.mass,
-#                 "m4PT":			m4.pt,
-#                 "m4Eta":		m4.eta,
-#                 "m4Phi":		m4.phi,
-#             }
-#         }
-
-#         return(),{
-#             "features": awk.values_astype(imap["features"],"float32")
-#         }
-    
-# @analyzerModule("jetAssignmentNN")
-# def addNNScores(events, analyzer):
-#     model = jetAssignmentNN("jetMatcherNN.pt")
-#     scores = model(events)
-#     print(scores)
-#     events["NNStopProb"]  = scores[:,0]
-#     events["NNChiProb"]   = scores[:,1]
-#     events["NNOtherProb"] = scores[:,2] 
-#     return events
-#     analyzer.H(
-#         f"m14_vs_m3NN",
-#         [
-#             makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-#             makeAxis(50, 0, 500, r"$pt_{14}$", unit="GeV"),
-#         ],
-#         [jets.mass, jets.pt],
-#         name="m14 vs pt 14",
-#     )
 
 
 @analyzerModule("stop_reco", categories="main")
