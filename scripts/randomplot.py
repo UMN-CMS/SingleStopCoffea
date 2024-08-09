@@ -37,10 +37,10 @@ from pathlib import Path
 # )
 
 
-directory='figures_2018_2022D'
+directory='figures_2018_2022D_test_new_cuts'
 sample_names = ["Data2018","Data2022DTemp"]
 plotter = Plotter(
-    ['analyzer-2018.pkl','analyzer-2022.pkl'],
+    ['2018and2022Danalyzed.pkl'],
     directory,
     default_backgrounds=None,
     target_lumi=59.83,

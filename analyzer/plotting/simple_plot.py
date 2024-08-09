@@ -59,45 +59,53 @@ class Plotter:
             filenames = (
                 [input_data] if isinstance(input_data, str) else list(input_data)
             )
-            results = [pkl.load(open(f, "rb")) for f in filenames]
-        
+            results = [pkl.load(open(f, "rb")) for f in filenames]         
         self.cut_list_dict = {}
         for i in results:
             for j in i.results.keys():
                 self.cut_list_dict[j] =list(dict.fromkeys(i.results[j].cut_list))
-
+        print(self.cut_list_dict)
+        input()
+        raise Exception 
         self.reverse_cut_dict = {'HT ≥ 1200': "ht1200", 'Jet-PT ≥ 300': "highptjet300", 
             "4 ≤ N-Jets ≤ 6" : "njets(4,6)", "0e, 0μ": "0Lep", "0b":"0looseb",
             "Med-b Jets ≥ 2":"2bjet", "Tight-b Jets ≥ 1":"1tightbjet",
             "b-jet ΔR > 1":"b_dr", "b-jet 1+2 > 200":"bbpt",'PFHT1050':'hlt',
             'AK8PFJet400_TrimMass30': 'hlt', 'AK8PFJet420_TrimMass30':'hlt'}
-
-        self.cut_list_for_plot = [] 
-        for dataset in self.cut_list_dict:
-            cut_list_for_plot_temp = [f'{dataset}\n'] 
-            for cut in self.cut_list_dict[dataset]:
-                if '|' in cut:
-                    split_cuts = cut.split(' | ')
-                    for split_cut in split_cuts:
-                        particular_cut = self.reverse_cut_dict[split_cut]
-                        if particular_cut not in cut_list_for_plot_temp: 
-                            cut_list_for_plot_temp.append(particular_cut)
-                else:
-                    particular_cut = self.reverse_cut_dict[cut]
-                    if particular_cut not in cut_list_for_plot_temp:
-                        cut_list_for_plot_temp.append(particular_cut)
-            if self.cut_list_for_plot[1:] != cut_list_for_plot_temp[1:]:
-                self.cut_list_for_plot += cut_list_for_plot_temp
-            else:   
-                self.cut_list_for_plot[0] = self.cut_list_for_plot[0][:-1] + "/" + cut_list_for_plot_temp[0]
-        temp = self.cut_list_for_plot[0]   
-        for i in self.cut_list_for_plot[1:]:
-            if '\n' in i:
-                temp += i
-            else:
-                temp += '\t' + i + '\n'
-        self.cut_list_for_plot = temp.expandtabs(2)
-        self.target_lumi= ( 
+        #hlt_names = analyzer.profile.hlt
+        #hlt_names = ' | '.join(hlt_names)
+        hlt_names = ""
+       
+        self.cut_dict = {"ht1200": "HT ≥ 1200", "highptjet": "Jet-PT ≥ 300",
+         "jets": "4 ≤ N-Jets ≤ 6", "0Lep": "0e, 0μ", "0looseb": "0b",
+         "2bjet": "Med-b Jets ≥ 2", "1tightbjet": "Tight-b Jets ≥ 1",
+         "b_dr": "b-jet ΔR > 1", "bbpt": "b-jet 1+2 > 200", "hlt": hlt_names}
+        #self.cut_list_for_plot = [] 
+        #for dataset in self.cut_list_dict:
+        #    cut_list_for_plot_temp = [f'{dataset}\n'] 
+        #    for cut in self.cut_list_dict[dataset]:
+        #        if '|' in cut:
+        #            split_cuts = cut.split(' | ')
+        #            for split_cut in split_cuts:
+        #                particular_cut = self.reverse_cut_dict[split_cut]
+        #                if particular_cut not in cut_list_for_plot_temp: 
+        #                    cut_list_for_plot_temp.append(particular_cut)
+        #        else:
+        #            particular_cut = self.reverse_cut_dict[cut]
+        #            if particular_cut not in cut_list_for_plot_temp:
+        #                cut_list_for_plot_temp.append(particular_cut)
+        #    if self.cut_list_for_plot[1:] != cut_list_for_plot_temp[1:]:
+        #        self.cut_list_for_plot += cut_list_for_plot_temp
+        #    else:   
+        #        self.cut_list_for_plot[0] = self.cut_list_for_plot[0][:-1] + "/" + cut_list_for_plot_temp[0]
+        #temp = self.cut_list_for_plot[0]   
+        #for i in self.cut_list_for_plot[1:]:
+        #    if '\n' in i:
+        #        temp += i
+        #    else:
+        #        temp += '\t' + i + '\n'
+        #self.cut_list_for_plot = temp.expandtabs(2)
+        #self.target_lumi= ( 
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].getLumi()
         )
