@@ -60,13 +60,44 @@ class Plotter:
                 [input_data] if isinstance(input_data, str) else list(input_data)
             )
             results = [pkl.load(open(f, "rb")) for f in filenames]
-
+        
         self.cut_list_dict = {}
         for i in results:
             for j in i.results.keys():
-                self.cut_list_dict[j] = i.results[j].cut_list
+                self.cut_list_dict[j] =list(dict.fromkeys(i.results[j].cut_list))
 
-        self.target_lumi = (
+        self.reverse_cut_dict = {'HT ≥ 1200': "ht1200", 'Jet-PT ≥ 300': "highptjet300", 
+            "4 ≤ N-Jets ≤ 6" : "njets(4,6)", "0e, 0μ": "0Lep", "0b":"0looseb",
+            "Med-b Jets ≥ 2":"2bjet", "Tight-b Jets ≥ 1":"1tightbjet",
+            "b-jet ΔR > 1":"b_dr", "b-jet 1+2 > 200":"bbpt",'PFHT1050':'hlt',
+            'AK8PFJet400_TrimMass30': 'hlt', 'AK8PFJet420_TrimMass30':'hlt'}
+
+        self.cut_list_for_plot = [] 
+        for dataset in self.cut_list_dict:
+            cut_list_for_plot_temp = [f'{dataset}\n'] 
+            for cut in self.cut_list_dict[dataset]:
+                if '|' in cut:
+                    split_cuts = cut.split(' | ')
+                    for split_cut in split_cuts:
+                        particular_cut = self.reverse_cut_dict[split_cut]
+                        if particular_cut not in cut_list_for_plot_temp: 
+                            cut_list_for_plot_temp.append(particular_cut)
+                else:
+                    particular_cut = self.reverse_cut_dict[cut]
+                    if particular_cut not in cut_list_for_plot_temp:
+                        cut_list_for_plot_temp.append(particular_cut)
+            if self.cut_list_for_plot[1:] != cut_list_for_plot_temp[1:]:
+                self.cut_list_for_plot += cut_list_for_plot_temp
+            else:   
+                self.cut_list_for_plot[0] = self.cut_list_for_plot[0][:-1] + "/" + cut_list_for_plot_temp[0]
+        temp = self.cut_list_for_plot[0]   
+        for i in self.cut_list_for_plot[1:]:
+            if '\n' in i:
+                temp += i
+            else:
+                temp += '\t' + i + '\n'
+        self.cut_list_for_plot = temp.expandtabs(2)
+        self.target_lumi= ( 
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].getLumi()
         )
@@ -182,6 +213,8 @@ class Plotter:
         ratio=False,
         energy='13 TeV',
         control_region=False,
+        cut_table_in_plot=False,
+        cut_list_in_plot=False,
     ):
         bkg_set = bkg_set if bkg_set is not None else self.default_backgrounds
         if not scale:
@@ -208,7 +241,15 @@ class Plotter:
             background_plobjs = {n: h.normalize() for n, h in background_plobjs.items()}
 
         r = next(iter(signal_plobjs.values()))
+        if not cut_table_in_plot:
+            cut_dict = None
+        if not cut_list_in_plot:
+            cut_list = None
         if len(r.axes) == 1:
+            if cut_table_in_plot:
+                cut_dict = self.cut_list_dict
+            if cut_list_in_plot:
+                cut_list = self.cut_list_for_plot  
             fig = plot1D(
                 signal_plobjs.values(),
                 background_plobjs.values(),
@@ -224,7 +265,8 @@ class Plotter:
                 energy=energy,
                 control_region=control_region,
                 weights=self.sample_manager.weights_normalized,
-                cut_list = self.cut_list_dict,
+                cut_table = cut_dict,
+                cut_list = cut_list,
             )
             fig.tight_layout()
             if self.outdir:
@@ -236,7 +278,12 @@ class Plotter:
 
         elif len(r.axes) == 2:
             ret = []
+            
             for key,obj in signal_plobjs.items():
+                if cut_table_in_plot:
+                    cut_dict = {key:self.cut_list_dict[key]}
+                if cut_list_in_plot:
+                    cut_list = self.cut_list_for_plot 
                 fig = plot2D(
                     obj,
                     coupling=self.coupling,
@@ -247,7 +294,8 @@ class Plotter:
                     scale=scale,
                     energy=energy,
                     control_region=control_region,
-                    cut_list={key:self.cut_list_dict[key]}
+                    cut_table=cut_dict,
+                    cut_list=cut_list,
                 )
                 fig.tight_layout()
                 if self.outdir:
@@ -256,6 +304,10 @@ class Plotter:
                 else:
                     ret.append(fig)
             if ratio:
+                if cut_table_in_plot:
+                    cut_dict = self.cut_list_dict
+                if cut_list_in_plot:
+                    cut_list = self.cut_list_for_plot 
                 keys = list(signal_plobjs.keys())
                 ob1 = signal_plobjs[keys[0]]
                 ob2 = signal_plobjs[keys[1]]
@@ -278,7 +330,8 @@ class Plotter:
                     control_region=control_region,
                     energy=energy,
                     zscorename=zscorename,
-                    cut_list=self.cut_list_dict,
+                    cut_table=cut_dict,
+                    cut_list=cut_list,
                 )
                 if self.outdir:
                     fig.savefig(self.outdir / f"{add_name}{hist_name}_zscore.pdf")

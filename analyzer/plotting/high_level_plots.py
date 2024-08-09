@@ -70,9 +70,10 @@ def plot1D(
     energy='13 TeV',
     control_region=False,
     weights=None,
+    cut_table=None,
     cut_list=None,
 ):
-    if cut_list:
+    if cut_table:
         plt.rcParams["figure.figsize"] = (10,13)
         fig, axes = plt.subplots(2,1,gridspec_kw={'height_ratios': [1, 0.25]})
         ax = axes[0]
@@ -101,11 +102,11 @@ def plot1D(
         add_text = f"\nCR Selection\n"
     else:
         add_text = f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-
+    
     addCmsInfo(
         ax,
         additional_text=add_text
-        + (add_label or ""),
+        + (add_label or "")+('\n'+cut_list or ""),
     )
 
     hc = next(it.chain(signal_plobjs, background_plobjs))
@@ -124,8 +125,8 @@ def plot1D(
 
     addTitles1D(ax, hc, top_pad=top_pad)
 
-    if cut_list:
-        addCutTable(ax_table,cut_list)
+    if cut_table:
+        addCutTable(ax_table,cut_table)
 
     if "$p_T ( \sum_{n=1}^" in hc.axes[0].title:
         ax.set_xlim(right=600)
@@ -146,9 +147,10 @@ def plot2D(
     energy='13 Tev',
     control_region=False,
     zscorename='',
+    cut_table=None,
     cut_list=None,
 ):
-    if cut_list:
+    if cut_table:
         plt.rcParams["figure.figsize"] = (10,13)
         fig, axes = plt.subplots(2,1,gridspec_kw={'height_ratios': [1, 0.25]})
         ax = axes[0]
@@ -204,20 +206,19 @@ def plot2D(
         add_text = f"\nCR Selection\n"
     else:
         add_text = f"\n$\\lambda_{{{coupling}}}''$ Selection\n"
-
     addCmsInfo(
         ax,
         additional_text=add_text
         + (f"{add_label}" if add_label else "")
-        + (f", {objtitle}"),
+        + (f", {objtitle}")+('\n'+cut_list or ""),
         pos=pos,
         color="white",
     )
     
     addTitles2D(ax, plot_obj)
 
-    if cut_list:
-        addCutTable(ax_table, cut_list)
+    if cut_table:
+        addCutTable(ax_table, cut_table)
 
     if zscore and hasattr(ax, "cax"):
         cax = ax.cax
