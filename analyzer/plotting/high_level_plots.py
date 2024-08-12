@@ -106,7 +106,7 @@ def plot1D(
     addCmsInfo(
         ax,
         additional_text=add_text
-        + (add_label or "")+('\n'+cut_list or ""),
+        + (add_label or "")+('\n'+cut_list if cut_list else ""),
     )
 
     hc = next(it.chain(signal_plobjs, background_plobjs))
@@ -210,7 +210,7 @@ def plot2D(
         ax,
         additional_text=add_text
         + (f"{add_label}" if add_label else "")
-        + (f", {objtitle}")+('\n'+cut_list or ""),
+        + (f", {objtitle}")+('\n'+cut_list if cut_list else ""),
         pos=pos,
         color="white",
     )

@@ -49,10 +49,6 @@ plotter = Plotter(
     year="2018/2022",
 )
 
-
-print(plotter.cut_list_dict)
-print(plotter.reverse_cut_dict)
-
 def cutsPlot(cut_dict):
     fig, ax = plt.subplots()
     ax.grid(False)
@@ -60,7 +56,7 @@ def cutsPlot(cut_dict):
     act(ax,cut_dict,loc="center")
     fig.savefig(Path(directory) / "cuts_table.pdf")
     plt.close(fig)
-cutsPlot(plotter.cut_list_dict)  
+cutsPlot(plotter.cut_table_dict)  
 
 def cutflowPlot(histogram_name,percent=False):
     fig = plt.figure()
@@ -140,8 +136,8 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 
 print(plotter.histos.keys())
 for j in plotter.histos.keys():
-    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True)
-    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True)
+    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True,cut_table_in_plot=False)
+    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True,cut_table_in_plot=False)
 
 sys.exit()
 
