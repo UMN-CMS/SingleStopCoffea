@@ -13,20 +13,23 @@ import dask
 import yaml
 from analyzer.file_utils import compressDirectory
 from distributed import Client, LocalCluster, TimeoutError
+from rich.progress import Progress
+import datetime
+from .configuration import getConfiguration
 
 try:
     from lpcjobqueue import LPCCondorCluster
     from lpcjobqueue.schedd import SCHEDD
-    LPCQUEUE_AVAILABLE=True
+
+    LPCQUEUE_AVAILABLE = True
 except ImportError as e:
-    LPCQUEUE_AVAILABLE=False
+    LPCQUEUE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
 
 def createLPCCondorCluster(configuration):
-    """Create a new dask cluster for use with LPC condor.
-    """
+    """Create a new dask cluster for use with LPC condor."""
     if not LPCQUEUE_AVAILABLE:
         raise NotImplemented("LPC Condor can only be used at the LPC.")
 
@@ -42,15 +45,20 @@ def createLPCCondorCluster(configuration):
 
     base = Path(os.environ.get("APPTAINER_WORKING_DIR", ".")).resolve()
     venv = Path(os.environ.get("VIRTUAL_ENV"))
+    x509 = Path(os.environ.get("X509_USER_PROXY")).absolute()
 
     logger.info("Deleting old dask logs")
-    base_log_path = Path("/uscmst1b_scratch/lpc1/3DayLifetime/ckapsiak/")
+    base_log_path = Path("/uscmst1b_scratch/lpc1/3DayLifetime/") / os.getlogin() 
     shutil.rmtree(base_log_path / "dask_logs")
     for p in base_log_path.glob("tmp*"):
         shutil.rmtree(p)
 
     # Compress environment to transport to the condor workers
-    compressed_env = Path("compressed") / "environment.tar.gz"
+    compressed_env = (
+        Path(getConfiguration()["ENV_LOCAL_APPLICATION_DATA"])
+        / "compressed"
+        / "environment.tar.gz"
+    )
     if not compressed_env.exists():
         compressDirectory(venv, compressed_env.parent)
 
@@ -59,6 +67,8 @@ def createLPCCondorCluster(configuration):
     #    str(base / str(compressed_env)),
     # ]
     transfer_input_files = ["setup.sh", compressed_env]
+    if x509:
+        transfer_input_files.append(x509)
     kwargs = {}
     kwargs["worker_extra_args"] = [
         *dask.config.get("jobqueue.lpccondor.worker_extra_args"),
@@ -71,7 +81,6 @@ def createLPCCondorCluster(configuration):
     logger.info(f"Transfering input files: \n{transfer_input_files}")
     s = SCHEDD()
     # print(s)
-
     cluster = LPCCondorCluster(
         ship_env=False,
         image=apptainer_container,
@@ -86,14 +95,13 @@ def createLPCCondorCluster(configuration):
     )
     cluster.scale(jobs=workers)
     # print(cluster)
-    #cluster.adapt(minimum=workers, maximum=workers)
+    #cluster.adapt(minimum=1, maximum=workers)
 
     return cluster
 
 
 def createLocalCluster(configuration):
-    """Create a local dask cluster for running on a single node.
-    """
+    """Create a local dask cluster for running on a single node."""
 
     workers = configuration["n_workers"]
     memory = configuration["memory"]
@@ -115,8 +123,7 @@ cluster_factory = dict(
 
 
 def createNewCluster(cluster_type, config):
-    """Creates a general new cluster of a certain given a configuration.
-    """
+    """Creates a general new cluster of a certain given a configuration."""
 
     with importlib.resources.as_file(
         importlib.resources.files(analyzer.resources)
@@ -140,4 +147,13 @@ def cleanup(p):
 
 def runNewCluster(cluster_type, config):
     cluster = createNewCluster(cluster_type, config)
-    time.sleep(config["timeout"])
+    start_time = datetime.datetime.now()
+    end_time = start_time + datetime.timedelta(seconds=config["timeout"])
+    with Progress() as progress:
+        running = progress.add_task("[red]Remaining Time...", total=(config["timeout"]))
+        while True:
+            time.sleep(1)
+            now = datetime.datetime.now()
+            progress.update(running, advance=1)
+            if now > end_time:
+                break

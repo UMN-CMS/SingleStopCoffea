@@ -19,152 +19,6 @@ from graphlib import CycleError, TopologicalSorter
 logger = logging.getLogger(__name__)
 
 
-class FakeEvents:
-    def __init__(self, parent=None):
-        self.used_fields = set()
-        self.created_fields = set()
-        self.parent = parent
-
-    def __setitem__(self, key, val):
-        self.created_fields.add(key)
-
-    def __getitem__(self, key):
-        if isinstance(key, str):
-            self.used_fields.add(key)
-        return FakeEvents(self)
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __call__(self, *args, **kwargs):
-        return FakeEvents(self)
-
-    def __iter__(self):
-        return iter([])
-
-    def __lt__(self, other):
-        return FakeEvents(self.parent)
-
-    def __gt__(self, other):
-        return FakeEvents(self.parent)
-
-    def __ge__(self, other):
-        return FakeEvents(self.parent)
-
-    def __le__(self, other):
-        return FakeEvents(self.parent)
-
-    def __and__(self, other):
-        return FakeEvents(self.parent)
-
-    def __rand__(self, other):
-        return FakeEvents(self.parent)
-
-    def __or__(self, other):
-        return FakeEvents(self.parent)
-
-    def __ror__(self, other):
-        return FakeEvents(self.parent)
-
-    def __not__(self, other):
-        return FakeEvents(self.parent)
-
-    def __invert__(self):
-        return FakeEvents(self.parent)
-
-    def __abs__(self):
-        return FakeEvents(self.parent)
-
-    def __mul__(self, other):
-        return FakeEvents(self.parent)
-
-    def __rmul__(self, other):
-        return FakeEvents(self.parent)
-
-    def __div__(self, other):
-        return FakeEvents(self.parent)
-
-    def __rdiv__(self, other):
-        return FakeEvents(self.parent)
-
-    def __truediv__(self, other):
-        return FakeEvents(self.parent)
-
-    def __floordiv__(self, other):
-        return FakeEvents(self.parent)
-
-    def __sub__(self, other):
-        return FakeEvents(self.parent)
-
-    def __rsub__(self, other):
-        return FakeEvents(self.parent)
-
-    def __add__(self, other):
-        return FakeEvents(self.parent)
-
-    def __radd__(self, other):
-        return FakeEvents(self.parent)
-
-
-class FakeSelector:
-    def __init__(self, parent):
-        self.parent = parent
-
-    def add(self, name, *args, **kwargs):
-        self.parent.selections.add(name)
-
-
-class FakeAnalyzer:
-    def __init__(self):
-        self.created_histograms = set()
-        self.selections = set()
-
-        self.selection = FakeSelector(self)
-
-    def H(self, x, *args, **kwargs):
-        self.created_histograms.add(x)
-
-
-class FakeAk:
-    def __init__(self, events):
-        self.events = events
-
-    def __getattr__(self, key):
-        def nothing(*args, **kwargs):
-            return self.events
-
-        return nothing
-
-
-class FakeDecorator:
-    def __call__(self, *args, **kwargs):
-        def inner(func):
-            return func
-
-        return inner
-
-
-def inspectModule(module):
-    module_code = inspect.getsource(module.function)
-    fev = FakeEvents()
-    fa = FakeAnalyzer()
-    code = module_code + f"\n{module.function.__name__}(fev, fa)"
-    env = {
-        "fev": fev,
-        "fa": fa,
-        "analyzerModule": FakeDecorator(),
-        "ak": FakeAk(fev),
-        "np": FakeAk(fev),
-    }
-    for k, v in module.function.__globals__.items():
-        if k in ["analyzerModule", "ak", "np"]:
-            continue
-        env[k] = v
-
-    exec(code, env)
-    return fev.used_fields, fev.created_fields, fa.created_histograms
-
-
 class AnalyzerGraphError(Exception):
     def __init__(self, message):
         super().__init__(message)
@@ -190,20 +44,24 @@ class AnalyzerModule:
         categories="main",
         after=None,
         always=False,
+        dataset_pred=None,
         documentation=None,
+        processing_info=None,
     ):
         self.name = name
         self.function = function
         self.depends_on = toSet(depends_on) if depends_on else set()
         self.categories = toSet(categories) if categories else set()
+        self.dataset_pred = dataset_pred or (lambda x: True)
         self.always = always
         self.documenation = documentation
+        self.processing_info = processing_info or {}
 
     def __call__(self, events, analyzer):
         return self.function(events, analyzer)
 
     def __str__(self):
-        return f"AnalyzerModule({self.name}, depends_on={self.depends_on}, catetories={self.categories})"
+        return f"AnalyzerModule({self.name}, depends_on={self.depends_on}, categories={self.categories})"
 
     def __repr__(self):
         return str(self)
@@ -211,16 +69,48 @@ class AnalyzerModule:
 
 modules = {}
 category_after = {
+    "preselection": ["init"],
+    "selection": ["preselection"],
     "post_selection": ["selection"],
+    "apply_selection": ["selection"],
+    "post_selection" : ["apply_selection"],
     "weights": ["post_selection"],
     "category": ["post_selection"],
+    "finalize_weights": ["post_selection", "weights"],
     "main": ["post_selection", "weights", "category"],
+    "final": ["main"],
 }
 
 
-def generateTopology(module_list):
-    mods = [x.name for x in module_list]
-    mods.extend([x.name for x in modules.values() if x.always])
+def generateTopology(module_list, sample_info, include_defaults=True):
+    logger.debug(f"Including defaults: {include_defaults}")
+    if not include_defaults:
+        logger.warn(
+            f"Not including default modules. This may lead to unexpected behavior, use only if you are certain this is what you want to do!"
+        )
+    logger.info(f"Resolving modules")
+    ts = tuple(reversed(tuple(TopologicalSorter(category_after).static_order())))
+    resolved_category_after = {ts[i]: ts[i + 1 :] for i in range(len(ts))}
+    logger.info(f"Category depencies have been resolved to\n{resolved_category_after}")
+
+    mods = [x for x in module_list if x.dataset_pred(sample_info)]
+
+    if include_defaults:
+        all_mods = [x for x in modules.values() if x.always]
+        logger.info(
+            f"Adding {len(all_mods)} default modules:\n{[x.name for x in all_mods]}"
+        )
+        mods.extend([x for x in modules.values() if x.always])
+
+    mods = list(set(mods))
+
+    logger.info(f"Unfiltered modules are:\n{[x.name for x in mods]}")
+    diff = [x.name for x in mods if not x.dataset_pred(sample_info)]
+    mods = [x.name for x in mods if x.dataset_pred(sample_info)]
+    logger.info(
+        f"Dropped {len(diff)} modules  because of incompatible dataset predicate:\n{diff}"
+    )
+    logger.info(f"Filtered modules are:\n{mods}")
 
     cats = defaultdict(list)
 
@@ -234,7 +124,7 @@ def generateTopology(module_list):
         module = modules[name]
         graph[name] = module.depends_on
         for c in module.categories:
-            for a in category_after.get(c, []):
+            for a in resolved_category_after.get(c, []):
                 graph[name].update(set(cats[a]))
 
         for m in graph[name]:
@@ -250,8 +140,8 @@ def namesToModules(module_list):
     return [modules[x] for x in module_list]
 
 
-def sortModules(module_list):
-    graph = generateTopology(module_list)
+def sortModules(module_list, sample_info, include_defaults=True):
+    graph = generateTopology(module_list, sample_info, include_defaults)
     try:
         ts = TopologicalSorter(graph)
         ret = tuple(ts.static_order())

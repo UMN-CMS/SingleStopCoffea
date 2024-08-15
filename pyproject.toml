@@ -6,11 +6,14 @@ authors = ["UMN Stealth Stop Group"]
 license = "MIT"
 readme = "README.org"
 
+[tool.poetry.scripts]
+analyzer = 'analyzer.cli:main'
+
 [tool.poetry.dependencies]
 python = "^3.9"
 hist = "^2.6.3"
 matplotlib = "^3.7"
-coffea = {version="^2024", extras=["dask"]} 
+coffea = {version=">=2024.6", extras=["dask"]} 
 
 
 jupyter = "*"
@@ -22,6 +25,8 @@ gpytorch  = {version = ">=1.11", optional=true}
 pyro-ppl = "*"
 numpyro = {version="*", extras=["cpu"]} 
 numexpr = ">=2.8.4"
+
+argcomplete='^3.4.0'
 
 
 [tool.poetry.extras]

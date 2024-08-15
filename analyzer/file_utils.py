@@ -1,14 +1,51 @@
+import collections.abc
 import logging
 import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
-import collections.abc
+import pickle
 
 import yaml
 
 logger = logging.getLogger(__name__)
+
+
+def stripPort(url):
+    protocol, netloc, *rest = urlparse(url)
+    netloc = netloc.split(":")[0]
+    return urlunparse((protocol, netloc, *rest))
+
+
+def stripPrefix(url):
+    protocol, netloc, *rest = urlparse(url)
+    netloc = netloc.split(":")[0]
+    return urlunparse(("", "", *rest))
+
+
+def getPath(url):
+    _, _, p, *rest = urlparse(url)
+    return Path(p)
+
+
+def extractCmsLocation(url):
+    _, _, p, *rest = urlparse(url)
+    parts = Path(p).parts
+    store_idx = next((i for i, x in enumerate(parts) if x == "store"), None)
+    if store_idx is None:
+        raise RuntimeError(f"Could not find 'store' in {parts}")
+
+    good_parts = parts[store_idx:]
+    cms_path = Path("/", *good_parts)
+    return str(cms_path)
+
+
+def pickleWithParents(outpath, data):
+    p = Path(outpath)
+    p.parent.mkdir(exist_ok=True, parents=True)
+    with open(p, "wb") as f:
+        pickle.dump(data, f)
 
 
 def compressDirectory(
@@ -45,34 +82,80 @@ def compressDirectory(
     return final_path
 
 
-def copyFile(fr, to):
+def exists(client, loc):
+    from XRootD.client.flags import OpenFlags, StatInfoFlags
+
+    status, result = client.stat(loc, OpenFlags.REFRESH)
+    return status.ok
+
+
+def isDir(client, loc):
+    from XRootD.client.flags import OpenFlags, StatInfoFlags
+
+    status, result = client.stat(loc, OpenFlags.REFRESH)
+    return bool(status.ok and (result.flags & StatInfoFlags.IS_DIR))
+
+
+def makeDir(client, loc):
+    from XRootD.client.flags import MkDirFlags
+
+    status, result = client.mkdir(loc, MkDirFlags.MAKEPATH)
+
+
+def copyFile(fr, to, from_rel_to=None):
+    logger.info(f'Dest path is "{str(to)}"')
+
     fr_scheme, fr_netloc, fr_path, *fr_rest = urlparse(str(fr))
     to_scheme, to_netloc, to_path, *to_rest = urlparse(str(to))
-    if not fr_scheme:
-        fr_path = str(Path(fr_path).resolve().absolute())
-    if not to_scheme:
-        to_path = str(Path(to_path).resolve().absolute())
-    fr = urlunparse((fr_scheme, fr_netloc, fr_path, *fr_rest))
-    to = urlunparse((to_scheme, to_netloc, to_path, *to_rest))
-    xrootd = any(x == "root" for x in (fr_scheme, to_scheme))
-    if xrootd:
-        import XRootD
-        import XRootD.client
+    if from_rel_to:
+        rest = Path(fr_path).relative_to(Path(from_rel_to))
+        to_path = str(Path(to_path) / rest)
 
-        copyproc = XRootD.client.CopyProcess()
-        copyproc.add_job(str(fr), str(to))
-        copyproc.prepare()
-        copyproc.run()
-        client = XRootD.client.FileSystem(to_netloc)
-        status = client.locate(to_path, XRootD.client.flags.OpenFlags.READ)
-        assert status[0].ok
-        del client
-        del copyproc
-    else:
-        to = Path(to)
-        if not to.parent.is_dir():
-            to.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(fr, to)
+    fr = urlunparse((fr_scheme, fr_netloc, str(Path(fr_path).absolute()), *fr_rest))
+    to = urlunparse((to_scheme, to_netloc, to_path, *to_rest))
+
+    xrootd = any("root" in x for x in (fr_scheme, to_scheme))
+
+    import XRootD
+    import XRootD.client
+
+    client = XRootD.client.FileSystem(to_netloc)
+
+    logger.info(f'Dest path is "{to_path}"')
+
+    is_dir = isDir(client, to_path)
+    ex = exists(client, to_path)
+
+    if ex and not is_dir:
+        raise RuntimeError(f"Destination exists and is not a directory")
+
+    elif ex and is_dir:
+        logger.info(f'Dest path "{to_path}" exists and is a directory')
+        to = urlunparse(
+            (to_scheme, to_netloc, str(Path(to_path) / Path(fr_path).name), *to_rest)
+        )
+
+    elif not ex:
+        to_is_dir = to_path[-1] == '/'
+        logger.info(f'Dest path "{str(to_path)}" does not exist and it will {"" if to_is_dir  else "NOT"} be treated as a directory')
+        if to_is_dir:
+            makeDir(client, str(to_path))
+            logger.info(f'Creating directory  "{str(to_path)}"')
+            dest = str(Path(to_path) / Path(fr_path).name)
+            to = urlunparse((to_scheme, to_netloc, dest, *to_rest))
+        else:
+            parent_path = str(Path(to_path).parent)
+            logger.info(f'Creating directory "{str(parent_path)}"')
+            makeDir(client, str(parent_path))
+
+    logger.info(f'FINAL DEST IS: "{to}"')
+    # copyproc = XRootD.client.CopyProcess()
+    # copyproc.add_job(str(fr), str(to))
+
+    status = client.copy(str(fr), str(to), force=True)[0]
+    logger.info(status)
+    assert status.ok
+    del client
 
 
 def appendToUrl(url, *args):
@@ -86,7 +169,6 @@ def getStem(url):
     return str(Path(path).stem)
 
 
-
 def update(d, u):
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
@@ -94,6 +176,7 @@ def update(d, u):
         else:
             d[k] = v
     return d
+
 
 class DirectoryData:
     data_file_name = "directory_data.yaml"
@@ -128,15 +211,14 @@ class DirectoryData:
 
     def set(self, path, data):
         k = self.__key(path)
-        d = {self.file_data_key : {k : data}}
+        d = {self.file_data_key: {k: data}}
         self.__updateData(d)
 
     def getGlobal(self):
         return self.getComplete()["global_data"]
 
     def setGlobal(self, data):
-        self.__updateData({"global_data" : data})
-
+        self.__updateData({"global_data": data})
 
     def sync(self):
         current_data = self.getAll()

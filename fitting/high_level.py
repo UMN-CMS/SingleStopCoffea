@@ -410,29 +410,33 @@ def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
 
 
 def main():
+<<<<<<< HEAD
+=======
+    from analyzer.datasets import SampleManager, ProfileRepo
+>>>>>>> scalefactors
     from analyzer.core import AnalysisResult
     from analyzer.datasets import SampleManager
 
     mpl.use("Agg")
 
+    res = AnalysisResult.fromFile("results/data2018.pkl")
     res = AnalysisResult.fromFile("results/data_control.pkl")
     sig = AnalysisResult.fromFile("results/everything.pkl")
 
+
+    profile_repo = ProfileRepo()
+    profile_repo.loadFromDirectory("profiles")
     sample_manager = SampleManager()
-    sample_manager.loadSamplesFromDirectory("datasets")
-    bkg_name = "CR0b_Data2018"
+    sample_manager.loadSamplesFromDirectory("datasets", profile_repo, False)
+
     hists = res.getMergedHistograms(sample_manager)
-    sig_hists = sig.getMergedHistograms(sample_manager)
-    complete_hist = hists["ratio_m14_vs_m24"]
-    signal_hists_complete = sig_hists["ratio_m14_vs_m24"][
-        ..., hist.loc(1000) : hist.loc(3000), hist.loc(0.35) : hist.loc(1.0)
-    ]
 
+    complete_hist = hists["ratio_m14_vs_m24"]["Data2018"]
     orig = complete_hist[
-        ..., hist.loc(1000) : hist.loc(3000), hist.loc(0.35) : hist.loc(1.0)
+        ..., hist.loc(1150) : hist.loc(3000), hist.loc(0.4) : hist.loc(1)
     ]
-
-    narrowed = orig[..., :: hist.rebin(1), :: hist.rebin(1)]
+    narrowed = orig[..., :: hist.rebin(2), :: hist.rebin(2)]
+    qcd_hist = narrowed
     qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
 
     signal_hist_names = [
@@ -493,7 +497,6 @@ def main():
     p = Path("allscans")
     for n, k in kernels.items():
         doEstimationForSignals(signals_to_scan, qcd_hist, k, p / n, kernel_name=n)
-
 
 if __name__ == "__main__":
     loadStyles()
