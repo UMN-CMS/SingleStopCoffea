@@ -410,12 +410,8 @@ def doEstimationForSignals(signals, bkg_hist, kernel, base_dir, kernel_name=""):
 
 
 def main():
-<<<<<<< HEAD
-=======
     from analyzer.datasets import SampleManager, ProfileRepo
->>>>>>> scalefactors
     from analyzer.core import AnalysisResult
-    from analyzer.datasets import SampleManager
 
     mpl.use("Agg")
 
