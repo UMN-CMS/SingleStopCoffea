@@ -98,6 +98,7 @@ def generatePulls(ax, observed, model, observed_title="", mask=None, domain=None
     edges, data, variances = observed
     mean, model_variance = model
 
+
     model_obj = plotting.PlotObject.fromNumpy((mean, edges), model_variance, mask=mask)
     obs_obj = plotting.PlotObject.fromNumpy(
         (data, edges), variances, title=observed_title, mask=mask

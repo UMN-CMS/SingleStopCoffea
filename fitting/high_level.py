@@ -159,11 +159,10 @@ def makeDiagnosticPlots(pred, raw_test, raw_train, raw_hist, mask=None):
 
     fig, ax = plt.subplots(layout="tight")
     all_pulls = (raw_test.Y - pred_mean) / torch.sqrt(pred.V)
-    p = plotting.PlotObject.fromHist(
-        uhi.numpy_plottable.ensure_plottable_histogram(
-            np.histogram(all_pulls[torch.abs(all_pulls) < np.inf], bins=20)
-        )
+    p = plotting.PlotObject.fromNumpy(
+        np.histogram(all_pulls[torch.abs(all_pulls) < np.inf], bins=20)
     )
+    print("HERE")
     plotting.drawAs1DHist(ax, p, yerr=False)
     ax.set_xlabel(r"$\frac{N_{obs}-N_{pred}}{\sigma_{p}}$")
     ax.set_ylabel("Count")
@@ -248,7 +247,7 @@ def doCompleteRegression(
         )
 
         if hasattr(model.covar_module, "initialize_from_data"):
-            model.covar_module.initialize_from_data(train.X,train.Y)
+            model.covar_module.initialize_from_data(train.X, train.Y)
         if torch.cuda.is_available() and use_cuda:
             model = model.cuda()
             likelihood = likelihood.cuda()
@@ -270,7 +269,7 @@ def doCompleteRegression(
             raw_pred_dist = regression.getPrediction(
                 model, likelihood, normalized_test_data
             )
-            with  gpytorch.settings.cholesky_max_tries(30):
+            with gpytorch.settings.cholesky_max_tries(30):
                 psd_pred_dist = fit_utils.fixMVN(raw_pred_dist)
             raw_pred_dist = type(raw_pred_dist)(
                 psd_pred_dist.mean, psd_pred_dist.covariance_matrix.to_dense()
@@ -415,10 +414,8 @@ def main():
 
     mpl.use("Agg")
 
-    res = AnalysisResult.fromFile("results/data2018.pkl")
-    res = AnalysisResult.fromFile("results/data_control.pkl")
-    sig = AnalysisResult.fromFile("results/everything.pkl")
-
+    res = AnalysisResult.fromFile("results/histograms/QCDInclusive2018.pkl")
+    sig = AnalysisResult.fromFile("results/histograms/signal.pkl")
 
     profile_repo = ProfileRepo()
     profile_repo.loadFromDirectory("profiles")
@@ -426,14 +423,16 @@ def main():
     sample_manager.loadSamplesFromDirectory("datasets", profile_repo, False)
 
     hists = res.getMergedHistograms(sample_manager)
+    sig_hists = sig.getMergedHistograms(sample_manager)
 
-    complete_hist = hists["ratio_m14_vs_m24"]["Data2018"]
+    complete_hist = hists["ratio_m14_vs_m24"]["QCDInclusive2018"]
+    signal_hists_complete = sig_hists["ratio_m14_vs_m24"]
     orig = complete_hist[
         ..., hist.loc(1150) : hist.loc(3000), hist.loc(0.4) : hist.loc(1)
     ]
     narrowed = orig[..., :: hist.rebin(2), :: hist.rebin(2)]
     qcd_hist = narrowed
-    qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
+    # qcd_hist = narrowed[bkg_name, ...] * 0.09764933859427383
 
     signal_hist_names = [
         "signal_312_1500_600",
@@ -441,7 +440,7 @@ def main():
         "signal_312_1500_900",
         "signal_312_2000_900",
     ]
-    signals_to_scan = [(sn, signal_hists_complete[sn, ...]) for sn in signal_hist_names]
+    signals_to_scan = [(sn, signal_hists_complete[sn]) for sn in signal_hist_names]
     signals_to_scan.append((None, None))
 
     nnrbf256 = SK(models.NNRBFKernel(odim=2, layer_sizes=(256, 128, 16)))
@@ -461,38 +460,38 @@ def main():
 
     shape = (256, 128, 64, 32, 16)
     nnrbf_deep = SK(models.NNRBFKernel(odim=2, layer_sizes=shape))
-    nnrbf_tiny = SK(models.NNRBFKernel(odim=2, layer_sizes=(32,16,8)))
-    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000,500,10)))
+    nnrbf_huge = SK(models.NNRBFKernel(odim=2, layer_sizes=(1000, 500, 10)))
 
-    nngrbf = SK(models.NNGRBFKernel(odim=2, layer_sizes=(32,16,4)))
+    nngrbf = SK(models.NNGRBFKernel(odim=2, layer_sizes=(32, 16, 4)))
 
-    nnsmk_tiny = models.NNSMKernel(odim=2, layer_sizes=(500,250,50),num_mixtures=4)
+    nnsmk_tiny = models.NNSMKernel(odim=2, layer_sizes=(500, 250, 50), num_mixtures=4)
 
     grq = SK(models.GeneralRQ(ard_num_dims=2))
 
     rbf = SK(gpytorch.kernels.RBFKernel(ard_num_dims=2))
 
     grbf = SK(models.GeneralRBF(ard_num_dims=2))
-    gsmk=models.GeneralSpectralMixture(ard_num_dims=2, num_mixtures=4)
+    gsmk = models.GeneralSpectralMixture(ard_num_dims=2, num_mixtures=4)
 
     smk = gpytorch.kernels.SpectralMixtureKernel(num_mixtures=12, ard_num_dims=2)
 
     kernels = {
-        #"rbf": rbf,
-        #"smk": smk,
-        #"grq": grq,
-        #"nngrf" : nngrbf,
-        #"nnsmk_tiny": nnsmk_tiny,
-        #"nnrbf_deep": nnrbf_deep,
-        #"nnrbf_huge": nnrbf_huge,
-        #"nnrbf_tiny": nnrbf_tiny,
+        # "rbf": rbf,
+        # "smk": smk,
+        # "grq": grq,
+        # "nngrf" : nngrbf,
+        # "nnsmk_tiny": nnsmk_tiny,
+        # "nnrbf_deep": nnrbf_deep,
+        # "nnrbf_huge": nnrbf_huge,
+        # "nnrbf_tiny": nnrbf_tiny,
         # "nnrbf_32_16_8": nnrbf32_16_8,
-        "nnrbf_256_128_64_32_16": nnrbf_deep,
+        "nnrbf_32_32_8": SK(models.NNRBFKernel(odim=2, layer_sizes=(32, 32, 8))),
     }
 
     p = Path("allscans")
     for n, k in kernels.items():
         doEstimationForSignals(signals_to_scan, qcd_hist, k, p / n, kernel_name=n)
+
 
 if __name__ == "__main__":
     loadStyles()
