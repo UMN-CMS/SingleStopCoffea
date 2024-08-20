@@ -23,7 +23,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
 
         if p.variances() is None:
             raise ValueError(f"Plot object does not have variance")
-        unc = np.sqrt(p.variances)
+        unc = np.sqrt(p.variances())
 
         # import csv
         # with open('uncertainty_check.csv', 'a', newline='') as file:

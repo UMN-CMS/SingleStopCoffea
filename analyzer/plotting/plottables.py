@@ -113,11 +113,12 @@ class PlotObject:
         return np.sum(self.values(flow))
 
     def variances(self, flow=False):
+        v = self.__variances
         if self.hasFlow() and not flow:
             cuts = tuple(slice(1, -1) for i in range(self.__values.ndim))
-            return self.__variances[cuts]
+            return v[cuts]
         else:
-            return self.__variances
+            return v
 
     def dropFlow(self):
         new_vals = self.values(flow=False)
