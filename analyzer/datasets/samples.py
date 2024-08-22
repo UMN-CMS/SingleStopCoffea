@@ -369,14 +369,14 @@ class SampleSet:
 
     def weight(self, target_lumi=None):
         if self.derived_from:
-            w = self.derived_from.weight()
+            w = self.derived_from.weight(target_lumi)
         else:
-            if self.sample_type:
+            if self.sample_type == "DATA":
                 w = 1
             else:
                 w = self.lumi * self.x_sec / self.n_events
-        if target_lumi:
-            w = w * target_lumi / self.lumi
+            if target_lumi:
+                w = w * target_lumi / self.lumi
         return w
 
     def getAnalyzerInput(self, setname=None, **kwargs):
