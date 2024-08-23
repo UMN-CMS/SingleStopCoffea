@@ -1,14 +1,11 @@
 import sys
-import warnings
-sys.path.append(".")
 
-import matplotlib as mpl
+sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
-mpl.use("Agg")
+import warnings
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
 
-backgrounds = []
 sig = [
     f"signal_312_{p}"
     for p in (
@@ -51,19 +48,20 @@ sig = [
 ]
 
 
-plotter = Plotter("results/everything.pkl", "plots", default_backgrounds=backgrounds)
+backgrounds = ["QCDInclusive2018"]
+plotter = Plotter("results/histograms/2018mc.pkl", "plots", default_backgrounds=backgrounds)
 
 
 toplot = [
     "h_njet",
+    "HT",
     "pt_1",
     "pt_2",
     "m14_m",
-    "m14_vs_m24",
-    "m14_vs_m13",
-    "ratio_m14_vs_m24",
-    "ratio_m14_vs_m13",
+    "m13_m",
+    "m24_vs_m14",
+    "m13_vs_m14",
 ]
 
 for p in toplot:
-    plotter(p, sig, normalize=True)
+    plotter(p, [], normalize=False, scale="log")
