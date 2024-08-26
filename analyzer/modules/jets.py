@@ -85,24 +85,32 @@ def createJetHistograms(events, analyzer):
         )
 
     for i in range(0, 4):
-        analyzer.H(rf"pt_{i}", 
+        analyzer.H(rf"pt_{i+1}", 
             makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),
             gj[:, i].pt,
             name=f"$p_T$ of jet {i+1}",
             description=f"$p_T$ of jet {i+1} ",
         )
-        analyzer.H(f"eta_{i}", 
+        analyzer.H(f"eta_{i+1}", 
             makeAxis(50, -5, 5, f"$\eta_{{{i+1}}}$"),
             gj[:, i].eta,
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
-        analyzer.H(f"phi_{i}", 
-            makeAxis(50, -4, 4, f"$\phi_{{{i+1}}}$"),
+        analyzer.H(f"phi_{i+1}", 
+            makeAxis(50, -5, 5, f"$\phi_{{{i+1}}}$"),
             gj[:, i].phi,
-            name=rf"$\phi$ of jet {i+1}",
-            description=rf"$\phi$ of jet {i+1}",
+            name=f"$\phi$ of jet {i+1}",
+            description=f"$\phi$ of jet {i+1}",
         )
+        analyzer.H(f"phi_{i+1}_vs_eta_{i+1}",
+                    [makeAxis(50,-5,5,f"$\eta_{{{i+1}}}$"),
+                        makeAxis(50,-5,5,f"$\phi_{{{i+1}}}$")],
+                    [gj[:,i].eta,
+                        gj[:,i].phi],
+                    name=f"$\eta$ vs $\phi$ of jet {i+1}",
+                    description=rf"$\eta$ vs $\phi$ of jet {i+1}"
+                   )
 
     masks = {}
     for i, j in list(x for x in it.combinations(range(0, 4), 2) if x[0] != x[1]):
@@ -138,12 +146,12 @@ def createJetHistograms(events, analyzer):
         mask = ak.num(gj, axis=1) > i
         masked_jets = gj[mask]
         htratio = masked_jets[:, i].pt / events.HT[mask]
-        analyzer.H(f"pt_ht_ratio_{i}", 
+        analyzer.H(f"pt_ht_ratio_{i+1}", 
             hist.axis.Regular(50, 0, 1, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
             mask=mask,
-            name=rf"Ratio of jet {i} $p_T$ to event HT",
-            description=rf"Ratio of jet {i} $p_T$ to event HT",
+            name=rf"Ratio of jet {i+1} $p_T$ to event HT",
+            description=rf"Ratio of jet {i+1} $p_T$ to event HT",
         )
     
     return events, analyzer
