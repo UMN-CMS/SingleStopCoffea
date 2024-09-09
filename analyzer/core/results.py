@@ -81,24 +81,6 @@ class DatasetRunResult:
         b = self.processed_chunks
         return a.difference(b)
 
-    def getMissingCoffeaDataset(self) -> DatasetSpec:
-        missing_chunks = self.dataset_preprocessed.chunks.difference(
-            self.getProcessedChunks()
-        )
-        input_dataset = copy.deepcopy(self.getCoffeaDataset())
-
-        def filterSteps(name, steps, missing):
-            return [s for s in steps if (name, *s) in missing]
-
-        for k, v in input_dataset["files"].items():
-            v["steps"] = filterSteps(k, v["steps"], missing_chunks)
-
-        input_dataset["files"] = {
-            k: v for k, v in input_dataset["files"].items() if v["steps"]
-        }
-
-        return input_dataset
-
     def getMissingDataset(self) -> Set[Chunk]:
         ds_prepped = copy.deepcopy(self.dataset_preprocessed)
         ds_prepped.limit_chunks = self.getBadChunks()
@@ -108,7 +90,7 @@ class DatasetRunResult:
         self, sample_manager: "SampleManager", target_lumi: float
     ) -> Dict[str, hist.Hist]:
         sample = sample_manager[self.dataset_preprocessed.dataset_input.dataset_name]
-        weight = sample.getWeight(target_lumi)
+        weight = sample.weight(target_lumi)
         reweighted = sample.n_events / self.raw_events_processed
         final_weight = reweighted * weight
         sample_manager.weights.append(final_weight)
@@ -125,9 +107,9 @@ class DatasetRunResult:
             self.dataset_preprocessed.dataset_name
             != other.dataset_preprocessed.dataset_name
         ):
-            raise ValueError()
+            raise ValueError("Attempting to merge different datasets.")
         if self.processed_chunks.intersection(other.processed_chunks):
-            raise ValueError()
+            raise ValueError(f"Detected overlapping chaunks when attempting to merge datasets.")
         new_hists = utils.accumulate([self.histograms, other.histograms])
         new_non_scaled_hists = utils.accumulate([self.non_scaled_histograms, other.non_scaled_histograms])
         new_non_scaled_hists_labels = utils.accumulate([self.non_scaled_histograms_labels, other.non_scaled_histograms_labels])
@@ -169,6 +151,7 @@ class AnalysisResult:
     # modifications: List[ResultModification]
     results: Dict[str, DatasetRunResult]
     module_list: List[str]
+    use_default_modules: bool
 
     def save(self, output_file):
         path = Path(output_file)
@@ -209,7 +192,7 @@ class AnalysisResult:
                 )
             else:
                 updated_results[dataset_name] = results
-        return AnalysisResult(updated_results, self.module_list)
+        return AnalysisResult(updated_results, self.module_list, self.use_default_modules)
     
     def getNonScaledHistograms(self):
         r = utils.accumulate(

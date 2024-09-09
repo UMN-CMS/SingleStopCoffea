@@ -12,7 +12,7 @@ from .utils import numMatching
 @analyzerModule("tiny", categories="main")
 def tiny(events, analyzer):
     gj = events.good_jets
-    analyzer.H(f"h_njet", nj_axis, ak.num(gj), name="njets")
+    analyzer.H(f"njet", nj_axis, ak.num(gj), name="njets")
     return events,analyzer
 
 
@@ -83,7 +83,6 @@ def createJetHistograms(events, analyzer):
             [masses[p2],masses[p1] / masses[p2]],
             name=f"ratio_m{mtitle1}_vs_m{mtitle2}",
         )
-
     for i in range(0, 4):
         analyzer.H(rf"pt_{i+1}", 
             makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),

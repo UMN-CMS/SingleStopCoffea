@@ -15,7 +15,7 @@ import analyzer.datasets as ds
 import dask
 from analyzer.file_utils import compressDirectory
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client, progress
+from dask.distributed import Client, progress, LocalCluster
 from rich.console import Console
 from rich.progress import (
     Progress,
@@ -93,6 +93,8 @@ def createClient(dask_schedd_address, transfer_analyzer=True):
     else:
         client = None
         logger.info("No scheduler address provided, running locally")
+        client = Client(n_workers=1, memory_limit="8GB", threads_per_worker=1)
+        logger.info("Created local client")
     return client
 
 
@@ -151,8 +153,24 @@ def runModulesOnDatasets(
     client=None,
     skim_save_path=None,
     file_retrieval_kwargs=None,
+    include_default_modules=True,
+    limit_samples=None,
+    limit_files=None,
+    sample_manager=None,
 ):
     import analyzer.modules
+
+    if limit_samples and sample_manager is None:
+        raise RuntimeError("If limiting samples must also provide sample manager")
+
+    if limit_samples:
+        samples = [sample_manager[x] for x in limit_samples]
+        limited = list(
+            it.chain.from_iterable(makeIterable(x.getAnalyzerInput()) for x in samples)
+        )
+        names = [x.dataset_name for x in limited]
+
+        prepped_datasets = [x for x in prepped_datasets if x.dataset_name in names]
 
     config_path = Path(getConfiguration()["APPLICATION_DATA"])
     path = config_path / "argparse_cache" / f"modules.pkl"
@@ -169,25 +187,30 @@ def runModulesOnDatasets(
     ) as p:
         t = p.add_task("Preparing Datasets", total=len(prepped_datasets))
         tasks = [
-            (p.add_task(x.dataset_name, total=len(analyzer.modules), visible=False), x)
+            (
+                p.add_task(
+                    x.dataset_name, total=len(analyzer.module_names), visible=False
+                ),
+                x,
+            )
             for x in prepped_datasets
         ]
         for task, prepped in tasks:
             p.advance(t, 1)
-            futures.append(
-                analyzer.getDatasetFutures(
-                    prepped,
-                    skim_save_path=skim_save_path,
-                    prog_bar_updater=partial(p.update, task),
-                    file_retrieval_kwargs=file_retrieval_kwargs,
-                )
+            f = analyzer.getDatasetFutures(
+                prepped,
+                skim_save_path=skim_save_path,
+                prog_bar_updater=partial(p.update, task),
+                file_retrieval_kwargs=file_retrieval_kwargs,
+                include_default_modules=include_default_modules,
+                limit_files=limit_files,
             )
-
+            futures.append(f)
     logger.info(f"Generated {len(futures)} analysis futures")
     with Progress(TextColumn("{task.description}"), BarColumn()) as p:
         t = p.add_task("Running Analysis", total=None)
         ret = ac.execute(futures, client)
-    ret = ac.AnalysisResult(ret, modules)
+    ret = ac.AnalysisResult(ret, modules, include_default_modules)
     return ret
 
 
@@ -196,5 +219,10 @@ def patchResult(result, **kwargs):
     missing_datasets = {
         k: v.getMissingDataset() for k, v in result.results.items() if v.getBadChunks()
     }
-    ret = runModulesOnDatasets(modules, list(missing_datasets.values()), **kwargs)
+    ret = runModulesOnDatasets(
+        modules,
+        list(missing_datasets.values()),
+        include_default_modules=result.use_default_modules,
+        **kwargs,
+    )
     return result.merge(ret)

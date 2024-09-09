@@ -6,7 +6,7 @@ application_data="$application_root/.application_data"
 declare -A env_configs
 
 env_configs[coffea,venv]="coffeaenv"
-env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2024.5.0-py3.10"
+env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2024.8.1-py3.10"
 
 if [[ $(hostname) =~ "fnal" ]]; then
     env_configs[coffea,extras]="lpcqueue"
@@ -60,10 +60,10 @@ function activate_venv(){
 }
 
 function version_info(){
-    local packages_to_show=("coffea" "awkward" "dask" "distributed" "dask-awkward" "dask-histogram" "fsspec_xrootd")
+    local packages_to_show=("coffea" "awkward" "uproot" "dask" "distributed" "dask-awkward" "dask-histogram" "fsspec_xrootd")
     local package_info="$(pip3 show "${packages_to_show[@]}")"
     for package in "${packages_to_show[@]}"; do
-        awk -v package="$package" 'BEGIN{pat=package "$" } a==1{printf("%s: %s\n", package, $2); exit} $0~pat{a++}' \
+        awk -v package="$package" 'BEGIN{pat="Name: " package } a==1{printf("%s: %s\n", package, $2); exit} $0~pat{a++}' \
             <<< "$package_info"
     done  >&2 
 
@@ -149,7 +149,7 @@ function rcmode(){
     export HISTIGNORE=:"&:[ ]*:exit:ls:bg:fg:history:clear"
     shopt -s histappend
     shopt -s cmdhist &>/dev/null
-    export HISTFILE=~/.bash_history
+    export HISTFILE=/srv/.bash_eternal_history
     export CONDOR_CONFIG="$application_data/.condor_config"
     export JUPYTER_PATH=$application_data/envlocal/$env/share/jupyter
     export JUPYTER_RUNTIME_DIR=$application_data/envlocal/$env/share/jupyter/runtime

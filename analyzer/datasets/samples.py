@@ -13,7 +13,7 @@ from yaml import dump, load
 
 import rich
 import json
-from analyzer.core.inputs import AnalyzerInput
+from analyzer.core.inputs import AnalyzerInput, SampleInfo
 from analyzer.datasets.styles import Style
 from analyzer.file_utils import stripPrefix
 from analyzer.configuration import getConfiguration
@@ -99,7 +99,11 @@ class SampleFile:
         return self.object_path
 
     def getFile(
-        self, require_location=None, location_priority_regex=None, require_protocol=None, **kwargs
+        self,
+        require_location=None,
+        location_priority_regex=None,
+        require_protocol=None,
+        **kwargs,
     ):
         if location_priority_regex and require_location:
             location_priority_regex = None
@@ -173,26 +177,46 @@ class SampleFile:
         return hash(self.cmsLocation())
 
 
-@dataclass
 class SampleSet:
-    name: str
-    title: str
-    n_events: int
-    profile: Optional[Union[str, Profile]]
-    derived_from: Optional[Union[str, "SampleSet"]]
-    sample_type: Optional[str]
-    produced_on: Optional[str]
-    lumi: Optional[float]
-    x_sec: Optional[float]
-    files: List[SampleFile] = field(default_factory=list)
-    tags: Set[str] = field(default_factory=set)
-    style: Optional[Union[Style, str]] = None
-    isdata: bool = False
-    forbid: Optional[bool] = False
-    mc_campaign: Optional[str] = None
-    lumi_json: Optional[str] = None
-    required_modules: Optional[str] = None
-    cms_dataset_regex: Optional[str] = None
+
+    def __init__(
+        self,
+        name: str,
+        title: str,
+        n_events: int,
+        profile: Optional[Union[str, Profile]],
+        derived_from: Optional[Union[str, "SampleSet"]],
+        sample_type: Optional[str],
+        produced_on: Optional[str],
+        lumi: Optional[float],
+        x_sec: Optional[float],
+        files: List[SampleFile] = field(default_factory=list),
+        style: Optional[Union[Style, str]] = None,
+        isdata: bool = False,
+        forbid: Optional[bool] = False,
+        mc_campaign: Optional[str] = None,
+        required_modules: Optional[str] = None,
+        cms_dataset_regex: Optional[str] = None,
+    ):
+        self.name = name
+        self.title = title
+        self.sample_type = sample_type
+        self.n_events = n_events
+        self.cms_dataset_regex = cms_dataset_regex
+
+        self.derived_from = derived_from
+
+        self.__profile = profile
+        self.__lumi = lumi
+        self.__x_sec = x_sec
+
+        self.files = files
+        self.style = style
+        self.forbid = forbid
+        self.mc_campaign = mc_campaign
+        self.required_modules = required_modules
+
+        self.produced_on = produced_on
 
     @staticmethod
     def fromDict(data):
@@ -200,18 +224,23 @@ class SampleSet:
         derived_from = data.get("derived_from", None)
         produced_on = data.get("produced_on", None)
         profile = data.get("profile", None)
+        if profile:
+            profile = str(profile)
         lumi = data.get("lumi", None)
         x_sec = data.get("x_sec", None)
         n_events = data.get("n_events", None)
-        tags = set(data.get("tags", []))
         title = data.get("title", name)
         isdata = data.get("isdata", False)
         forbid = data.get("forbid", None)
         mc_campaign = data.get("mc_campaign", None)
-        lumi_json = data.get("lumi_json", None)
         required_modules = data.get("required_modules", None)
 
-        sample_type = data.get("sample_type", None)
+        sample_type = (
+            data.get("sample_type", None)
+            or ("MC" if mc_campaign else None)
+            or ("Data" if isdata else None)
+        )
+
         cms_dataset = data.get("cms_dataset", None)
         if not (x_sec and n_events and lumi) and not (derived_from or isdata):
             raise Exception(
@@ -224,10 +253,6 @@ class SampleSet:
         if isdata:
             if mc_campaign:
                 raise Exception(f"A data sample cannot have an MC campaign.")
-            if not lumi_json and not derived_from:
-                raise Exception(
-                    f"Data sample {name} does not have an associated lumi json"
-                )
 
         files = [SampleFile.fromDict(x) for x in data["files"]]
 
@@ -246,12 +271,10 @@ class SampleSet:
             lumi=lumi,
             x_sec=x_sec,
             files=files,
-            tags=tags,
             style=style,
             isdata=isdata,
             forbid=forbid,
             mc_campaign=mc_campaign,
-            lumi_json=lumi_json,
             cms_dataset_regex=cms_dataset,
             required_modules=required_modules,
         )
@@ -305,92 +328,73 @@ class SampleSet:
         with open(look_for, "w") as f:
             json.dump(replicas, f, indent=2)
 
-    def isForbidden(self,modules=None):
+    def isForbidden(self, modules=None):
         if self.forbid is None:
             if self.derived_from is None:
                 return False
             else:
                 return self.derived_from.isForbidden()
-        elif self.forbid and (modules is not None and self.required_modules is not None):
+        elif self.forbid and (
+            modules is not None and self.required_modules is not None
+        ):
             if self.required_modules in modules:
                 return False
         else:
             return self.forbid
 
-    def getLumi(self):
+    @property
+    def lumi(self):
         if self.derived_from:
             return self.derived_from.lumi
         else:
-            return self.lumi
+            return self.__lumi
 
-    def isData(self):
+    @property
+    def x_sec(self):
         if self.derived_from:
-            return self.derived_from.isData()
+            return self.derived_from.x_sec
         else:
-            return self.isdata
+            return self.__x_sec
 
-    def getLumiJson(self):
+    @property
+    def profile(self):
+        if self.derived_from and self.__profile is None:
+            return self.derived_from.profile
+        else:
+            return self.__profile
+
+    @profile.setter
+    def profile(self, val):
+        self.__profile = val
+
+    def weight(self, target_lumi=None):
         if self.derived_from:
-            return self.derived_from.getLumiJson()
+            w = self.derived_from.weight()
         else:
-            return self.lumi_json
-
-    def getXSec(self):
-        if self.derived_from:
-            return self.derived_from.getXSec()
-        else:
-            return self.x_sec
-
-    def getProfile(self):
-        if self.derived_from:
-            return self.derived_from.getProfile()
-        else:
-            return self.profile
-
-    def toCoffeaDataset(self, location_priority_regex=None, require_location=None, modules=None):
-        if self.isForbidden(modules):
-            raise ForbiddenDataset(
-                f"Attempting to access the files for forbidden dataset {self.name}"
-            )
-
-        return {
-            self.name: {
-                "files": {
-                    f.getFile(location_priority_regex, require_location): f.getRootDir()
-                    for f in self.files
-                }
-            }
-        }
-
-    def fileList(self, prefer_location=None, require_location=None):
-        if self.isForbidden():
-            raise ForbiddenDataset(
-                f"Attempting to access the files for forbidden dataset {self.name}"
-            )
-
-        return [f.getNarrowed(prefer_location, require_location) for f in self.files]
-
-    def getWeight(self, target_lumi=None):
-        if self.derived_from:
-            w = self.derived_from.getWeight()
-        else:
-            if self.isData():
+            if self.sample_type:
                 w = 1
             else:
                 w = self.lumi * self.x_sec / self.n_events
         if target_lumi:
-            w = w * target_lumi / self.getLumi()
+            w = w * target_lumi / self.lumi
         return w
 
     def getAnalyzerInput(self, setname=None, **kwargs):
         return AnalyzerInput(
             dataset_name=self.name,
+            last_ancestor=self.getLastAncestor().name,
             fill_name=setname or self.name,
             files={f.cmsLocation(): f for f in self.files},
-            profile=self.getProfile(),
-            lumi_json=self.getLumiJson(),
+            profile=self.profile,
             required_modules=self.required_modules,
+            sample_info=SampleInfo(self.name, self.sample_type, self.mc_campaign),
         )
+
+    def getLastAncestor(self):
+        if self.derived_from:
+            return self.derived_from.getLastAncestor()
+        else:
+            return self
 
     def totalEvents(self):
         return self.n_events
@@ -439,7 +443,7 @@ class SampleCollection:
     def getSets(self):
         return self.sets
 
-    def getAnalyzerInput(self,**kwargs):
+    def getAnalyzerInput(self, **kwargs):
         return [
             x.getAnalyzerInput(
                 None if self.treat_separate else self.name,

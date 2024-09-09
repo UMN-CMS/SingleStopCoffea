@@ -83,7 +83,7 @@ def handlePreprocess(args):
         args.samples,
         args.step_size,
         file_retrieval_kwargs=dict(
-            location_priority_regex=[r".*(US|CH|FR).*", "eos"],
+            location_priority_regex=[r".*(US|CH).*", "eos"],
             require_location=args.require_location,
         ),
     )
@@ -132,6 +132,10 @@ def handleRunPreprocessed(args):
 
     with open(args.preprocessed_inputs, "rb") as f:
         prepped = pkl.load(f)
+
+    print("LIMIT")
+    print(args.limit_files)
+
     result = ra.runModulesOnDatasets(
         args.modules,
         prepped,
@@ -141,6 +145,10 @@ def handleRunPreprocessed(args):
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
             require_location=args.require_location,
         ),
+        include_default_modules=not args.no_default_modules,
+        sample_manager=sample_manager,
+        limit_samples=args.samples,
+        limit_files=args.limit_files,
     )
 
     pickleWithParents(args.output, result)
@@ -187,6 +195,7 @@ def handleRunSamples(args):
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
             require_location=args.require_location,
         ),
+        include_default_modules=not args.no_default_modules,
     )
     pickleWithParents(args.output, result)
 
@@ -710,6 +719,17 @@ def addCommonRunArgs(parser):
     parser.add_argument(
         "-o", "--output", required=True, type=Path, help="Output data path."
     )
+
+    parser.add_argument(
+        "--limit-files",  type=int, nargs=2, help="Limit file range"
+    )
+
+    parser.add_argument(
+        "--no-default-modules",
+        action="store_true",
+        default=False,
+        help="If set, do not include default modules when running the anzlyer. VERY DANGEROUS!",
+    )
     return parser
 
 
@@ -721,6 +741,19 @@ def addSubparserRunPreprocessed(subparsers):
     subparser = addCommonPathArgs(subparser)
     subparser = addCommonDaskArgs(subparser)
     subparser = addCommonRunArgs(subparser)
+
+    sample_choices = loadCachedArgparseList("samples")
+    subparser.add_argument(
+        "-s",
+        "--samples",
+        type=str,
+        nargs="+",
+        help="If provided, filter the samples found in the preprprocessed input file",
+        metavar="",
+        required=False,
+        choices=sample_choices,
+        default=None,
+    )
 
     subparser.add_argument(
         "--preprocessed-inputs",
@@ -756,8 +789,6 @@ def addSubparserRunSamples(subparsers):
     subparser = addCommonDaskArgs(subparser)
     subparser = addCommonPrepArgs(subparser)
     subparser = addCommonRunArgs(subparser)
-
-
 
     subparser.add_argument(
         "--save-preprocessed",
