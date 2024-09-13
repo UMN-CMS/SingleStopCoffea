@@ -42,13 +42,13 @@ def createSelection(events, analyzer):
     passes_b_dr = med_dr > 1
 
     if "HLT" in events.fields:
-        #hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+        hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+        selection.add('hlt',hlt)
         #passes_hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
         #selection.add("hlt", hlt)
-        for n in hlt_names:
-        #hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-            selection.add(f"hlt_{n}", events.HLT[n])
-
+        #for n in hlt_names:
+        #   hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+        #selection.add(f"hlt_{n}", events.HLT[n])
     selection.add("highptjet", passes_highptjet)
     selection.add("jets", passes_jets)
     selection.add("0Lep", passes_0Lep)
@@ -189,9 +189,10 @@ def createCRSelection(events, analyzer):
     # top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
-        for n in hlt_names:
-        #hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-            selection.add(f"hlt_{n}", events.HLT[n])
+        hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+        # for n in hlt_names:
+        #     selection.add(f"hlt_{n}", events.HLT[n])
+        selection.add('hlt', hlt)
     selection.add("ht1200", (events.HT >= 1200))
     selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
     selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))
