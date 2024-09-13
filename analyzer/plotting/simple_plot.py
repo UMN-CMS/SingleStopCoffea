@@ -65,7 +65,7 @@ class Plotter:
         #self.cut_list_for_plot and self.cut_table_dict are actually what get used in plotting
         #self.cut_list_for_plot is a string to be put on the plot itself and contains shortened names for the cuts.
         #Whereas self.cut_table_dict is a dictionary with keys=dataset names (Ex: Data2018) and values of each cut in plain words.
-        #self.cut_table_dict is plotted below the plots as a table.
+        #self.cut_table_dict is plotted below the plots as a table or individually.
         
         self.cut_list_dict = {}
         for i in results:
@@ -73,7 +73,7 @@ class Plotter:
                 #list(dict.fromkeys(...)) gets rid of duplicates
                 self.cut_list_dict[j] =list(dict.fromkeys(i.results[j].cut_list))
        
-        cut_map = {"hlt": "", "ht1200": "HT ≥ 1200", "highptjet": "Jet-PT ≥ 300",
+        cut_map = {"hlt": "", "ht1200": "HT ≥ 1200", "highptjet": "Leading Jet-PT ≥ 300",
          "jets": "4 ≤ N-Jets ≤ 6", "0Lep": "0e, 0μ", "0looseb": "0b",
          "2bjet": "Med-b Jets ≥ 2", "1tightbjet": "Tight-b Jets ≥ 1",
          "b_dr": "b-jet ΔR > 1", "bbpt": "b-jet 1+2 > 200"}
@@ -81,6 +81,8 @@ class Plotter:
         self.cut_table_dict = {}
         for dataset in self.cut_list_dict:
             cut_map['hlt'] = ' | '.join(self.sample_manager[dataset].profile.hlt)
+            for i in self.sample_manager[dataset].profile.hlt:
+                cut_map[f'hlt_{i}'] = i
             self.cut_table_dict[dataset] = [cut_map[i] for i in self.cut_list_dict[dataset]]
         
         self.cut_list_for_plot = [] 
