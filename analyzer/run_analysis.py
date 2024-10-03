@@ -91,7 +91,7 @@ def createClient(dask_schedd_address, transfer_analyzer=True):
         if transfer_analyzer:
             transferAnalyzerToClient(client)
     else:
-        client = None
+        client = Client(memory_limit='4GB')
         logger.info("No scheduler address provided, running locally")
     return client
 
