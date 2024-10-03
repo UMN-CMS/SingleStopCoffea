@@ -84,7 +84,7 @@ def handlePreprocess(args):
         args.step_size,
         file_retrieval_kwargs=dict(
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
-            require_location=args.require_location,
+            require_location=None,
         ),
     )
     pickleWithParents(args.output, prepped)
@@ -139,7 +139,7 @@ def handleRunPreprocessed(args):
         args.skim_save_path,
         file_retrieval_kwargs=dict(
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
-            require_location=args.require_location,
+            require_location=None,
         ),
     )
 
@@ -173,7 +173,7 @@ def handleRunSamples(args):
         args.step_size,
         file_retrieval_kwargs=dict(
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
-            require_location=args.require_location,
+            require_location=None,
         ),
     )
     if args.save_preprocessed:
@@ -185,7 +185,7 @@ def handleRunSamples(args):
         skim_save_path=args.skim_save_path,
         file_retrieval_kwargs=dict(
             location_priority_regex=[r".*(US|CH|FR).*", "eos"],
-            require_location=args.require_location,
+            require_location=None,
         ),
     )
     pickleWithParents(args.output, result)
