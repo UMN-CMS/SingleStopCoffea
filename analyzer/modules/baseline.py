@@ -23,17 +23,14 @@ def createSelection(events, analyzer):
 
     selection = analyzer.selection
     good_jets = events.good_jets
-    fat_jets = events.FatJet
     good_muons = events.good_muons
     good_electrons = events.good_electrons
-    loose_b = events.loose_bs
     med_b = events.med_bs
     tight_b = events.tight_bs
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
-    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
     filled_med = ak.pad_none(med_b, 2, axis=1)
     med_dr = ak.fill_none(filled_med[:, 0].delta_r(filled_med[:, 1]), False)
-    hlt_names = analyzer.profile.hlt
+
     passes_highptjet = ak.fill_none(filled_jets[:, 0].pt > 300, False)
     passes_jets = (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)
     passes_0Lep = (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)
@@ -41,19 +38,59 @@ def createSelection(events, analyzer):
     passes_1tightbjet = ak.num(tight_b) >= 1
     passes_b_dr = med_dr > 1
 
+    hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
         selection.add('hlt',hlt)
-        #passes_hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-        #selection.add("hlt", hlt)
-        #for n in hlt_names:
-        #   hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-        #selection.add(f"hlt_{n}", events.HLT[n])
     selection.add("highptjet", passes_highptjet)
     selection.add("jets", passes_jets)
     selection.add("0Lep", passes_0Lep)
     selection.add("2bjet", passes_2bjet)
     selection.add("1tightbjet", passes_1tightbjet)
+    selection.add("b_dr", passes_b_dr)
+
+    return events, analyzer
+
+
+@analyzerModule(
+    "baseline_313_selection",
+    categories="selection",
+    depends_on=["objects"],
+    processing_info={"used_btag_wps": ["T"]},
+)
+def create313Selection(events, analyzer):
+    """Baseline selection for the analysis.
+    Applies the following selection:
+    - Jets[0].pt > 300
+    - 4 <= nJets <= 6
+    - 0 leptons
+    - 3 tight bjets
+    - delta_R(bjets[0],bjets[1]) > 1
+    """
+
+    selection = analyzer.selection
+    good_jets = events.good_jets
+    good_muons = events.good_muons
+    good_electrons = events.good_electrons
+    tight_b = events.tight_bs
+    filled_jets = ak.pad_none(good_jets, 4, axis=1)
+    filled_tight= ak.pad_none(tight_b, 2, axis=1)
+    tight_dr = ak.fill_none(filled_tight[:, 0].delta_r(filled_tight[:, 1]), False)
+
+    passes_highptjet = ak.fill_none(filled_jets[:, 0].pt > 300, False)
+    passes_jets = (ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)
+    passes_0Lep = (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)
+    passes_3tightbjet = ak.num(tight_b) >= 3
+    passes_b_dr = tight_dr > 1
+    
+    hlt_names = analyzer.profile.hlt
+    if "HLT" in events.fields:
+        hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+        selection.add('hlt',hlt)
+    selection.add("highptjet", passes_highptjet)
+    selection.add("jets", passes_jets)
+    selection.add("0Lep", passes_0Lep)
+    selection.add("3tightbjet", passes_3tightbjet)
     selection.add("b_dr", passes_b_dr)
 
     return events, analyzer
@@ -178,27 +215,21 @@ def createBBptSelection(events, analyzer):
 def createCRSelection(events, analyzer):
     selection = analyzer.selection
     good_jets = events.good_jets
-    # fat_jets = events.FatJet
+
     good_muons = events.good_muons
     good_electrons = events.good_electrons
     loose_b = events.loose_bs
-    # med_b = events.med_bs
-    # tight_b = events.tight_bs
-    # tight_top = events.tight_tops
+
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
-    # top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-        # for n in hlt_names:
-        #     selection.add(f"hlt_{n}", events.HLT[n])
         selection.add('hlt', hlt)
     selection.add("ht1200", (events.HT >= 1200))
     selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
     selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))
     selection.add("0Lep", ((ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)))
     selection.add("0looseb", (ak.num(loose_b) == 0))
-
-    #analyzer.critical_selections.append("0looseb")
 
     return events, analyzer
