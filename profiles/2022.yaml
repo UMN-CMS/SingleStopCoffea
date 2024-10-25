@@ -10,6 +10,7 @@
   HLT:
     - PFHT1050
     - AK8PFJet420_TrimMass30
+    - QuadPFJet70_50_40_30_PFBTagParticleNet_2BTagSum0p65
 
 2022Muon:
   inherit: '2022'
@@ -17,3 +18,7 @@
     - Mu50
     - IsoMu24
   
+2023JetMET:
+  inherit: '2022'
+  HLT:
+    - PFHT280_QuadPFJet30_PNet2BTagMean0p55

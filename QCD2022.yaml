@@ -1,0 +1,196 @@
+- name: QCD2022
+  type: collection
+  sets:
+    - QCD2022_PT1000to1400
+    - QCD2022_PT120to170
+    - QCD2022_PT1400to1800
+    - QCD2022_PT170to300
+    - QCD2022_PT1800to2400
+    - QCD2022_PT2400to3200
+    - QCD2022_PT300to470
+    - QCD2022_PT3200
+    - QCD2022_PT470to600
+    - QCD2022_PT50to80
+    - QCD2022_PT600to800
+    - QCD2022_PT600toInf
+    - QCD2022_PT800to1000
+    - QCD2022_PT80to120
+  style:
+    color: "#8fbc8f"
+    alpha: 0.5 
+
+
+- name: QCD2022_PT1000to1400
+  mc_campaign: 2022
+  type: set
+  produced_on: ""
+  lumi: 38.01
+  n_events: 2415895 
+  x_sec: 8.92 
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/3b4fcefc-928b-4024-bbaf-c79cfc40caae.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/d036e76b-677e-44de-a557-8b9a1be50c17.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/d4f6a28c-5dc2-4c1f-8cf7-358df81306fb.root
+
+- name: QCD2022_PT120to170
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 1445010
+  x_sec: 445800
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/80000/21301782-dcf6-4f70-928f-dc64352183f2.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/80000/34a4ddaf-c511-4c25-ba5c-2cf3aef50887.root
+
+- name: QCD2022_PT1400to1800
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 1480068
+  x_sec: 0.8103 
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2560000/676abb3d-265e-4a51-9b57-a02c9cbe77f0.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2560000/976cb4bb-718d-40f7-9620-c8f27e33295e.root
+
+- name: QCD2022_PT170to300
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 912304 
+  x_sec: 113700
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/aa185f62-e322-470c-aa94-7cb654a7ff25.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/ff29af28-151f-40d2-ab65-dffd83f0eb2f.root
+
+- name: QCD2022_PT1800to2400
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 693521
+  x_sec: 0.1148
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/40000/ae73fa54-b3c7-44bc-a9dd-3dee6022e847.root
+
+- name: QCD2022_PT2400to3200
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 195024
+  x_sec: 0.007542
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/40000/42622cd5-978e-4617-88d7-25abb60caaec.root
+
+- name: QCD2022_PT300to470
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 984222
+  x_sec: 7559.0
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/801c6743-e159-4343-ad88-1a4ab87ab916.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/cb7c0dea-05f2-4cb6-baa7-580dfab699e2.root
+
+- name: QCD2022_PT3200
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 82392
+  x_sec: 0.0002331
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-3200_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-3200_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2810000/b9d574da-37f6-4234-b991-52bd4c98a87a.root
+
+- name: QCD2022_PT470to600
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 976760
+  x_sec: 626.4
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-470to600_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-470to600_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/ae9a3c5b-b892-4e1e-a188-afd8d5c19eb7.root
+
+- name: QCD2022_PT50to80
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 1433116
+  x_sec: 16760000
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/9724970b-17ea-4dca-8c19-f573bd4ac9c0.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/60000/b141123b-2f71-4000-a1e7-94713a786eec.root
+
+- name: QCD2022_PT600to800
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 7840148
+  x_sec: 178.6
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/0762bf76-45c1-401a-a902-9e58f08226d2.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/0ffcd15d-1b3b-408e-ba7c-02e2a557e5c7.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/38b4fd2b-18f1-491d-a4cf-2b0a44a7f0cc.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/733d36f2-1ee8-4539-8e37-03e2d67e7985.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/ae9914fe-b244-41c6-a66c-a76022db6d17.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/ba5d6de4-ea97-49ae-a09a-80f349387b1c.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/cccb3f89-a32b-4cc1-ad3d-ddd684870740.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/df9d9c17-eb8a-4bb5-8dbc-dc667bc9089a.root
+
+- name: QCD2022_PT600toInf
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 994177
+  x_sec: 221.0
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-600toInf_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600toInf_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/1a8c6f32-1494-4bc5-bec1-8e2b053a8c8d.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-600toInf_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/8035e414-113e-4971-914c-6973ff0714a5.root
+
+- name: QCD2022_PT800to1000
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 4383891
+  x_sec: 30.57
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/2279eec0-558b-44f9-9dc1-c459db749e09.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/4436376a-f1b3-49a3-9c08-39fbb3409732.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/4dd5ca20-67cd-4384-94a3-d34d7e5235ba.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/5658253a-fddd-4d7a-b768-00c3d7e0e4a6.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/59e266b2-d012-4e43-958e-5e7c7297300a.root
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/2550000/86a4912a-ab71-459d-bc6b-b62c49973e54.root
+
+- name: QCD2022_PT80to120
+  mc_campaign: 2022
+  type: set
+  lumi: 38.01
+  n_events: 982816
+  x_sec: 2534000.0
+  profile: 2022JetPT 
+  cms_dataset: /QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/Run3Summer22NanoAODv10-124X_mcRun3_2022_realistic_v12-v1/NANOAODSIM
+  files:
+    - root://cmsxrootd.fnal.gov//store/mc/Run3Summer22NanoAODv10/QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/NANOAODSIM/124X_mcRun3_2022_realistic_v12-v1/70000/44867f81-f647-4217-a1fc-70f0b1a963c9.root
