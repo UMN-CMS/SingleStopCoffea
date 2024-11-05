@@ -8,8 +8,8 @@
 2022JetMET:
   inherit: '2022'
   HLT:
-    - PFHT1050
-    - AK8PFJet420_TrimMass30
+    #- PFHT1050
+    #- AK8PFJet420_TrimMass30
     - QuadPFJet70_50_40_30_PFBTagParticleNet_2BTagSum0p65
 
 2022Muon:

@@ -67,6 +67,7 @@ class Plotter:
         #Whereas self.cut_table_dict is a dictionary with keys=dataset names (Ex: Data2018) and values of each cut in plain words.
         #self.cut_table_dict is plotted below the plots as a table.
         
+        '''
         self.cut_list_dict = {}
         for i in results:
             for j in i.results.keys():
@@ -81,6 +82,9 @@ class Plotter:
         self.cut_table_dict = {}
         for dataset in self.cut_list_dict:
             cut_map['hlt'] = ' | '.join(self.sample_manager[dataset].profile.hlt)
+            self.cut_list_dict = {k : 'hlt' for k, i in self.cut_list_dict.items()}
+            print(self.cut_list_dict[dataset])
+            print(cut_map)
             self.cut_table_dict[dataset] = [cut_map[i] for i in self.cut_list_dict[dataset]]
         
         self.cut_list_for_plot = [] 
@@ -98,6 +102,7 @@ class Plotter:
            else:
                temp += '\t' + i + '\n'
         self.cut_list_for_plot = temp.expandtabs(2)
+        '''
 
         self.target_lumi= ( 
             target_lumi

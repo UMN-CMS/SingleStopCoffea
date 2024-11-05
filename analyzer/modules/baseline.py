@@ -49,12 +49,12 @@ def createSelection(events, analyzer):
         #hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
             selection.add(f"hlt_{n}", events.HLT[n])
 
-    selection.add("highptjet", passes_highptjet)
-    selection.add("jets", passes_jets)
-    selection.add("0Lep", passes_0Lep)
-    selection.add("2bjet", passes_2bjet)
-    selection.add("1tightbjet", passes_1tightbjet)
-    selection.add("b_dr", passes_b_dr)
+    #selection.add("highptjet", passes_highptjet)
+    #selection.add("jets", passes_jets)
+    #selection.add("0Lep", passes_0Lep)
+    #selection.add("2bjet", passes_2bjet)
+    #selection.add("1tightbjet", passes_1tightbjet)
+    #selection.add("b_dr", passes_b_dr)
 
     return events, analyzer
 

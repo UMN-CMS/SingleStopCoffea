@@ -48,9 +48,18 @@ sig = [
 ]
 
 
-backgrounds = ["QCDInclusive2018"]
-plotter = Plotter("results/histograms/2018mc.pkl", "plots", default_backgrounds=backgrounds)
+backgrounds = ["QCDInclusive2023"]
+plotter = Plotter("QCD2023.pkl", "plots", default_backgrounds=backgrounds)
 
+import analyzer.datasets as ds
+import pickle as pkl
+d = pkl.load(open("QCD2023.pkl", "rb"))
+
+profile_repo = ds.ProfileRepo()
+profile_repo.loadFromDirectory("profiles")
+sample_manager = ds.SampleManager()
+sample_manager.loadSamplesFromDirectory('datasets/', profile_repo)
+hists = d.getMergedHistograms(sample_manager)
 
 toplot = [
     "h_njet",
@@ -62,6 +71,7 @@ toplot = [
     "m24_vs_m14",
     "m13_vs_m14",
 ]
+toplot = [h for h in hists.keys() if 'unweighted' not in h]
 
 for p in toplot:
     plotter(p, [], normalize=False, scale="log")

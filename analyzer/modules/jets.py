@@ -26,6 +26,8 @@ def createJetHistograms(events, analyzer):
     masses = {}
 
     for i, j in jet_combos:
+        mask = ak.num(gj, axis=1) > max(i, j)
+        gj = gj[mask]
         jets = gj[:, i:j].sum()
         masses[(i, j)] = jets.mass
         analyzer.H(f"m{i+1}{j}_pt", 
@@ -37,6 +39,7 @@ def createJetHistograms(events, analyzer):
                 unit="GeV",
             ),
             jets.pt,
+            mask = mask,
             name=f"Composite Jet {i+1} to Jet {j} $p_T$",
             description=f"$p_T$ of the sum of jets {i+1} to {j}",
         )
@@ -44,6 +47,7 @@ def createJetHistograms(events, analyzer):
             makeAxis(20, -5, 5, f"$\eta ( \\sum_{{n={i+1}}}^{{{j}}} ) jet_{{n}}$"),
             jets.eta,
             name=rf"Composite Jet {i+1} to Jet {j} $\eta$",
+            mask = mask,
             description=rf"$\eta$ of the sum of jets {i+1} to {j}",
         )
         mtitle = 4 if j - i == 4 else 3
@@ -51,6 +55,7 @@ def createJetHistograms(events, analyzer):
             makeAxis(60, 0, 3000, f"$m_{{{mtitle}}}$", unit="GeV"),
             jets.mass,
             name=rf"Composite Jet {i+1} to Jet {j} mass",
+            mask = mask,
             description=rf"Mass of the sum of jets {i+1} to {j}",
         )
 
@@ -69,6 +74,7 @@ def createJetHistograms(events, analyzer):
             ],
             [masses[p2], masses[p1]],
             name="Comp mass",
+            mask = mask,
         )
 
         analyzer.H(f"ratio_m{p1_1+1}{p1_2}_vs_m{p2_1+1}{p2_2}", 
@@ -82,17 +88,20 @@ def createJetHistograms(events, analyzer):
             ],
             [masses[p2],masses[p1] / masses[p2]],
             name=f"ratio_m{mtitle1}_vs_m{mtitle2}",
+            mask = mask,
         )
     for i in range(0, 4):
         analyzer.H(rf"pt_{i+1}", 
             makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),
             gj[:, i].pt,
             name=f"$p_T$ of jet {i+1}",
+            mask = mask,
             description=f"$p_T$ of jet {i+1} ",
         )
         analyzer.H(f"eta_{i+1}", 
             makeAxis(50, -5, 5, f"$\eta_{{{i+1}}}$"),
             gj[:, i].eta,
+            mask = mask,
             name=f"$\eta$ of jet {i+1}",
             description=f"$\eta$ of jet {i+1}",
         )
@@ -100,6 +109,7 @@ def createJetHistograms(events, analyzer):
             makeAxis(50, -5, 5, f"$\phi_{{{i+1}}}$"),
             gj[:, i].phi,
             name=f"$\phi$ of jet {i+1}",
+            mask = mask,
             description=f"$\phi$ of jet {i+1}",
         )
     analyzer.H(f"phi_vs_eta",
@@ -107,6 +117,7 @@ def createJetHistograms(events, analyzer):
                     makeAxis(50,-5,5,f"$\phi$")],
                 [gj.eta, gj.phi],
                 name=f"$\eta$ vs $\phi$ of jet ",
+                mask = mask,
                 description=rf"$\eta$ vs $\phi$ of jet "
                 )
 
