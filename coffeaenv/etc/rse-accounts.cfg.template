@@ -1,0 +1,25 @@
+{
+  "lxplus.cern.ch":{
+    "username":"USERNAME",
+    "password":"PASSWORD",
+    "host":"lxplus.cern.ch"
+  },
+  "swift.cern.ch": {
+    "access_key": "ACCESSKEY",
+    "secret_key": "PASSWORD",
+    "host_base": "swift.cern.ch",
+    "host_bucket": "swift.cern.ch",
+    "progress_meter": "False",
+    "skip_existing": "False"
+  },
+  "posix": {},
+  "DESY-ZN_SCRATCHDISK": {
+    "auth_type": "cert",
+    "timeout":300
+  },
+  "TAIWAN-LCG2_PPSSCRATCHDISK": {
+    "cert": ["/tmp/x509up","/tmp/x509up"],
+    "auth_type": "cert",
+    "timeout":300
+  }
+}

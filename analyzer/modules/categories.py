@@ -186,6 +186,13 @@ def pTOrHTTrigger(events, analyzer):
   analyzer.histogram_builder.addCategory(a, triggers)
   return events, analyzer
 
+@analyzerModule("4j2bTrigger", depends_on['objects'], categories='cat_axis')
+def run3Trigger(events, analyzer):
+  fourJTwoB = events.HLT.PFHT280_QuadPFJet30_PNet2BTagMean0p55
+  a = hist.axis.IntCategory([0, 1], name = '4j2b', label = '4j2b')
+  analyzer.histogram_builder.addCategory(a, fourJTwoB)
+  return events, analyzer
+
 '''
 @analyzerModule("nMinusOnePlots", ModuleType.MainHist)
 def nMinusOnePlots(events, hmaker):
