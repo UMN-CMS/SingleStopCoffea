@@ -31,3 +31,5 @@ auto-save-list
 tramp
 .\#*
 SoftDropPlots/
+plots/
+coffeaenv/
