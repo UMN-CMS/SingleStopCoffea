@@ -13,7 +13,7 @@
   isdata: true
   lumi: 5.8070
   forbid: true
-  profile: 2022JetMET
+  profile: 2022postJetMET
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
   required_modules: [cr_selection]
   cms_dataset: /JetMET/Run2022E-22Sep2023-v1/NANOAOD
@@ -173,7 +173,7 @@
   isdata: true
   lumi: 17.7819
   forbid: true
-  profile: 2022JetMET
+  profile: 2022postJetMET
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
   required_modules: [cr_selection]
   cms_dataset: /JetMET/Run2022F-22Sep2023-v2/NANOAOD
@@ -661,7 +661,7 @@
   isdata: true
   lumi: 3.0828
   forbid: true
-  profile: 2022JetMET
+  profile: 2022postJetMET
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
   required_modules: [cr_selection]
   cms_dataset: /JetMET/Run2022G-22Sep2023-v2/NANOAOD

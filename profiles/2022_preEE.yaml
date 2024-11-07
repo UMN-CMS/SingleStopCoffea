@@ -5,13 +5,13 @@
     file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz
     name: Collisions2022_355100_357900_eraBCD_GoldenJson
 
-2022JetMET:
+2022preJetMET:
   inherit: '2022_preEE'
   HLT:
     - PFHT1050
     - AK8PFJet420_TrimMass30
 
-2022Muon:
+2022preMuon:
   inherit: '2022_preEE'
   HLT:
     - Mu50
