@@ -88,7 +88,7 @@ def histRank(hist):
 class PlotObject:
     hist: Union[hist.Hist, tuple[np.ndarray]]
     title: Optional[str] = None
-    dataset: Optional[Dataset] = None
+    #dataset: Optional[Dataset] = None
     style: Optional[Dict[str, Any]] = None
 
     def ishist(self):

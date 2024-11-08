@@ -61,7 +61,7 @@ def createEventLevelHistograms(events, analyzer):
     )
     return events, analyzer
 
-
+'''
 <<<<<<< HEAD
 @analyzerModule("tag_hists", depends_on=["objects"])
 =======
@@ -115,3 +115,4 @@ def createTagHistograms(events, hmaker):
             ak.num(events[f"{name}_wp{wp}"], axis=1),
             name=f"Number of wp{wp} {name}",
         )
+'''

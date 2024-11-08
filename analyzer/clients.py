@@ -33,7 +33,7 @@ def createLPCCondorCluster(configuration):
     venv = Path(os.environ.get("VIRTUAL_ENV"))
 
     logger.info("Deleting old dask logs")
-    base_log_path = Path("/uscmst1b_scratch/lpc1/3DayLifetime/ckapsiak/")
+    base_log_path = Path("/uscmst1b_scratch/lpc1/3DayLifetime/shardulr/")
     shutil.rmtree(base_log_path / "dask_logs")
     for p in base_log_path.glob("tmp*"):
         shutil.rmtree(p)
