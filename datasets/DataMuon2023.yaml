@@ -1,7 +1,7 @@
 - name: DataMuon2023
   type: set
   isdata: true
-  lumi: 
+  lumi: 30.12 
   n_events: 566006991 
   forbid: false
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_eraC_367095_368823_Muon.json

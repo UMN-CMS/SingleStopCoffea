@@ -1,4 +1,4 @@
-#!/srv/coffeaenv/bin/python3
+#!/srv/coffeaenv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

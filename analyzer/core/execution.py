@@ -117,10 +117,10 @@ class Analyzer:
         if maybe_base_form is not None:
             maybe_base_form = ak.forms.from_json(decompress_form(maybe_base_form))
         events, report = getEvents(files, maybe_base_form, self.cache)
-        if lumi_json:
-            logger.info(f'Dataset {dataset_name}: Using lumi json file "{lumi_json}".')
-            lmask = getLumiMask(lumi_json)
-            events = events[lmask(events.run, events.luminosityBlock)]
+        #if lumi_json:
+            #logger.info(f'Dataset {dataset_name}: Using lumi json file "{lumi_json}".')
+            #lmask = getLumiMask(lumi_json)
+            #events = events[lmask(events.run, events.luminosityBlock)]
 
         if delayed:
             daskres = DatasetDaskRunResult(dsprep, {}, ak.num(events, axis=0), report)

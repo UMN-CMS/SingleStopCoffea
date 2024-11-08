@@ -122,6 +122,13 @@ def pTTrigger(events, analyzer):
   analyzer.histogram_builder.addCategory(a, pT400)
   return events, analyzer
 
+@analyzerModule("pTTrigger2023", depends_on=['objects'], categories='axis_cat')
+def pTTrigger(events, analyzer):
+  pT420 = events.HLT.AK8PFJet420_MassSD30
+  a = hist.axis.IntCategory([0, 1], name = 'pT420', label = 'pT420')
+  analyzer.histogram_builder.addCategory(a, pT420)
+  return events, analyzer
+
 @analyzerModule('fatJetpTPlot', depends_on=['objects', 'event_level'], categories='main')
 def pTPlot(events, analyzer):
   fatjets = events.FatJet

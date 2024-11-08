@@ -2,7 +2,7 @@
 
 declare -A env_configs
 env_configs[coffea,venv]="coffeaenv"
-env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest-py3.10"
+env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2024.9.1-py3.10/"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:l"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-base:v2024.1.2"
 #env_configs[coffea,container]="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/cs9:x86_64"
