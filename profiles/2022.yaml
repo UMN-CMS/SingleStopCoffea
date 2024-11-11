@@ -22,3 +22,8 @@
   inherit: '2022'
   HLT:
     - PFHT280_QuadPFJet30_PNet2BTagMean0p55
+
+2023Muon:
+  inherit: '2022'
+  HLT:
+    - Mu50

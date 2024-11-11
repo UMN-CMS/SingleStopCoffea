@@ -58,6 +58,26 @@ def createSelection(events, analyzer):
 
     return events, analyzer
 
+@analyzerModule(
+    "baseline_muon_selection",
+    categories="selection",
+    depends_on=["objects"],
+    processing_info={"used_btag_wps": ["M", "T"]},
+)
+def createMuonSelection(events, analyzer):
+    selection = analyzer.selection
+    good_jets = events.good_jets
+    fat_jets = events.FatJet
+    good_muons = events.good_muons
+    good_electrons = events.good_electrons
+    passes_0Electron = (ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)
+    if "HLT" in events.fields:
+        for n in hlt_names:
+            selection.add(f"hlt_{n}", events.HLT[n])
+    selection.add("0Electron", passes_0Electron)
+    
+    return events, analyzer
+
 
 @analyzerModule("baseline_hists", categories="main")
 def selectionHists(events, analyzer):
