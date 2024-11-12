@@ -48,12 +48,12 @@ sig = [
 ]
 
 
-backgrounds = ["QCDInclusive2023"]
-plotter = Plotter("QCD2023.pkl", "plots", default_backgrounds=backgrounds)
+backgrounds = ["DataSingleMuon2018"]
+plotter = Plotter("DataSingleMuon2018.pkl", "plots", default_backgrounds=backgrounds)
 
 import analyzer.datasets as ds
 import pickle as pkl
-d = pkl.load(open("QCD2023.pkl", "rb"))
+d = pkl.load(open("DataSingleMuon2018.pkl", "rb"))
 
 profile_repo = ds.ProfileRepo()
 profile_repo.loadFromDirectory("profiles")

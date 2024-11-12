@@ -17,3 +17,5 @@
   HLT:
     - Mu50
     - IsoMu24
+    - PFHT1050
+    - AK8PFJet400_TrimMass30

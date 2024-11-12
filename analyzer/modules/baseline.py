@@ -66,18 +66,58 @@ def createSelection(events, analyzer):
 )
 def createMuonSelection(events, analyzer):
     selection = analyzer.selection
-    good_jets = events.good_jets
-    fat_jets = events.FatJet
     good_muons = events.good_muons
     good_electrons = events.good_electrons
+    hlt_names = analyzer.profile.hlt
     passes_0Electron = (ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)
+
     if "HLT" in events.fields:
         for n in hlt_names:
-            selection.add(f"hlt_{n}", events.HLT[n])
+            if 'HT' not in n and 'AK8PFJet' not in n: selection.add(f"hlt_{n}", events.HLT[n])
     selection.add("0Electron", passes_0Electron)
     
     return events, analyzer
 
+@analyzerModule("trigger_efficiency_hists", categories="main")
+def triggerEfficiencyHists(events, analyzer):
+    gj = events.good_jets
+    fatjets = events.FatJet
+    hlt_names = analyzer.profile.hlt
+    if "HLT" in events.fields:
+        for n in hlt_names:
+            if 'HT' in n: HT_Trigger = events.HLT[n]
+            if 'AK8PFJet' in n: pT_Trigger = events.HLT[n]
+    
+    mht = HT_Trigger
+    mpt = pT_Trigger & (ak.num(gj, axis=1) > 1)
+    mnj = ak.num(gj, axis = 1) > 1
+    analyzer.H(
+        "passedHT",
+        makeAxis(60, 0, 3000, "HT", unit="GeV"),
+        events[mht].HT,
+        mask = mht,
+    ) 
+
+    analyzer.H(
+        "totalHT",
+        makeAxis(60, 0, 3000, "HT", unit="GeV"),
+        events.HT,
+    )
+
+    analyzer.H(
+        "passed_pt0",
+        makeAxis(100, 0, 1500, "$p_{T, 0}$", unit="GeV"),
+        gj[mpt][:, 0].pt,
+        mask = mpt,
+    )
+
+    analyzer.H(
+        "total_pt0",
+        makeAxis(100, 0, 1500, "$p_{T, 0}$", unit="GeV"),
+        gj[mnj][:, 0].pt,
+        mask = mnj,
+    )
+    return events, analyzer
 
 @analyzerModule("baseline_hists", categories="main")
 def selectionHists(events, analyzer):
