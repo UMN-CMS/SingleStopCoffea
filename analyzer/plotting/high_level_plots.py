@@ -241,5 +241,8 @@ def plot2D(
     if zscorename and hasattr(ax, "cax"):
         cax = ax.cax
         cax.set_ylabel(zscorename)
-
+    
+    #uncomment to place box around where the "hole" is in phi v eta for 2018 data.
+    # from matplotlib.patches import Rectangle
+    # ax.add_patch(Rectangle((-3.2,-1.57),1.9,0.7,fill=False,edgecolor='black'))
     return fig
