@@ -27,3 +27,5 @@
   inherit: '2022'
   HLT:
     - Mu50
+    - PFHT1050
+    - AK8PFJet420_MassSD30

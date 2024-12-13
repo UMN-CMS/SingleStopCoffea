@@ -16,6 +16,12 @@
   inherit: '2018'
   HLT:
     - Mu50
-    - IsoMu24
+    - PFHT1050
+    - AK8PFJet400_TrimMass30
+
+2018SingleMuonOfficial:
+  inherit: '2018'
+  HLT:
+    - IsoMu27
     - PFHT1050
     - AK8PFJet400_TrimMass30

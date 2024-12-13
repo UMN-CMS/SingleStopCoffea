@@ -69,11 +69,11 @@ def createMuonSelection(events, analyzer):
     good_muons = events.good_muons
     good_electrons = events.good_electrons
     hlt_names = analyzer.profile.hlt
-    passes_0Electron = (ak.num(good_electrons) == 0) & (ak.num(good_muons) > 0)
+    passes_0Electron = (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 1)
 
     if "HLT" in events.fields:
         for n in hlt_names:
-            if 'HT' not in n and 'AK8PFJet' not in n: selection.add(f"hlt_{n}", events.HLT[n])
+            if 'HT' not in n and 'AK8PFJet' not in n and 'Mu' in n: selection.add(f"hlt_{n}", events.HLT[n])
     selection.add("0Electron", passes_0Electron)
     
     return events, analyzer
@@ -82,6 +82,7 @@ def createMuonSelection(events, analyzer):
 def triggerEfficiencyHists(events, analyzer):
     gj = events.good_jets
     fatjets = events.FatJet
+    fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4) & (events.FatJet.msoftdrop > 50)]
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         for n in hlt_names:
@@ -89,31 +90,31 @@ def triggerEfficiencyHists(events, analyzer):
             if 'AK8PFJet' in n: pT_Trigger = events.HLT[n]
     
     mht = HT_Trigger
-    mpt = pT_Trigger & (ak.num(gj, axis=1) > 1)
-    mnj = ak.num(gj, axis = 1) > 1
+    mpt = pT_Trigger & (ak.num(fatjets, axis=1) >= 1)
+    mnj = ak.num(fatjets, axis = 1) >= 1
     analyzer.H(
         "passedHT",
-        makeAxis(60, 0, 3000, "HT", unit="GeV"),
-        events[mht].HT,
+        makeAxis(100, 0, 2000, "HT", unit="GeV"),
+        events[mht].NonMuonHT,
         mask = mht,
     ) 
 
     analyzer.H(
         "totalHT",
-        makeAxis(60, 0, 3000, "HT", unit="GeV"),
-        events.HT,
+        makeAxis(100, 0, 2000, "HT", unit="GeV"),
+        events.NonMuonHT,
     )
 
     analyzer.H(
         "passed_pt0",
-        makeAxis(100, 0, 1500, "$p_{T, 0}$", unit="GeV"),
+        makeAxis(30, 0, 1500, "$p_{T, 0}$", unit="GeV"),
         gj[mpt][:, 0].pt,
         mask = mpt,
     )
 
     analyzer.H(
         "total_pt0",
-        makeAxis(100, 0, 1500, "$p_{T, 0}$", unit="GeV"),
+        makeAxis(30, 0, 1500, "$p_{T, 0}$", unit="GeV"),
         gj[mnj][:, 0].pt,
         mask = mnj,
     )

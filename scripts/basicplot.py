@@ -48,12 +48,12 @@ sig = [
 ]
 
 
-backgrounds = ["DataSingleMuon2018"]
-plotter = Plotter("DataSingleMuon2018.pkl", "plots", default_backgrounds=backgrounds)
+backgrounds = ["DataSingleMuon2018Official"]
+plotter = Plotter("DataSingleMuon2018Official.pkl", "plots", default_backgrounds=backgrounds)
 
 import analyzer.datasets as ds
 import pickle as pkl
-d = pkl.load(open("DataSingleMuon2018.pkl", "rb"))
+d = pkl.load(open("DataSingleMuon2018Official.pkl", "rb"))
 
 profile_repo = ds.ProfileRepo()
 profile_repo.loadFromDirectory("profiles")
@@ -73,5 +73,8 @@ toplot = [
 ]
 toplot = [h for h in hists.keys() if 'unweighted' not in h]
 
-for p in toplot:
-    plotter(p, [], normalize=False, scale="log")
+#for p in toplot:
+    #plotter(p, [], normalize=False, scale="log")
+
+plotter.plotRatio('DataSingleMuonOfficial2018', 'totalHT', 'passedHT')
+plotter.plotRatio('DataSingleMuonOfficial2018', 'total_pt0', 'passed_pt0')

@@ -107,24 +107,35 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
             **kwargs,
         )
 
+    ax.set_yscale('log')
     return ax
 
 
 def drawRatio(
-    ax, numerator, denominator, uncertainty_type="poisson-ratio", hline_list=None, weights=None, **kwargs
+    ax, numerator, denominator, uncertainty_type="efficiency", hline_list=None, weights=None, **kwargs
 ):
     ax.axhline(y=1,linestyle='--',linewidth='1',color='k')
     hline_list = hline_list or []
     nv, dv = numerator.values(), denominator.values()
-    n, d = nv/weights[0], dv/weights[1]
+    try:
+        n, d = nv/weights[0], dv/weights[1]
+    except:
+        n, d = nv, dv
     with np.errstate(divide='ignore',invalid='ignore'):
         ratio = np.divide(nv, dv, out=np.ones_like(nv), where=(dv != 0))
     
-    unc = hinter.ratio_uncertainty(
-        n.astype(int),
-        d.astype(int),
-        uncertainty_type=uncertainty_type,
-    )*(weights[0]/weights[1])
+    try:
+        unc = hinter.ratio_uncertainty(
+            n.astype(int),
+            d.astype(int),
+            uncertainty_type=uncertainty_type,
+        )*(weights[0]/weights[1])
+    except:
+        unc = hinter.ratio_uncertainty(
+            n.astype(int),
+            d.astype(int),
+            uncertainty_type=uncertainty_type,
+        )
 
     x = numerator.axes[0].centers
 
@@ -136,6 +147,8 @@ def drawRatio(
         linestyle="none",
         **kwargs,
     )
+    ax.set_ylim(0.0, 1.1)
+    print('plots 1d')
     return ax
 
 

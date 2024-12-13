@@ -39,7 +39,15 @@ def createObjects(events, analyzer):
     events["med_bs"] = med_b
     events["tight_bs"] = tight_b
 
+    out, metric = events.good_jets.nearest(events.good_muons, return_metric = True)
+    metric = ak.fill_none(metric, 1)
+    mask = metric < 0.4
+    non_muonic_jets = events.good_jets[~mask]
+
     ht = ak.sum(good_jets.pt, axis=1)
     events["HT"] = ht
+
+    non_muonic_ht = ak.sum(non_muonic_jets.pt, axis=1)
+    events["NonMuonHT"] = non_muonic_ht
 
     return events, analyzer

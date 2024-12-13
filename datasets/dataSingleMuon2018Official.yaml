@@ -1,11 +1,11 @@
-- name: DataSingleMuon2018
+- name: DataSingleMuonOfficial2018
   type: set
   isdata: true
   lumi: 59.83
   forbid: false
   required_modules: [baseline_muon_selection]
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt 
-  profile: 2018SingleMuon
+  profile: 2018SingleMuonOfficial
   n_events: 985422152
   cms_dataset: /SingleMuon/Run2018*-UL2018_MiniAODv2_NanoAODv9-v*/NANOAOD
   files:
@@ -199,7 +199,7 @@
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/5B551B27-A190-8547-B2B2-508B2E2DA17E.root
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/B90CC9B8-A429-CD47-B201-CA9DEA69289F.root
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/102933C6-4F0C-5845-A5ED-838C6D900BAE.root
-     root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/06971AB5-FD43-554B-84E9-E8759FDD99A9.root
+    - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/06971AB5-FD43-554B-84E9-E8759FDD99A9.root
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/D0D7BD3D-5626-6C4B-B9F4-8DBD9AE223A9.root
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/100000/2B07B4C0-852B-9B4F-83FA-CA6B047542D1.root
     - root://cmsxrootd.fnal.gov//store/data/Run2018C/SingleMuon/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v2/110000/859F38B8-6302-B049-AD29-7E1317C3B79F.root

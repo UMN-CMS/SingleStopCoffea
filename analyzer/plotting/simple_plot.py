@@ -172,19 +172,20 @@ class Plotter:
             return fig
 
     def plotRatio(self, target, hist_obs, hist_pred):
-        ho = self.histos[target][hist_obs]
-        hp = self.histos[target][hist_pred]
-        hopo = PlotObject.fromHist(
-            ho, self.sample_manager[hist_obs].title, self.sample_manager[hist_obs].style
-        )
+        ho = self.histos[hist_obs][target]
+        hp = self.histos[hist_pred][target]
+        hopo = PlotObject.fromHist(ho)
+        #hopo = PlotObject.fromHist(
+            #ho, self.sample_manager[target].title, self.sample_manager[target].style
+        #)
         hppo = PlotObject.fromHist(
             hp,
-            self.sample_manager[hist_pred].title,
-            self.sample_manager[hist_pred].style,
+            #self.sample_manager[target].title,
+            #self.sample_manager[target].style,
         )
         fig = plotRatio(hppo, hopo, self.coupling, self.target_lumi)
         if self.outdir:
-            fig.savefig(self.outdir / f"pull_{hist_obs}_{hist_pred}.pdf")
+            fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
             plt.close(fig)
         else:
             return fig

@@ -47,7 +47,7 @@ def plotRatio(
     drawRatio(ab, numerator=hppo, denominator=hopo, weights=weights)
 
     ab.set_ylabel("Ratio")
-    ab.set_ylim(0.6, 1.3)
+    ab.set_ylim(0.0, 1.2)
     # addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
     # addTitles1D(ax, hopo, top_pad=0.2)
 
