@@ -76,8 +76,8 @@ class Plotter:
         cut_map = {"hlt": "", "ht1200": "HT ≥ 1200", "highptjet": "Leading Jet-PT ≥ 300",
          "jets": "4 ≤ N-Jets ≤ 6", "0Lep": "0e, 0μ", "0looseb": "0b",
          "2bjet": "Med-b Jets ≥ 2", "1tightbjet": "Tight-b Jets ≥ 1",
-         "b_dr": "b-jet ΔR > 1", "bbpt": "b-jet 1+2 > 200"}
-
+         "b_dr": "b-jet ΔR > 1", "bbpt": "b-jet 1+2 > 200", "3tightbjet": "Tight-b Jets ≥ 3"}
+        
         self.cut_table_dict = {}
         for dataset in self.cut_list_dict:
             cut_map['hlt'] = ' | '.join(self.sample_manager[dataset].profile.hlt)
@@ -87,20 +87,24 @@ class Plotter:
         
         self.cut_list_for_plot = [] 
         for dataset in self.cut_list_dict:
-           cut_list_for_plot_temp = [f'{dataset}\n'] 
-           cut_list_for_plot_temp += self.cut_list_dict[dataset]
-           if self.cut_list_for_plot[1:] != cut_list_for_plot_temp[1:]:
-               self.cut_list_for_plot += cut_list_for_plot_temp
-           else:   
-               self.cut_list_for_plot[0] = self.cut_list_for_plot[0][:-1] + "/" + cut_list_for_plot_temp[0]
-        temp = self.cut_list_for_plot[0]   
+            cut_list_for_plot_temp = [f'{dataset}\n'] 
+            cut_list_for_plot_temp += self.cut_list_dict[dataset]
+            if self.cut_list_for_plot[1:] != cut_list_for_plot_temp[1:]:
+                self.cut_list_for_plot += cut_list_for_plot_temp
+            elif "signal_313" in (cut_list_for_plot_temp[0] and self.cut_list_for_plot[0][:-1]):
+                self.cut_list_for_plot[0] = "signal_313\n"
+            elif "signal_312" in (cut_list_for_plot_temp[0] and self.cut_list_for_plot[0][:-1]):
+                self.cut_list_for_plot[0] = "signal_312\n"
+            else:
+                self.cut_list_for_plot[0] = self.cut_list_for_plot[0][:-1] + "/" + cut_list_for_plot_temp[0]
+        temp = self.cut_list_for_plot[0]
+        temp = "Cuts\n"
         for i in self.cut_list_for_plot[1:]:
            if '\n' in i:
                temp += i
            else:
                temp += '\t' + i + '\n'
         self.cut_list_for_plot = temp.expandtabs(2)
-
         self.target_lumi= ( 
             target_lumi
             or self.sample_manager[list(results[0].results.keys())[0]].lumi
@@ -128,18 +132,18 @@ class Plotter:
             )
         self.coupling = coupling
 
-        used_samples = set(it.chain.from_iterable(x.results.keys() for x in results))
-        lumis = [round(self.sample_manager[x].lumi, 4) for x in used_samples]
-        if (
-            not target_lumi
-            and len(
-                set(round(self.sample_manager[x].lumi, 4) for x in used_samples)
-            )
-            > 1
-        ):
-            raise ValueError(
-                "The underlying samples have different luminosities, and you are not performing scaling"
-            )
+        #used_samples = set(it.chain.from_iterable(x.results.keys() for x in results))
+        # lumis = [round(self.sample_manager[x].lumi, 4) for x in used_samples]
+        # if (
+        #     not target_lumi
+        #     and len(
+        #         set(round(self.sample_manager[x].lumi, 4) for x in used_samples)
+        #     )
+        #     > 1
+        # ):
+        #     raise ValueError(
+        #         "The underlying samples have different luminosities, and you are not performing scaling"
+        #     )
         if outdir:
             self.outdir = Path(outdir)
             self.outdir.mkdir(exist_ok=True, parents=True)
@@ -287,14 +291,15 @@ class Plotter:
                 if cut_table_in_plot:
                     cut_table = {key:self.cut_table_dict[key]}
                 if cut_list_in_plot:
-                    cut_list = self.cut_list_for_plot 
+                    cut_list = self.cut_list_for_plot
+
                 fig = plot2D(
                     obj,
                     coupling=self.coupling,
                     lumi=self.target_lumi,
                     era=self.year,
                     sig_style=sig_style,
-                    add_label=add_label,
+                    add_label=f'{add_label}\n{key}',
                     scale=scale,
                     energy=energy,
                     control_region=control_region,
@@ -303,7 +308,7 @@ class Plotter:
                 )
                 fig.tight_layout()
                 if self.outdir:
-                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{obj.title}.pdf")
+                    fig.savefig(self.outdir / f"{add_name}{hist_name}_{key}.pdf")
                     plt.close(fig)
                 else:
                     ret.append(fig)

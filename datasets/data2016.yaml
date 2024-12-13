@@ -4,6 +4,7 @@
   lumi: 19.5
   forbid: true
   required_modules: [cr_selection]
+  n_events: 374088989
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt
   profile: 2016_preVFP
   files:
@@ -309,6 +310,7 @@
   isdata: true
   lumi: 16.8
   forbid: true
+  n_events: 251352549
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt
   profile: 2016_postVFP
   files:

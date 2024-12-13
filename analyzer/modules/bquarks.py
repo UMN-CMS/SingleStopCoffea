@@ -114,6 +114,66 @@ def createBHistograms(events, analyzer):
         mask=mask,
     )
 
+
+    t_bjets = events.tight_bs
+    analyzer.H(f"tight_bjet_pt", pt_axis, t_bjets.pt, name="Tight BJet $p_{T}$")
+    analyzer.H(f"tight_nb", b_axis, ak.num(t_bjets.pt), name="Tight BJet Count")
+    for i in range(0, 4):
+        mask = ak.num(t_bjets, axis=1) > i
+        analyzer.H(
+            f"tight_b_{i}_pt",
+            makeAxis(100, 0, 800, f"$p_T$ of rank {i} tight b jet"),
+            t_bjets[mask][:,i].pt,
+            mask=mask,
+            name=f"Tight BJet {i} $p_T$",
+            description=f"$p_T$ of the rank {i} $p_T$ b jet",
+        )
+    mask = ak.num(t_bjets, axis=1) > 1
+    top2 = t_bjets[mask]
+    tb_eta = abs(top2[:, 0].eta - top2[:, 1].eta)
+    tb_phi = abs(angleToNPiToPi(top2[:, 0].phi - top2[:, 1].phi))
+    tb_dr = top2[:, 0].delta_r(top2[:, 1])
+
+    analyzer.H(
+        f"tight_bb_eta",
+        makeAxis(20, 0, 5, "$\Delta \eta$ between leading 2 tight b jets"),
+        tb_eta,
+        mask=mask,
+        name=rf"$\Delta \eta$ BB$",
+        description=rf"$\Delta \eta$ between leading 2 tight b jets",
+    )
+    analyzer.H(
+        f"tight_bb_phi",
+        makeAxis(25, 0, 4, "$\Delta \phi$ between leading tight b jets"),
+        tb_phi,
+        mask=mask,
+        name=rf"$\Delta \phi$ BB$",
+        description=rf"$\Delta \phi$ between leading 2 tight b jets",
+    )
+    analyzer.H(
+        f"medium_bdr",
+        makeAxis(20, 0, 5, "$\Delta R$ between leading 2 tight b jets"),
+        tb_dr,
+        mask=mask,
+        name=rf"Tight BJet $\Delta R$",
+        description=rf"$\Delta R$ between leading 2 tight $p_T$ b jets",
+    )
+    inv = top2[:, 0] + top2[:, 1]
+    analyzer.H(
+        f"tight_b_m",
+        makeAxis(60, 0, 3000, f"$m$ of leading 2 tight b jets", unit="GeV"),
+        inv.mass,
+        mask=mask,
+        name=rf"tightbmass",
+    )
+    analyzer.H(
+        f"tight_b_pt",
+        makeAxis(20, 0, 1000, f"$p_T$ of leading 2 tight b jets", unit="GeV"),
+        inv.pt,
+        name=rf"tightbpt",
+        mask=mask,
+    )
+
     return events, analyzer
 
 

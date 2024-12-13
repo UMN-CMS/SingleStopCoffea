@@ -26,9 +26,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#FF0C00"
   files: 
-  - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_400.root
+  - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_400.root
 
 - name: signal_313_1000_600
   mc_campaign: 2018UL
@@ -41,9 +41,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#1edb62"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_600.root
 
 - name: signal_313_1000_900
   mc_campaign: 2018UL
@@ -56,9 +56,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#FFA900"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1000_900.root
 
 - name: signal_313_1500_400
   mc_campaign: 2018UL
@@ -71,9 +71,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#DF00FF"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_400.root
 
 - name: signal_313_1500_600
   mc_campaign: 2018UL
@@ -86,9 +86,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#A020F0"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_600.root
 
 - name: signal_313_1500_900
   mc_campaign: 2018UL
@@ -101,9 +101,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#00AAA9"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_900.root
 
 - name: signal_313_1500_1400
   mc_campaign: 2018UL
@@ -116,9 +116,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#FFD201"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_1400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-1500_1400.root
 
 - name: signal_313_2000_400
   mc_campaign: 2018UL
@@ -133,7 +133,7 @@
   style:
     color: "#000000"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_400.root
 
 - name: signal_313_2000_600
   mc_campaign: 2018UL
@@ -146,9 +146,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#48C06D"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_600.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_600.root
 
 - name: signal_313_2000_900
   mc_campaign: 2018UL
@@ -161,9 +161,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#83D34B"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_900.root
 
 - name: signal_313_2000_1400
   mc_campaign: 2018UL
@@ -176,9 +176,9 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#00C69C"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_1400.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_1400.root
 
 - name: signal_313_2000_1900
   mc_campaign: 2018UL
@@ -191,6 +191,6 @@
   tags: 
     - signal
   style:
-    color: "#000000"
+    color: "#FF7C00"
   files: 
-    - root://cmsxrootd.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_1900.root
+    - root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC313/NANOAOD-ALL/NANOAOD-2000_1900.root

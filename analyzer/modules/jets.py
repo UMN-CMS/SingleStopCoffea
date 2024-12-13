@@ -19,6 +19,7 @@ def tiny(events, analyzer):
 @analyzerModule("jets", categories="main", depends_on=["objects"])
 def createJetHistograms(events, analyzer):
     gj = events.good_jets
+    fat_jets = events.fat_jets
     analyzer.H(f"h_njet", nj_axis, ak.num(gj), name="njets")
     jet_combos = [(0, 4), (0, 3), (1, 4)]
     co = lambda x: it.combinations(x, 2)
@@ -83,6 +84,7 @@ def createJetHistograms(events, analyzer):
             [masses[p2],masses[p1] / masses[p2]],
             name=f"ratio_m{mtitle1}_vs_m{mtitle2}",
         )
+
     for i in range(0, 4):
         analyzer.H(rf"pt_{i+1}", 
             makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),
@@ -110,6 +112,33 @@ def createJetHistograms(events, analyzer):
                     name=f"$\eta$ vs $\phi$ of jet {i+1}",
                     description=rf"$\eta$ vs $\phi$ of jet {i+1}"
                    )
+
+    analyzer.H(rf"pt_fat_0", 
+        makeAxis(100, 0, 1000, f"$p_{{T, 0}}$", unit="GeV"),
+        fat_jets[:, 0].pt,
+        name=f"$p_T$ of leading AK8 jet",
+        description=f"$p_T$ of leading AK8 jet",
+    )
+    analyzer.H(f"eta_fat_0", 
+        makeAxis(50, -5, 5, f"$\eta_{{0}}$"),
+        fat_jets[:, 0].eta,
+        name=f"$\eta$ of leading AK8 jet",
+        description=f"$\eta$ of AK8 jet",
+    )
+    analyzer.H(f"phi_fat_0", 
+        makeAxis(50, -5, 5, f"$\phi_{{0}}$"),
+        fat_jets[:, 0].phi,
+        name=f"$\phi$ of leading AK8 jet",
+        description=f"$\phi$ of leading AK8 jet",
+    )
+    analyzer.H(f"phi_fat_0_vs_eta_fat_0",
+                [makeAxis(50,-5,5,f"$\eta_{{0}}$"),
+                    makeAxis(50,-5,5,f"$\phi_{{0}}$")],
+                [fat_jets[:,0].eta,
+                    fat_jets[:,0].phi],
+                name=f"$\eta$ vs $\phi$ of leading AK8 jet",
+                description=rf"$\eta$ vs $\phi$ of leading AK8 jet"
+                )
 
     masks = {}
     for i, j in list(x for x in it.combinations(range(0, 4), 2) if x[0] != x[1]):

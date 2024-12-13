@@ -46,7 +46,6 @@ class SampleManager:
                 p = self.sets[sample].profile
                 if isinstance(p, Profile):
                     p = p.name
-
                 self.sets[sample].profile = profile_repo[p]
 
     def loadSamplesFromDirectory(

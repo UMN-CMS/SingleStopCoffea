@@ -96,7 +96,10 @@ class Analyzer:
         file_retrieval_kwargs=None,
         include_default_modules=True,
         limit_files=None,
+        sample_manager=None,
     ) -> DatasetDaskRunResult:
+        if sample_manager:
+            dsprep.dataset_input.updateSampleInfo(sample_manager)
         this_dataset_modules = self.__createAndSortModules(
             dsprep.dataset_input.sample_info,
             self.module_names,

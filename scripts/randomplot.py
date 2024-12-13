@@ -37,23 +37,82 @@ from pathlib import Path
 # )
 
 
-directory='figures_2018_2022D_test_new_cuts'
-sample_names = ["Data2018","Data2022DTemp"]
+
+# sample_names = ["signal_313_1000_400",
+#      "signal_313_1000_600",
+#      "signal_313_1000_900",
+#      "signal_313_1500_400",
+#      "signal_313_1500_600",
+#      "signal_313_1500_900",
+#      "signal_313_1500_1400",
+#      "signal_313_2000_400","signal_313_2000_600","signal_313_2000_900","signal_313_2000_1400","signal_313_2000_1900"]
+#sample_names = ["signal_313_1000_400","signal_313_1000_600","signal_313_1000_900","signal_313_1500_900","signal_313_2000_400","signal_313_2000_1900"]
+#sample_names = ["signal_312_1000_400","signal_312_1000_600","signal_312_1000_900","signal_312_1500_900","signal_312_2000_400","signal_312_2000_1900"]
+# sample_names = ["signal_312_1000_400",
+#     "signal_312_1000_600",
+#     "signal_312_1000_900",
+#     "signal_312_1200_400",
+#     "signal_312_1200_600",
+#     "signal_312_1200_1100",
+#     "signal_312_1300_400",
+#     "signal_312_1300_600",
+#     "signal_312_1300_1200",
+#     "signal_312_1400_400",
+#     "signal_312_1400_600",
+#     "signal_312_1400_1300",
+#     "signal_312_1500_400",
+#     "signal_312_1500_600",
+#     "signal_312_1500_900",
+#     "signal_312_1500_1400",
+#     "signal_312_2000_400",
+#     "signal_312_2000_600",
+#     "signal_312_2000_900",
+#     "signal_312_2000_1400",
+#     "signal_312_2000_1900",
+#     "signal_312_1000_700",
+#     "signal_312_1000_800",
+#     "signal_312_1200_700",
+#     "signal_312_1200_800",
+#     "signal_312_1200_900",
+#     "signal_312_1200_1000",
+#     "signal_312_1500_1000",
+#     "signal_312_1500_1100",
+#     "signal_312_1500_1200",
+#     "signal_312_1500_1300",
+#     "signal_312_1500_1350",
+#     "signal_312_1500_1450",
+#     "signal_312_2000_1200",
+#     "signal_312_2000_1300",
+#     "signal_312_2000_1500",
+#     "signal_312_2000_1600",
+#     "signal_312_2000_1700"]
+# sample_names = ["Data2018","QCDInclusive2018","Diboson2018","STHadronic2018","TTToHadronic2018","ZJetsToNuNu2018","ZJetsToQQ2018"]
+sample_names = ["Data2017"]
+directory='figures_data2017_dec13'
+cr = False
+ratio = False
+energy = '13 TeV'
+coupling = '312'
+if cr:
+    coupling = "CR"
 plotter = Plotter(
-    ['2018and2022Danalyzed.pkl'],
+    ['data2017_analyzed.pkl'],
     directory,
-    default_backgrounds=None,
-    target_lumi=59.83,
-    coupling="cr",
+    default_backgrounds=[],
+    coupling=coupling,
     non_scaled_histos=True,
-    year="2018/2022",
+    year="2017",
 )
 
 def cutsPlot(cut_dict):
+    print(cut_dict)
     fig, ax = plt.subplots()
     ax.grid(False)
     ax.set_axis_off()
-    act(ax,cut_dict,loc="center")
+    temp = cut_dict
+    #act(ax,{"Data2017" : temp["Data2017"], "MC" : temp["QCDInclusive2017_HT700to1000"]},loc="center")
+    act(ax,{"Data2017" : temp["Data2017"]},loc="center")
+
     fig.savefig(Path(directory) / "cuts_table.pdf")
     plt.close(fig)
 cutsPlot(plotter.cut_table_dict)  
@@ -92,7 +151,6 @@ def cutflowPlot(histogram_name,percent=False):
 
 
 cutflowPlot('cutflow',True)
-
 cutflowPlot('cutflow')
 cutflowPlot('onecut')
 cutflowPlot('N-1')
@@ -135,10 +193,11 @@ list_of_2022d_hists = ['HT', 'h_njet', 'm14_pt', 'm14_eta', 'm14_m', 'm13_pt', '
 #     plotter(j,["signal_312_1500_1400","signal_312_1500_1400_mg"],add_label=j,add_name="1400",normalize=True,ratio=True)
 
 print(plotter.histos.keys())
-for j in plotter.histos.keys():
-    plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True,cut_table_in_plot=False)
-    plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=True, energy='13/13.6 TeV',control_region=True,cut_list_in_plot=True,cut_table_in_plot=False)
 
+for j in plotter.histos.keys():
+    if "unweighted" not in j:
+        plotter(hist_name=j, sig_set=sample_names, normalize=False, add_label=j, ratio=ratio, energy=energy,control_region=cr,cut_list_in_plot=True,cut_table_in_plot=False)
+        plotter(hist_name=j, sig_set=sample_names, normalize=True, add_label=f'{j}_normalized', add_name="normalized", ratio=ratio, energy=energy,control_region=cr,cut_list_in_plot=True,cut_table_in_plot=False)
 sys.exit()
 
 

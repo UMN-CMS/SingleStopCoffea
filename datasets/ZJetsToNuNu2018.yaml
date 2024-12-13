@@ -10,6 +10,7 @@
     - ZJetsToNuNu2018_HT2500ToInf
 
 - name: ZJetsToNuNu2018_HT100To200
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 359649
   n_events: 28876062
@@ -75,6 +76,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/6EED898C-1C29-4343-8D6E-2C0D56E73A1C.root
 
 - name: ZJetsToNuNu2018_HT200To400
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 98438.76
   n_events: 22749608
@@ -113,6 +115,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/250000/EA681AB8-3A7D-9840-B365-5F1C5F09F2C6.root
 
 - name: ZJetsToNuNu2018_HT400To600
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 13363.587
   n_events: 19676607
@@ -140,6 +143,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/70000/5DAD0241-51B7-234F-B3E5-88098A011376.root
 
 - name: ZJetsToNuNu2018_HT600To800
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 3244.923
   n_events: 5968910
@@ -161,6 +165,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/2430000/BD1EA1E0-88A1-7F4A-B581-F58AABEC553B.root
 
 - name: ZJetsToNuNu2018_HT800To1200
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 1452.066
   n_events: 2129122
@@ -173,6 +178,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/280000/288435C3-CDD7-3044-BD2A-13654DC55BF4.root
 
 - name: ZJetsToNuNu2018_HT1200To2500
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 338.6358
   n_events: 381695
@@ -190,6 +196,7 @@
     - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZJetsToNuNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/260000/7EB23839-6971-464E-9E95-03CB9C2824F1.root
 
 - name: ZJetsToNuNu2018_HT2500ToInf
+  mc_campaign: 2018UL
   lumi: 59.8
   x_sec: 7.562058
   n_events: 268224 

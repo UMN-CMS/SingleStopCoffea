@@ -223,9 +223,12 @@ def createCRSelection(events, analyzer):
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
 
     hlt_names = analyzer.profile.hlt
+    
     if "HLT" in events.fields:
         hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
-        selection.add('hlt', hlt)
+    #print("only single jet trigger")
+    #selection.add('hlt', events.HLT["AK8PFJet400_TrimMass30"])
+    selection.add('hlt', hlt)
     selection.add("ht1200", (events.HT >= 1200))
     selection.add("highptjet", (ak.fill_none(filled_jets[:, 0].pt > 300, False)))
     selection.add("jets", ((ak.num(good_jets) >= 4) & (ak.num(good_jets) <= 6)))

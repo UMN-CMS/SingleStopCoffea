@@ -9,6 +9,6 @@
   inherit: '2023'
   HLT:
     - PFHT1050
-    - AK8PFJet420_TrimMass30
+    - AK8PFJet420_MassSD30
 
   

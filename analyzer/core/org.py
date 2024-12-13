@@ -126,7 +126,7 @@ def generateTopology(module_list, sample_info, include_defaults=True):
         for c in module.categories:
             for a in resolved_category_after.get(c, []):
                 graph[name].update(set(cats[a]))
-
+        logger.info(graph)
         for m in graph[name]:
             if m not in mods:
                 raise AnalyzerGraphError(

@@ -16,7 +16,7 @@ def negEventWeight(events, analyzer):
 
 
 @analyzerModule(
-    "finalize_weights", categories="finalize_weights", always=True, after="weights"
+    "finalize_weights", categories="finalize_weights", always=True
 )
 def finalizeWeights(events, analyzer):
     analyzer.finalizeWeights()

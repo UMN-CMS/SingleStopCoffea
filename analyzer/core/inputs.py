@@ -70,7 +70,10 @@ class AnalyzerInput:
                 }
             }
         }
-
+    
+    def updateSampleInfo(self, manager):
+        self.sample_info = manager.getSet(self.dataset_name).getAnalyzerInput().sample_info
+        return self.sample_info
 
 @dataclass
 class DatasetPreprocessed:

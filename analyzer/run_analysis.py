@@ -204,6 +204,7 @@ def runModulesOnDatasets(
                 file_retrieval_kwargs=file_retrieval_kwargs,
                 include_default_modules=include_default_modules,
                 limit_files=limit_files,
+                sample_manager=sample_manager,
             )
             futures.append(f)
     logger.info(f"Generated {len(futures)} analysis futures")

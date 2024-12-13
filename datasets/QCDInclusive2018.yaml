@@ -8,14 +8,14 @@
     - QCDInclusive2018_HT1500to2000
     - QCDInclusive2018_HT2000toInf
   style:
-    color: "#8fbc8f"
+    color: "#8fac8f"
     alpha: 0.5
 
 - name: QCDInclusive2018_HT1000to1500
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 14394786
   x_sec: 1127000
   profile: 2018JetHT
@@ -77,7 +77,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 84434559
   x_sec: 23590000000
   profile: 2018JetHT
@@ -170,7 +170,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 10411831
   x_sec: 109800
   profile: 2018JetHT
@@ -196,7 +196,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 5374711
   x_sec: 21980
   profile: 2018JetHT
@@ -215,7 +215,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 57336623
   x_sec: 1555000000
   profile: 2018JetHT
@@ -272,7 +272,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 61609663
   x_sec: 324500000
   profile: 2018JetHT
@@ -437,7 +437,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 49184771
   x_sec: 30310000
   profile: 2018JetHT
@@ -496,7 +496,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 38599389
   x_sec: 187300000000
   cms_dataset: /QCD_HT50to100_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
@@ -566,7 +566,7 @@
   mc_campaign: 2018UL
   type: set
   produced_on: ""
-  lumi: 59.8
+  lumi: 59.83
   n_events: 48506751
   x_sec: 6444000
   profile: 2018JetHT

@@ -1,6 +1,7 @@
 import awkward as ak
 
 def isMC(sample_info):
+    print(sample_info)
     return sample_info.sample_type == "MC"
 
 def isData(sample_info):

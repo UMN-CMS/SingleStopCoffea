@@ -38,6 +38,7 @@ def createObjects(events, analyzer):
     events["loose_bs"] = loose_b
     events["med_bs"] = med_b
     events["tight_bs"] = tight_b
+    events["fat_jets"] = fat_jets
 
     ht = ak.sum(good_jets.pt, axis=1)
     events["HT"] = ht
