@@ -507,3 +507,84 @@
   x_sec: 16
   other_data: 
     stop_mass: 0
+
+
+# NEW LOW MASS FILES
+
+- name: signal_312_800_700
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_700.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
+  x_sec: 1300
+  other_data: 
+    stop_mass: 800
+
+- name: signal_312_800_600
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_600.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
+  x_sec: 1300
+  other_data: 
+    stop_mass: 800
+
+- name: signal_312_800_400
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_400.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  x_sec: 1300
+  other_data: 
+    stop_mass: 800
+
+- name: signal_312_900_800
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_800.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 800\\ \\mathrm{GeV}$"
+  x_sec: 770
+  other_data: 
+    stop_mass: 900
+
+
+- name: signal_312_900_700
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_700.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
+  x_sec: 770
+  other_data: 
+    stop_mass: 900
+
+- name: signal_312_900_600
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_600.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
+  x_sec: 770
+  other_data: 
+    stop_mass: 900
+
+- name: signal_312_900_400
+  sample_type: MC
+  era: '2018'
+  files:
+  - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_400.root
+  n_events: 10000
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  x_sec: 770
+  other_data: 
+    stop_mass: 900

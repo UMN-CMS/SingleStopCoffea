@@ -230,8 +230,11 @@ if __name__ == "__main__":
     setup_logging()
 
     loaded = loadPostprocessors("configurations/post.yaml")
-    # result = AnalysisResult.fromFile("results/histograms/2024_10_06.pkl")
-    result = AnalysisResult.fromFile("results/histograms/2024_11_05_patched.pkl")
+    # loaded = loadPostprocessors("configurations/post.yaml")
+    result = AnalysisResult.fromFile("testout.pkl")
+    # result = AnalysisResult.fromFile("testout.pkl")
+    # result2 = AnalysisResult.fromFile("results/histograms/2024_10_06.pkl")
+    # result2 = AnalysisResult.fromFile("results/histograms/2024_11_05_patched.pkl")
     # result = AnalysisResult.fromFile("test.pkl")
     # print(list(result.results.keys()))
     result = result.getResults(drop_samples=[
@@ -250,7 +253,7 @@ if __name__ == "__main__":
     print("HERE")
     with Progress() as progress:
         task_id = progress.add_task("[cyan]Processing...", total=len(tasks))
-        with cf.ProcessPoolExecutor(max_workers=8) as executor:
+        with cf.ProcessPoolExecutor(max_workers=2) as executor:
             results = [executor.submit(f) for f in tasks]
             for i in cf.as_completed(results):
                 progress.advance(task_id)
