@@ -85,6 +85,7 @@ class SubSectorResult(pyd.BaseModel):
     params: SubSectorParams
     histograms: dict[str, HistogramCollection] = pyd.Field(default_factory=dict)
     other_data: dict[str, Any] = pyd.Field(default_factory=dict)
+    raw_processed: int = 0
     cutflow_data: Optional[SelectionResult] = None
 
     def __add__(self, other):
@@ -101,6 +102,7 @@ class SubSectorResult(pyd.BaseModel):
             params=self.params,
             histograms=new_hists,
             other_data=new_other,
+            raw_processed=self.raw_processed + other.raw_processed,
             cutflow_data=self.cutflow_data + other.cutflow_data,
         )
 
@@ -109,6 +111,7 @@ class SubSectorResult(pyd.BaseModel):
             params=self.params,
             histograms={x: y.scaled(scale) for x, y in self.histograms.items()},
             other_data=self.other_data,
+            raw_processed=self.raw_processed,
             cutflow_data=self.cutflow_data.scaled(scale),
         )
 
@@ -119,6 +122,7 @@ class SectorResult(pyd.BaseModel):
     histograms: dict[str, HistogramCollection]
     other_data: dict[str, Any]
     cutflow_data: Optional[SelectionResult]
+    raw_processed: int
 
     @staticmethod
     def fromSubSectorResult(subsector_result):
@@ -127,6 +131,7 @@ class SectorResult(pyd.BaseModel):
             sample_params=[subsector_result.params.sample],
             histograms=subsector_result.histograms,
             other_data=subsector_result.other_data,
+            raw_processed=subsector_result.raw_processed,
             cutflow_data=subsector_result.cutflow_data,
         )
 
@@ -135,6 +140,7 @@ class SectorResult(pyd.BaseModel):
             sector_params=self.sector_params,
             sample_params=[subsector_result.params.sample_params],
             histogrmams={x: y.scaled(scale) for x, y in self.histograms.items()},
+            raw_processed=self.raw_processed,
             other_data=self.other_data,
             cutflow_data=self.cutflow_data.scaled(scale),
         )
@@ -152,6 +158,7 @@ class SectorResult(pyd.BaseModel):
             sample_params=self.sample_params + other.sample_params,
             histograms=new_hists,
             other_data=new_other,
+            raw_processed=self.raw_processed + other.raw_processed,
             cutflow_data=self.cutflow_data + other.cutflow_data,
         )
 
@@ -234,6 +241,7 @@ class AnalysisResult(pyd.BaseModel):
             if subsector_id.sample_id in drop_samples:
                 continue
             k = (subsector_id.sample_id.dataset_name, subsector_id.region_name)
+            result.raw_processed =  self.raw_events_processed[subsector_id.sample_id]
 
             if result.params.sector.dataset.sample_type == SampleType.MC:
                 sample_info = result.params.sample

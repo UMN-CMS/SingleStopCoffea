@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Union, Literal
 from analyzer.datasets import SampleId
+from rich import print
 
 import yaml
 
@@ -65,6 +66,55 @@ class Histogram1D(pyd.BaseModel):
             d = yaml.safe_load(f)
         self.style_set = StyleSet(**d)
 
+
+
+
+
+
+def makeTable(sectors,  output_name):
+    import csv
+    res = []
+    for sector in sectors:
+        p = sector.sector_params
+        print(p)
+        cutflow = sector.cutflow_data
+        eff = cutflow.raw_passed / sector.raw_processed
+        res.append((p.dataset.name, eff))
+    print(sorted(res))
+        
+    # o = doFormatting(output_name, p, histogram_name=histogram)
+    # with open(o, 'w') as f:
+    #     writer = csv.writer(f)
+    #     f.write()
+        
+
+
+@registerPostprocessor
+class EfficiencyTable(pyd.BaseModel):
+    to_plot: SectorSpec
+    style_set: Union[str, StyleSet]
+    groupby: list[str] = ["dataset.era.name", "region.region_name"]
+    output_name: str = "{region.region_name}"
+
+    def getExe(self, results):
+        sectors = [x for x in results.values() if self.to_plot.passes(x.sector_params)]
+        r = createSectorGroups(sectors, *self.groupby)
+        ret = []
+        for sector_group in r:
+            ret.append(
+                ft.partial(
+                    makeTable,
+                    sector_group.sectors,
+                    self.output_name,
+                )
+            )
+        return ret
+
+    def init(self):
+        config_path = Path(CONFIG.STYLE_PATH) / "style.yaml"
+        with open(config_path, "r") as f:
+            d = yaml.safe_load(f)
+        self.style_set = StyleSet(**d)
 
 @registerPostprocessor
 class ExportHists(pyd.BaseModel):
@@ -229,7 +279,7 @@ if __name__ == "__main__":
 
     setup_logging()
 
-    loaded = loadPostprocessors("configurations/post.yaml")
+    loaded = loadPostprocessors("configurations/eff.yaml")
     # loaded = loadPostprocessors("configurations/post.yaml")
     result = AnalysisResult.fromFile("testout.pkl")
     # result = AnalysisResult.fromFile("testout.pkl")
@@ -247,9 +297,9 @@ if __name__ == "__main__":
         processor.init()
         tasks += processor.getExe(result)
 
-    # results = [f() for f in tasks]
-    # import sys
-    # sys.exit()
+    results = [f() for f in tasks]
+    import sys
+    sys.exit()
     print("HERE")
     with Progress() as progress:
         task_id = progress.add_task("[cyan]Processing...", total=len(tasks))
