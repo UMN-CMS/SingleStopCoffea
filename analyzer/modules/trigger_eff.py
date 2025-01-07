@@ -64,7 +64,7 @@ def trigger_eff_objects(columns, params):
     columns.add("loose_bs", loose_b)
     columns.add("med_bs", med_b)
     columns.add("tight_bs", tight_b)
-
+    columns.add("fat_jets", fat_jets, shape_dependent=True)
     ht = ak.sum(good_jets.pt, axis=1)
     columns.add("HT", ht)
 

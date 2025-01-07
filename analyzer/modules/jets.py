@@ -88,13 +88,18 @@ def jet_kinematics(events, params, analyzer):
         )
         htratio = masked_jets[:, i].pt / events.HT[mask]
         analyzer.H(
-            f"pt_ht_ratio_{i}",
+            f"pt_ht_ratio_{i+1}",
             hist.axis.Regular(50, 0, 1, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
             mask=mask,
-            description=rf"Ratio of jet {i} $p_T$ to event HT",
+            description=rf"Ratio of jet {i+1} $p_T$ to event HT",
         )
-
+        analyzer.H(
+        f"phi_vs_eta_{i+1}",
+        [makeAxis(50, -5, 5, f"$\eta$"), makeAxis(50, -5, 5, f"$\phi$")],
+        [gj[:,i].eta, gj[:,i].phi],
+        description=rf"$\eta$ vs $\phi$ of jet {i+1}",
+    )
 
 @MODULE_REPO.register(ModuleType.Histogram)
 def jet_combo_kinematics(events, params, analyzer):
@@ -174,13 +179,6 @@ def jet_combo_kinematics(events, params, analyzer):
             ],
             [masses[p2], masses[p1] / masses[p2]],
         )
-
-    analyzer.H(
-        f"phi_vs_eta",
-        [makeAxis(50, -5, 5, f"$\eta$"), makeAxis(50, -5, 5, f"$\phi$")],
-        [gj.eta, gj.phi],
-        description=rf"$\eta$ vs $\phi$ of jet ",
-    )
 
 
 @MODULE_REPO.register(ModuleType.Histogram)
