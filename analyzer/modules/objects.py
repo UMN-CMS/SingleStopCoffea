@@ -14,6 +14,7 @@ def makeCutSet(x, s, args):
 def core_objects(events, params):
     PRODUCED_COLUMNS = [
         "good_jets",
+        "fat_jets",
         "good_electrons",
         "good_muons",
         "loose_bs",
@@ -44,6 +45,7 @@ def core_objects(events, params):
 
 
     events["good_jets"] = good_jets
+    events["fat_jets"] = fat_jets
     events["good_electrons"] = good_electrons
     events["good_muons"] = good_muons
     events["loose_bs"] = loose_b

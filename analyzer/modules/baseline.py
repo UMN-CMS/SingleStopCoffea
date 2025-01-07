@@ -11,6 +11,22 @@ def signal_hlt(events, params, selector):
         f"HLT_HT | HLT_AK8", events.HLT[ht_trigger_name] | events.HLT[ak8_trigger_name]
     )
 
+@MODULE_REPO.register(ModuleType.Selection)
+def signal_ht_trigger(events, params, selector):
+    era_info = params.sector.dataset.era
+    ht_trigger_name = era_info.trigger_names["HT"]
+    selector.add(
+        f"HLT_HT", events.HLT[ht_trigger_name]
+    )
+
+@MODULE_REPO.register(ModuleType.Selection)
+def signal_single_jet_trigger(events, params, selector):
+    era_info = params.sector.dataset.era
+    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
+    selector.add(
+        f"HLT_AK8", events.HLT[ak8_trigger_name]
+    )
+
 
 @MODULE_REPO.register(ModuleType.Selection)
 def signal_muon(events, params, selector):

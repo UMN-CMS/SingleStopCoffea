@@ -1,0 +1,18 @@
+'2022_preEE':
+  partial: True
+  btag_scale_factors: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2022_Summer22/btagging.json.gz
+  pileup:
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22/puWeights.json.gz
+    name: Collisions2022_355100_357900_eraBCD_GoldenJson
+
+2022preJetMET:
+  inherit: '2022_preEE'
+  HLT:
+    - PFHT1050
+    - AK8PFJet420_TrimMass30
+
+2022preMuon:
+  inherit: '2022_preEE'
+  HLT:
+    - Mu50
+    - IsoMu24

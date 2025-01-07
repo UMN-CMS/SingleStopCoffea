@@ -1,0 +1,12 @@
+'2023':
+  partial: True
+  btag_scale_factors: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2023_Summer23/btagging.json.gz
+  pileup:
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2023_Summer23/puWeights.json.gz
+    name: Collisions2023_366403_369802_eraBC_GoldenJson
+
+2023JetMET:
+  inherit: '2023'
+  HLT:
+    - PFHT1050
+    - AK8PFJet420_MassSD30
