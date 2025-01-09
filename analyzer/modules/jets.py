@@ -213,3 +213,45 @@ def jet_relative_angles(events, params, analyzer):
             mask=mask,
             description=rf"$\Delta R$ between jets {i+1} and {j+1}",
         )
+
+@MODULE_REPO.register(ModuleType.Histogram)
+def leading_fat_jet_kinematics(events, params, analyzer):
+    """Basic information about leading fat jet"""
+
+    fj = events.fat_jets
+    
+    mask = ak.num(fj, axis=1) > 0
+    masked_jets = fj[mask]
+
+    analyzer.H(
+        rf"fat_pt_{1}",
+        makeAxis(100, 0, 1000, f"$p_{{T, {1}}}$", unit="GeV"),
+        fj[:, 0].pt,
+        description=f"$p_T$ of leading AK8 jet",
+    )
+    analyzer.H(
+        f"fat_eta_{1}",
+        makeAxis(50, -5, 5, f"$\eta_{{{1}}}$"),
+        fj[:, 0].eta,
+        description=f"$\eta$ of leading AK8 jet",
+    )
+    analyzer.H(
+        f"fat_phi_{1}",
+        makeAxis(50, -5, 5, f"$\phi_{{{1}}}$"),
+        fj[:, 0].phi,
+        description=f"$\phi$ of leading AK8 jet",
+    )
+    htratio = masked_jets[:, 0].pt / events.HT[mask]
+    analyzer.H(
+        f"fat_pt_ht_ratio_{1}",
+        hist.axis.Regular(50, 0, 1, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
+        htratio,
+        mask=mask,
+        description=rf"Ratio of leading AK8 jet $p_T$ to event HT",
+    )
+    analyzer.H(
+        f"fat_phi_vs_eta_1",
+        [makeAxis(50, -5, 5, f"$\eta$"), makeAxis(50, -5, 5, f"$\phi$")],
+        [fj[:,0].eta, fj[:,0].phi],
+        description=rf"$\eta$ vs $\phi$ of leading AK8 jet",
+    )

@@ -144,6 +144,7 @@ def patchFromPath(
 
     output = Path(output)
     inputs = [Path(path) for path in paths]
+
     if output in inputs:
         raise RuntimeError()
     description = loadDescription(description_path)
