@@ -107,17 +107,80 @@ def triggerEfficiencyHists(events, analyzer):
 
     analyzer.H(
         "passed_pt0",
-        makeAxis(30, 0, 1500, "$p_{T, 0}$", unit="GeV"),
-        gj[mpt][:, 0].pt,
+        makeAxis(30, 0, 1500, "$p_{T, 1}$", unit="GeV"),
+        fatjets[mpt][:, 0].pt,
         mask = mpt,
     )
 
     analyzer.H(
         "total_pt0",
-        makeAxis(30, 0, 1500, "$p_{T, 0}$", unit="GeV"),
-        gj[mnj][:, 0].pt,
+        makeAxis(30, 0, 1500, "$p_{T, 1}$", unit="GeV"),
+        fatjets[mnj][:, 0].pt,
         mask = mnj,
     )
+
+    analyzer.H(
+        "total_pT0_vs_mSoftDrop",
+        [ makeAxis(30, 0, 1500, "$p_{T, 1}$", unit="GeV"),
+          makeAxis(50, 0, 500, "$m_{SD, 1}$", unit="GeV")
+        ],
+        [fatjets[mnj][:, 0].pt, fatjets[mnj][:, 0].msoftdrop],
+        mask = mnj,
+    )
+
+    analyzer.H(
+        "passed_pT0_vs_mSoftDrop",
+        [ makeAxis(30, 0, 1500, "$p_{T, 1}$", unit="GeV"),
+          makeAxis(50, 0, 500, "$m_{SD, 1}$", unit="GeV")
+        ],
+        [fatjets[mpt][:, 0].pt, fatjets[mpt][:, 0].msoftdrop],
+        mask = mpt,
+    )
+
+    j = 1
+    mnj = (ak.num(gj, axis = 1) >= j) 
+    masked_jets = gj[mnj]
+    muons = events.good_muons[mnj]
+    analyzer.H(
+        "d_r_mu_j{0}".format(j),
+        makeAxis(25, 0, 5, "$|\Delta R_{{{\mu}{j_1}}}|$"),
+        abs(masked_jets[:, j - 1].delta_r(muons[:, 0])),
+        mask = mnj,
+    )
+
+    j = 2
+    mnj = (ak.num(gj, axis = 1) >= j) 
+    masked_jets = gj[mnj]
+    muons = events.good_muons[mnj]
+    analyzer.H(
+        "d_r_mu_j{0}".format(j),
+        makeAxis(25, 0, 5, "$|\Delta R_{{{\mu}{j_2}}}|$"),
+        abs(masked_jets[:, j - 1].delta_r(muons[:, 0])),
+        mask = mnj,
+    )
+
+    j = 3
+    mnj = (ak.num(gj, axis = 1) >= j) 
+    masked_jets = gj[mnj]
+    muons = events.good_muons[mnj]
+    analyzer.H(
+        "d_r_mu_j{0}".format(j),
+        makeAxis(25, 0, 5, "$|\Delta R_{{{\mu}{j_3}}}|$"),
+        abs(masked_jets[:, j - 1].delta_r(muons[:, 0])),
+        mask = mnj,
+    )
+
+    j = 4
+    mnj = (ak.num(gj, axis = 1) >= j) 
+    masked_jets = gj[mnj]
+    muons = events.good_muons[mnj]
+    analyzer.H(
+        "d_r_mu_j{0}".format(j),
+        makeAxis(25, 0, 5, "$|\Delta R_{{{\mu}{j_4}}}|$"),
+        abs(masked_jets[:, j - 1].delta_r(muons[:, 0])),
+        mask = mnj,
+    )
+
     return events, analyzer
 
 @analyzerModule("baseline_hists", categories="main")

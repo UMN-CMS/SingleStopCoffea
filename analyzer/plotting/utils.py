@@ -82,7 +82,7 @@ def addAxesToHist(
         ax.top_axes.append(ax_histx)
 
     for i in range(num_bottom):
-        ax_histx = divider.append_axes("bottom", 1, pad=bottom_pad, sharex=ax)
+        ax_histx = divider.append_axes("bottom", 4, pad=bottom_pad, sharex=ax)
         ax.bottom_axes.append(ax_histx)
 
     for i in range(num_left):

@@ -5,7 +5,7 @@ import matplotlib as mpl
 
 from .annotations import addEra, addCmsInfo, addCutTable
 from .plots_1d import addTitles1D, drawAs1DHist, drawPull, drawRatio, drawAsScatter
-from .plots_2d import addTitles2D, drawAs2DHist
+from .plots_2d import addTitles2D, drawAs2DHist, drawRatio2D
 from .utils import addAxesToHist
 
 
@@ -14,7 +14,7 @@ def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
 
     hopo = plotobj_obs
     hppo = plotobj_pred
-    ax = drawAs1DHist(hopo, yerr=True, fill=False)
+    ax = drawAs1DHist(hopo, yerr=True, fill=True)
 
     drawAs1DHist(ax, hppo, yerr=True, fill=False)
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
@@ -44,12 +44,15 @@ def plotRatio(
 
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     ab = ax.bottom_axes[0]
+    #ab = ax.twinx()
     drawRatio(ab, numerator=hppo, denominator=hopo, weights=weights)
 
+    #ax.set_yscale("linear")
+    ax.set_ylabel("Events")
     ab.set_ylabel("Ratio")
-    ab.set_ylim(0.0, 1.2)
-    # addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    # addTitles1D(ax, hopo, top_pad=0.2)
+    ab.set_ylim(0.0, 1.1)
+    addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
+    addTitles1D(ax, hopo, top_pad=0.2)
 
     if no_hists:
         return ax
@@ -57,6 +60,15 @@ def plotRatio(
         fig.tight_layout()
         return fig
 
+def plotRatio2D(plotobj_pred, plotobj_obs, coupling, lumi):
+    hppo = plotobj_pred
+    hopo = plotobj_obs
+
+    fig, ax = plt.subplots()
+    drawRatio2D(ax, numerator = hppo, denominator = hopo)
+    addCmsInfo(ax, additional_text="")
+    fig.tight_layout()
+    return fig
 
 def plot1D(
     signal_plobjs,
@@ -199,11 +211,12 @@ def plot2D(
         objtitle = plot_obj.title
         drawAs2DHist(ax, plot_obj)
 
-        if "/" in era:
-            split_eras = era.split("/")
-        else:
-            split_eras = []
+        #if "/" in era:
+            #split_eras = era.split("/")
+        #else:
+            #split_eras = []
 
+        split_eras = []
         for single_era in split_eras:
             if single_era in plot_obj.title:
                 actual_era = single_era
@@ -211,12 +224,12 @@ def plot2D(
             else:
                 actual_era = era
 
-        if "/" in actual_era:
-            actual_energy = energy
-        else:
-            actual_energy = energy_map[actual_era]
-
-    addEra(ax, lumi, actual_era, energy=actual_energy)
+        #if "/" in actual_era:
+            #actual_energy = energy
+        #else:
+            #actual_energy = energy_map[actual_era]
+        #actual_energy = energy_map[actual_era]
+    #addEra(ax, lumi, actual_era, energy=actual_energy)
     pos = "in"
 
     if control_region:

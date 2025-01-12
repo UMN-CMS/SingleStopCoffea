@@ -143,12 +143,12 @@ def drawRatio(
         x,
         ratio,
         yerr=unc,
-        marker="_",
+        marker=".",
         linestyle="none",
+        color='k',
+        ecolor='k',
         **kwargs,
     )
-    ax.set_ylim(0.0, 1.1)
-    print('plots 1d')
     return ax
 
 

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import analyzer.datasets as ad
 from analyzer.utils import accumulate
 
-from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio
+from .high_level_plots import plot1D, plot2D, plotPulls, plotRatio, plotRatio2D
 from .mplstyles import loadStyles
 from .plottables import PlotObject, createPlotObject, PlotAxis
 from .utils import getNormalized, splitHistDict
@@ -190,6 +190,20 @@ class Plotter:
         else:
             return fig
 
+    def plotRatio2D(self, target, hist_obs, hist_pred):
+        ho = self.histos[hist_obs][target]
+        hp = self.histos[hist_pred][target]
+        hopo = PlotObject.fromHist(ho)
+        hppo = PlotObject.fromHist(hp)
+
+        fig = plotRatio2D(hppo, hopo, self.coupling, self.target_lumi) 
+        if self.outdir:
+            print(self.outdir)
+            fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
+            plt.close(fig)
+        else:
+            return fig
+
     def doPlot(
         self,
         hist_name,
@@ -286,8 +300,8 @@ class Plotter:
 
         elif len(r.axes) == 2:
             ret = []
-            
-            for key,obj in signal_plobjs.items():
+            for key,obj in background_plobjs.items():
+                print(key, obj)
                 if cut_table_in_plot:
                     cut_table = {key:self.cut_table_dict[key]}
                 if cut_list_in_plot:

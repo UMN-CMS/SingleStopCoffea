@@ -47,8 +47,9 @@ sig = [
     )
 ]
 
+sig = []
 
-backgrounds = ["DataSingleMuon2018Official"]
+backgrounds = ["DataSingleMuonOfficial2018"]
 plotter = Plotter("DataSingleMuon2018Official.pkl", "plots", default_backgrounds=backgrounds)
 
 import analyzer.datasets as ds
@@ -72,9 +73,16 @@ toplot = [
     "m13_vs_m14",
 ]
 toplot = [h for h in hists.keys() if 'unweighted' not in h]
+print(toplot)
 
-#for p in toplot:
-    #plotter(p, [], normalize=False, scale="log")
+for p in toplot:
+    plotter(p, [], normalize=False, scale="log")
+#plotter('d_r_mu_j1', normalize=False, scale="log")
+#plotter('d_r_mu_j2', normalize=False, scale="log")
+#plotter('d_r_mu_j3', normalize=False, scale="log")
+#plotter('d_r_mu_j4', normalize=False, scale="log")
+#plotter("pT0_vs_mSoftDrop", [], normalize = False)
 
 plotter.plotRatio('DataSingleMuonOfficial2018', 'totalHT', 'passedHT')
 plotter.plotRatio('DataSingleMuonOfficial2018', 'total_pt0', 'passed_pt0')
+plotter.plotRatio2D('DataSingleMuonOfficial2018', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')
