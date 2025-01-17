@@ -218,7 +218,7 @@ def jet_relative_angles(events, params, analyzer):
 def leading_fat_jet_kinematics(events, params, analyzer):
     """Basic information about leading fat jet"""
 
-    fj = events.fat_jets
+    fj = events.good_fatjets
     
     mask = ak.num(fj, axis=1) > 0
     masked_jets = fj[mask]
