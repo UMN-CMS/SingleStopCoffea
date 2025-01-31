@@ -81,8 +81,9 @@ def createMuonSelection(events, analyzer):
 @analyzerModule("trigger_efficiency_hists", categories="main")
 def triggerEfficiencyHists(events, analyzer):
     gj = events.good_jets
+    nmj = events.non_muonic_jets
     fatjets = events.FatJet
-    fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4) & (events.FatJet.msoftdrop > 50)]
+    fatjets = fatjets[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4)]
     hlt_names = analyzer.profile.hlt
     if "HLT" in events.fields:
         for n in hlt_names:
@@ -138,8 +139,8 @@ def triggerEfficiencyHists(events, analyzer):
     )
 
     j = 1
-    mnj = (ak.num(gj, axis = 1) >= j) 
-    masked_jets = gj[mnj]
+    mnj = (ak.num(nmj, axis = 1) >= j) 
+    masked_jets = nmj[mnj]
     muons = events.good_muons[mnj]
     analyzer.H(
         "d_r_mu_j{0}".format(j),
@@ -149,8 +150,8 @@ def triggerEfficiencyHists(events, analyzer):
     )
 
     j = 2
-    mnj = (ak.num(gj, axis = 1) >= j) 
-    masked_jets = gj[mnj]
+    mnj = (ak.num(nmj, axis = 1) >= j) 
+    masked_jets = nmj[mnj]
     muons = events.good_muons[mnj]
     analyzer.H(
         "d_r_mu_j{0}".format(j),
@@ -160,8 +161,8 @@ def triggerEfficiencyHists(events, analyzer):
     )
 
     j = 3
-    mnj = (ak.num(gj, axis = 1) >= j) 
-    masked_jets = gj[mnj]
+    mnj = (ak.num(nmj, axis = 1) >= j) 
+    masked_jets = nmj[mnj]
     muons = events.good_muons[mnj]
     analyzer.H(
         "d_r_mu_j{0}".format(j),
@@ -171,8 +172,8 @@ def triggerEfficiencyHists(events, analyzer):
     )
 
     j = 4
-    mnj = (ak.num(gj, axis = 1) >= j) 
-    masked_jets = gj[mnj]
+    mnj = (ak.num(nmj, axis = 1) >= j) 
+    masked_jets = nmj[mnj]
     muons = events.good_muons[mnj]
     analyzer.H(
         "d_r_mu_j{0}".format(j),

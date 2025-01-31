@@ -32,16 +32,33 @@ def plotPulls(plotobj_pred, plotobj_obs, coupling, lumi):
 def plotRatio(
     plotobj_pred, plotobj_obs, coupling, lumi, weights=None, no_hists=False, ax=None
 ):
-
     hppo = plotobj_pred
     hopo = plotobj_obs
+    lumi_dict = {19.5 : f"19.5 fb$^{{-1}}$ (2016 pre-VFP, 13 TeV)",
+                 16.8 : f"16.8 fb$^{{-1}}$ (2016 post-VFP, 13 TeV)",
+                 41.48 : f"41.5 fb$^{{-1}}$ (2017, 13 TeV)", 
+                 59.83 : f"59.8 fb$^{{-1}}$ (2018, 13 TeV)", 
+                 7.98 : f"8.0 fb$^{{-1}}$ (2022 pre-EE, 13.6 TeV)",
+                 26.67 : f"26.7 fb$^{{-1}}$ (2022 post-EE, 13.6 TeV)",
+                 30.12 : f"30.1 fb$^{{-1}}$ (2023, 13.6 TeV)",
+                }
+
+    trigger_dict = {19.5 : f"PFHT900",
+                    16.8 : f"PFHT900",
+                    41.48 : f"PFHT1050", 
+                    59.83 : f"PFHT1050", 
+                    7.98 : f"PFHT1050",
+                    26.67 : f"PFHT1050",
+                    30.12 : f"PFHT1050",
+                   }
 
     if not no_hists:
         fig, ax = plt.subplots()
 
-        drawAs1DHist(ax, hopo, yerr=True, fill=False)
-        drawAs1DHist(ax, hppo, yerr=True, fill=False)
+        drawAs1DHist(ax, hopo, yerr=True, fill=False, ecolor='blue', label="Denominator")
+        drawAs1DHist(ax, hppo, yerr=True, fill=False, ecolor='orange', label="Numerator")
 
+    ax.legend()
     addAxesToHist(ax, num_bottom=1, bottom_pad=0)
     ab = ax.bottom_axes[0]
     #ab = ax.twinx()
@@ -51,8 +68,9 @@ def plotRatio(
     ax.set_ylabel("Events")
     ab.set_ylabel("Ratio")
     ab.set_ylim(0.0, 1.1)
-    addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addTitles1D(ax, hopo, top_pad=0.2)
+    #addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
+    addCmsInfo(ax, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", pos='in')
+    addTitles1D(ax, hopo, top_pad=1.55)
 
     if no_hists:
         return ax
@@ -63,12 +81,32 @@ def plotRatio(
 def plotRatio2D(plotobj_pred, plotobj_obs, coupling, lumi):
     hppo = plotobj_pred
     hopo = plotobj_obs
+    lumi_dict = {19.5 : f"19.5 fb$^{{-1}}$ (2016 pre-VFP, 13 TeV)",
+                 16.8 : f"16.8 fb$^{{-1}}$ (2016 post-VFP, 13 TeV)",
+                 41.48 : f"41.5 fb$^{{-1}}$ (2017, 13 TeV)", 
+                 59.83 : f"59.8 fb$^{{-1}}$ (2018, 13 TeV)", 
+                 7.98 : f"8.0 fb$^{{-1}}$ (2022 pre-EE, 13.6 TeV)",
+                 26.67 : f"26.7 fb$^{{-1}}$ (2022 post-EE, 13.6 TeV)",
+                 30.12 : f"30.1 fb$^{{-1}}$ (2023, 13.6 TeV)",
+                }
+
+    trigger_dict = {19.5 : f"AK8PFJet360_TrimMass30",
+                    16.8 : f"AK8PFJet360_TrimMass30",
+                    41.48 : f"AK8PFJet500", 
+                    59.83 : f"AK8PFJet400_TrimMass30", 
+                    7.98 : f"AK8PFJet420_TrimMass30",
+                    26.67 : f"AK8PFJet420_TrimMass30",
+                    30.12 : f"AK8PFJet420_MassSD30",
+                   }
 
     fig, ax = plt.subplots()
-    drawRatio2D(ax, numerator = hppo, denominator = hopo)
-    addCmsInfo(ax, additional_text="")
+    fig2, ab = plt.subplots()
+    drawRatio2D(ax, ab, numerator = hppo, denominator = hopo)
+    addCmsInfo(ax, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="white")
+    addCmsInfo(ab, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="black")
     fig.tight_layout()
-    return fig
+    fig2.tight_layout()
+    return fig, fig2
 
 def plot1D(
     signal_plobjs,

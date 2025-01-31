@@ -16,7 +16,7 @@ def extraObjects(events, analyzer):
 @analyzerModule("objects", categories="pre_selection")
 def createObjects(events, analyzer):
     good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.4)]
-    fat_jets = events.FatJet[(events.FatJet.pt > 30) & (abs(events.FatJet.eta) < 2.4)]
+    fat_jets = events.FatJet[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4)]
     bwps = getBTagWP(analyzer.profile)
 
     loose_b, med_b, tight_b = makeCutSet(
@@ -28,7 +28,7 @@ def createObjects(events, analyzer):
     el = events.Electron
     mu = events.Muon
 
-    good_electrons = el[(el.cutBased == 1) & (el.miniPFRelIso_all < 0.1) & (el.pt > 10) & (abs(el.eta) < 2.4)]
+    good_electrons = el[(el.cutBased == 4) & (el.miniPFRelIso_all < 0.1) & (el.pt > 10) & (abs(el.eta) < 2.4)]
     good_muons = mu[(mu.mediumId) & (mu.miniPFRelIso_all < 0.1) & (mu.pt > 30) & (abs(mu.eta) < 2.4)]
 
     events["good_jets"] = good_jets
@@ -42,6 +42,7 @@ def createObjects(events, analyzer):
     metric = ak.fill_none(metric, 1)
     mask = metric < 0.4
     non_muonic_jets = events.good_jets[~mask]
+    events["non_muonic_jets"] = non_muonic_jets
 
     ht = ak.sum(good_jets.pt, axis=1)
     events["HT"] = ht

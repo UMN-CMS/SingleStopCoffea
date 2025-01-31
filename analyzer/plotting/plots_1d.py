@@ -69,7 +69,7 @@ def drawAsScatter(ax, p, yerr=True, **kwargs):
     return ax
 
 
-def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
+def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", ecolor=None, label=None, **kwargs):
     style = plot_object.style
     x = plot_object.axes[0].centers
     edges = plot_object.axes[0].flat_edges
@@ -81,11 +81,11 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", **kwargs):
         errs = np.sqrt(plot_object.variances())
         if orient == "h":
             ax.errorbar(
-                x, raw_vals, yerr=errs, fmt="none", label=None, **kwargs, **style
+                x, raw_vals, yerr=errs, fmt="none", ecolor=ecolor, label=label, **kwargs, **style
             )
         else:
             ax.errorbar(
-                raw_vals, x, xerr=errs, fmt="none", label=None, **style, **kwargs
+                raw_vals, x, xerr=errs, fmt="none", ecolor=ecolor, label=label, **style, **kwargs
             )
     if fill:
         if orient == "h":

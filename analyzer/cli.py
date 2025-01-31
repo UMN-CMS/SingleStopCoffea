@@ -574,7 +574,7 @@ def addSubparserCluster(subparsers):
     subparser.add_argument(
         "--timeout",
         type=int,
-        default=3600,
+        default=14400,
         help="Maximum time in seconds to run the cluster",
     )
     subparser.set_defaults(func=handleCluster)

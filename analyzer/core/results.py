@@ -91,8 +91,9 @@ class DatasetRunResult:
     ) -> Dict[str, hist.Hist]:
         sample = sample_manager[self.dataset_preprocessed.dataset_input.dataset_name]
         weight = sample.weight(target_lumi)
-        reweighted = sample.n_events / self.raw_events_processed
-        final_weight = reweighted * weight
+        #reweighted = sample.n_events / self.raw_events_processed
+        #final_weight = reweighted * weight
+        final_weight = weight
         sample_manager.weights.append(final_weight)
         return {name: h * final_weight for name, h in self.histograms.items()}
     

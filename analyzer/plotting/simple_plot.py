@@ -196,13 +196,14 @@ class Plotter:
         hopo = PlotObject.fromHist(ho)
         hppo = PlotObject.fromHist(hp)
 
-        fig = plotRatio2D(hppo, hopo, self.coupling, self.target_lumi) 
+        fig, fig2 = plotRatio2D(hppo, hopo, self.coupling, self.target_lumi) 
         if self.outdir:
-            print(self.outdir)
             fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
             plt.close(fig)
+            fig2.savefig(self.outdir / f"unc_ratio_{hist_obs}_{hist_pred}.pdf")
+            plt.close(fig2)
         else:
-            return fig
+            return fig, fig2
 
     def doPlot(
         self,

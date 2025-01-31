@@ -82,7 +82,7 @@ class PlotObject:
         title: Optional[str] = None,
         style: Optional[Dict[str, Any]] = None,
         mask: Optional[np.typing.NDArray[Any]] = None,
-        fill_type: FillType = FillType.WeightedEvents,
+        fill_type: FillType = FillType.UnweightedEvents,
     ):
         self.__values = values
         self.__axes = axes

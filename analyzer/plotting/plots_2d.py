@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
+import hist
+import hist.intervals as hinter
 from .plottables import FillType
 import numpy as np
 from matplotlib.collections import PatchCollection, RegularPolyCollection
@@ -29,7 +31,7 @@ def drawAs2DHist(ax, plot_object, divider=None, add_color_bar=True, **kwargs):
     return ax
 
 def drawRatio2D(
-    ax, numerator, denominator, uncertainty_type="efficiency", divider = None, add_color_bar = True, **kwargs):
+    ax, ab, numerator, denominator, uncertainty_type="efficiency", divider = None, add_color_bar = True, **kwargs):
     nv, dv = numerator.values(), denominator.values()
     try:
         n, d = nv/weights[0], dv/weights[1]
@@ -38,22 +40,41 @@ def drawRatio2D(
     with np.errstate(divide='ignore',invalid='ignore'):
         ratio = np.divide(nv, dv, out=np.zeros_like(nv), where=(dv != 0))
 
+    unc = hinter.ratio_uncertainty(
+        n.astype(int),
+        d.astype(int),
+        uncertainty_type=uncertainty_type,
+    )
+
     a1, a2 = numerator.axes
     ex, ey = a1.flat_edges, a2.flat_edges
     vx, vy = np.meshgrid(ex, ey)
     im = ax.pcolormesh(vx, vy, ratio.T, **kwargs)
-    ax.set_xlabel(a1.title)
-    ax.set_ylabel(a2.title)
+    ax.set_xlabel(a1.title + " [GeV]")
+    ax.set_ylabel(a2.title + " [GeV]")
+
+    im2 = ab.pcolormesh(vx, vy, unc[0, :, :].T, **kwargs)
+    ab.set_xlabel(a1.title)
+    ab.set_ylabel(a2.title)
+    ab.set_xlabel(a1.title + " [GeV]")
+    ab.set_ylabel(a2.title + " [GeV]")
 
     if divider is None:
         divider = make_axes_locatable(ax)
     if add_color_bar:
         cax = divider.append_axes("right", size = "5%", pad = 0.05)
         #cbar = plt.colorbar(ax.quadmesh, cax = cax)
-        cbar = plt.colorbar(ax.collections[0], cax = cax)
+        cbar = plt.colorbar(ax.collections[0], cax = cax, label = 'Efficiency')
         cax.get_yaxis().set_offset_position("left")
         ax.cax = cax
-    return ax
+
+        divider = make_axes_locatable(ab)
+        cax = divider.append_axes("right", size = "5%", pad = 0.05)
+        #cbar = plt.colorbar(ax.quadmesh, cax = cax)
+        cbar = plt.colorbar(ax.collections[0], cax = cax, label = 'Efficiency Uncertainty')
+        cax.get_yaxis().set_offset_position("left")
+        ab.cax = cax
+    return ax, ab
 
 def set_xmargin(ax, left=0.0, right=0.3):
     ax.set_margin(0)
