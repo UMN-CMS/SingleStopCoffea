@@ -8,6 +8,7 @@ PostDefaults:
     sample_spec:
       name:
         - 'data_*muon*'
+        - 'qcd_inclusive_*'
 
 catalog_path: "postprocessing/trigger_eff/catalog.json"
 
@@ -15,7 +16,7 @@ Postprocessing:
   - name: ""
     action: Histogram2D
     histogram_names: ["ak8_pt_vs_sdmass"]
-    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{histogram_name}_{PassAK8Jet}"
+    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}_{PassAK8Jet}"
     to_process:
       region_name: SingleJetEff
     grouping:
@@ -35,7 +36,7 @@ Postprocessing:
     ratio_height: 3
     ratio_ylim: [0,1]
     ratio_hlines: [0.5,0.95]
-    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{histogram_name}"
+    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}"
     ratio_type: efficiency
     to_process:
       region_name: HTEff
@@ -66,7 +67,7 @@ Postprocessing:
     ratio_height: 3
     ratio_ylim: [0,1]
     ratio_hlines: [0.5,0.95]
-    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{histogram_name}"
+    output_name: "postprocessing/trigger_eff/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}"
     ratio_type: efficiency
     numerator:
       fields: ['dataset.name', 'dataset.era.name', 'region_name']
