@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from rich import print
 
@@ -5,6 +6,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mplhep
 from analyzer.postprocessing.style import Styler
+import hist
+from hist import Hist
 
 from ..grouping import doFormatting
 from .annotations import addCMSBits, labelAxis
@@ -198,7 +201,6 @@ def plotRatio(
 
     den_hist = denominator.histogram
 
-
     fixBadLabels(den_hist)
 
     style = denominator.style or styler.getStyle(denominator.sector_parameters)
@@ -250,6 +252,17 @@ def plotRatio(
             **all_opts,
         )
         # hist.plot.plot_ratio_array(den, ratio, unc, ax=ratio_ax,
+        # os.mkdir(output_path)
+
+        #Saving Ratio
+        head, tail = os.path.split(output_path)
+        os.makedirs(head, exist_ok=True)
+        rh = Hist(h.axes[0])
+        rh[...] = ratio
+        rh_with_unc = {"Hist": rh, "Unc": unc}
+        import pickle
+        with open(output_path+f"_ratio_hist.pkl", 'wb') as file:
+            pickle.dump(rh_with_unc, file)
 
     for l in ratio_hlines:
         ratio_ax.axhline(l, color="black", linestyle="dashed", linewidth=1.0)
