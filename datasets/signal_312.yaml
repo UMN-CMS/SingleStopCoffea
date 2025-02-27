@@ -37,7 +37,279 @@
     - signal_312_2000_1500
     - signal_312_2000_1600
     - signal_312_2000_1700
-    
+    - signal_312_200_100
+    - signal_312_300_100
+    - signal_312_300_200
+    - signal_312_500_100
+    - signal_312_500_200
+    - signal_312_500_400
+    - signal_312_700_100
+    - signal_312_700_400
+    - signal_312_700_600
+    - signal_312_800_400
+    - signal_312_800_600
+    - signal_312_800_700
+    - signal_312_900_400
+    - signal_312_900_600
+    - signal_312_900_700
+    - signal_312_900_800
+
+- name: signal_312_200_100
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-200_100.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-200_100.root
+
+- name: signal_312_300_100
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-300_100.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-300_100.root
+
+- name: signal_312_300_200
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 200\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-300_200.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-300_200.root
+
+- name: signal_312_500_100
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_100.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_100.root
+
+- name: signal_312_500_200
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 200\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_200.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_200.root
+
+- name: signal_312_500_400
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_400.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-500_400.root
+
+- name: signal_312_700_100
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_100.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_100.root
+
+- name: signal_312_700_400
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_400.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_400.root
+
+- name: signal_312_700_600
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_600.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-700_600.root
+
+- name: signal_312_800_400
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_400.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_400.root
+
+- name: signal_312_800_600
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_600.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_600.root
+
+- name: signal_312_800_700
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_700.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_700.root
+
+- name: signal_312_900_400
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_400.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_400.root
+
+- name: signal_312_900_600
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_600.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_600.root
+
+- name: signal_312_900_700
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_700.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_700.root
+
+- name: signal_312_900_800
+  mc_campaign: 2018UL
+  type: set
+  title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 800\\ \\mathrm{GeV}$"
+  lumi: 59.8
+  n_events: 10000
+  x_sec: 480
+  tags:
+    - signal
+  style:
+    color: "#FF0C00"
+  profile: 2018JetHT
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_800.root
+      umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_800.root
+
 - name: signal_312_1000_400 
   mc_campaign: 2018UL
   type: set

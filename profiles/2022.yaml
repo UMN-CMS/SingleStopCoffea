@@ -15,17 +15,21 @@
 2022Muon:
   inherit: '2022'
   HLT:
-    - Mu50
+    #- Mu50
+    - PFHT1050
+    - AK8PFJet420_TrimMass30
     - IsoMu24
   
 2023JetMET:
   inherit: '2022'
   HLT:
+    - PFHT1050
+    - AK8PFJet420_MassSD30
     - PFHT280_QuadPFJet30_PNet2BTagMean0p55
 
 2023Muon:
   inherit: '2022'
   HLT:
-    - Mu50
+    - IsoMu24
     - PFHT1050
     - AK8PFJet420_MassSD30

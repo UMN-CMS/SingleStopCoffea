@@ -1,4 +1,4 @@
-- name: DataSingleMuonOfficial2018
+- name: DataSingleMuon2018Official
   type: set
   isdata: true
   lumi: 59.83

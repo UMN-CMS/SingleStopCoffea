@@ -5,6 +5,8 @@ from analyzer.plotting.simple_plot import Plotter
 import warnings
 
 warnings.filterwarnings("ignore", message=r".*Removed bins.*")
+import analyzer.datasets as ds
+import pickle as pkl
 
 sig = [
     f"signal_312_{p}"
@@ -44,17 +46,75 @@ sig = [
         "2000_1500",
         "2000_1600",
         "2000_1700",
-    )
+        "200_100",
+        "300_100",
+        "300_200",
+        "500_100",
+        "500_200",
+        "500_400",
+        "700_100",
+        "700_400",
+        "700_600",
+        "800_400",
+        "800_600",
+        "800_700",
+        "900_400",
+        "900_600",
+        "900_700",
+        "900_800",
+            )
 ]
 
-sig = []
+#sig = []
 
-backgrounds = ["DataSingleMuonOfficial2018"]
-plotter = Plotter("DataSingleMuon2018Official.pkl", "plots", default_backgrounds=backgrounds)
+backgrounds = ["QCDInclusive2023"]
 
-import analyzer.datasets as ds
-import pickle as pkl
-d = pkl.load(open("DataSingleMuon2018Official.pkl", "rb"))
+for sample in (sig + backgrounds):
+    plotter = Plotter(f"Run3/{sample}.pkl", f"plots/{sample}/", default_backgrounds=sample)
+
+    d = pkl.load(open(f"Run3/{sample}.pkl", "rb"))
+
+    profile_repo = ds.ProfileRepo()
+    profile_repo.loadFromDirectory("profiles")
+    sample_manager = ds.SampleManager()
+    sample_manager.loadSamplesFromDirectory('datasets/', profile_repo)
+    hists = d.getMergedHistograms(sample_manager)
+
+    '''
+    toplot = [
+    "h_njet",
+    "HT",
+    "pt_1",
+    "pt_2",
+    "m14_m",
+    "m13m",
+    "m24_vs_m14",
+    "m13_vs_m14",
+    ]
+    '''
+
+    toplot = [h for h in hists.keys() if 'unweighted' not in h]
+
+    for p in toplot:
+        plotter(p, [], normalize=True, add_name=f"{sample}")
+
+combined = [f"signal_312_{f}" for f in
+           ( "200_100",
+             "300_200",
+             "500_100",
+             "700_400",
+             "900_600",
+             "1000_900",
+             "1500_600",
+             "1500_900",
+             "2000_1900",
+           )
+]
+
+
+plotter = Plotter(f"Run3/combined.pkl", f"plots/combined/", default_backgrounds="QCDInclusive2023")
+
+d = pkl.load(open(f"Run3/combined.pkl", "rb"))
 
 profile_repo = ds.ProfileRepo()
 profile_repo.loadFromDirectory("profiles")
@@ -62,27 +122,16 @@ sample_manager = ds.SampleManager()
 sample_manager.loadSamplesFromDirectory('datasets/', profile_repo)
 hists = d.getMergedHistograms(sample_manager)
 
-toplot = [
-    "h_njet",
-    "HT",
-    "pt_1",
-    "pt_2",
-    "m14_m",
-    "m13_m",
-    "m24_vs_m14",
-    "m13_vs_m14",
-]
 toplot = [h for h in hists.keys() if 'unweighted' not in h]
-print(toplot)
-
 for p in toplot:
-    plotter(p, [], normalize=False, scale="log")
+    plotter(p, combined, normalize=True, default_background = "QCDInclusive2023")
+
 #plotter('d_r_mu_j1', normalize=False, scale="log")
 #plotter('d_r_mu_j2', normalize=False, scale="log")
 #plotter('d_r_mu_j3', normalize=False, scale="log")
 #plotter('d_r_mu_j4', normalize=False, scale="log")
 #plotter("pT0_vs_mSoftDrop", [], normalize = False)
 
-plotter.plotRatio('DataSingleMuonOfficial2018', 'totalHT', 'passedHT')
-plotter.plotRatio('DataSingleMuonOfficial2018', 'total_pt0', 'passed_pt0')
-plotter.plotRatio2D('DataSingleMuonOfficial2018', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')
+#plotter.plotRatio(f'{sample}', 'totalHT', 'passedHT')
+#plotter.plotRatio('Run3/QCDInclusive2023', 'total_pt0', 'passed_pt0')
+#plotter.plotRatio2D('Run3/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')

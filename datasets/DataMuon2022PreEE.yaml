@@ -1,10 +1,12 @@
 - name: DataMuon2022PreEE
   type: set
   isdata: true
-  lumi: 
+  lumi: 7.98
   n_events: 213895726 
   forbid: false
   lumi_json: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_eraC_367095_368823_Muon.json
+  profile: 2022Muon
+  required_modules: [baseline_muon_selection]
   files:
     - root://cmsxrootd.fnal.gov//store/data/Run2022C/SingleMuon/NANOAOD/22Sep2023-v1/50000/8050649a-e9db-4a0b-96c0-51d45e6f7d71.root
     - root://cmsxrootd.fnal.gov//store/data/Run2022C/SingleMuon/NANOAOD/22Sep2023-v1/50000/979f64da-737c-4bc7-83c6-7c23541e9634.root

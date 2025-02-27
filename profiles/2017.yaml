@@ -15,6 +15,6 @@
     file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2017_UL/puWeights.json.gz
     name: Collisions17_UltraLegacy_goldenJSON
   HLT:
-    - Mu50
+    - IsoMu27
     - PFHT1050
     - AK8PFJet500

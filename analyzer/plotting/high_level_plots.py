@@ -36,20 +36,20 @@ def plotRatio(
     hopo = plotobj_obs
     lumi_dict = {19.5 : f"19.5 fb$^{{-1}}$ (2016 pre-VFP, 13 TeV)",
                  16.8 : f"16.8 fb$^{{-1}}$ (2016 post-VFP, 13 TeV)",
-                 41.48 : f"41.5 fb$^{{-1}}$ (2017, 13 TeV)", 
-                 59.83 : f"59.8 fb$^{{-1}}$ (2018, 13 TeV)", 
-                 7.98 : f"8.0 fb$^{{-1}}$ (2022 pre-EE, 13.6 TeV)",
-                 26.67 : f"26.7 fb$^{{-1}}$ (2022 post-EE, 13.6 TeV)",
-                 30.12 : f"30.1 fb$^{{-1}}$ (2023, 13.6 TeV)",
+                 41.5 : f"41.5 fb$^{{-1}}$ (2017, 13 TeV)", 
+                 59.8 : f"59.8 fb$^{{-1}}$ (2018, 13 TeV)", 
+                 8.0 : f"8.0 fb$^{{-1}}$ (2022 pre-EE, 13.6 TeV)",
+                 26.7 : f"26.7 fb$^{{-1}}$ (2022 post-EE, 13.6 TeV)",
+                 30.1 : f"30.1 fb$^{{-1}}$ (2023, 13.6 TeV)",
                 }
 
     trigger_dict = {19.5 : f"PFHT900",
                     16.8 : f"PFHT900",
-                    41.48 : f"PFHT1050", 
-                    59.83 : f"PFHT1050", 
-                    7.98 : f"PFHT1050",
-                    26.67 : f"PFHT1050",
-                    30.12 : f"PFHT1050",
+                    41.5 : f"PFHT1050", 
+                    59.8 : f"PFHT1050", 
+                    8.0 : f"PFHT1050",
+                    26.7 : f"PFHT1050",
+                    30.1 : f"PFHT1050",
                    }
 
     if not no_hists:
@@ -69,7 +69,7 @@ def plotRatio(
     ab.set_ylabel("Ratio")
     ab.set_ylim(0.0, 1.1)
     #addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addCmsInfo(ax, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", pos='in')
+    addCmsInfo(ax, additional_text=f"\n{lumi_dict[round(lumi, 1)]}\n{trigger_dict[round(lumi, 1)]}", pos='in')
     addTitles1D(ax, hopo, top_pad=1.55)
 
     if no_hists:
