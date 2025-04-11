@@ -6,6 +6,7 @@ import hist
 from hist import Hist
 from matplotlib import pyplot as plt
 import mplhep as hep
+import re
 
 def calculate_scale_factors():
     
@@ -72,5 +73,81 @@ def calculate_scale_factors():
                 pickle.dump(sf_h,file)
     return
 
+
+def calculate_scale_factors2d():
+    for i in ["2016_preVFP","2016_preVFP","2016_postVFP","2017","2018","2022_preEE","2022_postEE","2023_preBPix","2023_postBPix"]:
+        ratio_path =  list(Path(f"/srv/postprocessing/trigger_eff_2d_hist_test/plots/{i}/SingleJetEff").rglob("*.pkl"))
+        with open(ratio_path[0], 'rb') as picklefile:
+            num_h = pickle.load(picklefile)
+        with open(ratio_path[1], 'rb') as picklefile:
+            den_h = pickle.load(picklefile)
+        sf_h = num_h/den_h
+        plt.style.use(hep.style.CMS)
+        fig, ax = plt.subplots()
+        import re
+        year_num = int(re.findall(r'\d+', i)[0])
+        if year_num > 2018:
+            energy = 13.6
+        else:
+            energy = 13
+        hep.cms.label(year=i,ax=ax,data=True,label="Preliminary",com=energy)
+        sf_h.plot2d()
+        fig.tight_layout()
+        fig.savefig(f"/srv/postprocessing/trigger_eff_2d_hist_test/plots/{i}/SingleJetEff/2d_sf_plot.pdf")
+    return
+
+def calculate_scale_factors3d():
+    data_list = ["2016_preVFP","2016_preVFP","2016_postVFP","2017","2018","2022_preEE","2022_postEE","2023_preBPix","2023_postBPix"]
+    plt.style.use(hep.style.CMS)
+    for i in data_list:
+        path = Path(f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{i}/SingleJetEff").resolve()
+        if not path.is_dir():
+            raise ValueError(f'{path} is not a dir')
+        ratio_glob =  path.glob("**/*.pkl")
+        for j in ratio_glob:
+            with open(j, 'rb') as picklefile:
+                if 'data' in picklefile.name:
+                    num_dict = pickle.load(picklefile)
+                else:
+                    den_dict = pickle.load(picklefile)
+
+        num_h, num_unc, X, n = num_dict["Hist"], num_dict["Unc"], num_dict["num"], num_dict["den"]
+        den_h, den_unc, Y, m = den_dict["Hist"], den_dict["Unc"], num_dict["num"], num_dict["den"]
+
+        sf_h = num_h/den_h 
+        #saving scale factor histogram
+        
+        sf_path = Path(f"/srv/analyzer_resources/datavmc_sf/{i}_sf.pkl")
+        if not(os.path.exists(sf_path.parents[0])):
+            # create the directory you want to save to
+            os.makedirs(sf_path.parents[0])
+        with open(sf_path.resolve(), 'wb') as sf_file:
+            pickle.dump(sf_h,sf_file)
+
+        #ones_hist = hist.Hist(*sf_h.axes)
+        #sf_var = hist.Hist(*sf_h.axes)
+
+        #ones_hist[...] = np.ones_like(sf_h.values())
+        #one_hist = ones_hist[0,...]
+        length = len(sf_h.axes[0])
+        year_num = int(re.findall(r'\d+', i)[0])
+        
+        #sf_var[...] = sf_var_np
+
+        if year_num > 2018:
+            energy = 13.6
+        else:
+            energy = 13
+        for j in range(length):
+            htbin = sf_h.axes[0][j]
+            htbinstr = "_".join([str(k) for k in htbin])
+            fig, ax = plt.subplots()
+
+            hep.cms.label(year=i,ax=ax,data=True,label="Preliminary",com=energy)
+            sf_h[j,:,:].plot2d(ax=ax)
+            fig.tight_layout()
+            fig.savefig(f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{i}/SingleJetEff/3d_sf_plot_ht_{htbinstr}.pdf")
+    return
+
 if __name__ == "__main__":
-    calculate_scale_factors()
+    calculate_scale_factors3d()

@@ -129,9 +129,6 @@ def L1_prefiring_sf(events, params, weight_manager, variations=None):
     down = events.L1PreFiringWeight["Dn"]
     weight_manager.add(f"L1_prefire", nom, {"inclusive": (up, down)})
 
-
-
-
 @MODULE_REPO.register(ModuleType.Weight)
 def btagging_shape_sf(
     events, params, weight_manager, variations=None, working_points=None
