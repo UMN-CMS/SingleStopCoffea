@@ -2,6 +2,7 @@ import itertools as it
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib import colormaps as cmap
 
 from .annotations import addEra, addCmsInfo, addCutTable
 from .plots_1d import addTitles1D, drawAs1DHist, drawPull, drawRatio, drawAsScatter
@@ -137,12 +138,16 @@ def plot1D(
         fig, ax = plt.subplots()
     for o in background_plobjs:
         drawAs1DHist(ax, o, yerr=False)
+        ax.relim()
+        ax.autoscale_view()
     for o in signal_plobjs:
         # drawAs1DHist(ax, o, yerr=False)
         if sig_style == "scatter":
             drawAsScatter(ax, o, yerr=True)
         elif sig_style == "hist":
             drawAs1DHist(ax, o, yerr=True, fill=False)
+            ax.relim()
+            ax.autoscale_view()
     plobjslist = list(signal_plobjs)
     if ratio:
         if weights is None:
@@ -186,6 +191,9 @@ def plot1D(
         ax.set_xlabel(xlabel_override)
 
     addTitles1D(ax, hc, top_pad=top_pad)
+    #ax.set_ylim(0.0, 0.75)
+    #ax.relim()
+    #ax.autoscale_view()
 
     if cut_table:
         addCutTable(ax_table, cut_table)
@@ -247,6 +255,7 @@ def plot2D(
         drawAs2DHist(ax, plot_obj, cmap=cmap, norm=TwoSlopeNorm(0))
     else:
         objtitle = plot_obj.title
+        print(plot_obj.values)
         drawAs2DHist(ax, plot_obj)
 
         #if "/" in era:

@@ -54,15 +54,15 @@ signals=(
 
 for i in "${signals[@]}"; do
 	echo $i
-	python3 -m analyzer run-samples -s $i -o "Run3/$i.pkl" -m objects run3_hists
+	python3 -m analyzer run-samples -s $i -o "Run2/$i.pkl" -m objects run2_hists
 done
 
-python3 -m analyzer run-samples -s QCDInclusive2023 -o "Run3/QCDInclusive2023.pkl" -m objects run3_hists -a localhost:10006
+python3 -m analyzer run-samples -s QCDInclusive2018 -o "Run2/QCDInclusive2018.pkl" -m objects run2_hists -a localhost:10006
 
-python3 -m analyzer run-samples -s TTToHadronic2018 -o "Run3/TTToHadronic2018.pkl" -m objects run3_hists -a localhost:10006
+python3 -m analyzer run-samples -s TTToHadronic2018 -o "Run2/TTToHadronic2018.pkl" -m objects run2_hists -a localhost:10006
 
-#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_200_100 signal_312_300_200 signal_312_500_100 signal_312_700_400 signal_312_900_600 signal_312_1000_900 signal_312_1500_600 signal_312_1500_900 signal_312_2000_1900 -o "Run3/combined.pkl" -m objects run3_hists -a localhost:10006
+#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_200_100 signal_312_300_200 signal_312_500_100 signal_312_700_400 signal_312_900_600 signal_312_1000_900 signal_312_1500_600 signal_312_1500_900 signal_312_2000_1900 -o "Run3/combined.pkl" -m objects run2_hists -a localhost:10006
 	
-#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_200_100 signal_312_300_200 signal_312_500_400 signal_312_700_600 signal_312_900_800 signal_312_1000_900 signal_1200_1100 signal_312_1500_1400 signal_312_2000_1900 -o "Run3/compressed.pkl" -m objects run3_hists -a localhost:10006
+#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_200_100 signal_312_300_200 signal_312_500_400 signal_312_700_600 signal_312_900_800 signal_312_1000_900 signal_1200_1100 signal_312_1500_1400 signal_312_2000_1900 -o "Run3/compressed.pkl" -m objects run2_hists -a localhost:10006
 
-#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_500_100 signal_312_700_100 signal_312_900_400 signal_312_1000_400 signal_312_1200_700 signal_312_1500_900 signal_312_2000_1200 -o "Run3/uncompressed.pkl" -m objects run3_hists -a localhost:10006
+#python3 -m analyzer run-samples -s TTToHadronic2018 QCDInclusive2023 signal_312_500_100 signal_312_700_100 signal_312_900_400 signal_312_1000_400 signal_312_1200_700 signal_312_1500_900 signal_312_2000_1200 -o "Run3/uncompressed.pkl" -m objects run2_hists -a localhost:10006

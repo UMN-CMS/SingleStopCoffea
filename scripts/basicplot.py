@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 
 sys.path.append(".")
 from analyzer.plotting.simple_plot import Plotter
@@ -67,65 +68,90 @@ sig = [
 
 #sig = []
 
-backgrounds = ["QCDInclusive2023"]
+backgrounds = ["QCDInclusive2023", "TTToHadronic2018"]
+backgrounds = ["QCDInclusive2018", "TTToHadronic2018"]
 
-for sample in (sig + backgrounds):
-    plotter = Plotter(f"Run3/{sample}.pkl", f"plots/{sample}/", default_backgrounds=sample)
-
-    d = pkl.load(open(f"Run3/{sample}.pkl", "rb"))
-
-    profile_repo = ds.ProfileRepo()
-    profile_repo.loadFromDirectory("profiles")
-    sample_manager = ds.SampleManager()
-    sample_manager.loadSamplesFromDirectory('datasets/', profile_repo)
-    hists = d.getMergedHistograms(sample_manager)
-
-    '''
-    toplot = [
-    "h_njet",
-    "HT",
-    "pt_1",
-    "pt_2",
-    "m14_m",
-    "m13m",
-    "m24_vs_m14",
-    "m13_vs_m14",
-    ]
-    '''
-
-    toplot = [h for h in hists.keys() if 'unweighted' not in h]
-
-    for p in toplot:
-        plotter(p, [], normalize=True, add_name=f"{sample}")
-
-combined = [f"signal_312_{f}" for f in
-           ( "200_100",
-             "300_200",
-             "500_100",
-             "700_400",
-             "900_600",
-             "1000_900",
-             "1500_600",
-             "1500_900",
+combined_comp = [f"signal_312_{f}" for f in
+           ( "1200_1100",
+             "1500_1400",
              "2000_1900",
            )
 ]
 
 
-plotter = Plotter(f"Run3/combined.pkl", f"plots/combined/", default_backgrounds="QCDInclusive2023")
+combined_uncomp = [f"signal_312_{f}" for f in
+           ( "1200_400",
+             "1500_600",
+             "2000_1200",
+           )
+]
 
-d = pkl.load(open(f"Run3/combined.pkl", "rb"))
+compressed = [f"signal_312_{f}" for f in
+             ( "200_100",
+               "300_200",
+               "500_400",
+               "700_600",
+               "900_800",
+               "1000_900",
+               "1200_1100",
+               "1500_1400",
+               "2000_1900",
+              )
+]
 
-profile_repo = ds.ProfileRepo()
-profile_repo.loadFromDirectory("profiles")
-sample_manager = ds.SampleManager()
-sample_manager.loadSamplesFromDirectory('datasets/', profile_repo)
-hists = d.getMergedHistograms(sample_manager)
 
-toplot = [h for h in hists.keys() if 'unweighted' not in h]
-for p in toplot:
-    plotter(p, combined, normalize=True, default_background = "QCDInclusive2023")
+uncompressed = [f"signal_312_{f}" for f in
+             ( "500_100",
+               "700_100",
+               "900_400",
+               "1000_400",
+               "1200_700",
+               "1500_900",
+               "2000_1200",
+              )
+]
 
+toplot = ['HT', 
+         'm3_comp',
+         'm3_uncomp', 
+         'm4', 
+         'nb_med', 
+         'nb_tight', 
+         'nj', 
+         'dRbb_01', 
+         'pt_0', 
+         'pt_1', 
+         'pt_2', 
+         'pt_3'
+]
+
+'''
+for sample in (sig + backgrounds):
+    plotter = Plotter(f"Run2/{sample}.pkl", f"plots/{sample}/", default_backgrounds=sample)
+
+    for p in toplot:
+        plotter(p, [], normalize=True, add_name=f"{sample}")
+
+    for p in ['ratio_m3_comp_m4', 'ratio_m3_uncomp_m4', 'HT_cut_comp', 'HT_cut_uncomp']:
+        plotter(p, [], normalize=False, add_name=f"{sample}")
+'''
+
+for h in toplot:
+    comp_fnames = ["Run2/" + samp + ".pkl" for samp in (compressed + backgrounds)]
+    plotter = Plotter(comp_fnames, f"plots/compressed/", default_backgrounds = backgrounds)
+    #plotter(h, compressed, normalize=True, add_name="compressed")
+
+    uncomp_fnames = ["Run2/" + samp + ".pkl" for samp in (uncompressed + backgrounds)]
+    plotter = Plotter(uncomp_fnames, f"plots/uncompressed/", default_backgrounds = backgrounds)
+    #plotter(h, uncompressed, normalize=True, add_name="uncompressed")
+
+    combined_comp_fnames = ["Run2/" + samp + ".pkl" for samp in (combined_comp + backgrounds)]
+    plotter = Plotter(combined_comp_fnames, f"plots/combined_comp/", default_backgrounds = backgrounds)
+    plotter(h, combined_comp, normalize=True, add_name="combined_comp")
+
+    combined_uncomp_fnames = ["Run2/" + samp + ".pkl" for samp in (combined_uncomp + backgrounds)]
+    plotter = Plotter(combined_uncomp_fnames, f"plots/combined_uncomp/", default_backgrounds = backgrounds)
+    plotter(h, combined_uncomp, normalize=True, add_name="combined_uncomp")
 #plotter('d_r_mu_j1', normalize=False, scale="log")
 #plotter('d_r_mu_j2', normalize=False, scale="log")
 #plotter('d_r_mu_j3', normalize=False, scale="log")
@@ -133,5 +159,5 @@ for p in toplot:
 #plotter("pT0_vs_mSoftDrop", [], normalize = False)
 
 #plotter.plotRatio(f'{sample}', 'totalHT', 'passedHT')
-#plotter.plotRatio('Run3/QCDInclusive2023', 'total_pt0', 'passed_pt0')
-#plotter.plotRatio2D('Run3/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')
+#plotter.plotRatio('Run2/QCDInclusive2023', 'total_pt0', 'passed_pt0')
+#plotter.plotRatio2D('Run2/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')

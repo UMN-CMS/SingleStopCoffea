@@ -1,6 +1,6 @@
 - name: TTToHadronic2018
   mc_campaign: 2018UL
-  x_sec: 380.1326
+  x_sec: 380132.6
   n_events: 334206000
   lumi: 59.8
   profile: 2018JetHT

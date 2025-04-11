@@ -140,9 +140,10 @@ class Plotter:
             )
             > 1
         ):
-            raise ValueError(
-                "The underlying samples have different luminosities, and you are not performing scaling"
-            )
+            #raise ValueError(
+                #"The underlying samples have different luminosities, and you are not performing scaling"
+            #)
+            print("Plotting samples w/ different lumis")
         if outdir:
             self.outdir = Path(outdir)
             self.outdir.mkdir(exist_ok=True, parents=True)
@@ -262,7 +263,6 @@ class Plotter:
                 self.sample_manager.weights_normalized[i] *= 1/o.sum()
             signal_plobjs = {n: h.normalize() for n, h in signal_plobjs.items()}
             background_plobjs = {n: h.normalize() for n, h in background_plobjs.items()}
-
         r = next(iter(it.chain(signal_plobjs.values(), background_plobjs.values())))
         if not cut_table_in_plot:
             cut_table = None

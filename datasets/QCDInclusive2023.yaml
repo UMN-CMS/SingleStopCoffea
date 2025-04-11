@@ -24,7 +24,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 11988000
-  x_sec: 16760000 
+  x_sec: 16760000000 
   profile: 2023JetMET
   cms_dataset: /QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM
   files:
@@ -82,7 +82,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 17979000
-  x_sec: 2534000.0
+  x_sec: 2534000000.0
   profile: 2023JetMET
   cms_dataset: /QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -160,7 +160,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 17964000
-  x_sec: 445800.0
+  x_sec: 445800000.0
   profile: 2023JetMET
   cms_dataset: /QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM
   files:
@@ -242,7 +242,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 17889000
-  x_sec: 113700.0
+  x_sec: 113700000.0
   profile: 2023JetMET
   cms_dataset: /QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -322,7 +322,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 34626000
-  x_sec: 7559.0
+  x_sec: 7559000.0
   profile: 2023JetMET
   cms_dataset: /QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -463,7 +463,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 16766000
-  x_sec: 626.4
+  x_sec: 626400
   profile: 2023JetMET
   cms_dataset: /QCD_PT-470to600_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -557,7 +557,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 40468000
-  x_sec: 178.6
+  x_sec: 178600
   profile: 2023JetMET
   cms_dataset: /QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -749,7 +749,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 23908000 
-  x_sec: 30.57
+  x_sec: 30570
   profile: 2023JetMET
   cms_dataset: /QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -871,7 +871,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 11956000
-  x_sec: 8.92
+  x_sec: 8920
   profile: 2023JetMET
   cms_dataset: /QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -943,7 +943,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 3596000
-  x_sec: 0.8103
+  x_sec: 810.3
   profile: 2023JetMET
   cms_dataset: /QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -975,7 +975,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 1792000
-  x_sec: 0.1148
+  x_sec: 114.8
   profile: 2023JetMET
   cms_dataset: /QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -997,7 +997,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 1200000
-  x_sec: 0.007542
+  x_sec: 7.542
   profile: 2023JetMET
   cms_dataset: /QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:
@@ -1015,7 +1015,7 @@
   produced_on: ""
   lumi: 30.12
   n_events: 478000
-  x_sec: 0.0002331
+  x_sec: 0.2331
   profile: 2023JetMET
   cms_dataset: /QCD_PT-3200_TuneCP5_13p6TeV_pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v14-v2/NANOAODSIM 
   files:

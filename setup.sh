@@ -150,7 +150,7 @@ function rcmode(){
     shopt -s histappend
     shopt -s cmdhist &>/dev/null
     export HISTFILE=/srv/.bash_eternal_history
-    export CONDOR_CONFIG="$application_data/.condor_config"
+    export CONDOR_CONFIG=".condor_config"
     export JUPYTER_PATH=$application_data/envlocal/$env/share/jupyter
     export JUPYTER_RUNTIME_DIR=$application_data/envlocal/$env/share/jupyter/runtime
     export JUPYTER_DATA_DIR=$application_data/envlocal/$env/share/jupyter

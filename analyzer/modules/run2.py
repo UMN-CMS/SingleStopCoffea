@@ -6,8 +6,8 @@ from .axes import *
 from .btag_points import getBTagWP
 
 
-@analyzerModule("run3_hists", categories="main")
-def run3Hists(events, analyzer):
+@analyzerModule("run2_hists", categories="main")
+def run2Hists(events, analyzer):
     filled_jets = ak.pad_none(events.good_jets, 4, axis = 1) 
 
     analyzer.H(
@@ -25,6 +25,11 @@ def run3Hists(events, analyzer):
     pt4_trig = ak.fill_none(filled_jets[:, 3].pt > 30, False)
     b_trig = ak.fill_none(sorted_bs[:, -1] + sorted_bs[:, -2] > 1.1, False)
     trig = pt3_trig & pt4_trig & b_trig
+
+    hlt_names = analyzer.profile.hlt
+    if "HLT" in events.fields:
+        hlt = functools.reduce(op.or_, [events.HLT[x] for x in hlt_names])
+    trig = hlt
 
     gj = events.good_jets[trig]
     med_bs = events.med_bs[trig]
@@ -139,30 +144,10 @@ def run3Hists(events, analyzer):
     # Cuts
 
     # Number of bs
-    nb_cut = med_b_mask & (ak.fill_none(ak.num(events.tight_bs, axis = 1) >= 0, False))
-    gj = events.good_jets[trig & nb_cut]
-    analyzer.H(
-        "nb_cut_2med_0tight_comp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
-        mask = trig & med_b_mask & nb_cut,
-    )
-
-    analyzer.H(
-        "nb_cut_2med_0tight_uncomp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
-        mask = trig & med_b_mask & nb_cut,
-    )
-
     nb_cut = med_b_mask & (ak.fill_none(ak.num(events.tight_bs, axis = 1) >= 1, False))
     gj = events.good_jets[trig & nb_cut]
     analyzer.H(
-        "nb_cut_2med_1tight_comp",
+        "nb_cut_comp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
         ],
@@ -171,27 +156,7 @@ def run3Hists(events, analyzer):
     )
 
     analyzer.H(
-        "nb_cut_2med_1tight_uncomp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
-        mask = trig & med_b_mask & nb_cut,
-    )
-
-    nb_cut = med_b_mask & (ak.fill_none(ak.num(events.tight_bs, axis = 1) >= 2, False))
-    gj = events.good_jets[trig & nb_cut]
-    analyzer.H(
-        "nb_cut_2med_2tight_comp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
-        mask = trig & med_b_mask & nb_cut,
-    )
-
-    analyzer.H(
-        "nb_cut_2med_2tight_uncomp",
+        "nb_cut_uncomp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
         ],
@@ -225,7 +190,7 @@ def run3Hists(events, analyzer):
     dRbb_cut = (ak.fill_none(filled_bs[:, 0].delta_r(filled_bs[:, 1]) > 1, False))
     gj = events.good_jets[trig & dRbb_cut]
     analyzer.H(
-        "dRbb_cut_gt1_comp",
+        "dRbb_cut_comp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
         ],
@@ -234,28 +199,7 @@ def run3Hists(events, analyzer):
     )
 
     analyzer.H(
-        "dRbb_cut_gt1_uncomp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
-        mask = trig & dRbb_cut,
-    )
-
-    filled_bs = ak.pad_none(events.med_bs, 2, axis = 1)
-    dRbb_cut = (ak.fill_none(filled_bs[:, 0].delta_r(filled_bs[:, 1]) > 1, False)) & (ak.fill_none(filled_bs[:, 0].delta_r(filled_bs[:, 1]) < 3.2, False)) 
-    gj = events.good_jets[trig & dRbb_cut]
-    analyzer.H(
-        "dRbb_cut_gt1_lt32_comp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
-        mask = trig & dRbb_cut,
-    )
-
-    analyzer.H(
-        "dRbb_cut_gt1_lt32_uncomp",
+        "dRbb_cut_uncomp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
         ],
@@ -265,52 +209,10 @@ def run3Hists(events, analyzer):
 
     # Leading jet pT
     filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
-    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 100, False)
-    gj = events.good_jets[trig & pt_cut]
-    analyzer.H(
-        "pt_cut_100_comp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
-        mask = trig & pt_cut,
-    )
-
-    analyzer.H(
-        "pt_cut_gt100_uncomp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
-        mask = trig & pt_cut,
-    )
-
-    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
-    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 120, False)
-    gj = events.good_jets[trig & pt_cut]
-    analyzer.H(
-        "pt_cut_120_comp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
-        mask = trig & pt_cut,
-    )
-
-    analyzer.H(
-        "pt_cut_120_uncomp",
-        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
-          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
-        ],
-        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
-        mask = trig & pt_cut,
-    )
-
-    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
     pt_cut = ak.fill_none(filled_jets[:, 0].pt > 140, False)
     gj = events.good_jets[trig & pt_cut]
     analyzer.H(
-        "pt_cut_140_comp",
+        "pt_cut_comp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
         ],
@@ -319,7 +221,7 @@ def run3Hists(events, analyzer):
     )
 
     analyzer.H(
-        "pt_cut_140_uncomp",
+        "pt_cut_uncomp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
         ],

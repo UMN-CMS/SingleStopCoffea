@@ -15,7 +15,7 @@ def extraObjects(events, analyzer):
 
 @analyzerModule("objects", categories="pre_selection")
 def createObjects(events, analyzer):
-    good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.4)]
+    good_jets = events.Jet[(events.Jet.pt > 30) & (abs(events.Jet.eta) < 2.5)]
     fat_jets = events.FatJet[(events.FatJet.pt > 175) & (abs(events.FatJet.eta) < 2.4)]
     bwps = getBTagWP(analyzer.profile)
 

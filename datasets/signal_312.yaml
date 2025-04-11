@@ -60,7 +60,7 @@
   title: "$m_{\\tilde{t}} = 200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 170000
   tags:
     - signal
   style:
@@ -76,7 +76,7 @@
   title: "$m_{\\tilde{t}} = 300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 40000
   tags:
     - signal
   style:
@@ -92,7 +92,7 @@
   title: "$m_{\\tilde{t}} = 300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 200\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 40000
   tags:
     - signal
   style:
@@ -108,7 +108,7 @@
   title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 8000
   tags:
     - signal
   style:
@@ -124,7 +124,7 @@
   title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 200\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 8000
   tags:
     - signal
   style:
@@ -140,7 +140,7 @@
   title: "$m_{\\tilde{t}} = 500\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 8000
   tags:
     - signal
   style:
@@ -156,7 +156,7 @@
   title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 2200
   tags:
     - signal
   style:
@@ -172,7 +172,7 @@
   title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 2200
   tags:
     - signal
   style:
@@ -188,7 +188,7 @@
   title: "$m_{\\tilde{t}} = 700\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   lumi: 59.8
   n_events: 10000
-  x_sec: 480
+  x_sec: 2200
   tags:
     - signal
   style:
