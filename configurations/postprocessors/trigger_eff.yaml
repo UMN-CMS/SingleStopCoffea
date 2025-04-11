@@ -26,8 +26,6 @@ Postprocessing:
     plot_configuration:
       cms_text_color: White
 
-
-
   - name: RatioHT
     action: RatioPlot
     histogram_names: [HT]

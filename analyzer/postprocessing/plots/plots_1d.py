@@ -254,6 +254,9 @@ def plotRatio(
         fixBadLabels(h)
         num.sector_parameters
         s = num.style or styler.getStyle(num.sector_parameters)
+        
+        print(output_path)
+        print(h.sum())
 
         n, d = h.values(), den_hist.values()
         ratio, unc = getRatioAndUnc(n, d, uncertainty_type=ratio_type)
