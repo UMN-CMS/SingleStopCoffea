@@ -69,7 +69,6 @@ sig = [
 #sig = []
 
 backgrounds = ["QCDInclusive2023", "TTToHadronic2018"]
-backgrounds = ["QCDInclusive2018", "TTToHadronic2018"]
 
 combined_comp = [f"signal_312_{f}" for f in
            ( "1200_1100",
@@ -87,15 +86,15 @@ combined_uncomp = [f"signal_312_{f}" for f in
 ]
 
 compressed = [f"signal_312_{f}" for f in
-             ( "200_100",
-               "300_200",
+             ( #"200_100",
+               #"300_200",
                "500_400",
                "700_600",
                "900_800",
                "1000_900",
                "1200_1100",
-               "1500_1400",
-               "2000_1900",
+               #"1500_1400",
+               #"2000_1900",
               )
 ]
 
@@ -106,8 +105,8 @@ uncompressed = [f"signal_312_{f}" for f in
                "900_400",
                "1000_400",
                "1200_700",
-               "1500_900",
-               "2000_1200",
+               #"1500_900",
+               #"2000_1200",
               )
 ]
 
@@ -127,7 +126,7 @@ toplot = ['HT',
 
 '''
 for sample in (sig + backgrounds):
-    plotter = Plotter(f"Run2/{sample}.pkl", f"plots/{sample}/", default_backgrounds=sample)
+    plotter = Plotter(f"Run3/{sample}.pkl", f"plots/{sample}/", default_backgrounds=sample)
 
     for p in toplot:
         plotter(p, [], normalize=True, add_name=f"{sample}")
@@ -137,21 +136,21 @@ for sample in (sig + backgrounds):
 '''
 
 for h in toplot:
-    comp_fnames = ["Run2/" + samp + ".pkl" for samp in (compressed + backgrounds)]
+    comp_fnames = ["Run3/" + samp + ".pkl" for samp in (compressed + backgrounds)]
     plotter = Plotter(comp_fnames, f"plots/compressed/", default_backgrounds = backgrounds)
-    #plotter(h, compressed, normalize=True, add_name="compressed")
+    plotter(h, compressed, normalize=True, add_name="compressed")
 
-    uncomp_fnames = ["Run2/" + samp + ".pkl" for samp in (uncompressed + backgrounds)]
+    uncomp_fnames = ["Run3/" + samp + ".pkl" for samp in (uncompressed + backgrounds)]
     plotter = Plotter(uncomp_fnames, f"plots/uncompressed/", default_backgrounds = backgrounds)
-    #plotter(h, uncompressed, normalize=True, add_name="uncompressed")
+    plotter(h, uncompressed, normalize=True, add_name="uncompressed")
 
-    combined_comp_fnames = ["Run2/" + samp + ".pkl" for samp in (combined_comp + backgrounds)]
+    combined_comp_fnames = ["Run3/" + samp + ".pkl" for samp in (combined_comp + backgrounds)]
     plotter = Plotter(combined_comp_fnames, f"plots/combined_comp/", default_backgrounds = backgrounds)
-    plotter(h, combined_comp, normalize=True, add_name="combined_comp")
+    #plotter(h, combined_comp, normalize=True, add_name="combined_comp")
 
-    combined_uncomp_fnames = ["Run2/" + samp + ".pkl" for samp in (combined_uncomp + backgrounds)]
+    combined_uncomp_fnames = ["Run3/" + samp + ".pkl" for samp in (combined_uncomp + backgrounds)]
     plotter = Plotter(combined_uncomp_fnames, f"plots/combined_uncomp/", default_backgrounds = backgrounds)
-    plotter(h, combined_uncomp, normalize=True, add_name="combined_uncomp")
+    #plotter(h, combined_uncomp, normalize=True, add_name="combined_uncomp")
 #plotter('d_r_mu_j1', normalize=False, scale="log")
 #plotter('d_r_mu_j2', normalize=False, scale="log")
 #plotter('d_r_mu_j3', normalize=False, scale="log")
@@ -159,5 +158,5 @@ for h in toplot:
 #plotter("pT0_vs_mSoftDrop", [], normalize = False)
 
 #plotter.plotRatio(f'{sample}', 'totalHT', 'passedHT')
-#plotter.plotRatio('Run2/QCDInclusive2023', 'total_pt0', 'passed_pt0')
-#plotter.plotRatio2D('Run2/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')
+#plotter.plotRatio('Run3/QCDInclusive2023', 'total_pt0', 'passed_pt0')
+#plotter.plotRatio2D('Run3/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')

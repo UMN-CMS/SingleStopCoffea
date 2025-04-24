@@ -137,6 +137,87 @@ def run3Hists(events, analyzer):
     )
 
     # Cuts
+    
+    # Number of jets
+    nj_cut = (ak.fill_none((ak.num(events.good_jets, axis = 1) >= 4), False)) & (ak.fill_none((ak.num(events.good_jets, axis = 1) <= 5), False))
+    gj = events.good_jets[trig & nj_cut]
+    analyzer.H(
+        "nj_cut_gte4_lte5_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    analyzer.H(
+        "nj_cut_gte4_lte5_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    nj_cut = (ak.fill_none((ak.num(events.good_jets, axis = 1) >= 4), False)) & (ak.fill_none((ak.num(events.good_jets, axis = 1) <= 6), False))
+    gj = events.good_jets[trig & nj_cut]
+    analyzer.H(
+        "nj_cut_gte4_lte6_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    analyzer.H(
+        "nj_cut_gte4_lte6_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    nj_cut = (ak.fill_none((ak.num(events.good_jets, axis = 1) >= 4), False)) & (ak.fill_none((ak.num(events.good_jets, axis = 1) <= 7), False))
+    gj = events.good_jets[trig & nj_cut]
+    analyzer.H(
+        "nj_cut_gte4_lte7_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    analyzer.H(
+        "nj_cut_gte4_lte7_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    nj_cut = (ak.fill_none((ak.num(events.good_jets, axis = 1) >= 4), False)) & (ak.fill_none((ak.num(events.good_jets, axis = 1) <= 8), False))
+    gj = events.good_jets[trig & nj_cut]
+    analyzer.H(
+        "nj_cut_gte4_lte8_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & nj_cut,
+    )
+
+    analyzer.H(
+        "nj_cut_gte4_lte8_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & nj_cut,
+    )
 
     # Number of bs
     nb_cut = med_b_mask & (ak.fill_none(ak.num(events.tight_bs, axis = 1) >= 0, False))
@@ -277,7 +358,7 @@ def run3Hists(events, analyzer):
     )
 
     analyzer.H(
-        "pt_cut_gt100_uncomp",
+        "pt_cut_100_uncomp",
         [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
           makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
         ],
@@ -327,6 +408,110 @@ def run3Hists(events, analyzer):
         mask = trig & pt_cut,
     )
 
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 160, False)
+    gj = events.good_jets[trig & pt_cut]
+    analyzer.H(
+        "pt_cut_160_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    analyzer.H(
+        "pt_cut_160_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 180, False)
+    gj = events.good_jets[trig & pt_cut]
+    analyzer.H(
+        "pt_cut_180_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    analyzer.H(
+        "pt_cut_180_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 200, False)
+    gj = events.good_jets[trig & pt_cut]
+    analyzer.H(
+        "pt_cut_200_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    analyzer.H(
+        "pt_cut_200_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 220, False)
+    gj = events.good_jets[trig & pt_cut]
+    analyzer.H(
+        "pt_cut_220_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    analyzer.H(
+        "pt_cut_220_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 240, False)
+    gj = events.good_jets[trig & pt_cut]
+    analyzer.H(
+        "pt_cut_240_comp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (comp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 0:3].sum().mass],
+        mask = trig & pt_cut,
+    )
+
+    analyzer.H(
+        "pt_cut_240_uncomp",
+        [ makeAxis(60, 0, 3000, "$m_{4}$", unit="GeV"),
+          makeAxis(60, 0, 3000, "$m_{3}$ (uncomp.)", unit="GeV")
+        ],
+        [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
+        mask = trig & pt_cut,
+    )
     # All Cuts
     gj = events.good_jets[trig & nb_cut & HT_cut & dRbb_cut & pt_cut]
     analyzer.H(

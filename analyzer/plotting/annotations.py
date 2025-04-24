@@ -3,8 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def addCmsInfo(ax, pos="in", additional_text=None, color="black") -> mpl.axis.Axis:
-    text = r"$\bf{CMS}\ \it{Preliminary}$"
+def addCmsInfo(ax, pos="in", additional_text=None, color="black", style="") -> mpl.axis.Axis:
+    if style == "simulation":
+        text = r"$\it{Private Work}\ (\bf{CMS}\ \it{simulation}$)"
+    elif style == "data":
+        text = r"$\it{Private Work}\ (\bf{CMS}\ \it{data}$)"
+    else:
+        text = r"$(\bf{CMS}\ \it{Preliminary})$"
+    
     
     if additional_text:
         text += additional_text
