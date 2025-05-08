@@ -269,8 +269,9 @@ def plotRatio3D(
         fixBadLabels(num_hist)
 
         r0 = np.concatenate((28*np.ones(1,dtype=int),4*np.ones(8,dtype=int),60*np.ones(1,dtype=int)))
-        r1 = np.concatenate((np.ones(1,dtype=int),2*np.ones(22,dtype=int),11*np.ones(5,dtype=int)))
-        r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
+        r1 = 25*np.ones(4,dtype=int)
+        #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
+        r2 = 6*np.ones(5,dtype=int)
 
         rebin_ht = hist.rebin(groups=r0)
         rebin_pt = hist.rebin(groups=r1)
@@ -297,7 +298,6 @@ def plotRatio3D(
 
         n = num_hist.values()
         d = den_hist.values()
-        
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio_unc = hist.intervals.ratio_uncertainty(n,d,uncertainty_type="efficiency")
             if normalize:
@@ -305,7 +305,9 @@ def plotRatio3D(
                 ratio_unc *= (np.sum(d)/np.sum(n))
             else:
                 rvalues = (n / d)
-        
+        rvalues[n==0]=0
+        ratio_unc[0][n==0]=0
+        ratio_unc[1][n==0]=0
         ratio_hist[...] = rvalues
         ratio_unc_hist_lower[...] = ratio_unc[0]
         ratio_unc_hist_upper[...] = ratio_unc[1]
@@ -366,24 +368,28 @@ def slice_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_config, 
     matplotlib.use("Agg")
     loadStyles()
     fig, ax = plt.subplots()
-
+    offset = matplotlib.colors.TwoSlopeNorm(vcenter=1)
     if color_scale == "log":
         art = hist[bin_index,:,:].plot2d(norm=matplotlib.colors.LogNorm(), ax=ax)
     else:
         art = hist[bin_index,:,:].plot2d(ax=ax)
 
-    ax.vlines(450,*ax.get_ylim(),colors='r')
-    ax.hlines(50,*ax.get_xlim(),colors='r')
+    #ax.vlines(500,*ax.get_ylim(),colors='r')
+    #ax.hlines(50,*ax.get_xlim(),colors='r')
 
     ax = art.pcolormesh.axes
     fig = ax.get_figure()
 
     labelAxis(ax, "y", hist[bin_index,:,:].axes)
     labelAxis(ax, "x", hist[bin_index,:,:].axes)
+    if text is not None:
+        extra_text = f"{text}\n{num_sec_params.region_name}\n{num_sec_params.dataset.title}\nHT: {htbinstr} GeV"
+    else:
+        extra_text = f"{num_sec_params.region_name}\n{num_sec_params.dataset.title}\nHT: {htbinstr} GeV"
     addCMSBits(
         ax,
         [den_sec_params, num_sec_params],
-        extra_text=f"{text}\n{num_sec_params.region_name}\n{num_sec_params.dataset.title}\nHT: {htbinstr} GeV",
+        extra_text=extra_text,
         plot_configuration=plot_config,
         )
     mplhep.sort_legend(ax=ax)

@@ -7,6 +7,7 @@ from hist import Hist
 from matplotlib import pyplot as plt
 import mplhep as hep
 import re
+import matplotlib
 
 def calculate_scale_factors():
     
@@ -98,7 +99,7 @@ def calculate_scale_factors2d():
 
 def calculate_scale_factors3d():
     data_list = ["2016_preVFP","2016_preVFP","2016_postVFP","2017","2018","2022_preEE","2022_postEE","2023_preBPix","2023_postBPix"]
-    plt.style.use(hep.style.CMS)
+    #data_list = ["2018"]
     for i in data_list:
         path = Path(f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{i}/SingleJetEff").resolve()
         if not path.is_dir():
@@ -112,42 +113,159 @@ def calculate_scale_factors3d():
                     den_dict = pickle.load(picklefile)
 
         num_h, num_unc, X, n = num_dict["Hist"], num_dict["Unc"], num_dict["num"], num_dict["den"]
-        den_h, den_unc, Y, m = den_dict["Hist"], den_dict["Unc"], num_dict["num"], num_dict["den"]
-
-        sf_h = num_h/den_h 
-        #saving scale factor histogram
+        den_h, den_unc, Y, m = den_dict["Hist"], den_dict["Unc"], den_dict["num"], den_dict["den"]
         
+        sf_h = num_h/den_h
+        sf_h_values = sf_h.values()
+        sf_h_values[num_h.values()==0] = 0
+        sf_h[...] = sf_h_values
+        #uncertainty
+        #X/n and Y/m are Binomial and (X/n)/(Y/m) is approximately log normal with the following variance
+        #var = 1/X+1/Y-1/m-1/n
+        log_sf_var = np.divide(1,X.values())+np.divide(1,Y.values())-np.divide(1,m.values())-np.divide(1,n.values())
+        log_upper = np.log(sf_h.values()) + np.sqrt(log_sf_var)
+        log_lower = np.log(sf_h.values()) - np.sqrt(log_sf_var)
+
+        upper = np.exp(log_upper)
+        lower = np.exp(log_lower)
+        
+        unc_upper = upper-sf_h.values()
+        unc_lower = sf_h.values()-lower
+
+        sf_unc_hist_lower = hist.Hist(*sf_h.axes)
+        sf_unc_hist_upper = hist.Hist(*sf_h.axes)
+        
+        sf_unc_hist_lower[...] = unc_lower
+        sf_unc_hist_upper[...] = unc_upper
+
         sf_path = Path(f"/srv/analyzer_resources/datavmc_sf/{i}_sf.pkl")
         if not(os.path.exists(sf_path.parents[0])):
             # create the directory you want to save to
             os.makedirs(sf_path.parents[0])
         with open(sf_path.resolve(), 'wb') as sf_file:
             pickle.dump(sf_h,sf_file)
+        save_plots(sf_h, i, sf_unc_hist_lower, sf_unc_hist_upper, loop_axis = 1)
 
-        #ones_hist = hist.Hist(*sf_h.axes)
-        #sf_var = hist.Hist(*sf_h.axes)
-
-        #ones_hist[...] = np.ones_like(sf_h.values())
-        #one_hist = ones_hist[0,...]
-        length = len(sf_h.axes[0])
-        year_num = int(re.findall(r'\d+', i)[0])
+def save_plots(sf_h, dataset, unc_lower, unc_upper, loop_axis = 0):
+    length = len(sf_h.axes[loop_axis])
+    year_num = int(re.findall(r'\d+', dataset)[0])
         
-        #sf_var[...] = sf_var_np
+    plt.style.use(hep.style.CMS)
+    if year_num > 2018:
+        energy = 13.6
+    else:
+        energy = 13
+    for j in range(length):
+        loop_bin = sf_h.axes[loop_axis][j]
+        loop_bin_str = "_".join([str(k) for k in loop_bin])
+        fig, ax = plt.subplots()
+        if loop_axis == 0:
+            x_centers = sf_h.axes[1].centers
+            label = f'HT {loop_bin_str}\nScale Factors' 
+        elif loop_axis == 1:
+            x_centers = sf_h.axes[0].centers
+            label = f'PT {loop_bin_str}\nScale Factors' 
 
-        if year_num > 2018:
-            energy = 13.6
-        else:
-            energy = 13
-        for j in range(length):
-            htbin = sf_h.axes[0][j]
-            htbinstr = "_".join([str(k) for k in htbin])
-            fig, ax = plt.subplots()
+        msd_centers = sf_h.axes[2].centers
+        offset = matplotlib.colors.TwoSlopeNorm(vmin=0, vcenter=1)
+        hep.cms.label(year=dataset,ax=ax,data=True,label=label,com=energy,loc=3)
+        if loop_axis == 0:
+            sf_h[j,:,:].plot2d(norm=offset, ax=ax, cmap='berlin')
 
-            hep.cms.label(year=i,ax=ax,data=True,label="Preliminary",com=energy)
-            sf_h[j,:,:].plot2d(ax=ax)
-            fig.tight_layout()
-            fig.savefig(f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{i}/SingleJetEff/3d_sf_plot_ht_{htbinstr}.pdf")
-    return
+            for x_bin in range(len(x_centers)):
+                for msd_bin in range(len(msd_centers)):
+                    # Auto text color based on background
+                    if np.isfinite(sf_h[j,x_bin, msd_bin]):
+                        text_color = 'white'
+                    else:
+                        text_color = 'black'
+                        
+                    sup = f'{unc_upper[j,x_bin,msd_bin]:.2f}'
+                    sub = f'{unc_lower[j,x_bin,msd_bin]:.2f}'
+                    ax.text(x_centers[x_bin], msd_centers[msd_bin], f"${sf_h[j,x_bin,msd_bin]:.2f}^{{{sup}}}_{{{sub}}}$",
+                        ha="center", va="center",
+                        color=text_color, fontsize=12) 
+
+        elif loop_axis == 1:
+            sf_h[:,j,:].plot2d(norm=offset, ax=ax, cmap='berlin')
+
+            for x_bin in range(len(x_centers)):
+                for msd_bin in range(len(msd_centers)):
+                    # Auto text color based on background
+                    if np.isfinite(sf_h[x_bin,j, msd_bin]):
+                        text_color = 'white'
+                    else:
+                        text_color = 'black'
+                        
+                    sup = f'{unc_upper[x_bin,j,msd_bin]:.2f}'
+                    sub = f'{unc_lower[x_bin,j,msd_bin]:.2f}'
+                    ax.text(x_centers[x_bin], msd_centers[msd_bin], f"${sf_h[x_bin,j,msd_bin]:.2f}^{{{sup}}}_{{{sub}}}$",
+                        ha="center", va="center",
+                        color=text_color, fontsize=12) 
+        #hep.cms.text(text=f'HT {htbinstr}\nScale Factors', ax=ax, loc=3, com=energy, year=dataset, data=True)
+        fig.tight_layout()
+        if loop_axis == 0:
+            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_ht_{loop_bin_str}.pdf"
+        #    lower_max = np.nanmax(unc_lower[j,:,:].values())
+        #    upper_max = np.nanmax(unc_upper[j,:,:].values())
+
+        elif loop_axis == 1:
+            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_pt_{loop_bin_str}.pdf"
+        #    lower_max = np.nanmax(unc_lower[:,j,:].values())
+        #    upper_max = np.nanmax(unc_upper[:,j,:].values())
+
+        fig.savefig(output_title)
+        plt.close()
+        #vmax = np.max([upper_max, lower_max])
+        #save_unc(unc_lower, 'lower', dataset, loop_bin_str, j, energy, vmax, loop_axis)
+        #save_unc(unc_upper, 'upper', dataset, loop_bin_str, j, energy, vmax, loop_axis)
+       
+def save_unc(unc, title, dataset, loop_bin_str, index, energy, vmax, loop_axis):
+        fig, ax = plt.subplots()
+        
+        norm = matplotlib.colors.Normalize(vmin=0, vmax=vmax)
+        if loop_axis == 0:
+            x_centers = unc.axes[1].centers
+            hep.cms.label(year=dataset,ax=ax,data=True,label=f'HT: {loop_bin_str}\nSF {title} unc',com=energy,loc=3)
+            unc[index,:,:].plot2d(ax=ax, norm=norm)
+
+        elif loop_axis == 1:
+            x_centers = unc.axes[0].centers
+            hep.cms.label(year=dataset,ax=ax,data=True,label=f'PT: {loop_bin_str}\nSF {title} unc',com=energy,loc=3)
+            unc[:,index,:].plot2d(ax=ax, norm=norm)
+
+        msd_centers = unc.axes[2].centers
+        if loop_axis == 0:
+            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_ht_{loop_bin_str}_unc_{title}.pdf"
+            for x_bin in range(len(x_centers)):
+                for msd_bin in range(len(msd_centers)):
+                    # Auto text color based on background
+                    if np.isfinite(unc[index, x_bin, msd_bin]):
+                        text_color = 'white'
+                    else:
+                        text_color = 'black'
+                        
+                    ax.text(x_centers[x_bin], msd_centers[msd_bin], f"{unc[index,x_bin,msd_bin]:.2f}",
+                        ha="center", va="center",
+                        color=text_color, fontsize=12) 
+        elif loop_axis == 1:
+            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_pt_{loop_bin_str}_unc_{title}.pdf"
+            for x_bin in range(len(x_centers)):
+                for msd_bin in range(len(msd_centers)):
+                    # Auto text color based on background
+                    if np.isfinite(unc[x_bin, index, msd_bin]):
+                        text_color = 'white'
+                    else:
+                        text_color = 'black'
+                        
+                    ax.text(x_centers[x_bin], msd_centers[msd_bin], f"{unc[x_bin,index,msd_bin]:.2f}",
+                        ha="center", va="center",
+                        color=text_color, fontsize=12) 
+
+        fig.tight_layout()
+        fig.savefig(output_title)
+        plt.close()
+
 
 if __name__ == "__main__":
     calculate_scale_factors3d()
