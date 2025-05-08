@@ -572,7 +572,12 @@ def NN_mass_reco(events, analyzer):
     m14 = jets[:, 0:4].sum().mass
 
     # Uncompressed
-    mChiUncomp = jets[ak.argsort(ak.unflatten(outputs_uncomp0p67,ak.num(jets)),axis=1)[:,-3:]].sum().mass
+    top_3_idx = ak.argsort(ak.unflatten(outputs_uncomp0p67, ak.num(jets)),axis=1)[:,-3:]
+    mChiUncomp = jets[top_3_idx].sum().mass
+    top_3_excl_mask = (ak.local_index(jets,axis=1) != top_3_idx[:,0]) & (ak.local_index(jets,axis=1) != top_3_idx[:,1]) & (ak.local_index(jets,axis=1) != top_3_idx[:,2])
+    stop_b = jets[top_3_excl_mask][:,0] # Highest remaining pT
+    m4_NN = jets[top_3_idx].sum() + stop_b
+    mStopUncomp = m4_NN.mass
 
     analyzer.H(
         f"mChiUncomp",
@@ -580,33 +585,38 @@ def NN_mass_reco(events, analyzer):
             60,
             0,
             3000,
-            rf"mChiUncomp",
+            r"$m_{\tilde{\chi}^\pm}^{\text{NN}}$ (Uncomp)",
             unit="GeV",
         ),
         mChiUncomp,
         name="\'Mass of Chargino with NN trained on Uncompressed Points",
     )
     analyzer.H(
-        f"m14_vs_mChiUncomp",
+        f"mStopUncomp_vs_mChiUncomp",
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{t}}^{\text{NN}}$ (Uncomp)", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{\chi}^\pm}^{\text{NN}}$ (Uncomp)", unit="GeV"),
         ],
-        [m14, mChiUncomp],
-        name="m14_vs_mChiUncomp",
+        [mStopUncomp, mChiUncomp],
+        name="mStopUncomp_vs_mChiUncomp",
     )
     analyzer.H(
-        f"m14_vs_mChiUncompRatio",
+        f"mStopUncomp_vs_mChiUncompRatio",
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 1, r"$m_{3 (NN)} / m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{t}}^{\text{NN}}$ (Uncomp)", unit="GeV"),
+            makeAxis(60, 0, 1, r"$m_{\tilde{\chi}^\pm}^{\text{NN}} / m_{\tilde{t}}^{\text{NN}}$ (Uncomp)", unit="GeV"),
         ],
-        [m14, mChiUncomp / m14],
-        name="m14_vs_mChiUncomp",
+        [mStopUncomp, mChiUncomp / mStopUncomp],
+        name="mStopUncomp_vs_mChiUncomp",
     )
 
     # Compressed
-    mChiComp = jets[ak.argsort(ak.unflatten(outputs_comp0p67,ak.num(jets)),axis=1)[:,-3:]].sum().mass
+    top_3_idx = ak.argsort(ak.unflatten(outputs_comp0p67, ak.num(jets)),axis=1)[:,-3:]
+    mChiComp = jets[top_3_idx].sum().mass
+    top_3_excl_mask = (ak.local_index(jets,axis=1) != top_3_idx[:,0]) & (ak.local_index(jets,axis=1) != top_3_idx[:,1]) & (ak.local_index(jets,axis=1) != top_3_idx[:,2])
+    stop_b = jets[top_3_excl_mask][:,0] # Highest remaining pT
+    m4_NN = jets[top_3_idx].sum() + stop_b
+    mStopComp = m4_NN.mass
 
     analyzer.H(
         f"mChiComp",
@@ -614,29 +624,29 @@ def NN_mass_reco(events, analyzer):
             60,
             0,
             3000,
-            rf"mChiComp",
+            r"$m_{\tilde{\chi}^\pm}^{\text{NN}}$ (Comp)",
             unit="GeV",
         ),
         mChiComp,
         name="\'Mass of Chargino with NN trained on Compressed Points",
     )
     analyzer.H(
-        f"m14_vs_mChiComp",
+        f"mStopComp_vs_mChiComp",
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 3000, r"$m_{3 (NN)}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{t}}^{\text{NN}}$ (Comp)", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{\chi}^\pm}^{\text{NN}}$ (Comp)", unit="GeV"),
         ],
-        [m14, mChiComp],
-        name="m14_vs_mChiComp",
+        [mStopComp, mChiComp],
+        name="mStopComp_vs_mChiComp",
     )
     analyzer.H(
-        f"m14_vs_mChiCompRatio",
+        f"mStopComp_vs_mChiCompRatio",
         [
-            makeAxis(60, 0, 3000, r"$m_{14}$", unit="GeV"),
-            makeAxis(60, 0, 1, r"$m_{3 (NN)} / m_{14}$", unit="GeV"),
+            makeAxis(60, 0, 3000, r"$m_{\tilde{t}}^{\text{NN}}$ (Comp)", unit="GeV"),
+            makeAxis(60, 0, 1, r"$m_{\tilde{\chi}^\pm}^{\text{NN}} / m_{\tilde{t}}^{\text{NN}}$ (Comp)", unit="GeV"),
         ],
-        [m14, mChiComp / m14],
-        name="m14_vs_mChiComp",
+        [mStopComp, mChiComp / mStopComp],
+        name="mStopComp_vs_mChiComp",
     )
 
     # Uncompressed 0p75 no nJets
