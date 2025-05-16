@@ -81,10 +81,12 @@ def drawAs1DHist(ax, plot_object, yerr=True, fill=True, orient="h", ecolor=None,
               '1500': '#7F7F7F',
               '2000': '#BCBD22',
               }
+    '''
     if not fill:
         for c in colors:
             if c in plot_object.title.split(',')[0]:
                 style.color = colors[c]
+    '''
     x = plot_object.axes[0].centers
     edges = plot_object.axes[0].flat_edges
     raw_vals = plot_object.values()

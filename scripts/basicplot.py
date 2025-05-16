@@ -133,7 +133,6 @@ for sample in (sig + backgrounds):
 
     for p in ['ratio_m3_comp_m4', 'ratio_m3_uncomp_m4', 'HT_cut_comp', 'HT_cut_uncomp']:
         plotter(p, [], normalize=False, add_name=f"{sample}")
-'''
 
 for h in toplot:
     comp_fnames = ["Run3/" + samp + ".pkl" for samp in (compressed + backgrounds)]
@@ -160,3 +159,9 @@ for h in toplot:
 #plotter.plotRatio(f'{sample}', 'totalHT', 'passedHT')
 #plotter.plotRatio('Run3/QCDInclusive2023', 'total_pt0', 'passed_pt0')
 #plotter.plotRatio2D('Run3/QCDInclusive2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')
+'''
+
+backgrounds = ["DataMuon2023"]
+plotter = Plotter("DataMuon2023.pkl", "plots", default_backgrounds=backgrounds)
+plotter.plotRatio('DataMuon2023', 'totalHT', 'passedHT')
+plotter.plotRatio2D('DataMuon2023', 'total_pT0_vs_mSoftDrop', 'passed_pT0_vs_mSoftDrop')

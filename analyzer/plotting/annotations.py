@@ -5,9 +5,9 @@ import numpy as np
 
 def addCmsInfo(ax, pos="in", additional_text=None, color="black", style="") -> mpl.axis.Axis:
     if style == "simulation":
-        text = r"$\it{Private Work}\ (\bf{CMS}\ \it{simulation}$)"
+        text = r"$\it{Private\ Work}\ (\bf{CMS}\ \it{simulation}$)"
     elif style == "data":
-        text = r"$\it{Private Work}\ (\bf{CMS}\ \it{data}$)"
+        text = r"$\it{Private\ Work}\ (\bf{CMS}\ \it{data}$)"
     else:
         text = r"$(\bf{CMS}\ \it{Preliminary})$"
     

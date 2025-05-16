@@ -90,7 +90,7 @@ def triggerEfficiencyHists(events, analyzer):
             if 'HT' in n: HT_Trigger = events.HLT[n]
             if 'AK8PFJet' in n: pT_Trigger = events.HLT[n]
     
-    mht = HT_Trigger | pT_Trigger
+    mht = HT_Trigger
     mpt = (pT_Trigger & (ak.num(fatjets, axis=1) >= 1))
     mnj = ak.num(fatjets, axis = 1) >= 1
     analyzer.H(

@@ -512,7 +512,17 @@ def run3Hists(events, analyzer):
         [gj[:, 0:4].sum().mass, gj[:, 1:4].sum().mass],
         mask = trig & pt_cut,
     )
+
     # All Cuts
+
+    nb_cut = med_b_mask & (ak.fill_none(ak.num(events.tight_bs, axis = 1) >= 1, False))
+
+    filled_jets = ak.pad_none(events.good_jets, 1, axis = 1)
+    pt_cut = ak.fill_none(filled_jets[:, 0].pt > 160, False)
+
+    filled_bs = ak.pad_none(events.med_bs, 2, axis = 1)
+    dRbb_cut = (ak.fill_none(filled_bs[:, 0].delta_r(filled_bs[:, 1]) > 1, False)) & (ak.fill_none(filled_bs[:, 0].delta_r(filled_bs[:, 1]) < 3.2, False)) 
+
     gj = events.good_jets[trig & nb_cut & HT_cut & dRbb_cut & pt_cut]
     analyzer.H(
         "all_cuts_comp",

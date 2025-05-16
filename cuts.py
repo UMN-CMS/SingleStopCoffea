@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 import pandas as pd
 import mplhep as hep
 
@@ -102,9 +103,14 @@ signal_vals_uncomp = {s : np.zeros(2) for s in sig}
 backgrounds = ["QCDInclusive2023", "TTToHadronic2018"]
 
 signal_survival_rates = {(int(s.split('_')[2]), int(s.split('_')[3])) : 0 for s in sig}
+signal_scale_factors = {(int(s.split('_')[2]), int(s.split('_')[3])) : 0 for s in sig}
 
 for sample in (sig):
     d = pkl.load(open(f"Run3/{sample}.pkl", "rb"))
+
+    m_stop = int(sample.split('_')[2])
+    m_chargino = int(sample.split('_')[3])
+    sf = signal_scale_factors[(m_stop, m_chargino)]
 
     profile_repo = ds.ProfileRepo()
     profile_repo.loadFromDirectory("profiles")
@@ -131,7 +137,11 @@ for sample in (sig):
     HT_vals = np.array([t[0] for t in HT_list])
 
     signal_survival_rates[(int(sample.split('_')[2]), int(sample.split('_')[3]))] = np.sum(HT_vals) / np.sum(HT_presel_vals)    
+    signal_scale_factors[(int(sample.split('_')[2]), int(sample.split('_')[3]))] = np.sum(HT_presel_vals) / 10000    
+
 signal_survival_rates = {s : signal_survival_rates[s] for s in sorted(signal_survival_rates.keys())}
+signal_scale_factors = {s : signal_scale_factors[s] for s in sorted(signal_scale_factors.keys())}
+print(signal_scale_factors)
 
 #for sample in backgrounds:
 for sample in ['QCDInclusive2023']:
@@ -153,9 +163,10 @@ for sample in ['QCDInclusive2023']:
         #significance_arr_comp = np.sqrt(2 * ((signal_vals_comp[s] + m3m4_vals) * np.log(1 + np.divide(signal_vals_comp[s], m3m4_vals, out=np.zeros_like(m3m4_vals), where=m3m4_vals!=0)) - signal_vals_comp[s]))
         #significances_comp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(np.square(significance_arr_comp)))
         #np.set_printoptions(threshold=sys.maxsize)
-        significance_arr_comp = 2 * ((signal_vals_comp[s] + m3m4_vals) * (np.log(1 + np.divide(signal_vals_comp[s], m3m4_vals, out=np.zeros_like(m3m4_vals), where=m3m4_vals!=0))) - (signal_vals_comp[s]))        
-        significances_comp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(significance_arr_comp))
+        sf = signal_scale_factors[(int(s.split('_')[2]), int(s.split('_')[3]))]
 
+        significance_arr_comp = 2 * ((signal_vals_comp[s] + m3m4_vals) * (np.log(1 + np.divide(signal_vals_comp[s], m3m4_vals, out=np.zeros_like(m3m4_vals), where=m3m4_vals!=0))) - (signal_vals_comp[s]))        
+        significances_comp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(significance_arr_comp[signal_vals_comp[s] > sf]))
 
     p = 'ratio_m3_uncomp_m4'
     significances_uncomp = {s : 0 for s in sorted(signal_survival_rates.keys())}
@@ -164,14 +175,16 @@ for sample in ['QCDInclusive2023']:
     for s in signal_vals_uncomp:
         #significance_arr_uncomp = np.sqrt(2 * ((signal_vals_uncomp[s] + m3m4_vals) * np.log(1 + np.divide(signal_vals_uncomp[s], m3m4_vals, out=np.zeros_like(m3m4_vals), where=m3m4_vals!=0)) - signal_vals_uncomp[s]))
         #significances_uncomp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(np.square(significance_arr_uncomp)))
+        sf = signal_scale_factors[(int(s.split('_')[2]), int(s.split('_')[3]))]
+
         significance_arr_uncomp = 2 * ((signal_vals_uncomp[s] + m3m4_vals) * (np.log(1 + np.divide(signal_vals_uncomp[s], m3m4_vals, out=np.zeros_like(m3m4_vals), where=m3m4_vals!=0))) - (signal_vals_uncomp[s]))        
-        significances_uncomp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(significance_arr_uncomp))
+        significances_uncomp[(int(s.split('_')[2]), int(s.split('_')[3]))] = np.sqrt(np.sum(significance_arr_uncomp[signal_vals_uncomp[s] > sf]))
 
 
 print(significances_comp)
 print(significances_uncomp)
 
-def stop_chargino_plots(data_dict, outfile, title = "", cmap = 'Greens', cbar_label = r"$\sigma$ ratio"): 
+def stop_chargino_plots(data_dict, outfile, title = "", cmap = 'RdYlGn', cmapmin = 0, vmin = 0.5, vmax = 2.0, cbar_label = r"$\sigma$ ratio"): 
     hep.style.use("CMS")
     rows, cols = np.meshgrid(np.arange(500, 1250, 100), np.arange(100, 1150, 100))
     
@@ -185,7 +198,10 @@ def stop_chargino_plots(data_dict, outfile, title = "", cmap = 'Greens', cbar_la
 
     data[data == 0] = np.nan
 
-    f1 = ax.pcolormesh(rows, cols, data, cmap = cmap)
+    #if vmin == 0.5: cmap = mpl.colormaps[cmap].resampled(256)(np.linspace(cmapmin, vmax, 256))
+    #else: cmap = mpl.colormaps[cmap].resampled(256)(np.linspace(0, vmax, 256))
+    #cmap = ListedColormap(cmap)
+    f1 = ax.pcolormesh(rows, cols, data, cmap = cmap, vmin = vmin, vmax = vmax)
     fig.colorbar(f1, ax=ax, label = cbar_label)
 
     for i in range(data.shape[0]):
@@ -310,16 +326,21 @@ def calculate_significance_comp(cut_hist):
     for s in signal_vals:
         m_stop = s[0]
         m_chargino = s[1]
+        sf = signal_scale_factors[(m_stop, m_chargino)]
+        
         if (m_stop < 900 and m_chargino >= m_stop - 200) or (m_stop >= 900 and m_chargino >= m_stop - 300): 
             cut_hist_sig_arr = 2 * ((signal_vals[s] + cut_hist_vals_comp) * (np.log(1 + np.divide(signal_vals[s], cut_hist_vals_comp, out=np.zeros_like(cut_hist_vals_comp), where=cut_hist_vals_comp!=0))) - (signal_vals[s])) 
             #cut_hist_sig_arr = np.divide(signal_vals[s], np.sqrt(cut_hist_vals + cut_hist_var), out=np.zeros_like(cut_hist_vals), where=cut_hist_vals!=0)
-            cut_hist_sig = np.sqrt(np.sum(cut_hist_sig_arr))
+            cut_hist_sig = np.sqrt(np.sum(cut_hist_sig_arr[signal_vals[s] > sf]))
 
             baseline_sig_arr = 2 * ((signal_m3m4_vals[s] + m3m4_vals_comp) * (np.log(1 + np.divide(signal_m3m4_vals[s], m3m4_vals_comp, out=np.zeros_like(m3m4_vals_comp), where=m3m4_vals_comp!=0))) - signal_m3m4_vals[s])
             #baseline_sig_arr = np.divide(signal_m3m4_vals[s], np.sqrt(m3m4_vals + m3m4_var, out=np.zeros_like(m3m4_vals), where=m3m4_vals != 0))
-            baseline_sig = np.sqrt(np.sum(baseline_sig_arr))
+            baseline_sig = np.sqrt(np.sum(baseline_sig_arr[signal_vals[s] > sf]))
 
-            cut_significances[s] = cut_hist_sig / significances_comp[s]
+            #if "all_cuts" not in cut_hist: cut_significances[s] = cut_hist_sig / significances_comp[s]
+            #else: cut_significances[s] = cut_hist_sig
+
+            cut_significances[s] = cut_hist_sig
 
             cut_hist = '_'.join(list(cut_hist.split('_'))[:-1])
 
@@ -374,13 +395,16 @@ def calculate_significance_comp(cut_hist):
         else:
             cut_hist_sig_arr = 2 * ((signal_vals[s] + cut_hist_vals_uncomp) * (np.log(1 + np.divide(signal_vals[s], cut_hist_vals_uncomp, out=np.zeros_like(cut_hist_vals_uncomp), where=cut_hist_vals_uncomp!=0))) - (signal_vals[s])) 
             #cut_hist_sig_arr = np.divide(signal_vals[s], np.sqrt(cut_hist_vals + cut_hist_var), out=np.zeros_like(cut_hist_vals), where=cut_hist_vals!=0)
-            cut_hist_sig = np.sqrt(np.sum(cut_hist_sig_arr))
+            cut_hist_sig = np.sqrt(np.sum(cut_hist_sig_arr[signal_vals[s] > sf]))
 
             baseline_sig_arr = 2 * ((signal_m3m4_vals[s] + m3m4_vals_uncomp) * (np.log(1 + np.divide(signal_m3m4_vals[s], m3m4_vals_uncomp, out=np.zeros_like(m3m4_vals_uncomp), where=m3m4_vals_uncomp!=0))) - signal_m3m4_vals[s])
             #baseline_sig_arr = np.divide(signal_m3m4_vals[s], np.sqrt(m3m4_vals + m3m4_var, out=np.zeros_like(m3m4_vals), where=m3m4_vals != 0))
-            baseline_sig = np.sqrt(np.sum(baseline_sig_arr))
+            baseline_sig = np.sqrt(np.sum(baseline_sig_arr[signal_vals[s] > sf]))
 
-            cut_significances[s] = cut_hist_sig / significances_uncomp[s]
+            #if "all_cuts" not in cut_hist: cut_significances[s] = cut_hist_sig / significances_comp[s]
+            #else: cut_significances[s] = cut_hist_sig
+
+            cut_significances[s] = cut_hist_sig
 
             cut_hist = '_'.join(list(cut_hist.split('_'))[:-1])
 
@@ -447,30 +471,33 @@ def calculate_significance_comp(cut_hist):
     plt.savefig(f'plots/cut_significances/cut_out_bkg_vals.pdf')
     return cut_significances
 
-
-stop_chargino_plots(significances_comp, 'significances_comp_no_cuts', title = r"$\sigma$ After Trigger (comp.)", cbar_label = r'$\sigma$')
-stop_chargino_plots(significances_uncomp, 'significances_uncomp_no_cuts', title = r"$\sigma$ After Trigger (uncomp.)", cbar_label = r'$\sigma$')
+stop_chargino_plots(significances_comp, 'significances_comp_no_cuts', title = r"$\sigma$ After Trigger (comp.)", cmapmin = 0, vmin = 1.0, vmax = 10.0, cmap = 'YlGn', cbar_label = r'$\sigma$')
+stop_chargino_plots(significances_uncomp, 'significances_uncomp_no_cuts', title = r"$\sigma$ After Trigger (uncomp.)", cmapmin = 0, vmin = 1.0, vmax = 10.0, cmap = 'YlGn', cbar_label = r'$\sigma$')
 #stop_chargino_plots(signal_survival_rates, 'signal_survival_rates', title = "Signal Trigger Pass Rate")
-stop_chargino_plots(calculate_significance_comp('HT_cut_comp'), 'HT_cut_comp', title = r'$H_T > 400$ Cut')
+'''
+stop_chargino_plots(calculate_significance_comp('HT_cut_comp'), 'HT_cut_comp',)
 
-stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte5_comp'), 'nj_cut_gte4_lte5_comp', title = r'$4 \leq n_j \leq 5$ Cut')
-stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte6_comp'), 'nj_cut_gte4_lte6_comp', title = r'$4 \leq n_j \leq 6$ Cut')
-stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte7_comp'), 'nj_cut_gte4_lte7_comp', title = r'$4 \leq n_j \leq 7$ Cut')
-stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte8_comp'), 'nj_cut_gte4_lte8_comp', title = r'$4 \leq n_j \leq 8$ Cut')
+stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte5_comp'), 'nj_cut_gte4_lte5_comp')
+stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte6_comp'), 'nj_cut_gte4_lte6_comp')
+stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte7_comp'), 'nj_cut_gte4_lte7_comp')
+stop_chargino_plots(calculate_significance_comp('nj_cut_gte4_lte8_comp'), 'nj_cut_gte4_lte8_comp')
 
-stop_chargino_plots(calculate_significance_comp('nb_cut_2med_0tight_comp'), 'nb_cut_2med_0tight_comp', title = r'2 medium bs, 0 tight b Cut')
-stop_chargino_plots(calculate_significance_comp('nb_cut_2med_1tight_comp'), 'nb_cut_2med_1tight_comp', title = r'2 medium bs, 1 tight b Cut')
-stop_chargino_plots(calculate_significance_comp('nb_cut_2med_2tight_comp'), 'nb_cut_2med_2tight_comp', title = r'2 medium bs, 2 tight b Cut')
+stop_chargino_plots(calculate_significance_comp('nb_cut_2med_0tight_comp'), 'nb_cut_2med_0tight_comp')
+stop_chargino_plots(calculate_significance_comp('nb_cut_2med_1tight_comp'), 'nb_cut_2med_1tight_comp')
+stop_chargino_plots(calculate_significance_comp('nb_cut_2med_2tight_comp'), 'nb_cut_2med_2tight_comp')
 
-stop_chargino_plots(calculate_significance_comp('dRbb_cut_gt1_comp'), 'dRbb_cut_gt1_comp', title = r'$\Delta R_{b_0, b_1} > 1$ Cut')
-stop_chargino_plots(calculate_significance_comp('dRbb_cut_gt1_lt32_comp'), 'dRbb_cut_gt1_lt32_comp', title = r'$1 < \Delta R_{b_0, b_1} < 3.2$ Cut')
+stop_chargino_plots(calculate_significance_comp('dRbb_cut_gt1_comp'), 'dRbb_cut_gt1_comp')
+stop_chargino_plots(calculate_significance_comp('dRbb_cut_gt1_lt32_comp'), 'dRbb_cut_gt1_lt32_comp')
 
-stop_chargino_plots(calculate_significance_comp('pt_cut_100_comp'), 'pt_cut_100_comp', title = r'$p_{T, 0} > 100$ Cut')
-stop_chargino_plots(calculate_significance_comp('pt_cut_120_comp'), 'pt_cut_120_comp', title = r'$p_{T, 0} > 120$ Cut')
-stop_chargino_plots(calculate_significance_comp('pt_cut_140_comp'), 'pt_cut_140_comp', title = r'$p_{T, 0} > 140$ Cut')
-stop_chargino_plots(calculate_significance_comp('pt_cut_160_comp'), 'pt_cut_160_comp', title = r'$p_{T, 0} > 160$ Cut')
-stop_chargino_plots(calculate_significance_comp('pt_cut_180_comp'), 'pt_cut_180_comp', title = r'$p_{T, 0} > 180$ Cut')
-stop_chargino_plots(calculate_significance_comp('pt_cut_200_comp'), 'pt_cut_200_comp', title = r'$p_{T, 0} > 200$ Cut')
+stop_chargino_plots(calculate_significance_comp('pt_cut_100_comp'), 'pt_cut_100_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_120_comp'), 'pt_cut_120_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_140_comp'), 'pt_cut_140_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_160_comp'), 'pt_cut_160_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_180_comp'), 'pt_cut_180_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_200_comp'), 'pt_cut_200_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_220_comp'), 'pt_cut_220_comp')
+stop_chargino_plots(calculate_significance_comp('pt_cut_240_comp'), 'pt_cut_240_comp')
+'''
 
-stop_chargino_plots(calculate_significance_comp('all_cuts_comp'), 'all_cuts_comp', title = r'$H_T > 400$, 2 medium bs, 1 tight b, $\Delta R_{b_0, b_1} > 1$, $p_{T, 0} > 140$')
+stop_chargino_plots(calculate_significance_comp('all_cuts_comp'), 'all_cuts_comp', cmapmin = 0, vmin = 1.0, vmax = 22.0, cmap = 'YlGn', cbar_label = r'$\sigma$')
 

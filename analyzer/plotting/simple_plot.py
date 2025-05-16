@@ -187,6 +187,7 @@ class Plotter:
         fig = plotRatio(hppo, hopo, self.coupling, self.target_lumi)
         if self.outdir:
             fig.savefig(self.outdir / f"{target}_ratio_{hist_obs}_{hist_pred}.pdf")
+            #fig.savefig(self.outdir / f"ratio_{hist_obs}_{hist_pred}.pdf")
             plt.close(fig)
         else:
             return fig

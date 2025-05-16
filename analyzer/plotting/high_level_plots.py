@@ -70,7 +70,7 @@ def plotRatio(
     ab.set_ylabel("Ratio")
     ab.set_ylim(0.0, 1.1)
     #addCmsInfo(ax, additional_text=f"\n$\\lambda_{{{coupling}}}''$ ")
-    addCmsInfo(ax, additional_text=f"\n{lumi_dict[round(lumi, 1)]}\n{trigger_dict[round(lumi, 1)]}", pos='in')
+    addCmsInfo(ax, additional_text=f"\n{lumi_dict[round(lumi, 1)]}\n{trigger_dict[round(lumi, 1)]}", pos='in', style='simulation')
     addTitles1D(ax, hopo, top_pad=1.55)
 
     if no_hists:
@@ -103,8 +103,8 @@ def plotRatio2D(plotobj_pred, plotobj_obs, coupling, lumi):
     fig, ax = plt.subplots()
     fig2, ab = plt.subplots()
     drawRatio2D(ax, ab, numerator = hppo, denominator = hopo)
-    addCmsInfo(ax, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="white")
-    addCmsInfo(ab, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="black")
+    addCmsInfo(ax, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="white", style='data')
+    addCmsInfo(ab, additional_text=f"\n{lumi_dict[lumi]}\n{trigger_dict[lumi]}", color="black", style='data')
     fig.tight_layout()
     fig2.tight_layout()
     return fig, fig2
@@ -174,13 +174,14 @@ def plot1D(
         additional_text=add_text
         + (add_label or "")
         + ("\n" + cut_list if cut_list else ""),
+        style='simulation',
     )
 
     hc = next(it.chain(signal_plobjs, background_plobjs))
     handles, labels = ax.get_legend_handles_labels()
     labels, handles = zip(*reversed(sorted(zip(labels, handles), key=lambda t: t[0])))
     extra_legend_args = {}
-    extra_legend_args["prop"] = {"size": max(14, min(round(50 / len(labels)), 30))}
+    extra_legend_args["prop"] = {"size": max(8, min(round(50 / len(labels)), 15))}
     l = ax.legend(handles, labels, loc="upper right", **extra_legend_args)
     w = mpl.rcParams["lines.linewidth"]
     for l in ax.get_legend().legend_handles:
@@ -291,6 +292,7 @@ def plot2D(
         + ("\n" + cut_list if cut_list else ""),
         pos=pos,
         color="white",
+        style="simulation",
     )
 
     addTitles2D(ax, plot_obj)
