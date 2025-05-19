@@ -1,0 +1,41 @@
+PostDefaults:
+  style_set: "default.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".pdf"
+    cms_text_color: Black
+  to_process:
+    sample_spec:
+      name:
+        - 'signal*'
+
+catalog_path: "postprocessing/trigger_eff_3d_hist_test/catalog.json"
+
+Postprocessing:
+  - name: "Signal312"
+    action: Histogram3D
+    histogram_names: ["ht_ak8_pt_vs_sdmass"]
+    output_name: "postprocessing/trigger_eff_3d_hist_test/plots/{dataset.era.name}/{region_name}/{dataset.name}_{histogram_name}"
+    to_process:
+      region_name: Signal312
+    grouping:
+      axis_options: {variation: central}
+      fields: ['dataset.name', 'dataset.era.name', 'region_name']
+      title_format: "{dataset.era.trigger_names.HT}"
+    plot_configuration:
+      cms_text_color: White
+    save_plots: False
+  - name: "Signal313"
+    action: Histogram3D
+    histogram_names: ["ht_ak8_pt_vs_sdmass"]
+    output_name: "postprocessing/trigger_eff_3d_hist_test/plots/{dataset.era.name}/{region_name}/{dataset.name}_{histogram_name}"
+    to_process:
+      region_name: Signal313
+    grouping:
+      axis_options: {variation: central}
+      fields: ['dataset.name', 'dataset.era.name', 'region_name']
+      title_format: "{dataset.era.trigger_names.HT}"
+    plot_configuration:
+      cms_text_color: White
+    save_plots: False
+

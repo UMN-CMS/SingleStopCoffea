@@ -23,7 +23,7 @@ from .grouping import (
 )
 from .plots.export_hist import exportHist
 from .plots.plots_1d import PlotConfiguration, plotOne, plotRatio, plotStrCat
-from .plots.plots_2d import plot2D, plotRatio2D, plotRatio3D, plot2DSigBkg
+from .plots.plots_2d import plot2D, plot3D, plotRatio2D, plotRatio3D, plot2DSigBkg
 from .registry import registerPostprocessor
 from .split_histogram import Mode
 from .style import Style, StyleSet
@@ -603,6 +603,60 @@ class RatioPlot2D(BasePostprocessor, pyd.BaseModel):
                         ],
                     )
                 )
+        return ret, items
+
+
+@registerPostprocessor
+class Histogram3D(BasePostprocessor, pyd.BaseModel):
+    histogram_names: list[str]
+    to_process: SectorSpec
+    style_set: str | StyleSet
+    grouping: SectorGroupSpec
+    output_name: str
+    scale: Literal["log", "linear"] = "linear"
+    axis_options: dict[str, Mode | str | int] | None = None
+    normalize: bool = False
+    plot_configuration: PlotConfiguration | None = None
+    save_plots: bool = True
+    def getNeededHistograms(self):
+        return self.histogram_names
+
+    def getExe(self, results):
+        sectors = [x for x in results if self.to_process.passes(x.sector_params)]
+        r = createSectorGroups(sectors, self.grouping)
+        ret, items = [], []
+        for histogram in self.histogram_names:
+                for sector_group in r:
+                    output = doFormatting(
+                        self.output_name,
+                        sector_group.all_parameters,
+                        histogram_name=histogram,
+                    )
+                    ret.append(
+                        ft.partial(
+                            plot3D,
+                            sector_group.histograms(histogram)[0],
+                            output,
+                            self.style_set,
+                            normalize=self.normalize,
+                            color_scale=self.scale,
+                            plot_configuration=self.plot_configuration,
+                            save_plots=self.save_plots,
+                        )
+                    )
+                
+                    items.append(
+                        PostprocessCatalogueEntry(
+                            processor_name=self.name,
+                            identifier=histogram,
+                            path=output,
+                            sector_group=sector_group,
+                            sector_params=[
+                                x.sector_params
+                                for x in sector_group.sectors
+                            ],
+                        )
+                    )
         return ret, items
 
 @registerPostprocessor

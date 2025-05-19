@@ -32,7 +32,7 @@ def plot2D(
     styler.getStyle(packaged_hist.sector_parameters)
     h = packaged_hist.histogram
     fixBadLabels(h)
-
+    print(h)
     if normalize:
         h = h / np.sum(h.values())
     if color_scale == "log":
@@ -247,6 +247,60 @@ def plotRatio2D(
     
     saveFig(fig, output_path, extension=plot_configuration.image_type)
 
+def plot3D(
+    histogram,
+    output_path,
+    style_set,
+    normalize=False,
+    color_scale="linear",
+    plot_configuration=None,
+    save_plots=True,
+):
+    hist_3d = histogram.histogram
+    fixBadLabels(hist_3d)
+
+    head, _tail = os.path.split(output_path) 
+    os.makedirs(head, exist_ok=True)
+    r0 = np.concatenate((28*np.ones(1,dtype=int),4*np.ones(8,dtype=int),60*np.ones(1,dtype=int)))
+    r1 = 25*np.ones(4,dtype=int)
+    #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
+    r2 = 6*np.ones(5,dtype=int)
+
+    rebin_ht = hist.rebin(groups=r0)
+    rebin_pt = hist.rebin(groups=r1)
+    rebin_sd = hist.rebin(groups=r2)
+
+    temp_name = hist_3d.axes.name
+    temp_unit = hist_3d.axes.unit
+
+    #this requires boost_histogram >= 1.5.1
+    hist_3d = hist_3d[::rebin_ht, ::rebin_pt, ::rebin_sd]
+
+    #shouldn't be needed after boost_histogram 1.5.2
+    hist_3d.axes.name = temp_name
+    hist_3d.axes.unit = temp_unit
+
+    length = len(hist_3d.axes[0])
+    for i in range(length):
+        htbin = hist_3d.axes[0][i]
+        htbinstr = "_".join([str(k) for k in htbin])
+
+        #Plotting
+        if save_plots: 
+            slice_plot_2d(hist=hist_3d, 
+                bin_index=i, 
+                plot_config=plot_configuration, 
+                text=None, 
+                output_path=output_path, 
+                sec_params=histogram.sector_parameters,
+                htbinstr=htbinstr,
+                style_set=style_set,
+                color_scale=color_scale)
+
+    with open(output_path+".pkl", 'wb') as file:
+        pickle.dump(hist_3d, file)
+
+
 def plotRatio3D(
     denominator,
     numerators,
@@ -322,47 +376,56 @@ def plotRatio3D(
             htbinstr = "_".join([str(k) for k in htbin])
 
             #Plotting and saving efficiency 
-            slice_plot_2d(hist=ratio_hist, 
-                bin_index=i, 
-                den_sec_params=den.sector_parameters, 
-                num_sec_params=num.sector_parameters, 
+            slice_ratio_plot_2d(hist=ratio_hist, 
+                bin_index=i,
+                den_sec_params=den.sector_paramters,
+                num_sec_params=num.sector_parameters,
                 plot_config=plot_configuration, 
                 text=None, 
                 output_path=output_path, 
                 htbinstr=htbinstr,
                 style_set=style_set,
                 color_scale=color_scale)
-
-            #Plotting and saving lower uncertainty
-            slice_plot_2d(hist=ratio_unc_hist_lower, 
-                bin_index=i, 
-                den_sec_params=den.sector_parameters, 
-                num_sec_params=num.sector_parameters, 
-                plot_config=plot_configuration, 
-                text="unc_lower", 
-                output_path=output_path, 
-                htbinstr=htbinstr,
-                style_set=style_set,
-                color_scale=color_scale)
-
-
-            #Plotting and saving upper uncertainty
-            slice_plot_2d(hist=ratio_unc_hist_upper, 
-                bin_index=i, 
-                den_sec_params=den.sector_parameters, 
-                num_sec_params=num.sector_parameters, 
-                plot_config=plot_configuration, 
-                text="unc_upper", 
-                output_path=output_path, 
-                htbinstr=htbinstr,
-                style_set=style_set,
-                color_scale=color_scale)
-
         rh_with_unc = {"Hist": ratio_hist, "Unc": ratio_unc, "num": num_hist, "den": den_hist}
         with open(output_path+".pkl", 'wb') as file:
             pickle.dump(rh_with_unc, file)
 
-def slice_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale):
+def slice_plot_2d(hist, bin_index, sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale):
+    #Plotting and saving lower uncertainty
+    styler = Styler(style_set)
+    matplotlib.use("Agg")
+    loadStyles()
+    fig, ax = plt.subplots()
+    offset = matplotlib.colors.TwoSlopeNorm(vcenter=1)
+    if color_scale == "log":
+        art = hist[bin_index,:,:].plot2d(norm=matplotlib.colors.LogNorm(), ax=ax)
+    else:
+        art = hist[bin_index,:,:].plot2d(ax=ax)
+
+    ax = art.pcolormesh.axes
+    fig = ax.get_figure()
+
+    labelAxis(ax, "y", hist[bin_index,:,:].axes)
+    labelAxis(ax, "x", hist[bin_index,:,:].axes)
+    if text is not None:
+        extra_text = f"{text}\n{sec_params.region_name}\n{sec_params.dataset.title}\nHT: {htbinstr} GeV"
+    else:
+        extra_text = f"{sec_params.region_name}\n{sec_params.dataset.title}\nHT: {htbinstr} GeV"
+    addCMSBits(
+        ax,
+        [sec_params],
+        extra_text=extra_text,
+        plot_configuration=plot_config,
+        )
+    mplhep.sort_legend(ax=ax)
+    fig.tight_layout()
+    if text is None:
+        saveFig(fig, output_path+htbinstr, extension=plot_config.image_type)
+    else:
+        saveFig(fig, output_path+f"_{text}"+htbinstr, extension=plot_config.image_type)
+    plt.close(fig)
+
+def slice_ratio_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale):
     #Plotting and saving lower uncertainty
     styler = Styler(style_set)
     matplotlib.use("Agg")
