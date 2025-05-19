@@ -1,0 +1,124 @@
+# The name of analysis to be run
+name: Complete
+# Samples and in which regions they should be processed
+samples:
+  signal_312_2000_1900: [Signal312]
+  signal_312_1500_1400: [Signal312]
+  signal_312_1200_400: [Signal312]
+  signal_312_1200_600: [Signal312]
+  signal_312_1200_1100: [Signal312]
+  signal_312_1300_1200: [Signal312]
+  signal_312_1400_400: [Signal312]
+  signal_312_1400_1300: [Signal312]
+  signal_312_1500_400: [Signal312]
+  signal_312_1500_600: [Signal312]
+  signal_312_1500_900: [Signal312]
+  signal_312_1500_1400: [Signal312]
+  signal_312_2000_400: [Signal312]
+  signal_312_1300_400: [Signal312]
+  signal_312_1300_600: [Signal312]
+  signal_312_2000_900: [Signal312]
+  signal_312_2000_1900: [Signal312]
+  signal_312_1000_700: [Signal312]
+  signal_312_1000_800: [Signal312]
+  signal_312_1200_700: [Signal312]
+  signal_312_1200_800: [Signal312]
+  signal_312_1500_100: [Signal312]
+  signal_312_1500_1000: [Signal312]
+  signal_312_1500_1200: [Signal312]
+  signal_312_1500_1300: [Signal312]
+  signal_312_1500_1350: [Signal312]
+  signal_312_1500_1450: [Signal312]
+  signal_312_2000_1200: [Signal312]
+  signal_312_2000_1600: [Signal312]
+  signal_312_2000_1700: [Signal312]
+  signal_312_1000_400: [Signal312]
+  signal_312_1000_600: [Signal312]
+  signal_312_1000_900: [Signal312]
+
+  signal_313_1000_400: [Signal313]
+  signal_313_1000_600: [Signal313]
+  signal_313_1000_900: [Signal313]
+  signal_313_1500_400: [Signal313]
+  signal_313_1500_600: [Signal313]
+  signal_313_1500_900: [Signal313]
+  signal_313_1500_1400: [Signal313]
+  signal_313_2000_400: [Signal313]
+  signal_313_2000_600: [Signal313]
+  signal_313_2000_900: [Signal313]
+  signal_313_2000_1400: [Signal313]
+  signal_313_2000_1900: [Signal313]
+
+
+  signal_312_900_800: [Signal312]
+  signal_312_900_700: [Signal312]
+  signal_312_900_600: [Signal312]
+  signal_312_900_400: [Signal312]
+  
+  signal_312_800_700: [Signal312]
+  signal_312_800_600: [Signal312]
+  signal_312_800_400: [Signal312]
+
+  
+
+
+executors:
+  local:
+    executor_type: dask_local
+    step_size: 100000
+    max_workers: 4
+  imm:
+    executor_type: immediate
+    step_size: 1000000
+    catch_exceptions: False
+
+  condor:
+    executor_type: condor
+    step_size: 100000
+
+  dask_condor:
+    executor_type: dask_condor
+    max_workers: 200
+    min_workers: 20
+    use_threads: true
+    worker_memory: 2GB
+    worker_timeout: 7200
+    chunk_size: 400000
+
+
+# Samples and in which regions they should be processed
+execution_config:
+
+file_config:
+  location_priority_regex: [".*FNAL.*", ".*US.*", ".*(DE|IT|CH|FR).*", ".*(T0|T1|T2).*","eos"]
+  use_replicas: True
+
+# You can use yaml anchors to reduce the amount of duplication in the configuration file
+common_items:
+    common_signal_histograms: &common_signal
+      - name: trifecta_plot 
+
+    common_objects: &common_objects
+      - name: jets_and_ht
+      - name: core_objects
+
+regions:
+  - name: Signal312
+    forbid_data: true
+    objects: *common_objects
+    preselection:
+      - name: signal_hlt
+    selection: 
+      - name: general_selection
+      - name: partial_signal312_selection
+    histograms: *common_signal
+
+  - name: Signal313
+    forbid_data: true
+    objects: *common_objects
+    preselection:
+      - name: signal_hlt
+    selection: 
+      - name: general_selection
+      - name: partial_signal313_selection
+    histograms: *common_signal

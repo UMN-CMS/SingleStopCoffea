@@ -28,11 +28,12 @@ def calculate_scale_factors():
             plt.style.use(hep.style.CMS)
             num_values, num_bins = num_h.to_numpy()
             den_values, den_bins = den_h.to_numpy()
+            #
 
             sf_values, sf_bins = sf_h.to_numpy()
             num_mask = np.isnan(num_values)
             den_mask = np.isnan(den_values)
-            nan_mask = num_mask | den_mask
+            nan_mask = num_mask | den_mask  
 
             num_mask = ~num_mask
             den_mask = ~den_mask
