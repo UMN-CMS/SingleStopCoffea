@@ -261,8 +261,9 @@ def plot3D(
 
     head, _tail = os.path.split(output_path) 
     os.makedirs(head, exist_ok=True)
-    r0 = np.concatenate((28*np.ones(1,dtype=int),4*np.ones(8,dtype=int),60*np.ones(1,dtype=int)))
-    r1 = 25*np.ones(4,dtype=int)
+    r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(4,dtype=int), 60*np.ones(1,dtype=int)))
+    #r1 = 25*np.ones(4,dtype=int)
+    r1 = np.concatenate((30*np.ones(1,dtype=int), 25*np.ones(2,dtype=int), 20*np.ones(1,dtype=int)))
     #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
     r2 = 6*np.ones(5,dtype=int)
 
@@ -295,7 +296,9 @@ def plot3D(
                 sec_params=histogram.sector_parameters,
                 htbinstr=htbinstr,
                 style_set=style_set,
-                color_scale=color_scale)
+                color_scale=color_scale,
+                unc_lower=hist_3d.variances(),
+                unc_upper=hist_3d.variances())
 
     with open(output_path+".pkl", 'wb') as file:
         pickle.dump(hist_3d, file)
@@ -322,8 +325,9 @@ def plotRatio3D(
         num_hist = num.histogram
         fixBadLabels(num_hist)
 
-        r0 = np.concatenate((28*np.ones(1,dtype=int),4*np.ones(8,dtype=int),60*np.ones(1,dtype=int)))
-        r1 = 25*np.ones(4,dtype=int)
+        r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(4,dtype=int), 60*np.ones(1,dtype=int)))
+        #r1 = 25*np.ones(4,dtype=int)
+        r1 = np.concatenate((30*np.ones(1,dtype=int), 25*np.ones(2,dtype=int), 20*np.ones(1,dtype=int)))
         #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
         r2 = 6*np.ones(5,dtype=int)
 
@@ -378,19 +382,21 @@ def plotRatio3D(
             #Plotting and saving efficiency 
             slice_ratio_plot_2d(hist=ratio_hist, 
                 bin_index=i,
-                den_sec_params=den.sector_paramters,
+                den_sec_params=den.sector_parameters,
                 num_sec_params=num.sector_parameters,
                 plot_config=plot_configuration, 
                 text=None, 
                 output_path=output_path, 
                 htbinstr=htbinstr,
                 style_set=style_set,
-                color_scale=color_scale)
+                color_scale=color_scale,
+                unc_lower = ratio_unc_hist_lower,
+                unc_upper = ratio_unc_hist_upper)
         rh_with_unc = {"Hist": ratio_hist, "Unc": ratio_unc, "num": num_hist, "den": den_hist}
         with open(output_path+".pkl", 'wb') as file:
             pickle.dump(rh_with_unc, file)
 
-def slice_plot_2d(hist, bin_index, sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale):
+def slice_plot_2d(hist, bin_index, sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale, unc_lower, unc_upper):
     #Plotting and saving lower uncertainty
     styler = Styler(style_set)
     matplotlib.use("Agg")
@@ -417,6 +423,21 @@ def slice_plot_2d(hist, bin_index, sec_params, plot_config, text, output_path, h
         extra_text=extra_text,
         plot_configuration=plot_config,
         )
+
+    pt_centers = hist.axes[1].centers
+    msd_centers = hist.axes[2].centers
+
+    for x_bin in range(len(pt_centers)):
+        for msd_bin in range(len(msd_centers)): 
+            # Auto text color based on background
+            text_color = 'black'
+            sup = f'{unc_upper[bin_index,x_bin,msd_bin]:.2f}'
+            sub = f'{unc_lower[bin_index,x_bin,msd_bin]:.2f}' 
+            extra_text = f"${hist[bin_index,x_bin,msd_bin]:.2f}^{{{sup}}}_{{{sub}}}$"
+            ax.text(pt_centers[x_bin], msd_centers[msd_bin], extra_text,
+                ha="center", va="center",
+                color=text_color, fontsize=12) 
+ 
     mplhep.sort_legend(ax=ax)
     fig.tight_layout()
     if text is None:
@@ -425,7 +446,7 @@ def slice_plot_2d(hist, bin_index, sec_params, plot_config, text, output_path, h
         saveFig(fig, output_path+f"_{text}"+htbinstr, extension=plot_config.image_type)
     plt.close(fig)
 
-def slice_ratio_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale):
+def slice_ratio_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_config, text, output_path, htbinstr, style_set, color_scale, unc_lower, unc_upper):
     #Plotting and saving lower uncertainty
     styler = Styler(style_set)
     matplotlib.use("Agg")
@@ -442,7 +463,6 @@ def slice_ratio_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_co
 
     ax = art.pcolormesh.axes
     fig = ax.get_figure()
-
     labelAxis(ax, "y", hist[bin_index,:,:].axes)
     labelAxis(ax, "x", hist[bin_index,:,:].axes)
     if text is not None:
@@ -455,6 +475,20 @@ def slice_ratio_plot_2d(hist, bin_index, den_sec_params, num_sec_params, plot_co
         extra_text=extra_text,
         plot_configuration=plot_config,
         )
+
+    pt_centers = hist.axes[1].centers
+    msd_centers = hist.axes[2].centers
+
+    for x_bin in range(len(pt_centers)):
+        for msd_bin in range(len(msd_centers)):
+            # Auto text color based on background
+            text_color = 'black'
+            sup = f'{unc_upper[bin_index,x_bin,msd_bin]:.2f}'
+            sub = f'{unc_lower[bin_index,x_bin,msd_bin]:.2f}' 
+            extra_text = f"${hist[bin_index,x_bin,msd_bin]:.2f}^{{{sup}}}_{{{sub}}}$"
+            ax.text(pt_centers[x_bin], msd_centers[msd_bin], extra_text,
+                ha="center", va="center",
+                color=text_color, fontsize=12) 
     mplhep.sort_legend(ax=ax)
     fig.tight_layout()
     if text is None:
