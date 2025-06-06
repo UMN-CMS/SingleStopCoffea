@@ -145,7 +145,7 @@ def calculate_scale_factors3d():
             os.makedirs(sf_path.parents[0])
         with open(sf_path.resolve(), 'wb') as sf_file:
             pickle.dump(sf_h,sf_file)
-        save_plots(sf_h, i, sf_unc_hist_lower, sf_unc_hist_upper, loop_axis = 1)
+        save_plots(sf_h, i, sf_unc_hist_lower, sf_unc_hist_upper, loop_axis = 0)
 
 def save_plots(sf_h, dataset, unc_lower, unc_upper, loop_axis = 0):
     length = len(sf_h.axes[loop_axis])
