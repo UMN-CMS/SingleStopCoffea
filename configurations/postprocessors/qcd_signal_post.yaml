@@ -3,12 +3,7 @@ PostDefaults:
   plot_configuration:
     cms_text: "Preliminary"
     image_type: ".pdf"
-    lumi_text: "137.6 $fb^{-1}$ (13 TeV)"
-    cms_text_color: Black
-  to_process:
-    sample_spec:
-      name:
-        - 'qcd*'
+    cms_text_color: white
 
 all_oned: &all_oned
   #- h_njet
@@ -33,19 +28,19 @@ all_oned: &all_oned
   #- jet_2_btag_deepflavb 
   #- jet_3_btag_deepflavb 
   #- jet_4_btag_deepflavb 
-  #- uncomp_0p67_mChi
-  #- comp_0p67_mChi
-  #- uncomp_0p67_mStop
-  #- comp_0p67_mStop
-  - m14_pt
-  - m14_eta
-  - m14_m
-  - m13_pt
-  - m13_eta
-  - m13_m
-  - m24_pt
-  - m24_eta
-  - m24_m
+  - uncomp_0p67_mChi
+  - comp_0p67_mChi
+  - uncomp_0p67_mStop
+  - comp_0p67_mStop
+  #- m14_pt
+  #- m14_eta
+  #- m14_m
+  #- m13_pt
+  #- m13_eta
+  #- m13_m
+  #- m24_pt
+  #- m24_eta
+  #- m24_m
   #- L_bjet_pt
   #- L_nb
   #- L_b_0_pt
@@ -76,7 +71,7 @@ all_oned: &all_oned
 
 
 
-catalog_path: "postprocessing/data_mc/catalog.json"
+catalog_path: "postprocessing/qcd_signal/catalog.json"
 drop_sample_patterns:
   - "*50to80*"
   - "*80to120*"
@@ -109,9 +104,28 @@ Postprocessing:
   #    axis_options: {variation: central, 'PassHLTHT': Sum, 'PassHLTSingleJet': Sum, 'PassOfflineHT': 1, 'PassOfflineSingleJet': 1}
   #  normalize: true
 
-  #- name: Plot2D
+  - name: Plot2D
+    action: Histogram2D 
+    histogram_names:  
+      - comp_0p67_m14_vs_mChi
+      - uncomp_0p67_m14_vs_mChi
+      - comp_0p67_m14_vs_mChiRatio
+      - uncomp_0p67_m14_vs_mChiRatio
+    #- m13_vs_m14
+    #- ratio_m13_vs_m14
+    #- m24_vs_m14
+    #- ratio_m24_vs_m14
+    output_name: "postprocessing/qcd_signal/plots/{dataset.era.name}/{region_name}/{histogram_name}"
+    to_process:
+      sample_name:
+        - '*'
+      region_name: ['Signal312','Signal313'] 
+    grouping:
+      fields: ['dataset.name','dataset.era.name', 'region_name']
+      axis_options: {variation: central, 'PassHLTHT': Sum, 'PassHLTSingleJet': Sum, 'PassOfflineHT': Sum, 'PassOfflineSingleJet': Sum}
+
+  #- name: Added Plot2D
   #  action: Histogram2D 
-  #  match_fields: ["dataset.era.name", "region_name"]
   #  histogram_names:  
   #    - comp_0p67_m14_vs_mChi
   #    - uncomp_0p67_m14_vs_mChi
@@ -121,32 +135,32 @@ Postprocessing:
   #  #- ratio_m13_vs_m14
   #  #- m24_vs_m14
   #  #- ratio_m24_vs_m14
-  #  output_name: "postprocessing/data_mc/plots/{dataset.era.name}/{region_name}/2d/{dataset.name}/{histogram_name}"
+  #  output_name: "postprocessing/qcd_signal/plots/{region_name}/{histogram_name}"
   #  to_process:
   #    sample_name:
-  #      - '*qcd_inclusive_201*'
-  #    region_name: 'Control' 
+  #      - '*'
+  #    region_name: ['Signal312','Signal313'] 
   #  grouping:
-  #    fields: ['dataset.name', 'dataset.era.name', 'region_name']
+  #    fields: ['region_name']
+  #    axis_options: {variation: central, 'PassHLTHT': Sum, 'PassHLTSingleJet': Sum, 'PassOfflineHT': Sum, 'PassOfflineSingleJet': Sum}
+  #    add_together: true
+  #- name: Added 2D Plots
+  #  action: Histogram2D
+  #  histogram_names:
+  #    - uncomp_0p67_m14_vs_mChiRatio
+  #    - comp_0p67_m14_vs_mChiRatio
+  #    - uncomp_0p67_m14_vs_mChi
+  #    - comp_0p67_m14_vs_mChi
+  #  to_process:
+  #    sample_name:
+  #      - 'data*201*'
+  #  grouping: 
+  #    fields: ['region_name']
   #    axis_options: {variation: central, 'PassHLTHT': Sum, 'PassHLTSingleJet': Sum, 'PassOfflineHT': 1, 'PassOfflineSingleJet': 1}
-
-  - name: Added 2D Plots
-    action: Histogram2D
-    histogram_names:
-      - uncomp_0p67_m14_vs_mChiRatio
-      - comp_0p67_m14_vs_mChiRatio
-      - uncomp_0p67_m14_vs_mChi
-      - comp_0p67_m14_vs_mChi
-    to_process:
-      sample_name:
-        - 'data*201*'
-    grouping: 
-      fields: ['region_name']
-      axis_options: {variation: central, 'PassHLTHT': Sum, 'PassHLTSingleJet': Sum, 'PassOfflineHT': 1, 'PassOfflineSingleJet': 1}
-      add_together: true
-    output_name: "postprocessing/data_mc/plots/{region_name}/2d/qcd/{histogram_name}"
-    plot_configuration:
-      cms_text_color: white
+  #    add_together: true
+  #  output_name: "postprocessing/data_mc/plots/{region_name}/2d/qcd/{histogram_name}"
+  #  plot_configuration:
+  #    cms_text_color: white
 #  - name: DataMCRatio2018
 #    action: RatioPlot
 #    scale: log

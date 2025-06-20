@@ -20,7 +20,7 @@
     HT: PFHT1050
     AK8SingleJetPt: AK8PFJet500
     SingleMuon: Mu50
-    IsoMuon: IsoMu24
+    IsoMuon: IsoMu27
 
   trigger_plateaus:
     HT: 1200

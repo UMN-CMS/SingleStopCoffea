@@ -26,17 +26,18 @@ def topfatjet_plots(events, params, analyzer):
         description="pt of the leading ak8 jet",
         mask=mask,
     )
+    
 
-    analyzer.H(
-        f"ak8_pt_vs_sdmass",
-        [
-            makeAxis(100, 0, 1000, "$p_{T}$", unit="GeV"),
-            makeAxis(30, 0, 300, "$m_{\\text{SD}}$", unit="GeV"),
-        ],
-        [top_fj.pt, top_fj.msoftdrop],
-        description="2D plot of pt and softdrop mass",
-        mask=mask,
-    )
+    #analyzer.H(
+    #    f"ak8_pt_vs_sdmass",
+    #    [
+    #        makeAxis(100, 0, 1000, "$p_{T}$", unit="GeV"),
+    #        makeAxis(30, 0, 300, "$m_{\\text{SD}}$", unit="GeV"),
+    #    ],
+    #    [top_fj.pt, top_fj.msoftdrop],
+    #    description="2D plot of pt and softdrop mass",
+    #    mask=mask,
+    #)
 
 
 @MODULE_REPO.register(ModuleType.Histogram)
@@ -75,28 +76,33 @@ def jet_kinematics(events, params, analyzer):
         analyzer.H(
             rf"pt_{i+1}",
             makeAxis(100, 0, 1000, f"$p_{{T, {i+1}}}$", unit="GeV"),
-            gj[:, i].pt,
+            masked_jets[:, i].pt,
             description=f"$p_T$ of jet {i+1} ",
         )
         analyzer.H(
             f"eta_{i+1}",
             makeAxis(50, -5, 5, f"$\eta_{{{i+1}}}$"),
-            gj[:, i].eta,
+            masked_jets[:, i].eta,
             description=f"$\eta$ of jet {i+1}",
         )
         analyzer.H(
             f"phi_{i+1}",
             makeAxis(50, -5, 5, f"$\phi_{{{i+1}}}$"),
-            gj[:, i].phi,
+            masked_jets[:, i].phi,
             description=f"$\phi$ of jet {i+1}",
         )
         htratio = masked_jets[:, i].pt / events.HT[mask]
         analyzer.H(
-            f"pt_ht_ratio_{i}",
+            f"pt_ht_ratio_{i+1}",
             hist.axis.Regular(50, 0, 1, name="pt_o_ht", label=r"$\frac{p_{T}}{HT}$"),
             htratio,
-            mask=mask,
-            description=rf"Ratio of jet {i} $p_T$ to event HT",
+            description=rf"Ratio of jet {i+1} $p_T$ to event HT",
+        )
+        analyzer.H(
+            f"jet_{i+1}_btag_deepflavb",
+            makeAxis(10, 0, 1, f"$b$-tagging DeepFlavB Score of jet {i+1}"),
+            masked_jets[:, i].btagDeepFlavB,
+            description=f"$b$-tagging DeepFlavB of jet {i+1}",
         )
 
 @MODULE_REPO.register(ModuleType.Histogram)
@@ -136,10 +142,11 @@ def jet_combo_kinematics(events, params, analyzer):
     jet_combos = [
         ((0, 4), "4"),
         ((0, 3), "3,\\text{compressed}"),
-        ((1, 4), "3,\\text{uncompressed"),
+        ((1, 4), "3,\\text{uncompressed}"),
     ]
     co = lambda x: it.combinations(x, 2)
     masses = {}
+    masks = {}
     for (i, j), title in jet_combos:
         jets = gj[:, i:j].sum()
         masses[(i, j)] = jets.mass
@@ -176,7 +183,7 @@ def jet_combo_kinematics(events, params, analyzer):
             ((0, 4), "4"),
         ),
         (
-            ((1, 4), "3,\\text{uncompressed"),
+            ((1, 4), "3,\\text{uncompressed}"),
             ((0, 4), "4"),
         ),
     ]:

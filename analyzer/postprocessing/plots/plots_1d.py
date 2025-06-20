@@ -206,11 +206,9 @@ def plotRatio(
 
     fig, ax = plt.subplots()
     ratio_ax = addAxesToHist(ax, size=ratio_height, pad=0.3)
-
     den_hist = denominator.histogram
 
     fixBadLabels(den_hist)
-
     style = denominator.style or styler.getStyle(denominator.sector_parameters)
     den_hist.plot1d(
         ax=ax,
