@@ -53,3 +53,4 @@ compressed/
 .condor_config
 .inspect_cli_history
 oldpkl/
+.sitemaps

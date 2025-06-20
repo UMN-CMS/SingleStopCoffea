@@ -261,11 +261,11 @@ def plot3D(
 
     head, _tail = os.path.split(output_path) 
     os.makedirs(head, exist_ok=True)
-    r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(4,dtype=int), 60*np.ones(1,dtype=int)))
+    r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(2,dtype=int), 76*np.ones(1,dtype=int)))
     #r1 = 25*np.ones(4,dtype=int)
     r1 = np.concatenate((30*np.ones(1,dtype=int), 25*np.ones(2,dtype=int), 20*np.ones(1,dtype=int)))
     #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
-    r2 = 6*np.ones(5,dtype=int)
+    r2 = 10*np.ones(3,dtype=int)
 
     rebin_ht = hist.rebin(groups=r0)
     rebin_pt = hist.rebin(groups=r1)
@@ -325,11 +325,11 @@ def plotRatio3D(
         num_hist = num.histogram
         fixBadLabels(num_hist)
 
-        r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(4,dtype=int), 60*np.ones(1,dtype=int)))
+        r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(2,dtype=int), 76*np.ones(1,dtype=int)))
         #r1 = 25*np.ones(4,dtype=int)
         r1 = np.concatenate((30*np.ones(1,dtype=int), 25*np.ones(2,dtype=int), 20*np.ones(1,dtype=int)))
         #r2 = np.concatenate((np.ones(1,dtype=int),2*np.ones(2,dtype=int),5*np.ones(5,dtype=int)))
-        r2 = 6*np.ones(5,dtype=int)
+        r2 = 10*np.ones(3,dtype=int)
 
         rebin_ht = hist.rebin(groups=r0)
         rebin_pt = hist.rebin(groups=r1)
