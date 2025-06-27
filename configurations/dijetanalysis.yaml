@@ -1,0 +1,73 @@
+name: DijetAnalysis
+
+samples:
+  ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8: [Signal] 
+  ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+  ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+  ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+
+executors:
+  local:
+    executor_type: dask_local
+    step_size: 100000
+    max_workers: 4
+    adapt: false
+  imm:
+    executor_type: immediate
+    step_size: 100000
+    catch_exceptions: false
+
+  condor:
+    executor_type: condor
+    step_size: 100000
+
+  dask_condor:
+    executor_type: dask_condor
+    max_workers: 150
+    min_workers: 80
+    worker_memory: 2.5GB
+    worker_timeout: 7200
+    chunk_size: 1000000
+
+file_config:
+  location_priority_regex: [".*FNAL.*", ".*US.*", ".*(DE|IT|CH|FR).*", ".*(T0|T1|T2).*","eos"]
+  use_replicas: True
+
+# You can use yaml anchors to reduce the amount of duplication in the configuration file
+common_items:
+    common_signal_histograms: &common_signal
+      - name: dijet_hists 
+
+    common_objects: &common_objects
+      - name: dijet_objects
+
+    common_weights: &common_weights
+      - name: L1_prefiring_sf
+        sample_spec:
+          era: ["2016", "2017", "2018"]
+          sample_type: MC
+        config:
+          variations: All
+
+      - name: sign_gen_weight
+        sample_spec:
+          sample_type: MC
+
+      - name: pileup_sf
+        sample_spec:
+          sample_type: MC
+
+regions:
+  - name: Signal 
+    objects: *common_objects
+    # corrections: *common_corrections
+    preselection:
+      - name: signal_dijet_hlt
+    selection: 
+      - name: dijet_selection 
+    categories:
+      - name: two_btag_category
+      - name: one_btag_category
+      - name: zero_btag_category
+    histograms: *common_signal
+    weights: *common_weights
