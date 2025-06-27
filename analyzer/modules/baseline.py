@@ -177,3 +177,85 @@ def partial_cr_selection(events, params, selector):
     """
     loose_b = events.loose_bs
     selector.add("0looseb", (ak.num(loose_b) == 0))
+
+
+@MODULE_REPO.register(ModuleType.Selection)
+def dijet_selection(events, params, selector):
+    """Signal selection for dijet analysis"""
+    good_jets = events.good_jets
+    fat_jets = events.fat_jets 
+    wide_jet0 = events.wide_jet0
+    wide_jet1 = events.wide_jet1
+
+    filled_jets = ak.pad_none(good_jets, 2, axis=1)
+    d_eta = abs(wide_jet0.eta - wide_jet1.eta)
+    dijet = wide_jet0 + wide_jet1
+
+    passes_njets = ak.fill_none((ak.num(filled_jets) >= 2), False)
+    selector.add("njets", passes_njets)
+
+    passes_dijet_mass = (dijet.mass > 1530)
+    selector.add("dijet_mass", passes_dijet_mass)
+
+    passes_dijet_eta = ak.fill_none((d_eta < 1.1), False)
+    selector.add("dijet_eta", passes_dijet_eta)
+
+    filled_fatjets = ak.pad_none(fat_jets, 2, axis=1)
+    passes_fatjet_mass = ak.fill_none(((filled_fatjets[:, 0].msoftdrop < 65) & (filled_fatjets[:, 1].msoftdrop < 65)), False)
+    selector.add("fatjet_mass", passes_fatjet_mass)
+
+
+@MODULE_REPO.register(ModuleType.Categorization)
+def one_btag_category(events, params, categories):
+    """Categorization for events with one b-tagged jet"""
+    med_b = events.medium_bs
+    passes_one_btag = ak.num(med_b) == 1
+
+    categories.add(
+        name="OneBTag",
+        axis=hist.axis.Integer(
+            0, 2, underflow=False, overflow=False, name="OneBTag"
+        ),
+        values=passes_one_btag,
+    )
+
+@MODULE_REPO.register(ModuleType.Categorization)
+def two_btag_category(events, params, categories):
+    """Categorization for events with two b-tagged jets"""
+    med_b = events.medium_bs
+    passes_two_btag = ak.num(med_b) == 2
+    categories.add(
+        name="TwoBTag",
+        axis=hist.axis.Integer(
+            0, 2, underflow=False, overflow=False, name="TwoBTag"
+        ),
+        values=passes_two_btag,
+    )
+@MODULE_REPO.register(ModuleType.Categorization)
+def zero_btag_category(events, params, categories):
+    """Categorization for events with no b-tagged jets, but with one muon"""
+    med_b = events.medium_bs
+    good_muons = events.good_muons
+    passes_zero_btag = (ak.num(med_b) == 0) & ((ak.num(good_muons[good_muons.looseId]) >= 1))
+    categories.add(
+        name="OneMu",
+        axis=hist.axis.Integer(
+            0, 2, underflow=False, overflow=False, name="OneMu"
+        ),
+        values=passes_zero_btag,
+    )
+
+@MODULE_REPO.register(ModuleType.Selection)
+def signal_dijet_hlt(events, params, selector):
+    era_info = params.dataset.era
+    ht_trigger_name = era_info.trigger_names["HT"]
+    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
+    pf_trigger_name = era_info.trigger_names["PFSingleJetPt"]
+    calo_trigger_name = era_info.trigger_names["CaloSingleJetPt"]
+    selector.add(
+        f"HLT_HT | HLT_AK8 | HLT_PFJet | HLT_CaloJet",
+        events.HLT[ht_trigger_name]
+        | events.HLT[ak8_trigger_name]
+        | events.HLT[pf_trigger_name]
+        | events.HLT[calo_trigger_name],
+    )

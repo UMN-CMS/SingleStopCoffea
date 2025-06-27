@@ -236,3 +236,106 @@ def jet_relative_angles(events, params, analyzer):
             mask=mask,
             description=rf"$\Delta R$ between jets {i+1} and {j+1}",
         )
+
+@MODULE_REPO.register(ModuleType.Histogram)
+def dijet_hists(events, params, analyzer):
+    """Histograms for dijet analysis"""
+    dijet = events.wide_jet0 + events.wide_jet1
+
+    analyzer.H(
+        "dijet_mass",
+        makeAxis(100, 1530, 10000, "$m_{jj}$", unit="GeV"),
+        dijet.mass,
+        description="Mass of the dijet system",
+    )
+
+    analyzer.H(
+        "wide_jet1_pt",
+        makeAxis(100, 0, 5000, "$p_{T,1}$", unit="GeV"),
+        events.wide_jet0.pt,
+        description="Transverse momentum of the first wide jet", 
+    )
+    analyzer.H(
+        "wide_jet2_pt",
+        makeAxis(100, 0, 5000, "$p_{T,2}$", unit="GeV"),
+        events.wide_jet1.pt,
+        description="Transverse momentum of the second wide jet",
+    )
+    analyzer.H(
+        "wide_jet1_eta",
+        makeAxis(50, -3, 3, "$\eta_{1}$"),
+        events.wide_jet0.eta,
+        description="Pseudorapidity of the first wide jet",
+    )
+    analyzer.H(
+        "wide_jet2_eta",
+        makeAxis(50, -3, 3, "$\eta_{2}$"),
+        events.wide_jet1.eta,
+        description="Pseudorapidity of the second wide jet",
+    )
+    analyzer.H(
+        "wide_jet1_phi",
+        makeAxis(50, -3.2, 3.2, "$\phi_{1}$"),
+        events.wide_jet0.phi,
+        description="Azimuthal angle of the first wide jet",
+    )
+    analyzer.H(
+        "wide_jet2_phi",
+        makeAxis(50, -3.2, 3.2, "$\phi_{2}$"),
+        events.wide_jet1.phi,
+        description="Azimuthal angle of the second wide jet",
+    )
+    analyzer.H(
+        "wide_jet1_mass",
+        makeAxis(100, 0, 5000, "$m_{1}$", unit="GeV"),
+        events.wide_jet0.mass,
+        description="Mass of the first wide jet",
+    )
+    analyzer.H(
+        "wide_jet2_mass",
+        makeAxis(100, 0, 5000, "$m_{2}$", unit="GeV"),
+        events.wide_jet1.mass,
+        description="Mass of the second wide jet",
+    )
+    analyzer.H(
+        "dijet_eta",
+        makeAxis(50, 0, 5, "$|\Delta \eta_{jj}|$"),
+        abs(events.wide_jet0.eta - events.wide_jet1.eta),
+        description="Pseudorapidity difference between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_phi",
+        makeAxis(50, -3.2, 3.2, "$\Delta \phi_{jj}$"),
+        events.wide_jet0.phi - events.wide_jet1.phi,
+        description="Azimuthal angle difference between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_delta_r",
+        makeAxis(50, 0, 5, "$\Delta R_{jj}$"),
+        events.wide_jet0.delta_r(events.wide_jet1),
+        description="Delta R between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_pt",
+        makeAxis(100, 0, 5000, "$p_{T, jj}$", unit="GeV"),
+        dijet.pt,
+        description="Transverse momentum of the dijet system",
+    )
+    #analyzer.H(
+    #    "widejet1_DeepJet",
+    #    makeAxis(50, 0, 1, "DeepJet"),
+    #    events.wide_jet0.btagDeepFlavB,
+    #    description="DeepJet b-tagging score for the first wide jet",
+    #)
+    #analyzer.H(
+    #    "widejet2_DeepJet",
+    #    makeAxis(50, 0, 1, "DeepJet"),
+    #    events.wide_jet1.btagDeepFlavB,
+    #    description="DeepJet b-tagging score for the second wide jet",
+    #)
+    #analyzer.H(
+    #    "dijet_DeepJet",
+    #    makeAxis(50, 0, 1, "DeepJet"),
+    #    dijet.btagDeepFlavB,
+    #    description="DeepJet b-tagging score for the dijet system",
+    #)
