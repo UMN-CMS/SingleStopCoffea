@@ -99,6 +99,7 @@ def calculate_scale_factors2d():
     return
 
 def calculate_scale_factors3d():
+    #yes 2016_pre is in there twice, leave it. 
     data_list = ["2016_preVFP","2016_preVFP","2016_postVFP","2017","2018","2022_preEE","2022_postEE","2023_preBPix","2023_postBPix"]
     #data_list = ["2018"]
     for i in data_list:
