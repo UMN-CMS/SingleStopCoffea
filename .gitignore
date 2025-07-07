@@ -53,3 +53,10 @@ compressed/
 .condor_config
 .inspect_cli_history
 oldpkl/
+logs/
+.bash_history
+.sites_map.json
+nn_modles/
+postprocessing/
+.cmslpc-local-conf 
+nn_models/

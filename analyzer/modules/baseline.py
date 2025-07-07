@@ -186,6 +186,8 @@ def dijet_selection(events, params, selector):
     fat_jets = events.fat_jets 
     wide_jet0 = events.wide_jet0
     wide_jet1 = events.wide_jet1
+    electrons = events.good_electrons
+    muons = events.good_muons
 
     filled_jets = ak.pad_none(good_jets, 2, axis=1)
     d_eta = abs(wide_jet0.eta - wide_jet1.eta)
@@ -203,6 +205,12 @@ def dijet_selection(events, params, selector):
     filled_fatjets = ak.pad_none(fat_jets, 2, axis=1)
     passes_fatjet_mass = ak.fill_none(((filled_fatjets[:, 0].msoftdrop < 65) & (filled_fatjets[:, 1].msoftdrop < 65)), False)
     selector.add("fatjet_mass", passes_fatjet_mass)
+
+    no_electrons = (ak.num(events.good_electrons) == 0)
+    no_muons = (ak.num(events.good_muons) == 0)
+
+    selector.add("electron_veto", no_electrons)
+    selector.add("muon_veto", no_muons)
 
 
 @MODULE_REPO.register(ModuleType.Categorization)

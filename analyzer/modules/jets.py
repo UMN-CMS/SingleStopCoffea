@@ -251,13 +251,13 @@ def dijet_hists(events, params, analyzer):
 
     analyzer.H(
         "wide_jet1_pt",
-        makeAxis(100, 0, 5000, "$p_{T,1}$", unit="GeV"),
+        makeAxis(125, 0, 5000, "$p_{T,1}$", unit="GeV"),
         events.wide_jet0.pt,
         description="Transverse momentum of the first wide jet", 
     )
     analyzer.H(
         "wide_jet2_pt",
-        makeAxis(100, 0, 5000, "$p_{T,2}$", unit="GeV"),
+        makeAxis(125, 0, 5000, "$p_{T,2}$", unit="GeV"),
         events.wide_jet1.pt,
         description="Transverse momentum of the second wide jet",
     )
