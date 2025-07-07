@@ -42,8 +42,6 @@
     
   jet_veto_maps: null
 
-
-
   jet_corrections:
     jet_names:
       AK4: AK4PFchs
