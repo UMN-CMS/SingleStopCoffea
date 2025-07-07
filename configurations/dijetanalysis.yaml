@@ -1,10 +1,12 @@
 name: DijetAnalysis
 
 samples:
-  ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8: [Signal] 
-  ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8: [Signal]
-  ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
-  ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+  #ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8: [Signal] 
+  #ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+  #ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+  #ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
+
+  qcd_inclusive_2018_dijet: [Signal]
 
 executors:
   local:
