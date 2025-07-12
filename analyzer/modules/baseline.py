@@ -122,7 +122,7 @@ def general_selection(events, params, selector):
     good_muons = events.good_muons
     good_electrons = events.good_electrons
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
-    top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
+    #top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
 
     passes_highptjet = ak.fill_none(filled_jets[:, 0].pt > 300, False)
     selector.add("highptjet", passes_highptjet)
