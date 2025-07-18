@@ -1,0 +1,63 @@
+# The name of analysis to be run
+name: Complete
+# Samples and in which regions they should be processed
+samples:
+  dyjets_2018: [Signal]
+  gghww_2018: [Signal]
+  ggWW_2018: [Signal]
+  hwj_2018: [Signal]
+  wwto2l2nu_2018: [Signal]
+
+
+executors:
+  local:
+    executor_type: dask_local
+    step_size: 100000
+    max_workers: 4
+  imm:
+    executor_type: immediate
+    step_size: 1000000
+    catch_exceptions: False
+
+  condor:
+    executor_type: condor
+    step_size: 100000
+
+  dask_condor:
+    executor_type: dask_condor
+    max_workers: 50
+    min_workers: 8
+    use_threads: true
+    parallel_submission: 3
+    worker_memory: 2GB
+    worker_timeout: 7200
+    chunk_size: 400000
+
+execution_config:
+
+file_config:
+  location_priority_regex: [".*FNAL.*", ".*US.*", ".*(DE|IT|CH|FR).*", ".*(T0|T1|T2).*","eos"]
+  # location_priority_regex: [".*(T0|T1|T2).*","eos"]
+  use_replicas: True
+
+regions:
+  - name: Signal
+    # forbid_data: true
+    objects:
+        - name: electrons_muons
+    # corrections: *common_corrections
+    preselection: 
+        - name: trivial_selection
+    selection: 
+        - name: trivial_selection2
+    histograms:
+        - name: pt_plots
+        - name: dimass_plots
+    weights: 
+      - name: sign_gen_weight
+        sample_spec:
+          sample_type: MC
+
+      - name: pileup_sf
+        sample_spec:
+          sample_type: MC

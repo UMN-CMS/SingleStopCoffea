@@ -38,6 +38,9 @@ class Style(BaseModel):
             errorbar=("color", "markersize", "marker"),
         )
         ret = self.model_dump(include=mapping[plottype])
+        if plottype == "fill" and self.alpha == 1:
+            ret["facecolor"] = "none"
+            ret["edgecolor"] = self.color
         ret.setdefault("linewidth", mpl.rcParams["lines.linewidth"])
         if prepend:
             ret = {f"{prepend}_{x}": y for x, y in ret.items()}

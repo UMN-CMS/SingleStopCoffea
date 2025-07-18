@@ -372,6 +372,7 @@ class DatasetRepo:
     def load(self, directory, use_replicas=True):
         directory = Path(directory)
         files = list(directory.rglob("*.yaml"))
+        files = [f for f in files if not any(x.startswith(".") for x in f.parts)]
         file_contents = {}
         for f in progbar(files, title="Reading File"):
             with open(f, "r") as fo:

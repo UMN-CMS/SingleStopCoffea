@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import mplhep
 from analyzer.postprocessing.style import Styler
 from rich import print
+from itertools import islice
+
 
 from ..grouping import doFormatting
 from .annotations import addCMSBits, labelAxis
@@ -32,13 +34,49 @@ def plotOne(
     scale="linear",
     normalize=False,
     plot_configuration=None,
+    stack=[],
+    stackandplot=[],
 ):
     pc = plot_configuration or PlotConfiguration()
     styler = Styler(style_set)
     fig, ax = plt.subplots()
-    for packaged_hist in packaged_hists:
-        title = packaged_hist.title
-        h = packaged_hist.histogram
+    
+    allstacks = set(stack) | set(stackandplot)
+    stack_hists = [packaged_hist for packaged_hist in packaged_hists if packaged_hist.sector_parameters.dataset.name in allstacks]
+    stack_hists = sorted(stack_hists, key=lambda item: (item.sector_parameters.dataset.name in stackandplot, item.histogram.sum().value))
+    hists, labels, styles = [], [], []
+    for stack_hist in stack_hists:
+        h = stack_hist.histogram
+        fixBadLabels(h)
+        style_dict = styler.getStyle(stack_hist.sector_parameters).get()
+        hists.append(h)
+        styles.append(style_dict)
+        labels.append(stack_hist.title)
+    all_keys = set()
+    for style in styles:
+        all_keys.update(style.keys())
+    style_params = {}
+    for key in all_keys:
+        values = []
+        for style in styles:
+            defaults = {'alpha': 1, 'line_width': 1.5, 'facecolor': style.get('color'), 'edgecolor': style.get('color'),}
+            val = style.get(key, None)
+            if val is None:
+                val = defaults.get(key, None)
+            values.append(val)
+        style_params[key] = values
+    containers = mplhep.histplot(
+        hists,
+        ax=ax,
+        stack=True,
+        label=labels,
+        histtype="fill",
+        **style_params
+    )
+
+    for packaged_hist in [h for h in packaged_hists if (h.sector_parameters.dataset.name not in stack or h.sector_parameters.dataset.name in stackandplot)]:
+        title = packaged_hist.title if packaged_hist.sector_parameters.dataset.name not in stackandplot else None
+        h = packaged_hist.histogram        
         fixBadLabels(h)
         style = styler.getStyle(packaged_hist.sector_parameters)
         h.plot1d(
@@ -50,7 +88,6 @@ def plotOne(
             histtype=style.plottype,
             **style.get(),
         )
-
     labelAxis(ax, "y", h.axes, label=plot_configuration.y_label)
     labelAxis(ax, "x", h.axes, label=plot_configuration.x_label)
     addCMSBits(

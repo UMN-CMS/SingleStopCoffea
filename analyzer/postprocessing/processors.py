@@ -74,7 +74,8 @@ class Histogram1D(BasePostprocessor, pyd.BaseModel):
     style_set: str | StyleSet
     output_name: str
     grouping: SectorGroupSpec
-
+    stack: list[str] = []
+    stackandplot: list[str] = []
     scale: Literal["log", "linear"] = "linear"
     normalize: bool = False
     plot_configuration: PlotConfiguration | None = None
@@ -109,6 +110,8 @@ class Histogram1D(BasePostprocessor, pyd.BaseModel):
                         style_set=self.style_set,
                         normalize=self.normalize,
                         plot_configuration=pc,
+                        stack=self.stack,
+                        stackandplot=self.stackandplot,
                     )
                 )
 

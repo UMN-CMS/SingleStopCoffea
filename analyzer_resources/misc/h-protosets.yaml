@@ -1,0 +1,29 @@
+- name: hwj_2018
+  title: HWWW
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/HW*J_HToWWTo2L2Nu_WTo2L_M125_13TeV_powheg_pythia8_TuneCP5_PSweights/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+  
+- name: wwto2l2nu_2018
+  title: WWTo2L2Nu
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/WWTo2L2Nu_NNPDF31_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+
+- name: gghww_2018
+  title: ggHWW
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/GluGluHToWWTo2L2Nu_M125_13TeV_powheg2_JHUGenV714_pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+
+- name: ggWW_2018
+  title: ggWW
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/GluGluToWWTo*_TuneCP5_13TeV_MCFM701_pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+
+- name: dyjets_2018
+  title: DY
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
