@@ -183,17 +183,16 @@ def partial_cr_selection(events, params, selector):
 def dijet_selection(events, params, selector):
     """Signal selection for dijet analysis"""
     good_jets = events.good_jets
-    fat_jets = events.fat_jets 
     wide_jet0 = events.wide_jet0
     wide_jet1 = events.wide_jet1
-    electrons = events.good_electrons
-    muons = events.good_muons
+    #fat_jets = events.fat_jets 
+    #electrons = events.good_electrons
+    #muons = events.good_muons
 
-    filled_jets = ak.pad_none(good_jets, 2, axis=1)
     d_eta = abs(wide_jet0.eta - wide_jet1.eta)
     dijet = wide_jet0 + wide_jet1
 
-    passes_njets = ak.fill_none((ak.num(filled_jets) >= 2), False)
+    passes_njets = ak.fill_none((ak.num(good_jets) >= 2), False)
     selector.add("njets", passes_njets)
 
     passes_dijet_mass = (dijet.mass > 1530)
@@ -202,22 +201,30 @@ def dijet_selection(events, params, selector):
     passes_dijet_eta = ak.fill_none((d_eta < 1.1), False)
     selector.add("dijet_eta", passes_dijet_eta)
 
-    filled_fatjets = ak.pad_none(fat_jets, 2, axis=1)
-    passes_fatjet_mass = ak.fill_none(((filled_fatjets[:, 0].msoftdrop < 65) & (filled_fatjets[:, 1].msoftdrop < 65)), False)
-    selector.add("fatjet_mass", passes_fatjet_mass)
+    #filled_fatjets = ak.pad_none(fat_jets, 2, axis=1)
+    #passes_fatjet_mass = ak.fill_none(((filled_fatjets[:, 0].msoftdrop < 65) & (filled_fatjets[:, 1].msoftdrop < 65)), False)
+    #selector.add("fatjet_mass", passes_fatjet_mass)
 
-    no_electrons = (ak.num(events.good_electrons) == 0)
-    no_muons = (ak.num(events.good_muons) == 0)
+    #near_el = ak.any(~ak.is_none(filled_jets[:,0:2].nearest(electrons, threshold=0.4),axis=1),axis=1)
+    #near_mu = ak.any(~ak.is_none(filled_jets[:,0:2].nearest(muons, threshold=0.4),axis=1),axis=1)
 
-    selector.add("electron_veto", no_electrons)
-    selector.add("muon_veto", no_muons)
+    #ak.num(near_el is not None)
+    #no_electrons = (ak.num(ak.drop_none(good_jets.nearest(electrons,threshold=0.4))) == 0)
+    #no_muons = (ak.num(ak.drop_none(good_jets.nearest(muons,threshold=0.4))) == 0)
+
+    #no_electrons = (ak.num(electrons) == 0)
+    #no_muons = (ak.num(muons) == 0)
+
+    #no_leptons = no_electrons & no_muons
+    #selector.add("el_veto", ~(near_el))
+    #selector.add("mu_veto", ~(near_mu))
 
 
 @MODULE_REPO.register(ModuleType.Categorization)
 def one_btag_category(events, params, categories):
     """Categorization for events with one b-tagged jet"""
     med_b = events.medium_bs
-    passes_one_btag = ak.num(med_b) == 1
+    passes_one_btag = (ak.num(med_b) == 1)
 
     categories.add(
         name="OneBTag",
@@ -231,7 +238,7 @@ def one_btag_category(events, params, categories):
 def two_btag_category(events, params, categories):
     """Categorization for events with two b-tagged jets"""
     med_b = events.medium_bs
-    passes_two_btag = ak.num(med_b) == 2
+    passes_two_btag = (ak.num(med_b) == 2)
     categories.add(
         name="TwoBTag",
         axis=hist.axis.Integer(

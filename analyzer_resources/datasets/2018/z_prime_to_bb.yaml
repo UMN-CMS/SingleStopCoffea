@@ -2,40 +2,46 @@
   title: signal_dijet_Z_prime_2000
   sample_type: MC
   era: '2018_dijet'
-  n_events: 100000 
-  cms_dataset_regex: /ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/NANOAODSIM
-  x_sec: 1.0
+  n_events: 294000 
+  cms_dataset_regex: /ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  x_sec: 64110
   files:
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/260000/62B6A48F-B3C8-9F45-9CA2-6AEB05B6FD10.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/92FB31E9-FE35-1E4B-BE8D-E8AA7A10FC9D.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/130000/69972A38-FD2E-B040-AD3E-E39ED4AB4728.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/270000/EB3B95AB-B760-B24F-B402-1EE9CFD14A3C.root
 
 - name: ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8
   title: signal_dijet_Z_prime_2500
   sample_type: MC
   era: '2018_dijet'
-  n_events: 100000 
-  cms_dataset_regex: /ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/NANOAODSIM
-  x_sec: 1.0
+  n_events: 300000 
+  cms_dataset_regex: /ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  x_sec: 20960
   files:
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/260000/A8AA8B76-E582-7240-A776-BEB0B2168AA0.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/40000/A9D484C7-0033-FA46-9C5D-C044320F61D8.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/230000/37CB92D7-3F92-E343-AF53-E23F219FFC4B.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/2430000/A92B50BE-EC7A-D245-B380-EF5261C82E79.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/250000/4128F223-1E10-E547-9035-C931FE564A2B.root
 
 - name: ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8
   title: signal_dijet_Z_prime_4000
   sample_type: MC
   era: '2018_dijet'
-  n_events: 100000 
-  cms_dataset_regex: /ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/NANOAODSIM
-  x_sec: 1.0 
+  n_events: 300000 
+  cms_dataset_regex: /ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  x_sec: 1009 
   files:
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/20000/4AAC32C5-FB26-5547-B3F7-E41385FDE34A.root
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/20000/61CE3287-93A0-E449-8368-FBD897DDD320.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/260000/F5A6F701-93C6-6C40-B534-69199F122846.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/2430000/50DA72D0-6935-3444-A77D-B778A0DF1DF4.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/110000/F36DFF0A-F2F2-6D4D-9635-65D65F136E5D.root
+    - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/230000/A8B39C33-E26E-854D-913D-4C3036F29EE8.root
 
 - name: ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8
   title: signal_dijet_Z_prime_6000
   sample_type: MC
   era: '2018_dijet'
-  n_events: 100000 
-  cms_dataset_regex: /ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8/RunIIAutumn18NanoAODv6-Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/NANOAODSIM
-  x_sec: 1.0
+  n_events: 300000 
+  cms_dataset_regex: /ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM
+  x_sec: 38.79 
   files:
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/260000/C9DC3310-97DA-1144-8880-2B06ED59A515.root
-    - root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18NanoAODv6/ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/Nano25Oct2019_102X_upgrade2018_realistic_v20-v1/260000/D2213BE5-E0C2-5F4E-80B4-6EB7F069B89F.root
+  - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/ZprimeToBB_narrow_M-6000_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v2/2430000/24C32FF8-AA73-9846-BB0F-15123BD17809.root

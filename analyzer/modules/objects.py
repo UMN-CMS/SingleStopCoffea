@@ -101,11 +101,15 @@ def dijet_objects(columns, params):
     jets = columns.get("Jet")
     el = columns.get("Electron")
     mu = columns.get("Muon")
-    fatjets = columns.get("FatJet")
+    #fatjets = columns.get("FatJet")
 
-    good_jets = jets[(jets.pt > 30) & (abs(jets.eta) < 2.5)]
-    good_electrons = el[(el.pt > 50) & (el.cutBased >= 2)]
-    good_muons = mu[(mu.pt > 50) & (mu.highPtId == 2) & (mu.tkRelIso < 0.1)]
+    good_jets_w_lep = jets[(jets.pt > 30) & (abs(jets.eta) < 2.5)]
+    iso_electrons = el[(el.pt > 50) & (el.cutBased >= 2)]
+    iso_muons = mu[(mu.pt > 50) & (mu.highPtId == 2) & (mu.tkRelIso < 0.1)]
+
+    near_el = good_jets_w_lep.nearest(iso_electrons,threshold=0.4)
+    near_mu = good_jets_w_lep.nearest(iso_muons,threshold=0.4)
+    good_jets=good_jets_w_lep[ak.is_none(near_el,axis=-1) & ak.is_none(near_mu,axis=-1)]
 
     loose_b, med_b, tight_b = makeCutSet(
         good_jets,
@@ -114,6 +118,7 @@ def dijet_objects(columns, params):
     )
 
     filled_jets = ak.pad_none(good_jets, 2, axis=1)
+
     delta_r1 = filled_jets[:,0].delta_r(filled_jets[:,2:])
     delta_r2 = filled_jets[:,1].delta_r(filled_jets[:,2:])
 
@@ -129,12 +134,10 @@ def dijet_objects(columns, params):
     wide_jet0 = filled_jets[:, 0] + summed_jets1
     wide_jet1 = filled_jets[:, 1] + summed_jets2
 
-    columns.add('loose_bs', loose_b)
-    columns.add('medium_bs', med_b)
-    columns.add('tight_bs', tight_b)
-    columns.add('good_electrons', good_electrons)
-    columns.add('good_muons', good_muons)
+    #columns.add('loose_bs', loose_b)
+    #columns.add('tight_bs', tight_b)
+    #columns.add('fat_jets', fatjets)
     columns.add('good_jets', good_jets)
-    columns.add('fat_jets', fatjets)
+    columns.add('medium_bs', med_b)
     columns.add('wide_jet0', wide_jet0)
     columns.add('wide_jet1', wide_jet1)
