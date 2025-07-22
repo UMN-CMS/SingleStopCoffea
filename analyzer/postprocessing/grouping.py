@@ -1,4 +1,5 @@
 import copy
+import operator as op
 import functools as ft
 import itertools as it
 import string
@@ -10,6 +11,10 @@ from pydantic import BaseModel, Field, field_validator
 
 from .split_histogram import Mode, splitHistogram
 from .style import Style, StyleSet
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def getNested(d, s):
@@ -54,12 +59,13 @@ class SectorGroupSpec(BaseModel):
     cat_remap: dict[tuple[str, int | str], str] | None = None
     title_format: str = "{title}"
     style_set: StyleSet | None = None
+    add_together: bool = False
 
     @field_validator("axis_options", mode="after")
     @classmethod
     def coerceMode(cls, value):
         for k in list(value.keys()):
-            if value[k] in ("Sum", "Split", "Or", "Rebin2"):
+            if value[k] in ("Sum", "Split", "Or", "Rebin2", "Rebin3", "Rebin4"):
                 value[k] = Mode[value[k]]
         return value
 
@@ -108,13 +114,15 @@ class SectorGroup(SectorGroupParameters):
     """
     A collection of sectors (Region,Datasets pairs), which are treated as a unit for certain processors purposes.
     Different processors may use this construction differently
-    
+
     """
+
     separator: ClassVar[str] = " "
     sectors: Annotated[list[SectorResult], Field(repr=False)]
     title_format: Annotated[str, Field(repr=False)] = "{title}"
     style_set: Annotated[StyleSet | None, Field(repr=False)] = None
     cat_remap: dict[tuple[str, int | str], str] | None = None
+    add_together: bool = False
 
     def __len__(self):
         return len(self.sectors)
@@ -135,7 +143,7 @@ class SectorGroup(SectorGroupParameters):
             title=sector.sector_params.dataset.title,
         )
 
-    def getSectorStyle(self,sector):
+    def getSectorStyle(self, sector):
         if self.style_set:
             style = self.style_set.getStyle(sector.sector_params)
         else:
@@ -148,7 +156,14 @@ class SectorGroup(SectorGroupParameters):
         """
         everything = []
         for sector in self.sectors:
-            h = sector.result.histograms[hist_name].histogram
+            try:
+                h = sector.result.histograms[hist_name].histogram
+            except KeyError as e:
+                logger.error(
+                    f"Could not find histogram '{hist_name}' in {sector.sector_params.dataset.name} -- {sector.sector_params.region_name}"
+                )
+                raise
+
             if h.empty():
                 continue
             hists, labels = splitHistogram(
@@ -182,7 +197,27 @@ class SectorGroup(SectorGroupParameters):
                     )
                 )
 
-        return everything
+        if self.add_together:
+            new_name = "_plus_".join(
+                x.sector_parameters.dataset.name for x in everything
+            )
+            new_title = "+".join(x.sector_parameters.dataset.title for x in everything)
+
+            s = copy.deepcopy(sector.sector_params)
+            s.dataset.name = new_name
+            s.dataset.title = new_title
+            ret = [
+                PackagedHist(
+                    histogram=ft.reduce(op.add, (x.histogram for x in everything)),
+                    title=new_title,
+                    sector_parameters=s,
+                    axis_options=self.axis_options,
+                    style=everything[0].style,
+                )
+            ]
+            return ret
+        else:
+            return everything
 
     def __rich_repr__(self):
         yield "parameters", self.parameters
@@ -193,7 +228,7 @@ def createSectorGroups(sectors, spec):
     if spec.to_process is not None:
         sectors = [x for x in sectors if spec.to_process.passes(x.sector_params)]
     grouped = groupBy(sectors, spec.fields, data_acquire=lambda x: x.params_dict)
-    ret= [
+    ret = [
         SectorGroup(
             parameters=params,
             sectors=sectors,
@@ -201,6 +236,7 @@ def createSectorGroups(sectors, spec):
             title_format=spec.title_format,
             cat_remap=spec.cat_remap,
             style_set=spec.style_set,
+            add_together=spec.add_together,
         )
         for params, sectors in grouped
     ]
