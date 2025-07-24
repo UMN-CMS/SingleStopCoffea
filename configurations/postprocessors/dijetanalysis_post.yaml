@@ -46,6 +46,19 @@ Postprocessing:
       axis_options: {variation: central, OneBTag: Sum, TwoBTag: Sum}
     output_name: "postprocessing/dijet/plots/{region_name}/{histogram_name}"
 
+  - name: Dump Yields
+    action: DumpYields
+    target_histogram: dijet_mass 
+
+    grouping: 
+      fields: ['dataset.era.name', 'region_name']
+      axis_options: {variation: central}
+
+    to_process:
+      region_name: 'Signal'
+      sample_spec:
+    output_name: "postprocessing/dijet/yields/{dataset.era.name}_{region_name}_yield.csv"
+
   # 
   # - name: Simple 2D Plots
   #   action: Histogram2D
