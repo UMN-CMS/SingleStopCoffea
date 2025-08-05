@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 from collections import defaultdict
 
 import matplotlib as mpl
@@ -11,7 +12,7 @@ from .annotations import addCMSBits, labelAxis
 from .common import PlotConfiguration
 from .mplstyles import loadStyles
 from .utils import addAxesToHist, fixBadLabels, saveFig
-
+from pathlib import Path
 
 def getRatioAndUnc(num, den, uncertainty_type="poisson-ratio"):
     import hist.intervals as hinter
@@ -50,6 +51,7 @@ def plotOne(
             flow="none",
             **style.get(),
         )
+
     if stacked_hists:
         stacked_hists = sorted(stacked_hists, key=lambda x: x.histogram.sum().value)
         style_kwargs = defaultdict(list)
@@ -72,8 +74,14 @@ def plotOne(
             label=titles,  # sort="yield"
         )
 
-    labelAxis(ax, "y", h.axes, label=pc.y_label)
-    labelAxis(ax, "x", h.axes, label=pc.x_label)
+    labelAxis(ax, "x", h.axes, label=plot_configuration.x_label)
+
+    if normalize:
+        y_label = "Normalized Events"
+    else:
+        y_label = plot_configuration.y_label 
+
+    labelAxis(ax, "y", h.axes, label=y_label)
     addCMSBits(
         ax,
         [x.sector_parameters for x in packaged_hists],
@@ -111,7 +119,8 @@ def __plotStrCatOne(
     style_set,
     ax_name=None,
     normalize=False,
-        scale="linear",
+    scale="linear",
+    init_normalize=False,
     plot_configuration=None,
 ):
     pc = plot_configuration or PlotConfiguration()
@@ -121,15 +130,33 @@ def __plotStrCatOne(
 
     fig, ax = plt.subplots(layout="constrained")
     for sector in sectors:
-        p = sector.sector_params
-        style = styler.getStyle(p)
-        h = makeStrHist(getter(sector), ax_name=ax_name)
-        h.plot1d(
-            ax=ax,
-            label=sector.sector_params.dataset.title,
-            density=normalize,
-            **style.get(),
-        )
+        if init_normalize:
+            p = sector.sector_params
+            style = styler.getStyle(p)
+            h = makeStrHist(getter(sector), ax_name=ax_name)
+            initial = h[2]
+            h = h/initial
+            h = h[2:]
+            h.plot1d(
+                ax=ax,
+                label=sector.sector_params.dataset.title,
+                histtype=style.plottype,
+                **style.get(),
+            )
+        else:
+            p = sector.sector_params
+            style = styler.getStyle(p)
+            h = makeStrHist(getter(sector), ax_name=ax_name)
+            h.plot1d(
+                ax=ax,
+                label=sector.sector_params.dataset.title,
+                density=normalize,
+                histtype=style.plottype,
+                **style.get(),
+            )
+        #initial = h[0]
+        #for index, x in enumerate(ax.get_xticks()):
+        #    ax.text(x,h[index],h[index]/initial,horizontalalignment='center', verticalalignment='bottom', fontsize=10)
     ax.legend()
     labelAxis(ax, "y", h.axes)
     labelAxis(ax, "x", h.axes)
@@ -145,6 +172,13 @@ def __plotStrCatOne(
     mplhep.sort_legend(ax=ax)
     # mplhep.yscale_legend(ax, soft_fail=True)
     saveFig(fig, output_path, extension=pc.image_type)
+    #output = Path(output_path).parent.parent.parent/"eff_2btag.csv"
+#    eff = h[-1]/initial
+#    with open(output, "a") as f:
+#        writer = csv.writer(f, delimiter=",")
+#        writer.writerow([sector.sector_params.dataset.title,eff])
+#        
+#
     plt.close(fig)
 
 

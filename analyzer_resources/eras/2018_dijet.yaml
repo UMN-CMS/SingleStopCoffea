@@ -14,11 +14,14 @@
     
   trigger_names:
     HT: PFHT1050
-    AK8SingleJetPt: AK8PFJet550
-    PFSingleJetPt: PFJet550
-    CaloSingleJetPt: CaloJet550_NoJetID
-    SingleMuon: Mu50
-    IsoMuon: IsoMu24
+    AK8SingleJetPt: AK8PFJet400_TrimMass30
+    #EXO-20-008
+    #HT: PFHT1050
+    #AK8SingleJetPt: AK8PFJet550
+    #PFSingleJetPt: PFJet550
+    #CaloSingleJetPt: CaloJet550_NoJetID
+    #SingleMuon: Mu50
+    #IsoMuon: IsoMu24
 
   trigger_plateaus:
     HT: 1200

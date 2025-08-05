@@ -27,3 +27,8 @@ styles:
       plottype: fill
       color: "#e42536"
       alpha: 0.3
+
+  - sector_spec:
+      sample_name: 'signal*'
+    style:
+      plottype: step 

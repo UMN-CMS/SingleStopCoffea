@@ -98,6 +98,16 @@ def semilep_objects(columns, params):
 @MODULE_REPO.register(ModuleType.Producer)
 def dijet_objects(columns, params):
 
+    fat_jets = columns.get("FatJet")
+    #good_sub_jets = columns.get("SubJet")
+    good_fat_jets = fat_jets[(fat_jets.pt > 50) & (fat_jets.eta < 2.4)]
+    #good_fat_jets = unsorted_good_fat_jets[ak.argsort(unsorted_good_fat_jets.msoftdrop,ascending=False)]
+    columns.add('good_fat_jets', good_fat_jets)
+    #columns.add('good_sub_jets', good_sub_jets)
+    
+@MODULE_REPO.register(ModuleType.Producer)
+def dijet_objects_exo_20_008(columns, params):
+
     jets = columns.get("Jet")
     el = columns.get("Electron")
     mu = columns.get("Muon")

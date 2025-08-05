@@ -263,6 +263,7 @@ class PlotCutflow(BasePostprocessor, pyd.BaseModel):
     plot_types: list[str] = ["cutflow", "one_cut", "n_minus_one"]
     scale: Literal["log", "linear"] = "linear"
     normalize: bool = False
+    init_normalize: bool = False
     table_mode: bool = False
     plot_configuration: PlotConfiguration | None = None
 
@@ -289,6 +290,7 @@ class PlotCutflow(BasePostprocessor, pyd.BaseModel):
                         self.style_set,
                         table_mode=self.table_mode,
                         normalize=self.normalize,
+                        init_normalize=self.init_normalize,
                         plot_configuration=pc,
                         scale=self.scale,
                     )
@@ -434,6 +436,8 @@ class DumpYields(BasePostprocessor, pyd.BaseModel):
         results = [x for x in results if self.to_process.passes(x.sector_params)]
         ret, items = [], []
         groups = createSectorGroups(results, self.grouping)
+#        for result in results:
+#            print(result.result.selection_flow.cutflow[-1][1]/result.result.selection_flow.cutflow[0][1])
         for group in groups:
             hists = group.histograms(self.target_histogram)
             output = doFormatting(

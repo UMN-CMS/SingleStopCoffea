@@ -12,6 +12,14 @@ def njets(events, params, analyzer):
     """Basic information about individual jets"""
     gj = events.good_jets
     analyzer.H(f"h_njet", CommonAxes.nj_axis, ak.num(gj))
+    #jet_combos = [(0, 4), (0, 3), (1, 4)]
+
+
+@MODULE_REPO.register(ModuleType.Histogram)
+def fatnjets(events, params, analyzer):
+    """Basic information about individual jets"""
+    gj = events.good_fat_jets
+    analyzer.H(f"h_njet", CommonAxes.nj_axis, ak.num(gj))
 
 
 @MODULE_REPO.register(ModuleType.Histogram)
@@ -238,7 +246,7 @@ def jet_relative_angles(events, params, analyzer):
         )
 
 @MODULE_REPO.register(ModuleType.Histogram)
-def dijet_hists(events, params, analyzer):
+def dijet_hists_exo20008(events, params, analyzer):
     """Histograms for dijet analysis"""
     dijet = events.wide_jet0 + events.wide_jet1
 
@@ -339,3 +347,203 @@ def dijet_hists(events, params, analyzer):
     #    dijet.btagDeepFlavB,
     #    description="DeepJet b-tagging score for the dijet system",
     #)
+
+
+@MODULE_REPO.register(ModuleType.Histogram)
+def dijet_hists(events, params, analyzer):
+    """Histograms for dijet analysis"""
+    good_fat_jets = events.good_fat_jets
+    padded_fatjets = ak.pad_none(good_fat_jets, 2, axis=1)[:,:2]
+    sorted_good_fat_jets = padded_fatjets[ak.argsort(padded_fatjets.msoftdrop,ascending=False)]
+    fatjet_1 = sorted_good_fat_jets[:, 0]
+    fatjet_2 = sorted_good_fat_jets[:, 1]
+
+    dijet=fatjet_1+fatjet_2
+
+    analyzer.H(
+        "dijet_mass",
+        makeAxis(100, 0, 5000, "$m_{jj}$", unit="GeV"),
+        dijet.mass,
+        description="Mass of the dijet system",
+    )
+    analyzer.H(
+        "dijet_eta",
+        makeAxis(50, 0, 5, "$|\Delta \eta_{jj}|$"),
+        abs(fatjet_1.eta - fatjet_2.eta),
+        description="Pseudorapidity difference between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_phi",
+        makeAxis(50, -3.2, 3.2, "$\Delta \phi_{jj}$"),
+        abs(fatjet_1.phi - fatjet_2.phi),
+        description="Azimuthal angle difference between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_delta_r",
+        makeAxis(50, 0, 5, "$\Delta R_{jj}$"),
+        fatjet_1.delta_r(fatjet_2),
+        description="Delta R between the two wide jets",
+    )
+    analyzer.H(
+        "dijet_pt",
+        makeAxis(100, 0, 5000, "$p_{T, jj}$", unit="GeV"),
+        dijet.pt,
+        description="Transverse momentum of the dijet system",
+    )
+
+    analyzer.H(
+        "fat_jet1_pt",
+        makeAxis(125, 0, 3000, "$p_{T,1}$", unit="GeV"),
+        fatjet_1.pt,
+        description="Transverse momentum of the first wide jet", 
+    )
+    analyzer.H(
+        "fat_jet2_pt",
+        makeAxis(125, 0, 3000, "$p_{T,2}$", unit="GeV"),
+        fatjet_2.pt,
+        description="Transverse momentum of the second wide jet",
+    )
+
+    analyzer.H(
+        "fat_jet1_eta",
+        makeAxis(50, -3, 3, "$\eta_{1}$"),
+        fatjet_1.eta,
+        description="Pseudorapidity of the first wide jet",
+    )
+    analyzer.H(
+        "fat_jet2_eta",
+        makeAxis(50, -3, 3, "$\eta_{2}$"),
+        fatjet_2.eta,
+        description="Pseudorapidity of the second wide jet",
+    )
+
+    analyzer.H(
+        "fat_jet1_phi",
+        makeAxis(50, -3.2, 3.2, "$\phi_{1}$"),
+        fatjet_1.phi,
+        description="Azimuthal angle of the first wide jet",
+    )
+    analyzer.H(
+        "fat_jet2_phi",
+        makeAxis(50, -3.2, 3.2, "$\phi_{2}$"),
+        fatjet_2.phi,
+        description="Azimuthal angle of the second wide jet",
+    )
+
+    analyzer.H(
+        "fat_jet1_mass",
+        makeAxis(100, 0, 2500, "$m_{1}$", unit="GeV"),
+        fatjet_1.mass,
+        description="Mass of the first fat jet",
+    )
+    analyzer.H(
+        "fat_jet2_mass",
+        makeAxis(100, 0, 2500, "$m_{2}$", unit="GeV"),
+        fatjet_2.mass,
+        description="Mass of the second fat jet",
+    )
+
+    analyzer.H(
+        "fat_jet1_tau1",
+        makeAxis(100,0,1, "Tau1"),
+        fatjet_1.tau1,
+        description="Nsubjettiness Tau 1 of FatJet1"
+    )
+    analyzer.H(
+        "fat_jet2_tau1",
+        makeAxis(100,0,1, "Tau1"),
+        fatjet_2.tau1,
+        description="Nsubjettiness Tau 1 of FatJet2"
+    )
+
+    analyzer.H(
+        "fat_jet1_tau2",
+        makeAxis(100,0,1, "Tau2"),
+        fatjet_1.tau2,
+        description="Nsubjettiness Tau 2 of FatJet1"
+    )
+
+    analyzer.H(
+        "fat_jet2_tau2",
+        makeAxis(100,0,1, "Tau2"),
+        fatjet_2.tau2,
+        description="Nsubjettiness Tau 2 of FatJet2"
+    )
+
+    analyzer.H(
+        "fat_jet1_tau3",
+        makeAxis(100,0,1, "Tau3"),
+        fatjet_1.tau3,
+        description="Nsubjettiness Tau 3 of FatJet1"
+    )
+    analyzer.H(
+        "fat_jet2_tau3",
+        makeAxis(100,0,1, "Tau3"),
+        fatjet_2.tau3,
+        description="Nsubjettiness Tau 3 of FatJet2"
+    )
+
+    analyzer.H(
+        "fat_jet1_msoftdrop",
+        makeAxis(100,0,1000, "$m_{SD}$"),
+        fatjet_1.msoftdrop,
+        description="FatJet1 Softdrop Mass"
+    ) 
+    analyzer.H(
+        "fat_jet2_msoftdrop",
+        makeAxis(100,0,1000, "$m_{SD}$"),
+        fatjet_2.msoftdrop,
+        description="FatJet2 Softdrop Mass"
+    ) 
+
+    analyzer.H(
+        "fat_jet1_tau31",
+        makeAxis(100,0,1, "Tau31"),
+        fatjet_1.tau3/fatjet_1.tau1,
+        description="Nsubjettiness Tau 3/Tau 1 of FatJet1"
+    )
+    analyzer.H(
+        "fat_jet2_tau31",
+        makeAxis(100,0,1, "Tau31"),
+        fatjet_2.tau3/fatjet_2.tau1,
+        description="Nsubjettiness Tau 3/Tau 1 of FatJet2"
+    )
+
+    analyzer.H(
+        "fat_jet1_tau32",
+        makeAxis(100,0,1, "Tau32"),
+        fatjet_1.tau3/fatjet_1.tau2,
+        description="Nsubjettiness Tau 3/Tau 2 of FatJet1"
+    )
+    analyzer.H(
+        "fat_jet2_tau32",
+        makeAxis(100,0,1, "Tau32"),
+        fatjet_2.tau3/fatjet_2.tau2,
+        description="Nsubjettiness Tau 3/Tau 2 of FatJet2"
+    )
+
+    analyzer.H(
+        "fat_jet1_tau21",
+        makeAxis(100,0,1, "Tau21"),
+        fatjet_1.tau2/fatjet_1.tau1,
+        description="Nsubjettiness Tau 2/Tau 1 of FatJet1",
+    )
+    analyzer.H(
+        "fat_jet2_tau21",
+        makeAxis(100,0,1, "Tau21"),
+        fatjet_2.tau2/fatjet_2.tau1,
+        description="Nsubjettiness Tau 2/Tau 1 of FatJet2",
+    )
+
+    analyzer.H(
+        "fat_jet1_bscore",
+        makeAxis(100,0,1,"DeepB score"),
+        fatjet_1.btagDeepB,
+        description="DeepB Score of FatJet1",
+    )
+    analyzer.H(
+        "fat_jet2_bscore",
+        makeAxis(100,0,1,"DeepB score"),
+        fatjet_2.btagDeepB,
+        description="DeepB Score of FatJet2",
+    )

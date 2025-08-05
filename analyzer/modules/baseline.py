@@ -180,7 +180,7 @@ def partial_cr_selection(events, params, selector):
 
 
 @MODULE_REPO.register(ModuleType.Selection)
-def dijet_selection(events, params, selector):
+def dijet_selection_exo_20_008(events, params, selector):
     """Signal selection for dijet analysis"""
     good_jets = events.good_jets
     wide_jet0 = events.wide_jet0
@@ -219,7 +219,47 @@ def dijet_selection(events, params, selector):
     #selector.add("el_veto", ~(near_el))
     #selector.add("mu_veto", ~(near_mu))
 
+@MODULE_REPO.register(ModuleType.Selection)
+def dijet_selection(events, params, selector):
+    good_fat_jets = events.good_fat_jets
+    #good_sub_jets = events.good_sub_jets
+    passes_njets = (ak.num(good_fat_jets) >= 2)
+    selector.add("njets", passes_njets)
 
+    padded_fatjets = ak.pad_none(good_fat_jets, 2, axis=1)[:,:2]
+
+    passes_tau32_cut = ak.any((padded_fatjets.tau3/padded_fatjets.tau2) < 0.7, axis=1)
+    selector.add("tau32", passes_tau32_cut)
+
+    #passes_tau31_cut = ak.any((padded_fatjets.tau3/padded_fatjets.tau1) < 0.4, axis=1)
+    #selector.add("tau31", passes_tau31_cut)
+
+
+    #sorted_good_fat_jets = padded_fatjets[ak.argsort(padded_fatjets.msoftdrop,ascending=False)]
+    #wide_jet0 = sorted_good_fat_jets[:, 0]
+    #wide_jet1 = sorted_good_fat_jets[:, 1]
+    #padded_fj = ak.pad_none(good_fat_jets, 2)
+    #padded_sub_jets = ak.pad_none(good_sub_jets, 2)
+    #print(padded_fj[:,1].btagDeepB)
+    #print(padded_fj[:,1].subJetIdx1)
+    #print(padded_sub_jets.btagDeepB)
+    #print(padded_sub_jets.btagDeepB[:,2])
+    #passes_btag = ak.fill_none(padded_fj[:,1].btagDeepB > 0.4168, False) #ripped straight from btv wiki.
+    #selector.add("1b", passes_btag)
+
+@MODULE_REPO.register(ModuleType.Categorization)
+def dijet_njet_category(events, params, categories):      
+    """Categorization for events with 2-6 jets"""
+    good_jets = events.good_fat_jets
+    passes_njets = (ak.num(good_jets) >= 2) 
+    categories.add(
+        name="NJets",
+        axis=hist.axis.Integer(
+            0, 6, underflow=False, overflow=False, name="NJets"
+        ),
+        values=ak.num(good_jets[passes_njets], axis=1),
+    )
+    
 @MODULE_REPO.register(ModuleType.Categorization)
 def one_btag_category(events, params, categories):
     """Categorization for events with one b-tagged jet"""
@@ -268,9 +308,25 @@ def signal_dijet_hlt(events, params, selector):
     pf_trigger_name = era_info.trigger_names["PFSingleJetPt"]
     calo_trigger_name = era_info.trigger_names["CaloSingleJetPt"]
     selector.add(
-        f"HLT_HT | HLT_AK8 | HLT_PFJet | HLT_CaloJet",
+        f"HLT",
         events.HLT[ht_trigger_name]
         | events.HLT[ak8_trigger_name]
         | events.HLT[pf_trigger_name]
         | events.HLT[calo_trigger_name],
+    )
+
+@MODULE_REPO.register(ModuleType.Categorization)
+def hlt_dijet_trigger_category(events, params, categories):
+    era_info = params.dataset.era
+    ht_trigger_name = era_info.trigger_names["HT"]
+    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
+    pf_trigger_name = era_info.trigger_names["PFSingleJetPt"]
+    calo_trigger_name = era_info.trigger_names["CaloSingleJetPt"]
+    categories.add(
+        name=f"PassHLT",
+        axis=hist.axis.Integer(0, 2, underflow=False, overflow=False, name="PassHLT"),
+        values=(events.HLT[ht_trigger_name]
+        | events.HLT[ak8_trigger_name]
+        | events.HLT[pf_trigger_name]
+        | events.HLT[calo_trigger_name]) 
     )

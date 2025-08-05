@@ -5,7 +5,20 @@ samples:
   #ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8: [Signal] 
   #ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8: [Signal]
   #ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
-  signal_2018_312_dijet*: [Signal]
+  signal_2018_312_dijet_1000_100: [Signal]
+  signal_2018_312_dijet_1000_400: [Signal]
+  signal_2018_312_dijet_1200_400: [Signal]
+  signal_2018_312_dijet_1300_400: [Signal]
+  signal_2018_312_dijet_1300_600: [Signal]
+  signal_2018_312_dijet_1400_400: [Signal]
+  signal_2018_312_dijet_1400_600: [Signal]
+  signal_2018_312_dijet_1500_100: [Signal]
+  signal_2018_312_dijet_1500_400: [Signal]
+  signal_2018_312_dijet_1500_600: [Signal]
+  signal_2018_312_dijet_2000_100: [Signal]
+  signal_2018_312_dijet_2000_400: [Signal]
+  signal_2018_312_dijet_2000_600: [Signal]
+  signal_2018_312_dijet_2000_900: [Signal]
   #qcd_inclusive_2018_dijet: [Signal]
 
 executors:
@@ -39,37 +52,35 @@ file_config:
 common_items:
     common_signal_histograms: &common_signal
       - name: dijet_hists 
-
+      - name: fatnjets
     common_objects: &common_objects
       - name: dijet_objects
 
     common_weights: &common_weights
-      - name: L1_prefiring_sf
-        sample_spec:
-          era: ["2016", "2017", "2018"]
-          sample_type: MC
-        config:
-          variations: All
+    #  - name: L1_prefiring_sf
+    #    sample_spec:
+    #      era: ["2016", "2017", "2018"]
+    #      sample_type: MC
+    #    config:
+    #      variations: All
 
-      - name: sign_gen_weight
-        sample_spec:
-          sample_type: MC
+    #  - name: sign_gen_weight
+    #    sample_spec:
+    #      sample_type: MC
 
-      - name: pileup_sf
-        sample_spec:
-          sample_type: MC
+    #  - name: pileup_sf
+    #    sample_spec:
+    #      sample_type: MC
 
 regions:
   - name: Signal 
     objects: *common_objects
     # corrections: *common_corrections
     preselection:
-      - name: signal_dijet_hlt
+      - name: signal_hlt
     selection: 
-      - name: dijet_selection 
+      - name: dijet_selection
     categories:
-      - name: two_btag_category
-      - name: one_btag_category
-    #  - name: zero_btag_category
+      - name: dijet_njet_category
     histograms: *common_signal
     #weights: *common_weights
