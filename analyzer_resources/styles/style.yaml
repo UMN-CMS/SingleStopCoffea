@@ -10,6 +10,11 @@ styles:
   - sector_spec:
       sample_name: 'qcd*'
     style:
-      plottype: fill
+      plottype: fill 
       color: green
       alpha: 0.3
+
+  - sector_spec:
+      sample_name: 'signal*'
+    style:
+      plottype: step 
