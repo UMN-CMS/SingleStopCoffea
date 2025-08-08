@@ -39,6 +39,7 @@ from typing import Callable, Any
 from pydantic import BaseModel, Field
 import inspect
 import logging
+import dask
 
 
 logger = logging.getLogger(__name__)
@@ -58,9 +59,20 @@ class AnalyzerModule(BaseModel):
     description: str | None = None
     _function: Callable | None = None
 
-    def __call__(self, events, analyzer, *args, **kwargs):
+    @dask.delayed
+    def __callDelayed(self, *args, **kwargs):
+        return self._function(*args, **kwargs)
+
+    def __callImmediate(self, *args, **kwargs):
+        return self._function(*args, **kwargs)
+
+    def __call__(self, events, params, *args, **kwargs):
         logger.info(f"Running analyzer module: {self.name}")
-        return self._function(events, analyzer, *args, **kwargs)
+        ret =  self.__callImmediate(events, params, *args, **kwargs)
+        if args:
+            return ret[0], ret[1], ret[2]
+        else:
+            return ret[0], ret[1]
 
     def __eq__(self, other):
         return (self.name, self.type) == (other.name, other.type)
@@ -74,7 +86,6 @@ class ConfiguredAnalyzerModule(BaseModel):
     config: dict[str, Any] = Field(default_factory=dict)
 
     def __call__(self, *args, **kwargs):
-
         return self.module(*args, **kwargs, **self.config)
 
     def __eq__(self, other):

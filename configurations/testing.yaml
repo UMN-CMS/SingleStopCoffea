@@ -3,8 +3,6 @@ name: Complete
 # Samples and in which regions they should be processed
 samples:
   testsignal1: All
-  testsignal2: All
-  testsignal3: All
 
 executors:
   local:
@@ -91,9 +89,7 @@ common_items:
 
 regions:
   - name: Signal312
-    forbid_data: true
     objects: *common_objects
-    # corrections: *common_corrections
     preselection:
       - <<: *common_preselection
       - name: signal_hlt
@@ -103,41 +99,3 @@ regions:
     histograms: *common_signal
     weights: *common_weights
 
-  - name: Signal313
-    forbid_data: true
-    objects: *common_objects
-    # corrections: *common_corrections
-    preselection:
-      - <<: *common_preselection
-      - name: signal_hlt
-    selection: 
-      - name: general_selection
-      - name: partial_signal313_selection
-    histograms: *common_signal
-    weights: *common_weights
-
-  # - name: Control
-  #   objects: *common_objects
-  #   # corrections: *common_corrections
-  #   preselection:
-  #     - <<: *common_preselection
-  #     - name: signal_hlt
-  #   selection: 
-  #     - name: general_selection
-  #     - name: partial_cr_selection
-  #   histograms: *common_signal
-  #   weights: *common_weights
-  # 
-  # - name: Control_Cut
-  #   objects: *common_objects
-  #   # corrections: *common_corrections
-  #   preselection:
-  #     - <<: *common_preselection
-  #     - name: signal_hlt
-  #   selection: 
-  #     - name: ht_plateau
-  #     - name: softdrop_plateau
-  #     - name: general_selection
-  #     - name: partial_cr_selection
-  #   histograms: *common_signal
-  #   weights: *common_weights

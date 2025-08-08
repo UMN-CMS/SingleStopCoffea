@@ -29,6 +29,7 @@ class Category:
     """
     Category axis to be added to histograms
     """
+
     name: str
     axis: Any
     values: Any
@@ -157,7 +158,7 @@ class RegionAnalyzer(BaseModel):
         selector = Selector(selection, selection_set)
         for module in self.preselection:
             # Each module adds new masks to the selection
-            module(events, params, selector)
+            events, _, selector = module(events, params, selector)
         return selection
 
     def runSelection(self, columns, params, selection_set=None):
@@ -168,7 +169,7 @@ class RegionAnalyzer(BaseModel):
         selection = Selection(select_from=selection_set)
         selector = Selector(selection, selection_set)
         for module in self.selection:
-            module(columns, params, selector)
+            columns, _ , selector = module(columns, params, selector)
 
         return selection
 
@@ -178,21 +179,23 @@ class RegionAnalyzer(BaseModel):
         if columns is None:
             columns = Columns(events)
         for module in self.corrections:
-            module(columns, params)
+            columns, _ = module(columns, params)
         return columns
 
     def runObjects(self, columns, params):
         logger.info(f"Running objects")
         params = self.getSectorParams(params)
         for module in self.objects:
-            module(columns, params)
+            columns, _ = module(columns, params)
         return columns
 
     def runPostSelection(self, columns, params, histogram_storage):
         params = self.getSectorParams(params)
         active_shape = columns.syst
-        logger.info(f"Running post selection with active shape systematic {active_shape}")
-        # Different behaviour for dask 
+        logger.info(
+            f"Running post selection with active shape systematic {active_shape}"
+        )
+        # Different behaviour for dask
         if columns.delayed:
             size = None
         else:
@@ -202,9 +205,9 @@ class RegionAnalyzer(BaseModel):
 
         categorizer = Categorizer()
         for module in self.weights:
-            module(columns, params, weighter)
+            columns, _, weighter = module(columns, params, weighter)
         for module in self.categories:
-            module(columns, params, categorizer)
+            columns, _, categorizer = module(columns, params, categorizer)
 
         histogrammer = Histogrammer(
             storage=histogram_storage,
@@ -214,7 +217,7 @@ class RegionAnalyzer(BaseModel):
             delayed=columns.delayed,
         )
         for module in self.histograms:
-            module(columns, params, histogrammer)
+            columns, _, histogrammer = module(columns, params, histogrammer)
 
 
 __subsector_param_cache = {}

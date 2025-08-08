@@ -27,3 +27,17 @@ styles:
       plottype: fill
       color: "#e42536"
       alpha: 0.3
+
+  - sector_spec:
+      sample_name: 'diboson*'
+    style:
+      plottype: fill
+      color: "#964a8b"
+      alpha: 0.3
+
+  - sector_spec:
+      sample_name: 'wjets*'
+    style:
+      plottype: fill
+      color: "#9c9ca1"
+      alpha: 0.3
