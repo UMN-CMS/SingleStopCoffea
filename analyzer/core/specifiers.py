@@ -46,7 +46,7 @@ class SectorParams(pyd.BaseModel):
     region_name: str
 
     def simpleName(self):
-        return f"({region_name}, {dataset.name})"
+        return f"({self.region_name}, {self.dataset.name})"
         
 
 

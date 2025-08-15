@@ -5,20 +5,24 @@ samples:
   #ZprimeToBB_narrow_M-2000_TuneCP5_13TeV-madgraph-pythia8: [Signal] 
   #ZprimeToBB_narrow_M-2500_TuneCP5_13TeV-madgraph-pythia8: [Signal]
   #ZprimeToBB_narrow_M-4000_TuneCP5_13TeV-madgraph-pythia8: [Signal]
-  signal_2018_312_dijet_1000_100: [Signal]
-  signal_2018_312_dijet_1000_400: [Signal]
-  signal_2018_312_dijet_1200_400: [Signal]
-  signal_2018_312_dijet_1300_400: [Signal]
-  signal_2018_312_dijet_1300_600: [Signal]
-  signal_2018_312_dijet_1400_400: [Signal]
-  signal_2018_312_dijet_1400_600: [Signal]
-  signal_2018_312_dijet_1500_100: [Signal]
-  signal_2018_312_dijet_1500_400: [Signal]
-  signal_2018_312_dijet_1500_600: [Signal]
-  signal_2018_312_dijet_2000_100: [Signal]
-  signal_2018_312_dijet_2000_400: [Signal]
-  signal_2018_312_dijet_2000_600: [Signal]
-  signal_2018_312_dijet_2000_900: [Signal]
+  #signal_2018_312_dijet_1000_100: [Signal]
+  #signal_2018_312_dijet_1000_400: [Signal]
+  #signal_2018_312_dijet_1200_400: [Signal]
+  #signal_2018_312_dijet_1300_400: [Signal]
+  #signal_2018_312_dijet_1300_600: [Signal]
+  #signal_2018_312_dijet_1400_400: [Signal]
+  #signal_2018_312_dijet_1400_600: [Signal]
+  #signal_2018_312_dijet_1500_100: [Signal]
+  #signal_2018_312_dijet_1500_400: [Signal]
+  #signal_2018_312_dijet_1500_600: [Signal]
+  #signal_2018_312_dijet_2000_100: [Signal]
+  #signal_2018_312_dijet_2000_400: [Signal]
+  #signal_2018_312_dijet_2000_600: [Signal]
+  #signal_2018_312_dijet_2000_900: [Signal]
+  signal_2018_312_dijet_1100_100: [Signal]
+  signal_2018_312_dijet_1200_100: [Signal]
+  signal_2018_312_dijet_1300_100: [Signal]
+  signal_2018_312_dijet_1400_100: [Signal]
   #qcd_inclusive_2018_dijet: [Signal]
 
 executors:
@@ -77,7 +81,7 @@ regions:
     objects: *common_objects
     # corrections: *common_corrections
     preselection:
-      - name: signal_hlt
+      - name: signal_dijet_hlt
     selection: 
       - name: dijet_selection
     categories:

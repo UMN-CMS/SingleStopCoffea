@@ -18,6 +18,8 @@ def addCMSBits(
         energies = set(str(x.dataset.era.energy) for x in sectors)
         era = set(str(x.dataset.era.name) for x in sectors)
         era_text = f"{'/'.join(era)}"
+        if "dijet" in era_text:
+            era_text = '2018'
         lumi_text = (
             plot_configuration.lumi_text
             or f"{'/'.join(lumis)} fb$^{{-1}}$ ({'/'.join(energies)} TeV)"

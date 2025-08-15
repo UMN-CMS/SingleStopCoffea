@@ -283,6 +283,7 @@
   x_sec: 480
   other_data: 
     stop_mass: 0
+
 - name: signal_2018_312_dijet_1000_700
   sample_type: MC
   era: '2018_dijet'
@@ -294,6 +295,7 @@
   x_sec: 480
   other_data: 
     stop_mass: 0
+
 - name: signal_2018_312_dijet_1000_800
   sample_type: MC
   era: '2018_dijet'
@@ -513,7 +515,7 @@
   title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   n_events: 10000
   sample_type: MC
-  x_sec: 480
+  x_sec: 1300
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_400.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_400.root
@@ -524,7 +526,7 @@
   title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   n_events: 10000
   sample_type: MC
-  x_sec: 480
+  x_sec: 1300 
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_600.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_600.root
@@ -534,7 +536,7 @@
   type: set
   title: "$m_{\\tilde{t}} = 800\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
   n_events: 10000
-  x_sec: 480
+  x_sec: 1300 
   sample_type: MC
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-800_700.root
@@ -545,7 +547,7 @@
   sample_type: MC
   title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 400\\ \\mathrm{GeV}$"
   n_events: 10000
-  x_sec: 480
+  x_sec: 770 
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_400.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_400.root
@@ -555,7 +557,7 @@
   sample_type: MC
   title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 600\\ \\mathrm{GeV}$"
   n_events: 10000
-  x_sec: 480
+  x_sec: 770
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_600.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_600.root
@@ -565,7 +567,7 @@
   sample_type: MC
   title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 700\\ \\mathrm{GeV}$"
   n_events: 10000
-  x_sec: 480
+  x_sec: 770 
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_700.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_700.root
@@ -575,7 +577,43 @@
   sample_type: MC
   title: "$m_{\\tilde{t}} = 900\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 800\\ \\mathrm{GeV}$"
   n_events: 10000
-  x_sec: 480
+  x_sec: 770 
   files:
     - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_800.root
       umn: /local/cms/user/ckapsiak/EOS/store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-900_800.root
+
+- name: signal_2018_312_dijet_1100_100
+  era: '2018_dijet'
+  sample_type: MC
+  title: "$m_{\\tilde{t}} = 1100\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  n_events: 10000
+  x_sec: 310 
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1100_100.root
+
+- name: signal_2018_312_dijet_1200_100
+  era: '2018_dijet'
+  sample_type: MC
+  title: "$m_{\\tilde{t}} = 1200\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  n_events: 10000
+  x_sec: 210
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1200_100.root 
+
+- name: signal_2018_312_dijet_1300_100
+  era: '2018_dijet'
+  sample_type: MC
+  title: "$m_{\\tilde{t}} = 1300\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  n_events: 10000
+  x_sec: 150
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1300_100.root
+
+- name: signal_2018_312_dijet_1400_100
+  era: '2018_dijet'
+  sample_type: MC
+  title: "$m_{\\tilde{t}} = 1400\\ \\mathrm{GeV}, m_{\\tilde{\\chi}^{\\pm}} = 100\\ \\mathrm{GeV}$"
+  n_events: 10000
+  x_sec: 100
+  files:
+    - eos: root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1400_100.root
