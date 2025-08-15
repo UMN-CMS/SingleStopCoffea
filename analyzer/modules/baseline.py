@@ -227,9 +227,16 @@ def dijet_selection(events, params, selector):
     selector.add("njets", passes_njets)
 
     padded_fatjets = ak.pad_none(good_fat_jets, 2, axis=1)[:,:2]
+    sorted_good_fat_jets = padded_fatjets[ak.argsort(padded_fatjets.msoftdrop,ascending=False)]
 
     passes_tau32_cut = ak.any((padded_fatjets.tau3/padded_fatjets.tau2) < 0.7, axis=1)
     selector.add("tau32", passes_tau32_cut)
+
+    passes_msd_cut = sorted_good_fat_jets.msoftdrop[:,0] > 50
+    selector.add("m_SD", passes_msd_cut)
+
+    passes_ht_cut = (events.HT > 500)
+    selector.add("HT500", passes_ht_cut)
 
     #passes_tau31_cut = ak.any((padded_fatjets.tau3/padded_fatjets.tau1) < 0.4, axis=1)
     #selector.add("tau31", passes_tau31_cut)
@@ -305,14 +312,18 @@ def signal_dijet_hlt(events, params, selector):
     era_info = params.dataset.era
     ht_trigger_name = era_info.trigger_names["HT"]
     ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
-    pf_trigger_name = era_info.trigger_names["PFSingleJetPt"]
-    calo_trigger_name = era_info.trigger_names["CaloSingleJetPt"]
+    ak8_ht_trigger_name = era_info.trigger_names["AK8HT"]
+    ak8_b_trigger_name = era_info.trigger_names["AK8B"]
+    doublepf_trigger_name = era_info.trigger_names["DoublePF"]
+    dipf_trigger_name = era_info.trigger_names["DiPF"]
     selector.add(
         f"HLT",
         events.HLT[ht_trigger_name]
         | events.HLT[ak8_trigger_name]
-        | events.HLT[pf_trigger_name]
-        | events.HLT[calo_trigger_name],
+        | events.HLT[ak8_ht_trigger_name]
+        | events.HLT[ak8_b_trigger_name]
+        | events.HLT[doublepf_trigger_name]
+        | events.HLT[dipf_trigger_name]
     )
 
 @MODULE_REPO.register(ModuleType.Categorization)

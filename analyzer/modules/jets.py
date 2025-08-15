@@ -547,3 +547,10 @@ def dijet_hists(events, params, analyzer):
         fatjet_2.btagDeepB,
         description="DeepB Score of FatJet2",
     )
+
+    analyzer.H(
+        f"HT",
+        makeAxis(120, 0, 3000, "HT", unit="GeV"),
+        events.HT,
+        description="Sum of $p_T$ of good AK8 jets.",
+    )

@@ -15,6 +15,10 @@
   trigger_names:
     HT: PFHT1050
     AK8SingleJetPt: AK8PFJet400_TrimMass30
+    AK8HT: AK8PFHT800_TrimMass50
+    AK8B: AK8PFJet330_TrimMass30_PFAK8BTagDeepCSV_p17
+    DoublePF: DoublePFJets116MaxDeta1p6_DoubleCaloBTagDeepCSV_p71 
+    DiPF: DiPFJetAve300_HFJEC
     #EXO-20-008
     #HT: PFHT1050
     #AK8SingleJetPt: AK8PFJet550

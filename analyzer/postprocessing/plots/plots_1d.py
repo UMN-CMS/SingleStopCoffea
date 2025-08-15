@@ -134,13 +134,12 @@ def __plotStrCatOne(
             p = sector.sector_params
             style = styler.getStyle(p)
             h = makeStrHist(getter(sector), ax_name=ax_name)
-            initial = h[2]
-            h = h/initial
-            h = h[2:]
+            #initial = h[2]
+            #h = h/initial
+            #h = h[2:]
             h.plot1d(
                 ax=ax,
                 label=sector.sector_params.dataset.title,
-                histtype=style.plottype,
                 **style.get(),
             )
         else:
@@ -151,7 +150,6 @@ def __plotStrCatOne(
                 ax=ax,
                 label=sector.sector_params.dataset.title,
                 density=normalize,
-                histtype=style.plottype,
                 **style.get(),
             )
         #initial = h[0]
@@ -264,13 +262,31 @@ def plotRatio(
     fixBadLabels(den_hist)
 
     style = denominator.style or styler.getStyle(denominator.sector_parameters)
+
     den_hist.plot1d(
         ax=ax,
-        label=denominator.title,
+        label=denominator.title+" 1% mistag.",
         density=normalize,
         yerr=True,
-        **style.get(),
+        color='green',
+        alpha=0.5,
+        linewidth=1.5,
+        histtype='fill',
     )
+
+    den_hist_5 = den_hist*(0.0025/0.0001)
+    den_hist_5.plot1d(
+        ax=ax,
+        label=denominator.title+" 5% mistag.",
+        density=normalize,
+        yerr=True,
+        color="lime",
+        alpha=0.1,
+        linewidth=1.5,
+        histtype='fill',
+        zorder=0,
+    )
+    ax.set_ylim(0.1, 10.5**5)
 
     x_values = den_hist.axes[0].centers
     left_edge = den_hist.axes.edges[0][0]
@@ -286,12 +302,22 @@ def plotRatio(
         s = num.style or styler.getStyle(num.sector_parameters)
 
         n, d = h.values(), den_hist.values()
+        print(title)
+        print("QCD:", den_hist.sum())
+        print("QCD:", np.sum(den_hist.values()))
+        print("Signal:", h.sum())
+        print("Signal:", np.sum(h.values()))
+
         ratio, unc = getRatioAndUnc(n, d, uncertainty_type=ratio_type)
         if normalize:
             with np.errstate(divide="ignore", invalid="ignore"):
                 ratio = (n / np.sum(n)) / (d / np.sum(d))
         all_ratios.append(ratio)
         all_uncertainties.append(unc)
+        #zero mask
+        new_n = np.where(n!=0, n, np.nan*n)
+        new_variance = np.where(n!=0, h.variances(), np.nan*h.variances())
+        h[...] = np.stack([new_n, new_variance], axis=-1)
         h.plot1d(
             ax=ax,
             label=title,
@@ -300,21 +326,46 @@ def plotRatio(
             **s.get(),
         )
 
+        #line = ax.lines[0]
+        #y = line.get_ydata()
+        #mask = y!=0
+        #y_masked = np.where(mask, y, np.nan)
+        #line.set_ydata(y_masked) 
+
         ratio[ratio == 0] = np.nan
         ratio[np.isinf(ratio)] = np.nan
         all_opts = {**s.get("errorbar"), **dict(linestyle="none")}
-        ratio_ax.errorbar(
+        all_opts.pop("histtype")
+
+        #replace with significance
+        sig = np.sqrt(2*((n+d)*np.log(1+(n/d)) - n)) 
+        d5 = den_hist_5.values()
+        sig_5 = np.sqrt(2*((n+d5)*np.log(1+(n/(d5))) - n)) 
+        summed_sig = np.sqrt(np.nansum(sig**2))
+        summed_sig5 = np.sqrt(np.nansum(sig_5**2))
+        current_color = ax.lines[-1].get_color()
+ 
+        ratio_ax.scatter(
             x_values,
-            ratio,
-            yerr=unc,
-            **all_opts,
+            sig,
+            label=f'{summed_sig:.2f}',
+            color=current_color,
         )
+        ratio_ax.scatter(
+            x_values,
+            sig_5,
+            label=f'{summed_sig5:.2f}',
+            marker='x',
+            color=current_color,
+        )
+
         # hist.plot.plot_ratio_array(den, ratio, unc, ax=ratio_ax,
 
     for l in ratio_hlines:
         ratio_ax.axhline(l, color="black", linestyle="dashed", linewidth=1.0)
 
     ratio_ax.set_xlim(left_edge, right_edge)
+    ratio_ax.legend(title="1% mistag vs 5% mistag significance", ncols=3, fontsize=16, title_fontsize=16)
     ratio_ax.set_ylim(bottom=ratio_ylim[0], top=ratio_ylim[1])
     if normalize:
         y_label = "Normalized Events"
@@ -322,7 +373,7 @@ def plotRatio(
         y_label = None
 
     labelAxis(ax, "y", den_hist.axes, label=y_label)
-    ax.legend(loc="upper right")
+    ax.legend(loc="upper right", fontsize=18)
     ax.set_xlabel(None)
 
     labelAxis(ratio_ax, "x", den_hist.axes)
@@ -332,7 +383,9 @@ def plotRatio(
         plot_configuration=pc,
     )
 
-    ratio_ax.set_ylabel("Ratio", loc="center")
+
+    ratio_ax.set_ylabel("Significance/Bin", loc="center", fontsize=16)
+    ax.set_xlim(250, 3500)
     ax.tick_params(axis="x", which="both", labelbottom=False)
     mplhep.sort_legend(ax=ax)
     ax.set_yscale(scale)
