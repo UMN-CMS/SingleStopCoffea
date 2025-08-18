@@ -40,7 +40,7 @@ def core_objects(columns, params):
 
     el = columns.get("Electron")
     mu = columns.get("Muon")
-    good_electrons = el[(el.cutBased == 1) & (el.pt > 10) & (abs(el.eta) < 2.4)]
+    good_electrons = el[(el.cutBased >= 1) & (el.pt > 10) & (abs(el.eta) < 2.4)]
     good_muons = mu[(mu.looseId) & (mu.pfIsoId == 2) & (abs(mu.eta) < 2.4)]
 
     columns.add("good_fatjets", good_fatjets)

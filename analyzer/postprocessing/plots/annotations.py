@@ -9,6 +9,7 @@ def addCMSBits(
     extra_text=None,
     text_color=None,
     plot_configuration=None,
+    nolumi=False,
 ):
     if plot_configuration is None:
         plot_configuration = PlotConfiguration()
@@ -22,8 +23,8 @@ def addCMSBits(
             plot_configuration.lumi_text
             or f"{'/'.join(lumis)} fb$^{{-1}}$ ({'/'.join(energies)} TeV)"
         )
-        info_text = era_text + ", " + lumi_text
-    mplhep.cms.lumitext(text=info_text, ax=ax)
+        info_text = era_text + " (" + lumi_text.split("(")[-1] if nolumi else era_text + ", " + lumi_text
+        mplhep.cms.lumitext(text=info_text, ax=ax)
 
     text = plot_configuration.cms_text
     if extra_text is not None:
@@ -51,6 +52,6 @@ def labelAxis(ax, which, axes, label=None, label_complete=None):
         units = [getattr(x, "unit", None) for x in axes]
         units = [x for x in units if x]
         unit_format = "*".join(units)
-        if unit_format:
-            label += f" / {unit_format}"
+        # if unit_format:
+        #     label += f" / {unit_format}"
         getattr(ax, f"set_{which}label")(label.replace("textrm", "text"))

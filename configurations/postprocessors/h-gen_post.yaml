@@ -1,0 +1,44 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".pdf"
+    cms_text_color: Black
+    cms_text_pos: 0
+
+Postprocessing:
+  # - name: Cutflow
+  #   action: PlotCutflow
+  #   to_process:
+  #     sample_name: '*'
+  #     region_name: '*'
+  #   grouping: 
+  #     fields: ['dataset.era.name', 'region_name']
+  #     axis_options: {variation: central}
+  # 
+  #   style_set:
+  #     - style:
+  #         plot_type: step
+  # 
+  #   output_name: "postprocessing/plots/cutflow_{region_name}_{histogram_name}"
+  # 
+  - name: Proof Of Concept Plots
+    action: Histogram1D
+    histogram_names: 
+        # - fatjet_pt
+        # - fatjet0_pt
+        # - fatjet1_pt
+        # - fatjet2_pt
+        # - njets
+        - genhiggs_pt
+    to_process:
+      region_name: Signal
+    plot_configuration:
+      cms_text: "Simulation"
+      y_label: "Event Fraction"
+    unit_area: True
+    scale: log
+    grouping: 
+      fields: ['dataset.era.name', 'region_name']
+      axis_options: {variation: central}
+    output_name: "postprocessing/plots/{histogram_name}"

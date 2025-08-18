@@ -11,7 +11,7 @@ import yaml
 import pydantic as pyd
 from analyzer.configuration import CONFIG
 from analyzer.core.specifiers import SectorSpec, SectorParams
-from .misc import dumpYield
+# from .misc import dumpYield
 
 from .grouping import (
     SectorGroupSpec,
@@ -80,6 +80,7 @@ class Histogram1D(BasePostprocessor, pyd.BaseModel):
     scale: Literal["log", "linear"] = "linear"
     normalize: bool = False
     plot_configuration: PlotConfiguration | None = None
+    unit_area: bool = False
 
     def getNeededHistograms(self):
         return self.histogram_names
@@ -113,6 +114,7 @@ class Histogram1D(BasePostprocessor, pyd.BaseModel):
                         plot_configuration=pc,
                         stack=self.stack,
                         stackandplot=self.stackandplot,
+                        unit_area=self.unit_area,
                     )
                 )
 

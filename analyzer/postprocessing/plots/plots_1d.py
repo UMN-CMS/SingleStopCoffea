@@ -36,6 +36,7 @@ def plotOne(
     plot_configuration=None,
     stack=[],
     stackandplot=[],
+    unit_area=False,
 ):
     pc = plot_configuration or PlotConfiguration()
     styler = Styler(style_set)
@@ -44,6 +45,8 @@ def plotOne(
     allstacks = set(stack) | set(stackandplot)
     stack_hists = [packaged_hist for packaged_hist in packaged_hists if packaged_hist.sector_parameters.dataset.name in allstacks]
     stack_hists = sorted(stack_hists, key=lambda item: (item.sector_parameters.dataset.name in stackandplot, item.histogram.sum().value))
+
+    #Begin stacked plotting
     hists, labels, styles = [], [], []
     for stack_hist in stack_hists:
         h = stack_hist.histogram
@@ -65,18 +68,25 @@ def plotOne(
                 val = defaults.get(key, None)
             values.append(val)
         style_params[key] = values
-    containers = mplhep.histplot(
-        hists,
-        ax=ax,
-        stack=True,
-        label=labels,
-        histtype="fill",
-        **style_params
-    )
+    if hists != []:
+        if unit_area:
+            norm = sum([hist.sum() for hist in hists])
+            hists = [hist/norm for hist in hists]
+            print(hists)
+        mplhep.histplot(
+            hists,
+            ax=ax,
+            stack=True,
+            label=labels,
+            histtype="fill",
+            **style_params
+        )
 
+    #Begin standard plotting
     for packaged_hist in [h for h in packaged_hists if (h.sector_parameters.dataset.name not in stack or h.sector_parameters.dataset.name in stackandplot)]:
         title = packaged_hist.title if packaged_hist.sector_parameters.dataset.name not in stackandplot else None
-        h = packaged_hist.histogram        
+        h = packaged_hist.histogram
+        h = h/h.sum().value if unit_area else h
         fixBadLabels(h)
         style = styler.getStyle(packaged_hist.sector_parameters)
         h.plot1d(
@@ -94,6 +104,7 @@ def plotOne(
         ax,
         [x.sector_parameters for x in packaged_hists],
         plot_configuration=plot_configuration,
+        nolumi=unit_area
     )
     if style.legend:
         legend_kwargs = {}
@@ -106,6 +117,7 @@ def plotOne(
         ax.set_ylim(bottom=style.y_min)
     else:
         mplhep.ylow(ax)
+    output_path = output_path+"_norm" if unit_area else output_path
     saveFig(fig, output_path, extension=plot_configuration.image_type)
     plt.close(fig)
 

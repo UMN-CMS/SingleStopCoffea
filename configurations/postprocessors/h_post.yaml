@@ -2,7 +2,7 @@ PostDefaults:
   style_set: "style.yaml"
   plot_configuration:
     cms_text: "Preliminary"
-    image_type: ".pdf"
+    image_type: ".svg"
     cms_text_color: Black
 
 Postprocessing:
@@ -21,24 +21,28 @@ Postprocessing:
   # 
   #   output_name: "postprocessing/plots/cutflow_{region_name}_{histogram_name}"
   # 
-  - name: Simple 1D Plots
+  - name: Proof Of Concept Plots
     action: Histogram1D
     histogram_names: 
-        - electron_pt
-        - muon_pt
-        - dielec_mass
-        - dimuon_mass
+        # - dijet_pt
+        # - dijet_delta_r
+        # - dijet_pair_pt
+        # - dijet_pair_delta_r
+        - jet_pt
+        - jet_eta
+        - jet_phi
+        - jet_ht
     to_process:
       region_name: Signal
     plot_configuration:
       cms_text: "Preliminary"
     stack:
-        - dyjets_2018
-        - ggWW_2018
-        - wwto2l2nu_2018
+        - tt_semilepton_2018
+        - tt_had_2018
+        - qcd_2018
     stackandplot: 
-        - hwj_2018
-        - gghww_2018
+        - ggHHbbVV_2018
+    scale: log
 
     grouping: 
       fields: ['dataset.era.name', 'region_name']

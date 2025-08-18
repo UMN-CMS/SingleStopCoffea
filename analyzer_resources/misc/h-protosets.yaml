@@ -1,29 +1,23 @@
-- name: hwj_2018
-  title: HWWW
+- name: qcd_2018
+  title: QCD
   era: '2018'
   sample_type: MC
-  cms_regex: '/HW*J_HToWWTo2L2Nu_WTo2L_M125_13TeV_powheg_pythia8_TuneCP5_PSweights/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
-  
-- name: wwto2l2nu_2018
-  title: WWTo2L2Nu
-  era: '2018'
-  sample_type: MC
-  cms_regex: '/WWTo2L2Nu_NNPDF31_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+  cms_regex: '/QCD_HT*_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v*/NANOAODSIM'
 
-- name: gghww_2018
-  title: ggHWW
+- name: tt_had_2018
+  title: '$t\\overline{t}$'
   era: '2018'
   sample_type: MC
-  cms_regex: '/GluGluHToWWTo2L2Nu_M125_13TeV_powheg2_JHUGenV714_pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+  cms_regex: '/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM'
 
-- name: ggWW_2018
-  title: ggWW
+- name: tt_semilepton_2018
+  title: '$t\\overline{t}$'
   era: '2018'
   sample_type: MC
-  cms_regex: '/GluGluToWWTo*_TuneCP5_13TeV_MCFM701_pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+  cms_regex: '/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM'
 
-- name: dyjets_2018
-  title: DY
+- name: ggHHbbVV_2018
+  title: ggHHbbVV
   era: '2018'
   sample_type: MC
-  cms_regex: '/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv7-Nano02Apr2020_102X_upgrade2018_realistic_v21-v1/NANOAODSIM'
+  cms_regex: '/GluGluToHHTobbVV_node_cHHH1_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM'

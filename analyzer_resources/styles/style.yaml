@@ -29,3 +29,9 @@ styles:
       plottype: fill
       color: red
       alpha: 1
+      
+  - sector_spec:
+      sample_name: 'ggHH*'
+    style:
+      yerr: False
+      plottype: fill

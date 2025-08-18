@@ -2,18 +2,17 @@
 name: Complete
 # Samples and in which regions they should be processed
 samples:
-  dyjets_2018: [Signal]
-  gghww_2018: [Signal]
-  ggWW_2018: [Signal]
-  hwj_2018: [Signal]
-  wwto2l2nu_2018: [Signal]
+  ggHHbbVV_2018: [Signal]
+  qcd_2018: [Signal]
+  tt_had_2018: [Signal]
+  tt_semilepton_2018: [Signal]
 
 
 executors:
   local:
     executor_type: dask_local
     step_size: 100000
-    max_workers: 4
+    max_workers: 6
   imm:
     executor_type: immediate
     step_size: 1000000
@@ -25,13 +24,13 @@ executors:
 
   dask_condor:
     executor_type: dask_condor
-    max_workers: 50
+    max_workers: 100
     min_workers: 8
     use_threads: true
     parallel_submission: 3
     worker_memory: 2GB
     worker_timeout: 7200
-    chunk_size: 400000
+    chunk_size: 100000
 
 execution_config:
 
@@ -44,15 +43,17 @@ regions:
   - name: Signal
     # forbid_data: true
     objects:
-        - name: electrons_muons
+        - name: jets_and_ht
+        - name: core_objects
+        # - name: dijet_deltar
     # corrections: *common_corrections
     preselection: 
-        - name: trivial_selection
+        - name: signal_preselection
     selection: 
-        - name: trivial_selection2
+        - name: signal_selection
     histograms:
-        - name: pt_plots
-        - name: dimass_plots
+        # - name: dijet_plots
+        - name: jet_plots
     weights: 
       - name: sign_gen_weight
         sample_spec:
