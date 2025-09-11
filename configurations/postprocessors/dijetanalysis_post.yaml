@@ -74,8 +74,8 @@ Postprocessing:
       region_name: 'Signal'
     scale: log
 
-    ratio_ylim: [0,50]
-    #ratio_hlines: [0.5,0.95]
+    ratio_ylim: [0,42]
+
 
     denominator:
       to_process:

@@ -43,18 +43,18 @@ for index,value in enumerate(xsec_z_exp):
     xsec_z_exp_fill_between_1std.append((value + xsec_z_exp_1_std_dev[index][0], value + xsec_z_exp_1_std_dev[index][1]))
     xsec_z_exp_fill_between_2std.append((value + xsec_z_exp_2_std_dev[index][0], value + xsec_z_exp_2_std_dev[index][1]))
 
-plt.fontweight = "bold"
 mplhep.style.use("CMS")
+plt.rcParams["font.weight"] = 2
 mplhep.cms.label(data=True, lumi=137) 
 plt.plot(mass_points, xsec_z_obs, label="Z' Obs", color='black', marker='.', markersize=10,linewidth=3)
 plt.plot(mass_points, xsec_z_exp, label="Z' (Expected)", color='black',linestyle='dotted',linewidth=3)
 plt.fill_between(mass_points, [y[0] for y in xsec_z_exp_fill_between_1std], [y[1] for y in xsec_z_exp_fill_between_1std], color='#00cc00', alpha=1, label="±1 std. deviation",zorder=1)
 plt.fill_between(mass_points, [y[0] for y in xsec_z_exp_fill_between_2std], [y[1] for y in xsec_z_exp_fill_between_2std], color='#ffcc00', alpha=1, label="±2 std. deviation",zorder=0)
-plt.plot(list(xsec_stop.keys()), list(xsec_stop.values()), label="Stop", color='red', linewidth=3)
+plt.plot(list(xsec_stop.keys()), list(xsec_stop.values()), label="$\widetilde{t}$: $\lambda^{\prime\prime}_{312}=0.1$", color='red', linewidth=3)
 plt.yscale("log")
 plt.xlabel("Resonance Mass (GeV)")
-plt.ylabel("$\sigma$ * Br(b b-bar) (fb)")
-plt.ylim(0.1, 4500)
+plt.ylabel("$\sigma$ (fb)")
+plt.ylim(0.1, 5e2)
 plt.xlim(1800, 8000)
 plt.grid()
 plt.legend(title="95% CL Upper Limits", alignment='left', title_fontsize=22)
