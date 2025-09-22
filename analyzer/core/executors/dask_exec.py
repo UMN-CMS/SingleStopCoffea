@@ -395,8 +395,8 @@ class LPCCondorDask(DaskExecutor):
         kwargs = {}
         kwargs["worker_extra_args"] = [
             *dask.config.get("jobqueue.lpccondor.worker_extra_args"),
-            # "--preload",
-            # "lpcjobqueue.patch",
+             "--preload",
+             "lpcjobqueue.patch",
         ]
         kwargs["job_extra_directives"] = {"+MaxRuntime": self.worker_timeout}
         kwargs["python"] = f"{str(self.venv_path)}/bin/python"

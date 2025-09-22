@@ -6,7 +6,8 @@ import hist.intervals
 import mplhep
 import os
 import pickle
-
+import correctionlib
+import correctionlib.convert
 
 from analyzer.postprocessing.style import Styler
 
@@ -371,7 +372,24 @@ def plotRatio3D(
         ratio_unc_hist_upper[...] = ratio_unc[1]
         all_ratios.append(ratio_hist)
         length = len(ratio_hist.axes[0])
-        
+        ratio_hist.name = 'trigger_eff'
+        ratio_hist.label = 'out'
+        trigger_eff = correctionlib.convert.from_histogram(ratio_hist)
+        cset = correctionlib.schemav2.CorrectionSet(
+            schema_version=2,
+            description="Trigger_Efficiency_Corrections",
+            corrections=[trigger_eff],
+)
+
+        with open(output_path + "trigg_eff_corrections.json", "w") as fout:
+            fout.write(cset.json(exclude_unset=True))
+
+        #import gzip
+
+        #with gzip.open(output_path + "trig_eff_corrections.json.gz", "wt") as fout:
+            #fout.write(cset.json(exclude_unset=True))
+
+
         head, tail = os.path.split(output_path) 
         os.makedirs(head, exist_ok=True)
 

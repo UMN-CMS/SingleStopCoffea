@@ -7,17 +7,17 @@ samples:
   data_singlemuon_2017: All
   data_singlemuon_2016pre: All
   data_singlemuon_2016post: All
-  # 
+  ## 
   data_muon_2022pre: All
   data_muon_2022post: All
   data_muon_2023pre: All
   data_muon_2023post: All
-  #
+  ##
   qcd_inclusive_2016_preVFP: All
   qcd_inclusive_2016_postVFP: All
   qcd_inclusive_2017: All
   qcd_inclusive_2018: All
-  #
+  ##
   qcd_inclusive_2022_postEE: All
   qcd_inclusive_2022_preEE: All
   qcd_inclusive_2023_postBPix: All
@@ -70,20 +70,20 @@ regions:
     histograms:
       - name: goodjet_ht
     weights: 
-      - name: L1_prefiring_sf
-        sample_spec:
-          era: ["2016", "2017", "2018"]
-          sample_type: MC
-        config:
-          variations: All
+      #- name: L1_prefiring_sf
+      #  sample_spec:
+      #    era: ["2016", "2017", "2018"]
+      #    sample_type: MC
+      #  config:
+      #    variations: All
 
       - name: sign_gen_weight
         sample_spec:
           sample_type: MC
 
-      - name: pileup_sf
-        sample_spec:
-          sample_type: MC
+      #- name: pileup_sf
+      #  sample_spec:
+      #    sample_type: MC
 
   - name: SingleJetEff
     objects:
@@ -103,16 +103,16 @@ regions:
       - name: topfatjet_plots
       - name: trifecta_plot
     weights: 
-      - name: L1_prefiring_sf
-        sample_spec:
-          era: ["2016", "2017", "2018"]
-          sample_type: MC
-        config:
-          variations: All
+    #  - name: L1_prefiring_sf
+    #    sample_spec:
+    #      era: ["2016", "2017", "2018"]
+    #      sample_type: MC
+    #    config:
+    #      variations: All
       - name: sign_gen_weight
         sample_spec:
           sample_type: MC
-      - name: pileup_sf
-        sample_spec:
-          sample_type: MC
+    #  - name: pileup_sf
+    #    sample_spec:
+    #      sample_type: MC
 

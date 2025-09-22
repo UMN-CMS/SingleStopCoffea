@@ -14,6 +14,7 @@ python = "^3.9"
 hist = "^2"
 matplotlib = "^3.7"
 coffea = {version="^2025", extras=["dask"]} 
+boost_histogram = 1.5.1
 jupyter = "*"
 pyyaml = "^6.0"
 lpcjobqueue = { git = "https://github.com/CoffeaTeam/lpcjobqueue", branch = "main"}

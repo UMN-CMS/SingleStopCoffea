@@ -738,6 +738,7 @@ class TriggerHist3D(BasePostprocessor, pyd.BaseModel):
                             x.sector_params
                             for x in [*den_group.sectors, *num_group.sectors]
                         ],
+                        axis_parameters=dh[0].axis_parameters
                     )
                 )
         return ret, items

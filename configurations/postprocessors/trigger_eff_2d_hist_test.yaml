@@ -92,7 +92,7 @@ Postprocessing:
   - name: "trigger_hist_3d"
     action: TriggerHist3D
     histogram_names: ["ht_ak8_pt_vs_sdmass"]
-    output_name: "postprocessing/trigger_eff_3d_hist_test/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}_3d_efficiency"
+    output_name: "postprocessing/trigger_eff_sept_2025/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}_3d_efficiency"
     to_process:
       region_name: SingleJetEff
     plot_configuration:
