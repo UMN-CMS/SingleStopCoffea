@@ -279,18 +279,18 @@ def plotRatio(
         histtype='fill',
     )
 
-    #den_hist_5 = den_hist*(0.0025/0.0001)
-    #den_hist_5.plot1d(
-    #    ax=ax,
-    #    label=denominator.title+" 5% mistag",
-    #    density=normalize,
-    #    yerr=True,
-    #    color="limegreen",
-    #    alpha=0.3,
-    #    linewidth=1.5,
-    #    histtype='fill',
-    #    zorder=0,
-    #)
+    den_hist_5 = den_hist*(0.0025/0.0001)
+    den_hist_5.plot1d(
+        ax=ax,
+        label=denominator.title+" 5% mistag",
+        density=normalize,
+        yerr=True,
+        color="limegreen",
+        alpha=0.3,
+        linewidth=1.5,
+        histtype='fill',
+        zorder=0,
+    )
     #ax.set_ylim(0.1, 10.5**5)
 
     x_values = den_hist.axes[0].centers
@@ -331,46 +331,46 @@ def plotRatio(
         all_opts = {**s.get("errorbar"), **dict(linestyle="none")}
         all_opts.pop("histtype")
 
+        #current_color = ax.lines[-1].get_color()
+        #ratio_ax.scatter(
+        #    x_values,
+        #    ratio,
+        #    label=title,
+        #    color=current_color,
+        #)
+        #replace with significance
+        sig = np.sqrt(2*((n+d)*np.log(1+(n/d)) - n)) 
+        d5 = den_hist_5.values()
+        sig_5 = np.sqrt(2*((n+d5)*np.log(1+(n/(d5))) - n)) 
+        summed_sig = decimal.Decimal(np.sqrt(np.nansum(sig**2)))
+        summed_sig5 = decimal.Decimal(np.sqrt(np.nansum(sig_5**2)))
         current_color = ax.lines[-1].get_color()
+ 
         ratio_ax.scatter(
             x_values,
-            ratio,
-            label=title,
+            sig,
+            label=f'{summed_sig:.2g}$\sigma$',
             color=current_color,
         )
-        #replace with significance
-        #sig = np.sqrt(2*((n+d)*np.log(1+(n/d)) - n)) 
-        #d5 = den_hist_5.values()
-        #sig_5 = np.sqrt(2*((n+d5)*np.log(1+(n/(d5))) - n)) 
-        #summed_sig = decimal.Decimal(np.sqrt(np.nansum(sig**2)))
-        #summed_sig5 = decimal.Decimal(np.sqrt(np.nansum(sig_5**2)))
-        #current_color = ax.lines[-1].get_color()
- 
-        #ratio_ax.scatter(
-        #    x_values,
-        #    sig,
-        #    label=f'{summed_sig:.2g}$\sigma$',
-        #    color=current_color,
-        #)
-        #ratio_ax.scatter(
-        #    x_values,
-        #    sig_5,
-        #    label=f'{summed_sig5:.2g}$\sigma$',
-        #    marker='x',
-        #    color=current_color,
-        #)
+        ratio_ax.scatter(
+            x_values,
+            sig_5,
+            label=f'{summed_sig5:.2g}$\sigma$',
+            marker='x',
+            color=current_color,
+        )
         
 
     for l in ratio_hlines:
         ratio_ax.axhline(l, color="black", linestyle="dashed", linewidth=1.0)
 
     ratio_ax.set_xlim(left_edge, right_edge)
-    #ratio_ax.legend(title="Total Significance: 1% mistag vs 5% mistag", ncols=3, fontsize=16, title_fontsize=16)
+    ratio_ax.legend(title="Total Significance: 1% mistag vs 5% mistag", ncols=3, fontsize=16, title_fontsize=16)
     ratio_ax.set_ylim(bottom=ratio_ylim[0], top=ratio_ylim[1])
-    if normalize:
-        y_label = "Normalized Events"
-    else:
-        y_label = None
+    #if normalize:
+    #    y_label = "Normalized Events"
+    #else:
+    #    y_label = None
 
     #labelAxis(ax, "y", den_hist.axes, label=y_label)
     ax.legend(loc="upper right", fontsize=18)
@@ -384,10 +384,11 @@ def plotRatio(
     )
 
 
-    ratio_ax.set_ylabel("Significance", loc="center", fontsize=20)
-    ax.set_xlim(250, 3500)
+    ratio_ax.set_ylabel("Significance", loc="center", fontsize=18)
+    #ratio_ax.set_ylabel("Ratio", loc="center", fontsize=15)
+    #ax.set_xlim(250, 3500)
     ax.tick_params(axis="x", which="both", labelbottom=False)
     mplhep.sort_legend(ax=ax)
     ax.set_yscale(scale)
-    ax.set_yscale(scale)
+    fig.tight_layout()
     saveFig(fig, output_path, extension=pc.image_type)
