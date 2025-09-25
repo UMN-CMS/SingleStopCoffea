@@ -105,7 +105,7 @@ def dijet_objects(columns, params):
     columns.add('good_fat_jets', good_fat_jets)
     #columns.add('good_sub_jets', good_sub_jets)
     
-    ht = ak.sum(fat_jets.pt, axis=1)
+    ht = ak.sum(good_fat_jets.pt, axis=1)
     columns.add('HT', ht)
 
 
@@ -155,3 +155,14 @@ def dijet_objects_exo_20_008(columns, params):
     columns.add('medium_bs', med_b)
     columns.add('wide_jet0', wide_jet0)
     columns.add('wide_jet1', wide_jet1)
+
+@MODULE_REPO.register(ModuleType.Producer)
+def dijet_objects_exo_22_026(columns, params):
+    fatjets = columns.get("FatJet")
+    eta_fatjets = fatjets[abs(fatjets.eta) < 2.5]
+    tight_fat_jets = eta_fatjets[eta_fatjets.jetId >= 2]
+    good_fat_jets = tight_fat_jets[tight_fat_jets.pt > 300]
+    columns.add('good_fat_jets', good_fat_jets)
+
+    ht = ak.sum(good_fat_jets.pt, axis=1)
+    columns.add('HT', ht)

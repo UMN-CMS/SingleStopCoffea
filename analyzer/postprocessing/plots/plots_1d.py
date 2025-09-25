@@ -44,6 +44,10 @@ def plotOne(
         h = packaged_hist.histogram
         fixBadLabels(h)
         style = styler.getStyle(packaged_hist.sector_parameters)
+
+        new_n = np.where(h.values()!=0, h.values(), np.nan*h.values())
+        new_variance = np.where(h.variances()!=0, h.variances(), np.nan*h.variances())
+        h[...] = np.stack([new_n, new_variance], axis=-1)
         h.plot1d(
             ax=ax,
             label=title,
@@ -275,19 +279,19 @@ def plotRatio(
         histtype='fill',
     )
 
-    den_hist_5 = den_hist*(0.0025/0.0001)
-    den_hist_5.plot1d(
-        ax=ax,
-        label=denominator.title+" 5% mistag",
-        density=normalize,
-        yerr=True,
-        color="limegreen",
-        alpha=0.3,
-        linewidth=1.5,
-        histtype='fill',
-        zorder=0,
-    )
-    ax.set_ylim(0.1, 10.5**5)
+    #den_hist_5 = den_hist*(0.0025/0.0001)
+    #den_hist_5.plot1d(
+    #    ax=ax,
+    #    label=denominator.title+" 5% mistag",
+    #    density=normalize,
+    #    yerr=True,
+    #    color="limegreen",
+    #    alpha=0.3,
+    #    linewidth=1.5,
+    #    histtype='fill',
+    #    zorder=0,
+    #)
+    #ax.set_ylim(0.1, 10.5**5)
 
     x_values = den_hist.axes[0].centers
     left_edge = den_hist.axes.edges[0][0]
@@ -303,11 +307,6 @@ def plotRatio(
         s = num.style or styler.getStyle(num.sector_parameters)
 
         n, d = h.values(), den_hist.values()
-        print(title)
-        print("QCD:", den_hist.sum())
-        print("QCD:", np.sum(den_hist.values()))
-        print("Signal:", h.sum())
-        print("Signal:", np.sum(h.values()))
 
         ratio, unc = getRatioAndUnc(n, d, uncertainty_type=ratio_type)
         if normalize:
@@ -332,35 +331,41 @@ def plotRatio(
         all_opts = {**s.get("errorbar"), **dict(linestyle="none")}
         all_opts.pop("histtype")
 
-        #replace with significance
-        sig = np.sqrt(2*((n+d)*np.log(1+(n/d)) - n)) 
-        d5 = den_hist_5.values()
-        sig_5 = np.sqrt(2*((n+d5)*np.log(1+(n/(d5))) - n)) 
-        summed_sig = decimal.Decimal(np.sqrt(np.nansum(sig**2)))
-        summed_sig5 = decimal.Decimal(np.sqrt(np.nansum(sig_5**2)))
         current_color = ax.lines[-1].get_color()
+        ratio_ax.scatter(
+            x_values,
+            ratio,
+            label=title,
+            color=current_color,
+        )
+        #replace with significance
+        #sig = np.sqrt(2*((n+d)*np.log(1+(n/d)) - n)) 
+        #d5 = den_hist_5.values()
+        #sig_5 = np.sqrt(2*((n+d5)*np.log(1+(n/(d5))) - n)) 
+        #summed_sig = decimal.Decimal(np.sqrt(np.nansum(sig**2)))
+        #summed_sig5 = decimal.Decimal(np.sqrt(np.nansum(sig_5**2)))
+        #current_color = ax.lines[-1].get_color()
  
-        ratio_ax.scatter(
-            x_values,
-            sig,
-            label=f'{summed_sig:.2g}$\sigma$',
-            color=current_color,
-        )
-        ratio_ax.scatter(
-            x_values,
-            sig_5,
-            label=f'{summed_sig5:.2g}$\sigma$',
-            marker='x',
-            color=current_color,
-        )
+        #ratio_ax.scatter(
+        #    x_values,
+        #    sig,
+        #    label=f'{summed_sig:.2g}$\sigma$',
+        #    color=current_color,
+        #)
+        #ratio_ax.scatter(
+        #    x_values,
+        #    sig_5,
+        #    label=f'{summed_sig5:.2g}$\sigma$',
+        #    marker='x',
+        #    color=current_color,
+        #)
+        
 
-        # hist.plot.plot_ratio_array(den, ratio, unc, ax=ratio_ax,
-
-    # for l in ratio_hlines:
-    #     ratio_ax.axhline(l, color="black", linestyle="dashed", linewidth=1.0)
+    for l in ratio_hlines:
+        ratio_ax.axhline(l, color="black", linestyle="dashed", linewidth=1.0)
 
     ratio_ax.set_xlim(left_edge, right_edge)
-    ratio_ax.legend(title="Total Significance: 1% mistag vs 5% mistag", ncols=3, fontsize=16, title_fontsize=16)
+    #ratio_ax.legend(title="Total Significance: 1% mistag vs 5% mistag", ncols=3, fontsize=16, title_fontsize=16)
     ratio_ax.set_ylim(bottom=ratio_ylim[0], top=ratio_ylim[1])
     if normalize:
         y_label = "Normalized Events"

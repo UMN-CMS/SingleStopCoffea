@@ -20,6 +20,23 @@
     EleWPTight: Ele32_WPTight_Gsf
     EleCaloIdVT: Ele115_CaloIdVT_GsfTrkIdT
 
+    dijet_HT: PFHT1050
+    dijet_AK8SingleJetPt: AK8PFJet400_TrimMass30
+    dijet_AK8HT: AK8PFHT800_TrimMass50
+    dijet_AK8B: AK8PFJet330_TrimMass30_PFAK8BTagDeepCSV_p17
+    dijet_DoublePF: DoublePFJets116MaxDeta1p6_DoubleCaloBTagDeepCSV_p71 
+    dijet_DiPF: DiPFJetAve300_HFJEC
+
+    exo_20_008_HT: PFHT1050
+    exo_20_008_AK8SingleJetPt: AK8PFJet550
+    exo_20_008_PFSingleJetPt: PFJet550
+    exo_20_008_CaloSingleJetPt: CaloJet550_NoJetID
+    exo_20_008_SingleMuon: Mu50
+    exo_20_008_IsoMuon: IsoMu24
+
+    exo_22_026_HT: PFHT1050
+    exo_22_026_AK8SingleJetPt: AK8PFJet500
+
   trigger_plateaus:
     HT: 1200
     AK8SingleJetPt:

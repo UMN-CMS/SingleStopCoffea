@@ -7,130 +7,130 @@ PostDefaults:
     cms_text_pos: 0
 
 all_oned: &all_oned
-  #- h_njet
+  - h_njet
   - dijet_mass
-  #- dijet_phi
-  #- dijet_eta
-  #- dijet_pt
-  #- dijet_delta_r
-  #- fat_jet1_pt
-  #- fat_jet2_pt
-  #- fat_jet1_eta
-  #- fat_jet2_eta
-  #- fat_jet1_phi
-  #- fat_jet2_phi
-  #- fat_jet1_mass
-  #- fat_jet2_mass
-  #- fat_jet1_msoftdrop
-  #- fat_jet2_msoftdrop
-  #- fat_jet1_tau1
-  #- fat_jet2_tau1
-  #- fat_jet1_tau2
-  #- fat_jet2_tau2
-  #- fat_jet1_tau3
-  #- fat_jet2_tau3
-  #- fat_jet1_tau32
-  #- fat_jet2_tau32
-  #- fat_jet1_tau31
-  #- fat_jet2_tau31
-  #- fat_jet1_tau21
-  #- fat_jet2_tau21
-  #- HT
+  - dijet_phi
+  - dijet_eta
+  - dijet_pt
+  - dijet_delta_r
+  - fat_jet1_pt
+  - fat_jet2_pt
+  - fat_jet1_eta
+  - fat_jet2_eta
+  - fat_jet1_phi
+  - fat_jet2_phi
+  - fat_jet1_mass
+  - fat_jet2_mass
+  - fat_jet1_msoftdrop
+  - fat_jet2_msoftdrop
+  - fat_jet1_tau1
+  - fat_jet2_tau1
+  - fat_jet1_tau2
+  - fat_jet2_tau2
+  - fat_jet1_tau3
+  - fat_jet2_tau3
+  - fat_jet1_tau32
+  - fat_jet2_tau32
+  - fat_jet1_tau31
+  - fat_jet2_tau31
+  - fat_jet1_tau21
+  - fat_jet2_tau21
+  - HT
 
 Postprocessing:
-#  - name: Simple 1D Plots
-#    action: Histogram1D
-#    histogram_names: *all_oned
-#    to_process:
-#      region_name: 'Signal'
-#      sample_spec:
-#        name: "*"
-#    scale: log
-#    plot_configuration:
-#      cms_text: "Preliminary\n{region_name}"
-#    grouping: 
-#      fields: ['dataset.era.name','region_name']
-#      axis_options: {variation: central, NJets: Sum}
-#      style_set: 
-#        - sector_spec:
-#            sample_name: 'qcd*'
-#          style:
-#            plottype: errorbar 
-#            color: green
-#            alpha: 0.3
-#      rescale: 
-#        - sector_spec:
-#            sample_spec: 
-#                name: 'qcd*'
-#          scale: 0.01
-#    output_name: "postprocessing/dijet_just_qcd/plots/{region_name}/{histogram_name}"
-#    #normalize: true
-
-  - name: Simple Ratio 
-    action: RatioPlot
+  - name: Simple 1D Plots
+    action: Histogram1D
     histogram_names: *all_oned
-    match_fields: ['dataset.era.name', 'region_name']
     to_process:
       region_name: 'Signal'
+      sample_spec:
+        name: "*"
     scale: log
-
-    ratio_ylim: [0,42]
-
-
-    denominator:
-      to_process:
-        sample_name: qcd*
-      fields: ['dataset.era.name', 'region_name']
-      axis_options: {variation: central, NJets: 2}
-      style:
-        plot_type: step
-        color: red
-        linestyle: dashed
-        linewidth: 2
-      rescale: 
-        - sector_spec:
-            sample_spec: 
-                name: 'qcd*'
-          scale: 0.0001
-          #scale: 0.0025 
-    numerator:
-      fields: ['dataset.era.name', 'region_name']
-      to_process:
-        sample_name: signal*
-      axis_options: {variation: central, NJets: 2}
-      style:
-        plot_type: step
-        color: blue
-        linewidth: 2
-      rescale: 
-        - sector_spec:
-            sample_spec: 
-                name: 'signal*'
-          scale: 0.49
-    #normalize: true
     plot_configuration:
-      image_type: ".pdf"
-      cms_text: "Preliminary"
-    output_name: "postprocessing/dijet_w_tau32_cut_hlt_ak8ht_ak8b_ht_cut_didouble/plots/{region_name}/{histogram_name}"
-
-  - name: Cutflow
-    action: PlotCutflow
-    to_process:
-      sample_name: '*'
-      region_name: '*'
+      cms_text: "Preliminary\n{region_name}"
     grouping: 
       fields: ['dataset.era.name','region_name']
-      axis_options: {variation: central, NJets: 2} 
-    scale: log
-    style_set:
-      - style:
-          plot_type: step
+      axis_options: {variation: central, NJets: Sum}
+      style_set: 
+        - sector_spec:
+            sample_name: 'qcd*'
+          style:
+            plottype: errorbar 
+            color: green
+            alpha: 0.3
+      #rescale: 
+      #  - sector_spec:
+      #      sample_spec: 
+      #          name: 'qcd*'
+      #    scale: 0.01
+    output_name: "postprocessing/dijet_exo_22_026/plots/{region_name}/{histogram_name}"
+    #normalize: true
 
-    output_name: "postprocessing/dijet_w_tau32_cut_hlt_ak8ht_ak8b_ht_cut_didouble/plots/{region_name}/{histogram_name}"
-    init_normalize: True
-    #plot_types: ["cutflow"]
-    #table_mode: True
+#- name: Simple Ratio 
+#  action: RatioPlot
+#  histogram_names: *all_oned
+#  match_fields: ['dataset.era.name', 'region_name']
+#  to_process:
+#    region_name: 'Signal'
+#  scale: log
+#
+#  ratio_ylim: [0,5]
+#
+#
+#  denominator:
+#    to_process:
+#      sample_name: qcd*
+#    fields: ['dataset.era.name', 'region_name']
+#    axis_options: {variation: central, NJets: 2}
+#    style:
+#      plot_type: step
+#      color: red
+#      linestyle: dashed
+#      linewidth: 2
+#    rescale: 
+#      - sector_spec:
+#          sample_spec: 
+#              name: 'qcd*'
+#        scale: 0.0001
+#    #    #scale: 0.0025 
+#  numerator:
+#    fields: ['dataset.era.name', 'region_name']
+#    to_process:
+#      sample_name: signal*
+#    axis_options: {variation: central, NJets: 2}
+#    style:
+#      plot_type: step
+#      color: blue
+#      linewidth: 2
+#    rescale: 
+#      - sector_spec:
+#          sample_spec: 
+#              name: 'signal*'
+#        scale: 0.49
+#  #normalize: true
+#  plot_configuration:
+#    image_type: ".pdf"
+#    cms_text: "Preliminary"
+#  output_name: "postprocessing/dijet_exo_22_026/plots/{region_name}/{histogram_name}"
 
+#  - name: Cutflow
+#    action: PlotCutflow
+#    to_process:
+#      sample_name: '*'
+#      region_name: '*'
+#    grouping: 
+#      fields: ['dataset.era.name','region_name']
+#      axis_options: {variation: central, NJets: 2} 
+#    scale: log
+#    style_set:
+#      - style:
+#          plot_type: step
+#
+#    output_name: "postprocessing/dijet_w_tau32_cut_hlt_ak8ht_ak8b_ht_cut_didouble/plots/{region_name}/{histogram_name}"
+#    init_normalize: True
+#    #plot_types: ["cutflow"]
+#    #table_mode: True
+#
   #- name: Dump Yields
   #  action: DumpYields
   #  target_histogram: h_njet 

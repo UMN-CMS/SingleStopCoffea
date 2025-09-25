@@ -219,6 +219,21 @@ def dijet_selection_exo_20_008(events, params, selector):
     #selector.add("el_veto", ~(near_el))
     #selector.add("mu_veto", ~(near_mu))
 
+
+@MODULE_REPO.register(ModuleType.Selection)
+def dijet_selection_exo_22_026(events, params, selector):
+    good_fatjets = events.good_fat_jets
+    passes_njets = (ak.num(good_fatjets) >= 2)
+    selector.add("njets", passes_njets)
+
+    padded_fatjets = ak.pad_none(good_fatjets, 2, axis=1)[:,:2]
+    passes_deta = abs(padded_fatjets[:,0].eta - padded_fatjets[:,1].eta) < 1.3
+    selector.add('dEta', passes_deta)
+
+    passes_dijet_mass = ((padded_fatjets[:,0]+padded_fatjets[:,1]).mass > 1455)
+    selector.add("dijet_mass", passes_dijet_mass)
+
+
 @MODULE_REPO.register(ModuleType.Selection)
 def dijet_selection(events, params, selector):
     good_fat_jets = events.good_fat_jets
@@ -256,7 +271,7 @@ def dijet_selection(events, params, selector):
 
 @MODULE_REPO.register(ModuleType.Categorization)
 def dijet_njet_category(events, params, categories):      
-    """Categorization for events with 2-6 jets"""
+    """Categorization for events with at least 2-6 jets"""
     good_jets = events.good_fat_jets
     passes_njets = (ak.num(good_jets) >= 2) 
     categories.add(
@@ -310,12 +325,12 @@ def zero_btag_category(events, params, categories):
 @MODULE_REPO.register(ModuleType.Selection)
 def signal_dijet_hlt(events, params, selector):
     era_info = params.dataset.era
-    ht_trigger_name = era_info.trigger_names["HT"]
-    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
-    ak8_ht_trigger_name = era_info.trigger_names["AK8HT"]
-    ak8_b_trigger_name = era_info.trigger_names["AK8B"]
-    doublepf_trigger_name = era_info.trigger_names["DoublePF"]
-    dipf_trigger_name = era_info.trigger_names["DiPF"]
+    ht_trigger_name = era_info.trigger_names["dijet_HT"]
+    ak8_trigger_name = era_info.trigger_names["dijet_AK8SingleJetPt"]
+    ak8_ht_trigger_name = era_info.trigger_names["dijet_AK8HT"]
+    ak8_b_trigger_name = era_info.trigger_names["dijet_AK8B"]
+    doublepf_trigger_name = era_info.trigger_names["dijet_DoublePF"]
+    dipf_trigger_name = era_info.trigger_names["dijet_DiPF"]
     selector.add(
         f"HLT",
         events.HLT[ht_trigger_name]
@@ -326,8 +341,34 @@ def signal_dijet_hlt(events, params, selector):
         | events.HLT[dipf_trigger_name]
     )
 
+@MODULE_REPO.register(ModuleType.Selection)
+def signal_dijet_hlt_exo_20_008(events, params, selector):
+    era_info = params.dataset.era
+    ht_trigger_name = era_info.trigger_names["exo_20_008_HT"]
+    ak8_trigger_name = era_info.trigger_names["exo_20_008_AK8SingleJetPt"]
+    calo_trigger_name = era_info.trigger_names["exo_20_008_CaloSingleJetPt"]
+    pf_trigger_name = era_info.trigger_names["exo_20_008_PFSingleJetPt"]
+    selector.add(
+        f"HLT",
+        events.HLT[ht_trigger_name]
+        | events.HLT[ak8_trigger_name]
+        | events.HLT[calo_trigger_name]
+        | events.HLT[pf_trigger_name]
+    )
+
+@MODULE_REPO.register(ModuleType.Selection)
+def signal_dijet_hlt_exo_22_026(events, params, selector):
+    era_info = params.dataset.era
+    ht_trigger_name = era_info.trigger_names["exo_22_026_HT"]
+    ak8_trigger_name = era_info.trigger_names["exo_22_026_AK8SingleJetPt"]
+    selector.add(
+        f"HLT",
+        events.HLT[ht_trigger_name]
+        | events.HLT[ak8_trigger_name]
+    )
+
 @MODULE_REPO.register(ModuleType.Categorization)
-def hlt_dijet_trigger_category(events, params, categories):
+def dijet_trigger_category(events, params, categories):
     era_info = params.dataset.era
     ht_trigger_name = era_info.trigger_names["HT"]
     ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]

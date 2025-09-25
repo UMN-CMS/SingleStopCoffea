@@ -19,11 +19,11 @@ samples:
   #signal_2018_312_dijet_2000_400: [Signal]
   #signal_2018_312_dijet_2000_600: [Signal]
   #signal_2018_312_dijet_2000_900: [Signal]
-  signal_2018_312_dijet_1100_100: [Signal]
-  signal_2018_312_dijet_1200_100: [Signal]
-  signal_2018_312_dijet_1300_100: [Signal]
-  signal_2018_312_dijet_1400_100: [Signal]
-  #qcd_inclusive_2018_dijet: [Signal]
+  signal_2018_312_1100_100: [Signal]
+  signal_2018_312_1200_100: [Signal]
+  signal_2018_312_1300_100: [Signal]
+  signal_2018_312_1400_100: [Signal]
+  qcd_inclusive_2018: [Signal]
 
 executors:
   local:
@@ -55,35 +55,35 @@ file_config:
 # You can use yaml anchors to reduce the amount of duplication in the configuration file
 common_items:
     common_signal_histograms: &common_signal
-      - name: dijet_hists 
+      - name: dijet_hists_exo_22_026
       - name: fatnjets
     common_objects: &common_objects
-      - name: dijet_objects
+      - name: dijet_objects_exo_22_026
 
     common_weights: &common_weights
-    #  - name: L1_prefiring_sf
-    #    sample_spec:
-    #      era: ["2016", "2017", "2018"]
-    #      sample_type: MC
-    #    config:
-    #      variations: All
+      - name: L1_prefiring_sf
+        sample_spec:
+          era: ["2016", "2017", "2018"]
+          sample_type: MC
+        config:
+          variations: All
 
-    #  - name: sign_gen_weight
-    #    sample_spec:
-    #      sample_type: MC
+      - name: sign_gen_weight
+        sample_spec:
+          sample_type: MC
 
-    #  - name: pileup_sf
-    #    sample_spec:
-    #      sample_type: MC
+      - name: pileup_sf
+        sample_spec:
+          sample_type: MC
 
 regions:
   - name: Signal 
     objects: *common_objects
     # corrections: *common_corrections
     preselection:
-      - name: signal_dijet_hlt
+      - name: signal_dijet_hlt_exo_22_026
     selection: 
-      - name: dijet_selection
+      - name: dijet_selection_exo_22_026
     categories:
       - name: dijet_njet_category
     histograms: *common_signal
