@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import mplhep as hep
 import re
 import matplotlib
+import correctionlib
+import correctionlib.convert
 
 def calculate_scale_factors():
     
@@ -103,7 +105,7 @@ def calculate_scale_factors3d():
     data_list = ["2016_preVFP","2016_preVFP","2016_postVFP","2017","2018","2022_preEE","2022_postEE","2023_preBPix","2023_postBPix"]
     #data_list = ["2018"]
     for i in data_list:
-        path = Path(f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{i}/SingleJetEff").resolve()
+        path = Path(f"/srv/postprocessing/trigger_eff_sept_2025/plots/{i}/SingleJetEff").resolve()
         if not path.is_dir():
             raise ValueError(f'{path} is not a dir')
         ratio_glob =  path.glob("**/*.pkl")
@@ -119,7 +121,7 @@ def calculate_scale_factors3d():
         
         sf_h = num_h/den_h
         sf_h_values = sf_h.values()
-        sf_h_values[num_h.values()==0] = 0
+        #sf_h_values[num_h.values()==0] = 0
         sf_h[...] = sf_h_values
         #uncertainty
         #X/n and Y/m are Binomial and (X/n)/(Y/m) is approximately log normal with the following variance
@@ -139,11 +141,25 @@ def calculate_scale_factors3d():
         
         sf_unc_hist_lower[...] = unc_lower
         sf_unc_hist_upper[...] = unc_upper
-
+        sf_h.name = f"datavmc_sf_corrections"
+        sf_h.label = f"out"
+        sf_correction = correctionlib.convert.from_histogram(sf_h)
+        sf_correction.data.flow = 'clamp'
         sf_path = Path(f"/srv/analyzer_resources/datavmc_sf/{i}_sf.pkl")
+        sf_correction_path = Path(f"/srv/analyzer_resources/datavmc_sf/{i}_sf_correction.json")
+
+        cset = correctionlib.schemav2.CorrectionSet(
+            schema_version=2,
+            description="Scale_Factor_Corrections",
+            corrections=[sf_correction],
+        )
+
         if not(os.path.exists(sf_path.parents[0])):
             # create the directory you want to save to
             os.makedirs(sf_path.parents[0])
+        with open(sf_correction_path, "w") as fout:
+            fout.write(cset.json(exclude_unset=True))
+
         with open(sf_path.resolve(), 'wb') as sf_file:
             pickle.dump(sf_h,sf_file)
         save_plots(sf_h, i, sf_unc_hist_lower, sf_unc_hist_upper, loop_axis = 0)
@@ -207,12 +223,12 @@ def save_plots(sf_h, dataset, unc_lower, unc_upper, loop_axis = 0):
         #hep.cms.text(text=f'HT {htbinstr}\nScale Factors', ax=ax, loc=3, com=energy, year=dataset, data=True)
         fig.tight_layout()
         if loop_axis == 0:
-            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_ht_{loop_bin_str}.pdf"
+            output_title = f"/srv/postprocessing/trigger_eff_sept_2025/plots/{dataset}/SingleJetEff/3d_sf_plot_ht_{loop_bin_str}.pdf"
         #    lower_max = np.nanmax(unc_lower[j,:,:].values())
         #    upper_max = np.nanmax(unc_upper[j,:,:].values())
 
         elif loop_axis == 1:
-            output_title = f"/srv/postprocessing/trigger_eff_3d_hist_test/plots/{dataset}/SingleJetEff/3d_sf_plot_pt_{loop_bin_str}.pdf"
+            output_title = f"/srv/postprocessing/trigger_eff_sept_2025/plots/{dataset}/SingleJetEff/3d_sf_plot_pt_{loop_bin_str}.pdf"
         #    lower_max = np.nanmax(unc_lower[:,j,:].values())
         #    upper_max = np.nanmax(unc_upper[:,j,:].values())
 

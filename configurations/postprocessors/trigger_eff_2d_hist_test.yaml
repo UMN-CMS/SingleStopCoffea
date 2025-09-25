@@ -101,7 +101,7 @@ Postprocessing:
     numerator:
       fields: ['dataset.name', 'dataset.era.name', 'region_name']
       title_format: "{dataset.era.trigger_names.AK8SingleJetPt}\n{dataset.era.trigger_names.HT}"
-      axis_options: {variation: central, PassHT: 1, PassAK8Jet: 1}
+      axis_options: {variation: central}
     denominator:
       fields: ['dataset.name', 'dataset.era.name', 'region_name']
       title_format: "{dataset.era.trigger_names.IsoMuon}"

@@ -323,9 +323,11 @@ def plotRatio3D(
     all_ratios, all_uncertainties = [], []
 
     for num in numerators:
-        num_hist = num.histogram
+        cat_num_hist = num.histogram
+        num_hist = cat_num_hist[1,0,:,:,:] + cat_num_hist[0,1,:,:,:] + cat_num_hist[1,1,:,:,:]
         fixBadLabels(num_hist)
 
+        #r0 = np.concatenate((28*np.ones(1,dtype=int), 4*np.ones(6,dtype=int), 68*np.ones(1,dtype=int)))
         r0 = np.concatenate((28*np.ones(1,dtype=int), 8*np.ones(2,dtype=int), 76*np.ones(1,dtype=int)))
         #r1 = 25*np.ones(4,dtype=int)
         r1 = np.concatenate((30*np.ones(1,dtype=int), 25*np.ones(2,dtype=int), 20*np.ones(1,dtype=int)))
@@ -350,7 +352,9 @@ def plotRatio3D(
         den_hist.axes.name = temp_den_name
         num_hist.axes.unit = temp_num_unit
         den_hist.axes.unit = temp_den_unit
-
+        #rebinht = hist.rebin(groups=4*np.ones(30,dtype=int))
+        #num_hist = num_hist[::rebinht, :, :]
+        #den_hist = den_hist[::rebinht, :, :]
         ratio_hist = hist.Hist(*num_hist.axes)
         ratio_unc_hist_lower = hist.Hist(*num_hist.axes)
         ratio_unc_hist_upper = hist.Hist(*num_hist.axes)
@@ -364,7 +368,7 @@ def plotRatio3D(
                 ratio_unc *= (np.sum(d)/np.sum(n))
             else:
                 rvalues = (n / d)
-        rvalues[n==0]=0
+        #rvalues[n==0]=0
         ratio_unc[0][n==0]=0
         ratio_unc[1][n==0]=0
         ratio_hist[...] = rvalues
@@ -375,12 +379,15 @@ def plotRatio3D(
         ratio_hist.name = 'trigger_eff'
         ratio_hist.label = 'out'
         trigger_eff = correctionlib.convert.from_histogram(ratio_hist)
+        trigger_eff.data.flow = 'clamp'
         cset = correctionlib.schemav2.CorrectionSet(
             schema_version=2,
             description="Trigger_Efficiency_Corrections",
             corrections=[trigger_eff],
 )
 
+        head, tail = os.path.split(output_path) 
+        os.makedirs(head, exist_ok=True)
         with open(output_path + "trigg_eff_corrections.json", "w") as fout:
             fout.write(cset.json(exclude_unset=True))
 
@@ -389,9 +396,6 @@ def plotRatio3D(
         #with gzip.open(output_path + "trig_eff_corrections.json.gz", "wt") as fout:
             #fout.write(cset.json(exclude_unset=True))
 
-
-        head, tail = os.path.split(output_path) 
-        os.makedirs(head, exist_ok=True)
 
         for i in range(length):
             htbin = ratio_hist.axes[0][i]
