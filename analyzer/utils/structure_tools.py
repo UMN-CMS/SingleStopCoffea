@@ -174,3 +174,4 @@ def accumulate(
     except StopIteration:
         pass
     return accum
+

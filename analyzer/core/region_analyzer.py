@@ -238,13 +238,17 @@ class RegionAnalyzer(BaseModel):
             else:
                 weight_storage["unweighted"] = ak.num(columns.events, axis=0)
 
+
+            always_include = ["trigger_weight"]
+            always_include = [x for x in always_include if x in names]
             for name in names:
                 weight_storage[name] = ak.sum(
                     weighter.weight(
-                        include=[name],
+                        include=[name, *always_include],
                     ),
                     axis=0,
                 )
+
         if active_shape is None:
             ret = {}
             for module in self.other_results:

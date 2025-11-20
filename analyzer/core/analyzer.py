@@ -61,6 +61,7 @@ class Analyzer:
         cutflow_storage: dict[str, SelectionFlow],
         weight_storage: dict[str, float],
         pre_sel_weight_storage: dict[str, float],
+        other_storage: dict[str, float],
         variation=None,
     ) -> dict[tuple[str, str], results.SubSectorResult]:
         """
@@ -91,6 +92,8 @@ class Analyzer:
 
             if pre_sel_weight_storage is not None and variation is None:
                 names = weighter.weight_names
+                always_include = ["trigger_weight"]
+                always_include = [x for x in always_include if x in names]
                 if "pos_neg" in names:
                     pre_sel_weight_storage[ra.region_name]["unweighted"] = ak.sum(
                         weighter.weight(
@@ -105,7 +108,7 @@ class Analyzer:
                 for name in names:
                     pre_sel_weight_storage[ra.region_name][name] = ak.sum(
                         weighter.weight(
-                            include=[name],
+                            include=[name, *always_include],
                         ),
                         axis=0,
                     )
@@ -121,13 +124,12 @@ class Analyzer:
             # Once the final selection has been performed for a region
             # we can run the remainder of the analyzer
             if variation is None:
-                ret = ra.runPostSelection(
+                r = ra.runPostSelection(
                     new_cols, params, hs, w, weight_storage[ra.region_name]
                 )
-                return ret
+                other_storage[ra.region_name] = r
             else:
                 ra.runPostSelection(new_cols, params, hs, w)
-                return None
 
     def _runPreselectionGroup(
         self, events, params, region_analyzers, preselection, preselection_set
@@ -138,6 +140,8 @@ class Analyzer:
         cutflow_storage = {ra.region_name: {} for ra in region_analyzers}
         # Each region has its own weights
         weight_storage = {ra.region_name: {} for ra in region_analyzers}
+
+        other_storage = {ra.region_name: {} for ra in region_analyzers}
 
         # Each region has its own weights
         pre_sel_weight_storage = {ra.region_name: {} for ra in region_analyzers}
@@ -168,10 +172,9 @@ class Analyzer:
                 cutflow_storage,
                 weight_storage,
                 pre_sel_weight_storage,
+                other_storage,
                 variation=variation,
             )
-            if variation is None:
-                other_results = this_run
 
         ret = {
             ra.region_name: results.SubSectorResult(
@@ -181,7 +184,7 @@ class Analyzer:
                     selection_flow=cutflow_storage[ra.region_name],
                     post_sel_weight_flow=weight_storage[ra.region_name],
                     pre_sel_weight_flow=pre_sel_weight_storage[ra.region_name],
-                    other_data=other_results,
+                    other_data=other_storage[ra.region_name],
                 ),
             )
             for ra in region_analyzers
@@ -253,24 +256,18 @@ def runAnalyzerChunks(
             from analyzer.logging import setup_logging
 
             setup_logging()
-
             chunks = fileset.toCoffeaDataset()["files"]
-
+            f = next(iter(chunks))
             logger.info(f"Loading events from {fileset}")
             events = NanoEventsFactory.from_root(
-                chunks,
+                {f: chunks[f]["object_path"]},
                 schemaclass=NanoAODSchema,
                 known_base_form=known_form,
-                delayed=True,
-                uproot_options=dict(use_threads=False),
+                mode="virtual",
+                entry_start=chunks[f]["steps"][0][0],
+                entry_stop=chunks[f]["steps"][0][1],
             ).events()
-
             result = analyzer.run(events, params)
-            result = result.model_dump()
-            result = dask.compute(result, scheduler="threads")[0]
-            logger.info(f"Analysis completed successfully for {fileset}")
-            result = results.MultiSectorResult(**result)
-
             for sector_result in result.values():
                 for k in sector_result.base_result.other_data:
                     v = sector_result.base_result.other_data[k]

@@ -99,10 +99,22 @@ common_items:
       - name: top_pt_reweighting
         sample_spec:
           name: 'tt*'
-      - name: btagging_shape_sf
-        sample_spec:
-          sample_type: MC
 
+      - name: btagging_shape_sf
+        config:
+          include_systematics: False
+        constraint:
+          sample_type: MC
+          name:
+            op: NOT
+            expr: "*signal*"
+
+      - name: btagging_shape_sf
+        config:
+          include_systematics: True
+        constraint:
+          sample_type: MC
+          name: "*signal*"
 
 
 regions:
@@ -111,7 +123,7 @@ regions:
     objects: *common_lep_objects
     # corrections: *common_corrections
     categories:
-      - name: njets_category
+      - name: ht_category
     preselection:
       - <<: *common_preselection
       - name: one_lep_hlt
@@ -126,7 +138,7 @@ regions:
     objects: *common_lep_objects
     # corrections: *common_corrections
     categories:
-      - name: njets_category
+      - name: ht_category
     preselection:
       - <<: *common_preselection
       - name: one_lep_hlt
@@ -141,7 +153,7 @@ regions:
     objects: *common_lep_objects
     # corrections: *common_corrections
     categories:
-      - name: njets_category
+      - name: ht_category
     preselection:
       - <<: *common_preselection
       - name: one_lep_hlt
@@ -173,7 +185,7 @@ regions:
     objects: *common_had_objects
     # corrections: *common_corrections
     categories:
-      - name: njets_category
+      - name: ht_category
     preselection:
       - <<: *common_preselection
       - name: signal_hlt

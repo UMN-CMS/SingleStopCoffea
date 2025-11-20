@@ -188,9 +188,22 @@ def btagging_shape_sf(
     systematics = bparams["systematics"]
 
     def computeForSyst(j, syst):
-        return ak.prod(
-            sf_eval(syst, j.hadronFlavour, abs(j.eta), j.pt, j.btagDeepFlavB), axis=1,
-        )
+        if syst=="central" or '202' in params.dataset.era.name:
+            return ak.prod(
+                sf_eval("central", j.hadronFlavour, abs(j.eta), j.pt, j.btagDeepFlavB), axis=1,
+            )
+        elif "_cf" in syst:
+            j = gj[gj.hadronFlavour == 4]
+            return ak.prod(
+                sf_eval(syst, j.hadronFlavour, abs(j.eta), j.pt, j.btagDeepFlavB), axis=1,
+            )
+        else:
+            j = gj[gj.hadronFlavour != 4]
+            return ak.prod(
+                sf_eval(syst, j.hadronFlavour, abs(j.eta), j.pt, j.btagDeepFlavB), axis=1,
+            )
+
+
 
     if (
         current_syst is not None

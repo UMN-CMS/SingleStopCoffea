@@ -2,7 +2,7 @@
 
 application_root="/srv"
 application_data="$application_root/.application_data"
-container="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2025.1.0-py3.10"
+container="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2025.10.0-py3.10"
 env_extras="lpcqueue"
 virtual_env_path="$application_data/venv"
 
@@ -69,7 +69,7 @@ function create_venv(){
     else
         python3 -m pip install -U -e ".[$env_extras]" 
     fi
-    python3 -m pip install htcondor==24.2.1
+    python3 -m pip install htcondor==25.2.1
 
     # pip3 install ipython --upgrade
     python3 -m ipykernel install --name "$env_name" --prefix "$application_data/local/"

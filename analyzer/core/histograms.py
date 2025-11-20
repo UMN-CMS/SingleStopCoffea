@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import copy
 from rich import print
 from typing import Any
 
@@ -81,16 +82,9 @@ class HistogramCollection(BaseModel):
     histogram: Hist
 
     def __add__(self, other):
-        if self.spec != other.spec:
-            logger.error(
-                "Cannot add two incompatible histograms specs. Hist1:\n"
-                f"{self.spec}\nHist2:\n{other.spec}"
-            )
-            raise ValueError(f"Cannot add two incomatible histograms")
-        return HistogramCollection(
-            spec=self.spec,
-            histogram=self.histogram + other.histogram,
-        )
+        ret = copy.copy(self)
+        ret += other
+        return ret
 
     def __iadd__(self, other):
         if self.spec != other.spec:
@@ -173,10 +167,12 @@ class HistogramCollection(BaseModel):
                 mask=mask,
             )
 
+        always_include = ["trigger_weight"]
+        always_include = [x for x in always_include if x in weight_repo.weight_names]
         if include_individual and active_shape_systematic is None:
             for weight_variation in weight_repo.weight_names:
                 logger.debug(f'Filling histogram with individual "{weight_variation}"')
-                w = weight_repo.weight(include=[weight_variation])
+                w = weight_repo.weight(include=[weight_variation, *always_include])
                 real_weight = transformToFill(representative, w, mask)
                 fillHistogram(
                     self.histogram,
@@ -184,6 +180,16 @@ class HistogramCollection(BaseModel):
                     fill_data,
                     real_weight,
                     variation_val=f"only_{weight_variation}",
+                    mask=mask,
+                )
+                w = weight_repo.weight(exclude=[weight_variation])
+                real_weight = transformToFill(representative, w, mask)
+                fillHistogram(
+                    self.histogram,
+                    cat_values,
+                    fill_data,
+                    real_weight,
+                    variation_val=f"all_but_{weight_variation}",
                     mask=mask,
                 )
 

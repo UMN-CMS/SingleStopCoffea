@@ -58,6 +58,17 @@ def jetmap_vetoed_jets(columns, params, jet_in, jet_out, veto_type="jetvetomap")
 
     columns.add(jet_out, good_jets, shape_dependent=True)
 
+@MODULE_REPO.register(ModuleType.Producer)
+def pass_signal_triggers(
+    columns,
+    params,
+    jet_in,
+):
+
+    jets = columns.get(jet_in)
+    ht = ak.sum(jets.pt, axis=1)
+    columns.add("HT", ht)
+
 
 @MODULE_REPO.register(ModuleType.Producer)
 def ht(
@@ -83,7 +94,6 @@ def core_objects(columns, params):
     bwps = getBTagWP(params)
     logger.info(f"B-tagging workign points are:\n {bwps}")
     good_jets = columns.good_jets
-
     loose_b, med_b, tight_b = makeCutSet(
         good_jets,
         good_jets.btagDeepFlavB,

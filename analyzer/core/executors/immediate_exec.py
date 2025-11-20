@@ -31,12 +31,14 @@ class ImmediateExecutor(Executor):
                     events = NanoEventsFactory.from_root(
                         {fname: data["object_path"]},
                         schemaclass=NanoAODSchema,
-                        delayed=False,
+                        # delayed=False,
                         entry_start=start,
                         entry_stop=end,
                     ).events()
                     if ret is None:
                         ret = task.analyzer.run(events, task.sample_params)
+                        # # import dask
+                        # dask.compute(ret.model_dump())
                     else:
                         ret = accumulate(
                             [ret, task.analyzer.run(events, task.sample_params)]

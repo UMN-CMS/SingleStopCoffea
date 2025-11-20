@@ -1,13 +1,9 @@
-#include <unordered_map>
-#include <unordered_set>
 #include <string>
 #include <iostream>
 #include <format>
 #include <memory>
 #include <fstream>
 #include <filesystem>
-#include "TFile.h"
-#include "TTree.h"
 #include "ROOT/RDataFrame.hxx"
 
 
@@ -21,6 +17,7 @@ std::filesystem::path getUniquePath(const std::filesystem::path& p){
     while(std::filesystem::exists(ret)){
         ret  = parent / (stem.string() + "_" + std::to_string(i)) ;
         ret.replace_extension(ext);
+        i+=1;
     }
     return ret;
 }

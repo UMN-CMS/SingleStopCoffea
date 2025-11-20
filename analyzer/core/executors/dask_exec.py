@@ -406,9 +406,10 @@ class LPCCondorDask(DaskExecutor):
         with open(CONFIG.DASK_CONFIG_PATH) as f:
             defaults = yaml.safe_load(f)
             dask.config.update(dask.config.config, defaults, priority="new")
-        apptainer_container = "/".join(
-            Path(os.environ["APPTAINER_CONTAINER"]).parts[-2:]
-        )
+        # apptainer_container = "/".join(
+        #     Path(os.environ["APPTAINER_CONTAINER"]).parts[-2:]
+        # )
+        apptainer_container = Path(os.environ["APPTAINER_CONTAINER"])
         Path(os.environ.get("APPTAINER_WORKING_DIR", ".")).resolve()
 
         logpath = Path(self.base_log_path) / os.getlogin() / "dask_logs"

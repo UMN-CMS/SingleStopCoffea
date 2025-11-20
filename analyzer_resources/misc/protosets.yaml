@@ -292,3 +292,15 @@
     - /TQbartoLNu-t-channel_TuneCP5_13p6TeV_powheg-pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v15-v2/NANOAODSIM
     - /TbarQtoLNu-t-channel_TuneCP5_13p6TeV_powheg-pythia8/Run3Summer23NanoAODv12-130X_mcRun3_2023_realistic_v15-v2/NANOAODSIM
     
+- name: wjetsqq_2018
+  title: WJets
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/WJetsToQQ_HT-*_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X*/NANOAODSIM'
+
+
+- name: wjetslnu_2018
+  title: WLNu
+  era: '2018'
+  sample_type: MC
+  cms_regex: '/WJetsToLNu_HT-*_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1_ext1-v*/NANOAODSIM'

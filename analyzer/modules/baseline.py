@@ -192,7 +192,7 @@ def njet_category(events, params, categories):
 def ht_category(events, params, categories):
     categories.add(
         name=f"_HT",
-        axis=hist.axis.Regular(50, 500, 3000, underflow=True, overflow=True, name="_HT"),
+        axis=hist.axis.Regular(50, 0, 3000, underflow=True, overflow=True, name="_HT"),
         values=events.HT,
     )
 

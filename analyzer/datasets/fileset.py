@@ -280,6 +280,9 @@ class FileSet(BaseModel):
             file_retrieval_kwargs=self.file_retrieval_kwargs,
         )
 
+    def __str__(self):
+        return str(self.files)
+
     # @staticmethod
     # def
 

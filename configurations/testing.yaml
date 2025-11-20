@@ -71,23 +71,27 @@ common_items:
 
     common_objects: &common_objects
       - name: jets_and_ht
+        config:
+          jet_name: Jet
+
       - name: core_objects
 
-    common_corrections: &common_corrections
-      - name: corrected_jets_data
-        config:
-          input_col: Jet
-          output_col: CorrectedJet
-        constraint:
-          sample_type: data
-
-      - name: corrected_jets
-        config:
-          input_col: Jet
-          output_col: CorrectedJet
-          do_smearing: false
-        constraint:
-          sample_type: MC
+      # - name: corrected_jets_data
+      #   config:
+      #     input_col: Jet
+      #     output_col: CorrectedJet
+      #   constraint:
+      #     sample_type: data
+      
+    # common_corrections: &common_corrections 
+      # - name: corrected_jets
+      #   config:
+      #     input_col: Jet
+      #     output_col: CorrectedJet
+      #     do_smearing: true
+      #   constraint:
+      #     sample_type: MC
+      #     name: "*signal*"
           
 
     common_preselection: &common_preselection 
@@ -95,10 +99,21 @@ common_items:
         constraint:
           sample_type: Data
 
+
+
     common_weights: &common_weights
+
       - name: L1_prefiring_sf
         config:
           variations: All
+        constraint:
+          era.name: '201*'
+          sample_type: MC
+
+
+      - name: puid_sf
+        config:
+          working_point: "M"
         constraint:
           era.name: '201*'
           sample_type: MC
@@ -121,13 +136,28 @@ regions:
   - name: Signal312
     # forbid_data: true
     objects: *common_objects
-    corrections: *common_corrections
+    # corrections: *common_corrections
     preselection:
       - <<: *common_preselection
       - name: signal_hlt
+      # - name: jet_veto_maps
     selection: 
       - name: general_selection
       - name: partial_signal312_selection
+    histograms: *common_signal
+    weights: *common_weights
+
+  - name: Signal313
+    # forbid_data: true
+    objects: *common_objects
+    # corrections: *common_corrections
+    preselection:
+      - <<: *common_preselection
+      - name: signal_hlt
+      # - name: jet_veto_maps
+    selection: 
+      - name: general_selection
+      - name: partial_signal313_selection
     histograms: *common_signal
     weights: *common_weights
 

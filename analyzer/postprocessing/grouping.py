@@ -226,7 +226,6 @@ class NormalizeSystematicByProjection(BaseModel):
             for idxs in it.product(
                 *((hist.underflow, *range(len(x)), hist.overflow) for x in proj_axes)
             ):
-                # print(i, pa.bin(i))
                 d = dict(zip((x.name for x in proj_axes), idxs))
                 hu = (
                     hold[
@@ -257,7 +256,6 @@ class NormalizeSystematicByProjection(BaseModel):
                 h[{**d, self.variation_axis: self.target_name}] = np.stack(
                     [vals, weights], axis=-1
                 )
-
             provenance = copy.deepcopy(ph.provenance)
             ret.append(
                 PackagedHist(

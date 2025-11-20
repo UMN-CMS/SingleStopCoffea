@@ -77,10 +77,8 @@ def getWeightRatio(new_weights, before_weights):
 
 @MODULE_REPO.register(ModuleType.Weight)
 def top_pt_reweighting(events, params, weight_manager):
-
     gp = events.GenPart
     tops = gp[(abs(gp.pdgId) == 6) & gp.hasFlags("isLastCopy")]
-
     weight = np.sqrt(ak.prod(topPtReweightData(tops.pt), axis=1))
     before_weights = weight_manager.weight()
     before_total = ak.sum(before_weights, axis=0)
