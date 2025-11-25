@@ -1,0 +1,34 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".png"
+    cms_text_color: Black
+
+drop_sample_patterns: 
+  # - "*30to50*"
+  # - "*50to80*"
+  # - "*80to120*"
+  # - "*120to170*"
+  # - "*170to300*"
+  # - "*300to470*"
+  # - "*470to600*"
+
+  - "*50to100*"
+  - "*100to200*"
+  # - "*200to300*"
+  # - "*300to500*"
+  # - "*1500to*"
+  # - "*2000to*"
+
+Postprocessing:
+  - name: Plot
+    action: ExtractOtherData
+    scale: log
+    other_names:
+      - trigger_info
+    input: 
+      group_fields: {'dataset.era.name': '*', 'region_name': 'TriggerOnly'}
+      pipeline:  []
+    output_name: "postprocessing/nn_inputs/{dataset.era.name}/{region_name}/nn_inputs.npz"
+    

@@ -1,0 +1,42 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".png"
+    cms_text_color: Black
+
+drop_sample_patterns: 
+  - "*50to80*"
+  - "*80to120*"
+  - "*120to170*"
+  - "*170to300*"
+
+  - "*50to100*"
+  - "*100to200*"
+  - "*200to300*"
+  - "*300to500*"
+
+Postprocessing:
+  - name: Simple 1D Plots
+    action: Histogram1D
+    histogram_names: 
+        - m13_m
+        - m14_m
+        - HT
+    scale: linear
+    plot_configuration:
+      cms_text: "Preliminary\n{region_name}"
+    input: 
+      group_fields: {'dataset.era.name':'*', 'dataset.name':'*', 'region_name':'*'}
+      pipeline:
+        - split_axis_names: ["variation"]
+          pattern:
+            - "*_JER*"
+            - "*_jesSinglePionECA*"
+            - "*central*"
+            # - "*uncorrected*"
+            # - "*unweighted*"
+        - rebin: 2
+        - title_format: "{variation}"
+    output_name: "test_post/plots/{dataset.era.name}/{region_name}/{dataset.name}/{histogram_name}"
+

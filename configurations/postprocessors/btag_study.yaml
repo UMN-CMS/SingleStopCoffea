@@ -1,0 +1,209 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".png"
+    cms_text_color: Black
+
+# num_files: 400
+
+all_oned: &all_oned
+  - uncomp_0p67_mChi
+  - comp_0p67_mChi
+  - uncomp_0p67_mStop
+  - comp_0p67_mStop
+  - m14_m
+  - m13_m
+  - h_njet
+  - HT
+  - pt_1
+  - pt_2
+
+drop_sample_patterns: 
+
+  - "*30to50*"
+  - "*50to80*"
+  # - "*80to120*"
+  # - "*120to170*"
+  # - "*170to300*"
+  # - "*300to470*"
+  # - "*470to600*"
+
+  - "*50to100*"
+  - "*100to200*"
+  # - "*200to300*"
+  # - "*300to500*"
+
+Postprocessing:
+
+  # - name: Plot
+  #   action: RatioPlot 
+  #   histogram_names:
+  #     - HT
+  #     - pt_1
+  #   normalize: True
+  #   scale: log
+  # 
+  # 
+  #   style_set:
+  #     - pattern:
+  #         dataset.name: 'data*'
+  #       style:
+  #         plottype: errorbar
+  #         color: black
+  #         linestyle: null
+  #         marker: 'o'
+  # 
+  #     - pattern:
+  #         dataset.name: 'qcd*'
+  #       style:
+  #         plottype: step
+  #         color: "#5790fc"
+  # 
+  #   numerator: 
+  #     group_fields: {'dataset.name': 'data*', 'dataset.era.name': '*', 'region_name': 'Control'}
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"central"}
+  #       - title_format: "{dataset.title}"
+  # 
+  #   denominator: 
+  #     group_fields:
+  #       dataset.name:
+  #           - 'qcd*'
+  #           - 'tt*'
+  #       dataset.era.name: '*'
+  #       region_name: 'Control'
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"central"}
+  #       - title_format: "MC"
+  #       - merge_fields: null
+  #           
+  #   match_fields: ['dataset.era.name' ,'region_name']
+  #   output_name: "postprocessing/plots/ratios/{dataset.era.name}/{dataset.name}/{region_name}/{dataset.era.name}_{dataset.name}_{histogram_name}"
+  # 
+  # - name: CutPlot
+  #   action: RatioPlot 
+  #   histogram_names:
+  #     - HT
+  #   normalize: true
+  #   scale: log
+  # 
+  # 
+  #   style_set:
+  #     - pattern:
+  #         dataset.name: 'data*'
+  #       style:
+  #         plottype: errorbar
+  #         color: black
+  #         linestyle: null
+  #         marker: 'o'
+  # 
+  #     - pattern:
+  #         dataset.name: 'qcd*'
+  #       style:
+  #         plottype: step
+  #         color: "#5790fc"
+  # 
+  #   numerator: 
+  #     group_fields: {'dataset.name': 'data*', 'dataset.era.name': '*', 'region_name': 'Control'}
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"central"}
+  #       - slices:
+  #           - [1050, null]
+  #       - title_format: "{dataset.title} {dataset.era.name}"
+  # 
+  #   denominator: 
+  #     group_fields: 
+  #       dataset.name:
+  #           - 'qcd*'
+  #           - 'tt*'
+  #       dataset.era.name: '*'
+  #       region_name: 'Control'
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"central"}
+  #       - slices:
+  #           - [1050, null]
+  #       - title_format: "{dataset.title} {dataset.era.name}"
+  #   match_fields: ['dataset.era.name' ,'region_name']
+  #   output_name: "postprocessing/plots/ratios/{dataset.era.name}/{dataset.name}/{region_name}/{dataset.era.name}_{dataset.name}_plateau_{histogram_name}"
+  
+  - name: CutPlot
+    action: RatioPlot 
+    histogram_names:
+      - L_nb
+      - M_nb
+      - T_nb
+    normalize: true
+  
+  
+    style_set:
+      - pattern:
+          dataset.name: 'data*'
+        style:
+          plottype: errorbar
+          color: black
+          linestyle: null
+          marker: 'o'
+  
+      - pattern:
+          dataset.name: 'qcd*'
+        style:
+          plottype: step
+          color: "#5790fc"
+  
+    numerator: 
+      group_fields: {'dataset.name': 'data*', 'dataset.era.name': '*', 'region_name': 'Control'}
+      pipeline: 
+        - select_axes_values: {"variation":"central"}
+        - title_format: "{dataset.title} {dataset.era.name}"
+  
+    denominator: 
+      group_fields:
+        dataset.name:
+            - 'qcd*'
+            - 'tt*'
+        dataset.era.name: '*'
+        region_name: 'Control'
+      pipeline: 
+        - select_axes_values: {"variation":"central"}
+        - merge_fields: null
+        - title_format: "MC"
+    match_fields: ['dataset.era.name' ,'region_name']
+    output_name: "postprocessing/plots/ratios/{dataset.era.name}/{dataset.name}/{region_name}/{dataset.era.name}_{dataset.name}_{histogram_name}"
+  
+  # - name: CutPlot
+  #   action: RatioPlot 
+  #   histogram_names:
+  #     - L_nb
+  #     - M_nb
+  #     - T_nb
+  #   # normalize: true
+  # 
+  #   style_set:
+  #     - pattern:
+  #         dataset.name: 'data*'
+  #       style:
+  #         plottype: errorbar
+  #         color: black
+  #         linestyle: null
+  #         marker: 'o'
+  # 
+  #     - pattern:
+  #         dataset.name: 'qcd*'
+  #       style:
+  #         plottype: step
+  #         color: "#5790fc"
+  # 
+  #   numerator: 
+  #     group_fields: {'dataset.name': 'qcd*', 'dataset.era.name': '*', 'region_name': 'Control'}
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"unweighted"}
+  #       - title_format: "{dataset.title} {dataset.era.name} no BSF"
+  # 
+  #   denominator: 
+  #     group_fields: {'dataset.name': 'qcd*', 'dataset.era.name': '*', 'region_name': 'Control'}
+  #     pipeline: 
+  #       - select_axes_values: {"variation":"central"}
+  #       - title_format: "{dataset.title} {dataset.era.name} with BSF"
+  #   match_fields: ['dataset.era.name' ,'region_name']
+  #   output_name: "postprocessing/plots/ratios/{dataset.era.name}/{dataset.name}/{region_name}/comparison_{dataset.era.name}_{dataset.name}_plateau_{histogram_name}"

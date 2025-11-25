@@ -1,0 +1,147 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".png"
+    cms_text_color: Black
+
+drop_sample_patterns: []
+  # - "*30to50*"
+  # - "*50to80*"
+  # - "*80to120*"
+  # - "*120to170*"
+  # - "*170to300*"
+  # - "*300to470*"
+  # - "*470to600*"
+
+  # - "*50to100*"
+  # - "*100to200*"
+  # - "*200to300*"
+  # - "*300to500*"
+  # - "*1500to*"
+  # - "*2000to*"
+
+Postprocessing:
+  - name: Plot
+    action: RatioPlot 
+    scale: log
+    histogram_names:
+      - HT
+      - L_nb
+      - h_njet
+      - m13_m
+      - m14_m
+  
+    denominator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', 'dataset.sample_type': 'MC'}
+      pipeline: 
+        - select_axes_values: {"variation": "unweighted"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+    numerator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', "dataset.sample_type": Data}
+      pipeline: 
+        - select_axes_values: {"variation": "central"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+        - merge_fields: null
+      
+    match_fields: ['dataset.era.name' ,'region_name']
+    output_name: "postprocessing/with_eff/plots/{dataset.era.name}/{region_name}/{region_name}_raw_{histogram_name}"
+  
+  - name: Plot
+    action: RatioPlot 
+    scale: log
+    histogram_names:
+      - HT
+      - L_nb
+      - h_njet
+      - m13_m
+      - m14_m
+  
+    denominator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', 'dataset.sample_type': 'MC'}
+      pipeline: 
+        - select_axes_values: {"variation": "central"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+    numerator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', "dataset.sample_type": Data}
+      pipeline: 
+        - select_axes_values: {"variation": "central"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+        - merge_fields: null
+      
+    match_fields: ['dataset.era.name' ,'region_name']
+    output_name: "postprocessing/with_eff/plots/{dataset.era.name}/{region_name}/{region_name}_central_{histogram_name}"
+    
+    
+  - name: Plot
+    action: RatioPlot 
+    scale: log
+    histogram_names:
+      - HT
+      - L_nb
+      - h_njet
+      - m13_m
+      - m14_m
+  
+    denominator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', 'dataset.sample_type': 'MC'}
+      pipeline: 
+        - select_axes_values: {"variation": "only_btag_shape_sf"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+    numerator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', "dataset.sample_type": Data}
+      pipeline: 
+        - select_axes_values: {"variation": "central"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+        - merge_fields: null
+      
+    match_fields: ['dataset.era.name' ,'region_name']
+    output_name: "postprocessing/with_eff/plots/{dataset.era.name}/{region_name}/{region_name}_only_bsf_{histogram_name}"
+  
+  
+  - name: Plot
+    action: RatioPlot 
+    scale: log
+    histogram_names:
+      - HT
+      - L_nb
+      - h_njet
+      - m13_m
+      - m14_m
+  
+    numerator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', 'dataset.sample_type': 'Data'}
+      pipeline: 
+        - select_axes_values: {"variation": "central"}
+        - merge_axis_names: [_HT]
+        - title_format: "{dataset.title}"
+        - slices: [[null,3000]]
+        - merge_fields: null
+  
+    denominator: 
+      group_fields: {'dataset.era.name': '*', 'region_name': '*', "dataset.sample_type": MC}
+      pipeline: 
+        - title_format: "{dataset.title}"
+        - projection_axes: [_HT]
+          unweighted_name: unweighted
+          other_name: only_btag_shape_sf
+          target_name: unweighted
+        - merge_axis_names: [_HT]
+        - select_axes_values: {"variation":"central"}
+        - slices: [[null,3000]]
+      
+    match_fields: ['dataset.era.name' ,'region_name']
+    output_name: "postprocessing/with_eff/plots/{dataset.era.name}/{region_name}/{region_name}_ht_reweighted_bsf_{dataset.era.name}_{histogram_name}"
+  
