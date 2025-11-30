@@ -1,5 +1,6 @@
 import itertools as it
 import awkward as ak
+from rich import print
 import dask
 import logging
 from dataclasses import dataclass
@@ -219,7 +220,16 @@ class Analyzer:
                     events, params, [x[0] for x in items], sel, preselection_set
                 )
             )
-        return results.MultiSectorResult(ret)
+        ret =  results.MultiSectorResult(ret)
+        for sector_result in ret.values():
+            for k in sector_result.base_result.other_data:
+                v = sector_result.base_result.other_data[k]
+                if isinstance(v, ak.Array):
+                    sector_result.base_result.other_data[k] = ak.to_numpy(v)
+                else:
+                    sector_result.base_result.other_data[k] = v
+        return ret
+
 
     def runDelayed(self, *args, **kwargs):
         return dask.delayed(self.run)(*args, **kwargs)
@@ -268,14 +278,6 @@ def runAnalyzerChunks(
                 entry_stop=chunks[f]["steps"][0][1],
             ).events()
             result = analyzer.run(events, params)
-            for sector_result in result.values():
-                for k in sector_result.base_result.other_data:
-                    v = sector_result.base_result.other_data[k]
-                    if isinstance(v, ak.Array):
-                        sector_result.base_result.other_data[k] = ak.to_numpy(v)
-                    else:
-                        sector_result.base_result.other_data[k] = v
-
             return (fileset, result)
 
     except Exception as e:

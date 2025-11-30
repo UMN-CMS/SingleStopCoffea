@@ -3,7 +3,9 @@
 name: Complete
 # Samples and in which regions they should be processed
 datasets:
-  - dataset: 'data_singlemuon_2018'
+  - dataset: 'data_singlemuon_*'
+    regions: [ TriggerOnly]
+  - dataset: 'data_muon_*'
     regions: [ TriggerOnly]
 
 regions:
