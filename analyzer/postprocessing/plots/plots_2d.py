@@ -1,7 +1,9 @@
+from unicodedata import name
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-
+import matplotlib.cm
+import decimal
 
 from analyzer.postprocessing.style import Styler
 
@@ -130,5 +132,49 @@ def plot2DSigBkg(
         text_color="white",
         plot_configuration=plot_configuration,
     )
+    saveFig(fig, output_path, extension=plot_configuration.image_type)
+    plt.close(fig)
+
+def plot2DSignificance(
+        bkg_hist,
+        sig_hists,
+        output_path,
+        style_set,
+        plot_configuration=None,
+        color_scale="linear",
+        override_axis_labels=None,
+):
+    
+    override_axis_labels = override_axis_labels or {}
+    pc = plot_configuration or PlotConfiguration()
+    styler = Styler(style_set)
+    matplotlib.use("Agg")
+    loadStyles()
+    fig, ax = plt.subplots()
+    styler.getStyle(bkg_hist.sector_parameters)
+    background_hist = bkg_hist.histogram
+    B = background_hist.values()
+    fixBadLabels(background_hist)
+    for i in sig_hists:
+        signal_hist = i.histogram
+        S = signal_hist.values()
+
+        per_bin_sigs = np.sqrt(2*((S+B)*np.log(1+(S/B)) - S)) 
+        total_significance = decimal.Decimal(np.sqrt(np.nansum(per_bin_sigs**2)))
+        name_split = str.split(i.sector_parameters.dataset.name,'_')
+        chargino_mass = int(name_split[-1])
+        stop_mass = int(name_split[-2])
+
+        #plot the total significance value in the mass plane
+        sc = ax.scatter(stop_mass, chargino_mass, c=float(total_significance), s=float(total_significance)*5, vmin=0, vmax=80, cmap='viridis')
+        ax.text(stop_mass, chargino_mass+15, f"{total_significance:.2f}", color='black', ha='center', va='bottom', fontsize=12)
+
+    
+    #colorbar normalized to total significance 
+    cbar = fig.colorbar(sc, ax=ax)
+    cbar.set_label('Total Significance')
+    
+    #add y=x line
+
     saveFig(fig, output_path, extension=plot_configuration.image_type)
     plt.close(fig)

@@ -23,7 +23,7 @@ from .grouping import (
 )
 from .plots.export_hist import exportHist
 from .plots.plots_1d import PlotConfiguration, plotOne, plotRatio, plotStrCat
-from .plots.plots_2d import plot2D, plot2DSigBkg
+from .plots.plots_2d import plot2D, plot2DSigBkg, plot2DSignificance
 from .registry import registerPostprocessor
 from .split_histogram import Mode
 from .style import Style, StyleSet
@@ -533,6 +533,80 @@ class Histogram2DStack(BasePostprocessor, pyd.BaseModel):
                             x.sector_params
                             for x in [*prim_group.sectors, *sig_group.sectors]
                         ],
+                    )
+                )
+        return ret, items
+    
+@registerPostprocessor
+class Histogram2DSignificance(BasePostprocessor, pyd.BaseModel):
+    histogram_names: list[str]
+    background: SectorGroupSpec
+    signal: SectorGroupSpec
+    to_process: SectorSpec
+    style_set: str | StyleSet
+    output_name: str
+    match_fields: list[str]
+    scale: Literal["log", "linear"] = "linear"
+    match_fields: list[str]
+    axis_options: dict[str, Mode | str | int] | None = None
+    normalize: bool = False
+    override_axis_labels: dict[Literal["x", "y"], str] | None = None
+    plot_configuration: PlotConfiguration | None = None
+
+    def getNeededHistograms(self):
+        return self.histogram_names
+
+    def getExe(self, results):
+        results = [x for x in results if self.to_process.passes(x.sector_params)]
+        gnums = createSectorGroups(results, self.signal)
+        gdens = createSectorGroups(results, self.background)
+        ret, items = [], []
+        for histogram in self.histogram_names:
+            for den_group in gdens:
+                try:
+                    num_group = list(
+                        x for x in gnums if groupsMatch(den_group, x, self.match_fields)
+                    )
+                    if len(num_group) != 1:
+                        raise KeyError(f"Too many groups")
+                    num_group = next(iter(num_group))
+                except StopIteration:
+                    raise KeyError(f"Could not find group")
+
+                # print(
+                #     f"Denominator group\n{den_group}\n matched with numerator group\n{num_group}"
+                # )
+
+                dh = den_group.histograms(histogram)
+                if not dh:
+                    continue
+                if len(dh) != 1:
+                    raise RuntimeError
+                output = doFormatting(
+                    self.output_name, den_group.all_parameters, histogram_name=histogram
+                )
+                ret.append(
+                    ft.partial(
+                        plot2DSignificance,
+                        dh[0],
+                        num_group.histograms(histogram),
+                        output,
+                        self.style_set,
+                        plot_configuration=self.plot_configuration,
+                        override_axis_labels=self.override_axis_labels,
+                    )
+                )
+                items.append(
+                    PostprocessCatalogueEntry(
+                        processor_name=self.name,
+                        identifier=histogram,
+                        path=output,
+                        sector_group=den_group,
+                        sector_params=[
+                            x.sector_params
+                            for x in [*den_group.sectors, *num_group.sectors]
+                        ],
+                        axis_parameters=dh[0].axis_parameters
                     )
                 )
         return ret, items

@@ -66,51 +66,51 @@ Postprocessing:
   #  output_name: "postprocessing/dijet_exo_22_026/plots/{region_name}/{histogram_name}"
   #  #normalize: true
 
- - name: Simple Ratio 
-   action: RatioPlot
-   histogram_names: *all_oned
-   match_fields: ['dataset.era.name', 'region_name']
-   to_process:
-     region_name: 'Signal'
-   scale: log
- 
-   ratio_ylim: [0,60]
- 
-   denominator:
-     to_process:
-       sample_name: qcd*
-     fields: ['dataset.era.name', 'region_name']
-     axis_options: {variation: central, NJets: 2}
-     style:
-       plot_type: step
-       color: red
-       linestyle: dashed
-       linewidth: 2
-     rescale: 
-       - sector_spec:
-           sample_spec: 
-               name: 'qcd*'
-         scale: 0.0001
-     #    #scale: 0.0025 
-   numerator:
-     fields: ['dataset.era.name', 'region_name']
-     to_process:
-       sample_name: signal*
-     axis_options: {variation: central, NJets: 2}
-     style:
-       plot_type: step
-       color: blue
-       linewidth: 2
-     rescale: 
-       - sector_spec:
-           sample_spec: 
-               name: 'signal*'
-         scale: 0.49
-   #normalize: true
-   plot_configuration:
-     image_type: ".pdf"
-     cms_text: "Preliminary"
-   output_name: "postprocessing/dijet_sept_2025/plots/{region_name}/{histogram_name}"
+# - name: Simple Ratio 
+#   action: RatioPlot
+#   histogram_names: *all_oned
+#   match_fields: ['dataset.era.name', 'region_name']
+#   to_process:
+#     region_name: 'Signal'
+#   scale: log
+# 
+#   ratio_ylim: [0,60]
+# 
+#   denominator:
+#     to_process:
+#       sample_name: qcd*
+#     fields: ['dataset.era.name', 'region_name']
+#     axis_options: {variation: central, NJets: 2}
+#     style:
+#       plot_type: step
+#       color: red
+#       linestyle: dashed
+#       linewidth: 2
+#     rescale: 
+#       - sector_spec:
+#           sample_spec: 
+#               name: 'qcd*'
+#         scale: 0.0001
+#     #    #scale: 0.0025 
+#   numerator:
+#     fields: ['dataset.era.name', 'region_name']
+#     to_process:
+#       sample_name: signal*
+#     axis_options: {variation: central, NJets: 2}
+#     style:
+#       plot_type: step
+#       color: blue
+#       linewidth: 2
+#     rescale: 
+#       - sector_spec:
+#           sample_spec: 
+#               name: 'signal*'
+#         scale: 0.49
+#   #normalize: true
+#   plot_configuration:
+#     image_type: ".pdf"
+#     cms_text: "Preliminary"
+#   output_name: "postprocessing/dijet_sept_2025/plots/{region_name}/{histogram_name}"
 
 #  - name: Cutflow
 #    action: PlotCutflow
@@ -172,3 +172,38 @@ Postprocessing:
   #     fields: ['dataset.name', 'dataset.era.name', 'region_name']
   #     axis_options: {variation: central}
   #   output_name: "postprocessing/export_hists/{dataset.name}/{region_name}/{histogram_name}.pkl"
+
+- name: SigPlot
+  action: Histogram2DSignificance
+  histogram_names: 
+    - dijet_mass
+  match_fields: ['dataset.era.name', 'region_name']
+  to_process:
+    region_name: 'Signal'
+ 
+  background:
+    to_process:
+      sample_name: qcd*
+    fields: ['dataset.era.name', 'region_name']
+    axis_options: {variation: central, NJets: 2}
+    rescale: 
+      - sector_spec:
+          sample_spec: 
+              name: 'qcd*'
+        scale: 0.0001
+    #    #scale: 0.0025 
+  signal:
+    fields: ['dataset.era.name', 'region_name']
+    to_process:
+      sample_name: signal*
+    axis_options: {variation: central, NJets: 2}
+    rescale: 
+      - sector_spec:
+          sample_spec: 
+              name: 'signal*'
+        scale: 0.49
+  #normalize: true
+  plot_configuration:
+    image_type: ".pdf"
+    cms_text: "Preliminary"
+  output_name: "postprocessing/dijet_dec_signif/plots/{region_name}/{histogram_name}_significance_mass_plane"
