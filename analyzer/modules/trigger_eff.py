@@ -37,6 +37,11 @@ def trigger_eff_objects(columns, params):
     fat_jets = columns.get("FatJet")
     good_fj_mask = (fat_jets.pt > 175) & (abs(fat_jets.eta) < 2.4)
 
+    good_fatjets = fat_jets[good_fj_mask]
+    near_muon = good_fatjets.nearest(good_muons, threshold=0.8)
+    good_fatjets = good_fatjets[ak.is_none(near_muon, axis=1)]
+
+
     era_info = params.dataset.era
     # jet_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
     # if (
@@ -46,7 +51,6 @@ def trigger_eff_objects(columns, params):
     # ):
     #    good_fj_mask = good_fj_mask & (fat_jets.msoftdrop > 50)
 
-    good_fatjets = fat_jets[good_fj_mask]
     # fatnear_muon = good_fatjets.nearest(good_muons, threshold=0.4)
     # good_fatjets = good_fatjets[ak.is_none(fatnear_muon, axis=1)]
 

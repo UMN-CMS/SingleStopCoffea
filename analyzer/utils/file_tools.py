@@ -1,4 +1,5 @@
 import collections.abc
+import time
 import logging
 import pickle
 import shutil
@@ -122,7 +123,10 @@ def compressDirectory(
     )
     logger.info(f"Created analyzer archive at {package_path}")
     shutil.copy(package_path, output)
-    shutil.rmtree(temp)
+    try:
+        shutil.rmtree(temp)
+    except OSError:
+        pass
     # final_path = temp_path / f"{name}.{archive_type}"
     return output
 
