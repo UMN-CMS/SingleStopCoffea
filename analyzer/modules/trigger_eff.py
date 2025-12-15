@@ -41,7 +41,6 @@ def trigger_eff_objects(columns, params):
     near_muon = good_fatjets.nearest(good_muons, threshold=0.8)
     good_fatjets = good_fatjets[ak.is_none(near_muon, axis=1)]
 
-
     era_info = params.dataset.era
     # jet_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
     # if (
@@ -93,9 +92,13 @@ def ht_trig_eff_selection(events, params, selector):
 def singlejet_trig_eff_selection(events, params, selector):
     one_muon = ak.num(events.good_muons) == 1
     no_electron = ak.num(events.good_electrons) == 0
+
+    good_fatjets = events.good_fatjets
+    padded_fatjets = ak.pad_none(good_fatjets, 1, axis=1)
     selector.add("one_muon", one_muon)
     selector.add("no_electron", no_electron)
     selector.add("greater_one_fatjet", ak.num(events.good_fatjets) > 0)
+    # selector.add("sd_40", padded_fatjets[0].msoftdrop > 40)
 
 
 @MODULE_REPO.register(ModuleType.Categorization)
@@ -126,14 +129,16 @@ def pass_SingleJet_category(events, params, categories):
 def save_trigger_info(events, params):
     era_info = params.dataset.era
     jet_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
+    jet_trigger_no_trim_name = era_info.trigger_names["AK8SingleJetPtNoTrim"]
     ht_trigger_name = era_info.trigger_names["HT"]
     cols = ak.concatenate(
         (
-            events.HT[:,np.newaxis],
-            events.good_fatjets[:, 0].pt[:,np.newaxis],
-            events.good_fatjets[:, 0].msoftdrop[:,np.newaxis],
-            events.HLT[ht_trigger_name][:,np.newaxis],
-            events.HLT[jet_trigger_name][:,np.newaxis],
+            events.HT[:, np.newaxis],
+            events.good_fatjets[:, 0].pt[:, np.newaxis],
+            events.good_fatjets[:, 0].msoftdrop[:, np.newaxis],
+            events.HLT[ht_trigger_name][:, np.newaxis],
+            events.HLT[jet_trigger_name][:, np.newaxis],
+            events.HLT[jet_trigger_no_trim_name][:, np.newaxis],
         ),
         axis=1,
     )
