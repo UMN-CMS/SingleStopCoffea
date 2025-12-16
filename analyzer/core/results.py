@@ -27,7 +27,7 @@ class BaseResult(pyd.BaseModel):
     histograms: dict[str, anh.HistogramCollection] = pyd.Field(default_factory=dict)
     other_data: dict[str, Any] = pyd.Field(default_factory=dict)
     selection_flow: ans.SelectionFlow | None = None
-    post_sel_weight_flow: dict[str, float] | None = None
+    post_sel_weight_flow: dict[str, Any] | None = None
 
     def includeOnly(self, histograms):
         self.histograms = {x: y for x, y in self.histograms.items() if x in histograms}
@@ -62,7 +62,7 @@ class BaseResult(pyd.BaseModel):
             other_data=self.other_data,
             selection_flow=self.selection_flow,  # .scaled(scale),
             post_sel_weight_flow=(
-                {x: y * scale for x, y in self.post_sel_weight_flow}
+                {x: y * scale for x, y in self.post_sel_weight_flow.items()}
                 if self.post_sel_weight_flow is not None
                 else None
             ),

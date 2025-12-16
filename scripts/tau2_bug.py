@@ -3,7 +3,7 @@ import uproot
 import pprint
 #from .preprocessing_tools import preprocess
 
-fname = "root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-1000_100.root"
+fname = "root://cmseos.fnal.gov//store/user/dmahon/condor/RPVSingleStopMC/NANOAOD-ALL/NANOAOD-2000_100.root"
 
 events = NanoEventsFactory.from_root(
     {fname: "Events"},
@@ -23,12 +23,12 @@ for key in uproot_fatjet.keys():
     uproot_fatjet[key] = uproot_fatjet[key][0]
 
 print("Result using Coffea")
-print('Good, using ["tau2"]:', tau2_coffea_good, '\nBad, using .tau2:', tau2_coffea_bad)
+print('Good, using jets["tau2"]:', tau2_coffea_good, '\nBad, using jets.tau2:', tau2_coffea_bad)
 print('vs')
 print("Result using Uproot")
 print(tau2_uproot)
-raise Exception()
-print("Coffea FatJet:")
+
+print("Coffea FatJet (.show()):")
 coffea_fatjet[0].show(limit_rows=70)
 print('vs')
 print("Uproot FatJet:")
