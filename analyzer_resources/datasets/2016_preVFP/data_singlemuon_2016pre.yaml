@@ -3,12 +3,12 @@
   sample_type: Data
   era: 2016_preVFP
   samples:
-    - name: Run2016B-ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2
-      n_events: 2789243
-      cms_dataset_regex: /SingleMuon/Run2016B-ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/NANOAOD
-      files:
-        - root://cmsxrootd.fnal.gov//store/data/Run2016B/SingleMuon/NANOAOD/ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/2520000/BB6DC570-2223-7B43-BB87-2526FB1639B4.root
-        - root://cmsxrootd.fnal.gov//store/data/Run2016B/SingleMuon/NANOAOD/ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/40000/136B48F7-CA92-704E-A81A-BD0F4D9C75F4.root
+    # - name: Run2016B-ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2
+    #   n_events: 2789243
+    #   cms_dataset_regex: /SingleMuon/Run2016B-ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/NANOAOD
+    #   files:
+    #     - root://cmsxrootd.fnal.gov//store/data/Run2016B/SingleMuon/NANOAOD/ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/2520000/BB6DC570-2223-7B43-BB87-2526FB1639B4.root
+    #     - root://cmsxrootd.fnal.gov//store/data/Run2016B/SingleMuon/NANOAOD/ver1_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/40000/136B48F7-CA92-704E-A81A-BD0F4D9C75F4.root
     - name: Run2016B-ver2_HIPM_UL2016_MiniAODv2_NanoAODv9-v2
       n_events: 158145722
       cms_dataset_regex: /SingleMuon/Run2016B-ver2_HIPM_UL2016_MiniAODv2_NanoAODv9-v2/NANOAOD

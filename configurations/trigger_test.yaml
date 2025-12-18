@@ -3,9 +3,9 @@
 name: Complete
 # Samples and in which regions they should be processed
 datasets:
-  - dataset: 'data_singlemuon_*2018*'
+  - dataset: 'data_singlemuon_*'
     regions: [ TriggerOnly]
-  - dataset: 'data_muon_*2018*'
+  - dataset: 'data_muon_*'
     regions: [ TriggerOnly]
 
 regions:
@@ -13,6 +13,7 @@ regions:
     preselection:
       - name: golden_lumi_filter
       - name: iso_muon
+      - name: noise_filters
     selection:
       - name: singlejet_trig_eff_selection
     objects:

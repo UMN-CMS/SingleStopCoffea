@@ -112,6 +112,13 @@ def signal_hlt_no_trim(events, params, selector):
 
 
 @MODULE_REPO.register(ModuleType.Selection)
+def signal_hlt_ht_only(events, params, selector):
+    era_info = params.dataset.era
+    ht_trigger_name = era_info.trigger_names["HT"]
+    selector.add(f"HLT_HT", events.HLT[ht_trigger_name])
+
+
+@MODULE_REPO.register(ModuleType.Selection)
 def hlt_HT(events, params, selector):
     era_info = params.dataset.era
     ht_trigger_name = era_info.trigger_names["HT"]
