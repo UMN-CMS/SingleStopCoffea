@@ -54,8 +54,8 @@ def jetmap_vetoed_jets(columns, params, jet_in, jet_out, veto_type="jetvetomap")
         & ((j.chEmEF + j.neEmEF) < 0.9)
     ]
     vetoes = eval_veto.evaluate(veto_type, j.eta, j.phi)
-    good_jets = j[(vetoes == 0)]
-
+    good_jets = ak.mask(j, vetoes == 0)
+    good_jets = ak.drop_none(good_jets, axis=1)
     columns.add(jet_out, good_jets, shape_dependent=True)
 
 @MODULE_REPO.register(ModuleType.Producer)

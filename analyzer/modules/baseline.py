@@ -200,7 +200,7 @@ def zero_loose_b_category(events, params, categories):
 def njet_category(events, params, categories):
     categories.add(
         name=f"NJets",
-        axis=hist.axis.Integer(0, 8, underflow=True, overflow=True, name="NJets"),
+        axis=hist.axis.Integer(4,7,underflow=True, overflow=True, name="NJets"),
         values=ak.num(events.good_jets, axis=1),
     )
 
@@ -209,7 +209,7 @@ def njet_category(events, params, categories):
 def ht_category(events, params, categories):
     categories.add(
         name=f"_HT",
-        axis=hist.axis.Regular(50, 0, 3000, underflow=True, overflow=True, name="_HT"),
+        axis=hist.axis.Regular(25, 0, 3000, underflow=True, overflow=True, name="_HT"),
         values=events.HT,
     )
 
@@ -264,6 +264,7 @@ def general_selection(events, params, selector):
     good_jets = events.good_jets
     good_muons = events.good_muons
     good_electrons = events.good_electrons
+    good_fatjets = events.good_fatjets
     filled_jets = ak.pad_none(good_jets, 4, axis=1)
     top_two_dr = ak.fill_none(filled_jets[:, 0].delta_r(filled_jets[:, 1]), False)
 
@@ -275,6 +276,9 @@ def general_selection(events, params, selector):
 
     passes_0Lep = (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)
     selector.add("0Lep", passes_0Lep)
+
+    # good_fatjets = events.good_fatjets
+    # selector.add("MinOneFatJet", ak.num(good_fatjets) > 0)
 
 
 @MODULE_REPO.register(ModuleType.Selection)

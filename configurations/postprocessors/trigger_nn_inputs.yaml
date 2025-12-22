@@ -30,5 +30,5 @@ Postprocessing:
     input: 
       group_fields: {'dataset.era.name': '*', 'region_name': 'TriggerOnly'}
       pipeline:  []
-    output_name: "postprocessing/nn_inputs_no_trim/{dataset.era.name}_{region_name}_nn_inputs.npz"
+    output_name: "postprocessing/nn_inputs_noise_filter/{dataset.era.name}_{region_name}_nn_inputs.npz"
     

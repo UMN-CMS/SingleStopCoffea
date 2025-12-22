@@ -88,14 +88,15 @@ class BNNEnsemble:
 def trigger_bnn(events, params, weight_manager, base_path=""):
     base_path = Path(base_path)
     era = params.dataset.era.name
-    path = base_path / f"{era}.json"
+    path = base_path / f"{era}_mixed.json"
     bnn = BNNEnsemble.fromFile(path)
 
     ht = events.HT
-    fj = events.FatJet
+    fj = events.good_fatjets
+
     fjpt = fj[:, 0].pt
-    fjmsd = fj[:, 0].msoftdrop
-    out = bnn(ak.concatenate([x[:, np.newaxis] for x in [ht, fjpt, fjmsd]], axis=1))
+    # fjmsd = fj[:, 0].msoftdrop
+    out = bnn(ak.concatenate([x[:, np.newaxis] for x in [ht, fjpt]], axis=1))
     central, down, up = out[ 0], out[ 1], out[ 2]
     weight_manager.add(f"trigger_weight", central, {"bnn_unc": (up, down)})
     return
