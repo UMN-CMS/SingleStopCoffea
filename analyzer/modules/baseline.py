@@ -93,7 +93,7 @@ def signal_hlt(events, params, selector):
     #     selector.add(f"HLT_HT | HLT_AK8", pass_ht | pass_ak8)
     # else:
     ht_trigger_name = era_info.trigger_names["HT"]
-    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPt"]
+    ak8_trigger_name = era_info.trigger_names["AK8SingleJetPtNoTrim"]
     selector.add(
         f"HLT_HT | HLT_AK8",
         events.HLT[ht_trigger_name] | events.HLT[ak8_trigger_name],

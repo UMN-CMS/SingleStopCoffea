@@ -20,3 +20,4 @@ def xsec_weight(events, params, weight_manager):
 @MODULE_REPO.register(ModuleType.Weight)
 def lumi_weight(events, params, weight_manager):
     weight_manager.add("lumi", ak.ones_like(events.run) * params["lumi"])
+

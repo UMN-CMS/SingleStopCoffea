@@ -37,7 +37,6 @@ datasets:
   #   regions: [SingleLepHighPtCR312, SingleLepHighPtCR313]
   
 
-
   - dataset: 'data_JetHT*2018*'
     regions: [ Control]
   - dataset: 'qcd_inclusive*2018*'
@@ -46,6 +45,10 @@ datasets:
     regions: [Signal312, Signal313,Control, ControlNoBNN]
   - dataset: 'wjetsqq*2018*'
     regions: [Signal312, Signal313, Control, ControlNoBNN]
+  - dataset: 'signal_2018_312_*0'
+    regions: [Signal312]
+  - dataset: 'signal_2018_313_*0'
+    regions: [Signal313]
 
   # - dataset: 'qcd_inclusive*'
   #   regions: [ TriggerOnly]
@@ -130,7 +133,7 @@ executors:
   imm:
     executor_type: immediate
     step_size: 100000
-    catch_exceptions: False
+    catch_exceptions: True
 
   condor:
     executor_type: condor
@@ -159,8 +162,8 @@ executors:
 execution_config:
 
 file_config:
-  location_priority_regex: [".*FNAL.*", ".*US.*", ".*(DE|IT|CH|FR).*", ".*(T0|T1|T2).*","eos"]
-  # location_priority_regex: [".*(T0|T1|T2).*","eos"]
+  # location_priority_regex: [".*US.*", ".*(DE|IT|CH|FR).*", ".*(T0|T1|T2).*","eos"]
+  location_priority_regex: [".*(T0|T1|T2).*","eos"]
   use_replicas: True
 
 common_items:
