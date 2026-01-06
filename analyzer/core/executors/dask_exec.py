@@ -250,7 +250,7 @@ def runOneTaskDask(
 
 class DaskExecutor(Executor):
     memory: str = "2GB"
-    dashboard_address: str | None = "localhost:8789"
+    dashboard_address: str | None = "localhost:8780"
     schedd_address: str | None = "localhost:12358"
     max_workers: int | None = 2
     min_workers: int | None = 1
@@ -374,7 +374,7 @@ class LPCCondorDask(DaskExecutor):
             defaults = yaml.safe_load(f)
             dask.config.update(dask.config.config, defaults, priority="new")
         apptainer_container = "/".join(
-            Path(os.environ["APPTAINER_CONTAINER"]).parts[-2:]
+            Path(os.environ["APPTAINER_CONTAINER"]).parts
         )
         Path(os.environ.get("APPTAINER_WORKING_DIR", ".")).resolve()
 

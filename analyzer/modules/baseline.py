@@ -237,28 +237,23 @@ def dijet_selection_exo_22_026(events, params, selector):
 @MODULE_REPO.register(ModuleType.Selection)
 def dijet_selection(events, params, selector):
     good_fat_jets = events.good_fat_jets
-    #good_sub_jets = events.good_sub_jets
-    passes_njets = (ak.num(good_fat_jets) >= 2)
+    good_jets = events.good_jets
+    t_b = events.good_tight_bs
+     
+    passes_njets = (ak.num(good_jets) >= 2) & (ak.num(good_fat_jets) >= 1)
     selector.add("njets", passes_njets)
 
-    #padded_fatjets = ak.pad_none(good_fat_jets, 2, axis=1)
-    sorted_good_fat_jets = good_fat_jets[ak.argsort(good_fat_jets.msoftdrop,ascending=False)]
-    tau32_full_mask = (sorted_good_fat_jets["tau3"]/sorted_good_fat_jets["tau2"]) < 0.7
-    
-    passes_tau32_cut = ak.any(tau32_full_mask, axis=1)
-    selector.add("tau32", passes_tau32_cut)
-
-    #sorted_good_fat_jets_masked = sorted_good_fat_jets[tau32_full_mask]
-    #print(ak.fill_none(ak.pad_none(sorted_good_fat_jets_masked.msoftdrop, 1, axis=1) > 50, False)[:,0])
-    passes_msd_cut = ak.fill_none(ak.pad_none(sorted_good_fat_jets[tau32_full_mask].msoftdrop, 1, axis=1) > 50, False)[:,0]
+    passes_msd_cut = ak.fill_none(ak.pad_none(good_fat_jets.msoftdrop, 1, axis=1)[:,0] > 50, False)
     selector.add("m_SD", passes_msd_cut)
+   
+    passes_b_tag = (ak.num(t_b) >= 1)
+    selector.add("1b", passes_b_tag)
 
     passes_ht_cut = (events.HT > 500)
     selector.add("HT500", passes_ht_cut)
 
     #passes_tau31_cut = ak.any((padded_fatjets.tau3/padded_fatjets.tau1) < 0.4, axis=1)
     #selector.add("tau31", passes_tau31_cut)
-
 
     #sorted_good_fat_jets = padded_fatjets[ak.argsort(padded_fatjets.msoftdrop,ascending=False)]
     #wide_jet0 = sorted_good_fat_jets[:, 0]

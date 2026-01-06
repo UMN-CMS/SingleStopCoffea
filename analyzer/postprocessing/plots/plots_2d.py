@@ -33,20 +33,21 @@ def plot2D(
     if normalize:
         h = h / np.sum(h.values())
     if color_scale == "log":
-        art = h.plot2d(norm=matplotlib.colors.LogNorm(), ax=ax)
+        art = h.plot2d(norm=matplotlib.colors.LogNorm(), ax=ax, label=packaged_hist.title)
     else:
-        art = h.plot2d(ax=ax)
+        art = h.plot2d(ax=ax, label=packaged_hist.title)
     labelAxis(ax, "y", h.axes)
     labelAxis(ax, "x", h.axes)
     sp = packaged_hist.sector_parameters
     addCMSBits(
         ax,
         [sp],
-        extra_text=f"{sp.region_name}\n{packaged_hist.title}",
+        extra_text=f"{sp.region_name}",
         text_color="white",
         plot_configuration=pc,
     )
     saveFig(fig, output_path, extension=pc.image_type)
+    ax.legend(loc='upper right')
     plt.close(fig)
 
 

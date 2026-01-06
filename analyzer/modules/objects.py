@@ -97,16 +97,36 @@ def semilep_objects(columns, params):
 
 @MODULE_REPO.register(ModuleType.Producer)
 def dijet_objects(columns, params):
-
+    logger = getSectorLogger(params)
     fat_jets = columns.get("FatJet")
-    #good_sub_jets = columns.get("SubJet")
-    good_fat_jets = fat_jets[(fat_jets.eta < 2.4)]
-    #good_fat_jets = unsorted_good_fat_jets[ak.argsort(unsorted_good_fat_jets.msoftdrop,ascending=False)]
-    columns.add('good_fat_jets', good_fat_jets)
-    #columns.add('good_sub_jets', good_sub_jets)
+    kinematically_good_fat_jets = fat_jets[(fat_jets.eta < 2.4)]
+    jets = columns.get("Jet")
+    good_jets = jets[(jets.pt > 200) & (abs(jets.eta) < 2.4)]
+
+    bwps = getBTagWP(params)
+    logger.info(f"B-tagging workign points are:\n {bwps}")
+
+    tight_b = makeCutSet(
+        good_jets,
+        good_jets.btagDeepFlavB,
+        [bwps["T"]],
+    )[0]
+
+    padded_t_b = ak.pad_none(tight_b, 1, axis=1)
+    sorted_good_fat_jets = kinematically_good_fat_jets[ak.argsort(kinematically_good_fat_jets.msoftdrop,ascending=False)]
+    tau32_full_mask = (sorted_good_fat_jets["tau3"]/sorted_good_fat_jets["tau2"]) < 0.7
     
-    ht = ak.sum(good_fat_jets.pt, axis=1)
+    good_fat_jets = sorted_good_fat_jets[tau32_full_mask]
+    padded_good_fat_jets = ak.pad_none(good_fat_jets, 1, axis=1)
+    dr = ak.fill_none(padded_good_fat_jets[:,0].delta_r(padded_t_b), -1)
+    passes_dr = (dr > 1.2) 
+    good_t_b = tight_b[passes_dr]
+    ht = ak.sum(good_jets.pt, axis=1)
+
+    columns.add('good_fat_jets', good_fat_jets)
+    columns.add('good_jets', good_jets)
     columns.add('HT', ht)
+    columns.add("good_tight_bs", good_t_b)
 
 
 @MODULE_REPO.register(ModuleType.Producer)
