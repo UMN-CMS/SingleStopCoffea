@@ -23,6 +23,7 @@
     AK8SingleJetPt: AK8PFJet360_TrimMass30
     IsoMuon: IsoMu24
     SingleMuon: Mu50
+    bbww: HLT_PFHT400_SixJet30_DoubleBTagCSV_p056
   
   trigger_plateaus:
     HT: 1050
