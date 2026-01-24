@@ -50,8 +50,8 @@ class SelectionFlow(BaseModel):
 
         return SelectionFlow(
             cutflow=dropDup(self.cutflow + child.cutflow),
-            one_cut=self.one_cut + child.one_cut,
-            n_minus_one=self.n_minus_one + child.n_minus_one,
+            one_cut=child.one_cut,
+            n_minus_one=child.n_minus_one,
         )
 
 

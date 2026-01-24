@@ -231,7 +231,6 @@ class PlotCutflow(BasePostprocessor, pyd.BaseModel):
     grouping: SectorGroupSpec
     output_name: str
     plot_types: list[str] = ["cutflow", "one_cut", "n_minus_one"]
-
     normalize: bool = False
     table_mode: bool = False
     plot_configuration: PlotConfiguration | None = None

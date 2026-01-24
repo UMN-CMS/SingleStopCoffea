@@ -6,7 +6,8 @@ import mplhep
 from analyzer.postprocessing.style import Styler
 from rich import print
 from itertools import islice
-
+from math import log10
+import hist
 
 from ..grouping import doFormatting
 from .annotations import addCMSBits, labelAxis
@@ -47,37 +48,45 @@ def plotOne(
     stack_hists = sorted(stack_hists, key=lambda item: (item.sector_parameters.dataset.name in stackandplot, item.histogram.sum().value))
 
     #Begin stacked plotting
-    hists, labels, styles = [], [], []
+    stack_dict = {}
     for stack_hist in stack_hists:
+        if stack_hist.title == r"$t\\overline{t}$": stack_hist.title = "$t\\overline{t}$"
         h = stack_hist.histogram
+        style = styler.getStyle(stack_hist.sector_parameters)
         fixBadLabels(h)
-        style_dict = styler.getStyle(stack_hist.sector_parameters).get()
-        hists.append(h)
-        styles.append(style_dict)
-        labels.append(stack_hist.title)
+        if stack_hist.title in stack_dict:
+            stack_dict[stack_hist.title]['histogram'] = stack_dict[stack_hist.title]['histogram'] + h
+        else:
+            style_dict = style.get()
+            stack_dict[stack_hist.title] = {}
+            stack_dict[stack_hist.title]['histogram'] = h
+            stack_dict[stack_hist.title]['style'] = style_dict
     all_keys = set()
-    for style in styles:
-        all_keys.update(style.keys())
+    for info in stack_dict.values():
+        style_info = info['style']
+        all_keys.update(style_info.keys())
     style_params = {}
     for key in all_keys:
         values = []
-        for style in styles:
-            defaults = {'alpha': 1, 'line_width': 1.5, 'facecolor': style.get('color'), 'edgecolor': style.get('color'),}
-            val = style.get(key, None)
+        for info in stack_dict.values():
+            style_info = info['style']
+            defaults = {'alpha': 1, 'line_width': 1.5, 'facecolor': style_info.get('color'), 'edgecolor': style_info.get('color'),}
+            val = style_info.get(key, None)
             if val is None:
                 val = defaults.get(key, None)
             values.append(val)
         style_params[key] = values
-    if hists != []:
+    if stack_dict != {}:
         if unit_area:
-            norm = sum([hist.sum() for hist in hists])
-            hists = [hist/norm for hist in hists]
-            print(hists)
+            norm = sum([info['histogram'].sum()['value'] for info in stack_dict.values()])
+            hists = [info['histogram']/norm for info in stack_dict.values()]
+        else:
+            hists = [info['histogram'] for info in stack_dict.values()]
         mplhep.histplot(
             hists,
             ax=ax,
             stack=True,
-            label=labels,
+            label=stack_dict.keys(),
             histtype="fill",
             **style_params
         )
@@ -117,14 +126,19 @@ def plotOne(
         ax.set_ylim(bottom=style.y_min)
     else:
         mplhep.ylow(ax)
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(top=(ymin * (ymax / ymin)**(1 / 0.7) if scale=="log" else ymax*1.5))
     output_path = output_path+"_norm" if unit_area else output_path
     saveFig(fig, output_path, extension=plot_configuration.image_type)
     plt.close(fig)
 
 
 def makeStrHist(data, ax_name=None):
-    import hist
-
+    def labelfix(label):
+        label = label.replace(" preselection", "")
+        label = label.replace("_PFHT400_SixJet30_DoubleBTagCSV_p056", "")
+        return label
+    data = [(labelfix(label), count) for (label, count) in data]
     ax = hist.axis.StrCategory([x[0] for x in data], name=ax_name)
     h = hist.Hist(ax, storage="double")
     h[:] = np.array([x[1] for x in data])
@@ -143,20 +157,27 @@ def __plotStrCatOne(
 ):
     pc = plot_configuration or PlotConfiguration()
     styler = Styler(style_set)
-    print(style_set)
     loadStyles()
     mpl.use("Agg")
-
+    
     fig, ax = plt.subplots()
+    combined_hists = {}
     for sector in sectors:
+        name = sector.sector_params.dataset.title
+        h = makeStrHist(getter(sector), ax_name=ax_name)
+        if name not in combined_hists:
+            combined_hists[name] = (h, sector)
+        else:
+            combined_hists[name] = (combined_hists[name][0] + h, combined_hists[name][1])
+        
+    for name, (h, sector) in combined_hists.items():
+        if normalize: h = h / h[0]
+        if name == r"$t\\overline{t}$": name = "$t\\overline{t}$"
         p = sector.sector_params
         style = styler.getStyle(p)
-        print(style)
-        h = makeStrHist(getter(sector), ax_name=ax_name)
         h.plot1d(
             ax=ax,
-            label=sector.sector_params.dataset.title,
-            density=normalize,
+            label=name,
             histtype=style.plottype,
             **style.get(),
         )
@@ -173,6 +194,13 @@ def __plotStrCatOne(
     ax.legend(loc="upper right")
     mplhep.sort_legend(ax=ax)
     # mplhep.yscale_legend(ax, soft_fail=True)
+    if hasattr(pc, "y_scale"):
+        ax.set_yscale(pc.y_scale)
+        scale = pc.y_scale
+    else:
+        scale = "linear"
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(top=(ymin * (ymax / ymin)**(1 / 0.8) if scale=="log" else ymax*1.2))
     fig.tight_layout()
     saveFig(fig, output_path, extension=plot_configuration.image_type)
     plt.close(fig)
@@ -233,7 +261,6 @@ def plotStrCat(plot_type, *args, table_mode=False, **kwargs):
         f = __plotStrCatAsTable
     else:
         f = __plotStrCatOne
-
     f(makeGetter(plot_type), *args, ax_name=plot_type, **kwargs)
 
 

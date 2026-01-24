@@ -2,36 +2,118 @@ PostDefaults:
   style_set: "style.yaml"
   plot_configuration:
     cms_text: "Preliminary"
-    image_type: ".svg"
+    image_type: ".pdf"
     cms_text_color: Black
+    scale: log
 
 Postprocessing:
-  # - name: Cutflow
-  #   action: PlotCutflow
-  #   to_process:
-  #     sample_name: '*'
-  #     region_name: '*'
-  #   grouping: 
-  #     fields: ['dataset.era.name', 'region_name']
-  #     axis_options: {variation: central}
-  # 
-  #   style_set:
-  #     - style:
-  #         plot_type: step
-  # 
-  #   output_name: "postprocessing/plots/cutflow_{region_name}_{histogram_name}"
-  # 
+  - name: Cutflow
+    action: PlotCutflow
+    to_process:
+      sample_name: '*'
+      region_name: '*'
+    grouping: 
+      fields: ['dataset.era.name', 'region_name']
+      axis_options: {variation: central}
+    plot_configuration:
+        y_scale: linear
+    normalize: True
+  
+    style_set:
+      - style:
+          plot_type: step
+  
+    output_name: "postprocessing/plots/v0p1-cutflow_{histogram_name}"
   - name: Proof Of Concept Plots
     action: Histogram1D
-    histogram_names: 
-        # - dijet_pt
-        # - dijet_delta_r
-        # - dijet_pair_pt
-        # - dijet_pair_delta_r
+    histogram_names:
         - jet_pt
         - jet_eta
         - jet_phi
+        - jet_m
         - jet_ht
+        - n_jets
+        - jet_btagDeepFlavB
+        - jet0_pt
+        - jet0_eta
+        - jet0_phi
+        - jet0_m
+        - jet0_btagDeepFlavB
+        - jet1_pt
+        - jet1_eta
+        - jet1_phi
+        - jet1_m
+        - jet1_btagDeepFlavB
+        - jet2_pt
+        - jet2_eta
+        - jet2_phi
+        - jet2_m
+        - jet2_btagDeepFlavB
+        - jet3_pt
+        - jet3_eta
+        - jet3_phi
+        - jet3_m
+        - jet3_btagDeepFlavB
+        - jet4_pt
+        - jet4_eta
+        - jet4_phi
+        - jet4_m
+        - jet4_btagDeepFlavB
+        - jet5_pt
+        - jet5_eta
+        - jet5_phi
+        - jet5_m
+        - jet5_btagDeepFlavB
+        - b_jet_pt
+        - b_jet_eta
+        - b_jet_phi
+        - b_jet_m
+        - b_jet0_pt
+        - b_jet0_eta
+        - b_jet0_phi
+        - b_jet0_m
+        - b_jet0_btagDeepFlavB
+        - b_jet1_pt
+        - b_jet1_eta
+        - b_jet1_phi
+        - b_jet1_m
+        - b_jet1_btagDeepFlavB
+        - n_fatjets
+        - fatjet_pt
+        - fatjet_eta
+        - fatjet_phi
+        - fatjet_msoftdrop
+        - fatjet_1subjettiness
+        - fatjet_2subjettiness
+        - tau_21
+        - fatjet_3subjettiness
+        - tau_32
+        - tau_31
+        - fatjet_4subjettiness
+        - tau_43
+        - tau_42
+        - tau_41
+        - fatjet0_pt
+        - fatjet1_pt
+        - fatjet2_pt
+        - MET_pt
+        - MET_phi
+        - MET_sumEt
+        - MET_significance
+        - pMET_pt
+        - pMET_phi
+        - pMET_sumEt
+        - b_dijet_pt
+        - b_dijet_eta
+        - b_dijet_phi
+        - b_dijet_m
+        - non2b_fourjet_pt
+        - non2b_fourjet_eta
+        - non2b_fourjet_phi
+        - non2b_fourjet_m
+        - b_HT
+        - b_deltaR
+        
     to_process:
       region_name: Signal
     plot_configuration:
@@ -47,4 +129,4 @@ Postprocessing:
     grouping: 
       fields: ['dataset.era.name', 'region_name']
       axis_options: {variation: central}
-    output_name: "postprocessing/plots/{region_name}_{histogram_name}"
+    output_name: "postprocessing/plots/v0p1-{histogram_name}"

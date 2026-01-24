@@ -5,7 +5,7 @@
   samples:
     - name: TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8
       n_events: 476408000
-      x_sec:  369487
+      x_sec: 369487
       cms_dataset_regex: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
       files:
         - root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18NanoAODv9/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/120000/87DEE912-70CF-A549-B10B-1A229B256E88.root

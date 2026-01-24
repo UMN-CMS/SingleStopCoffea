@@ -51,10 +51,10 @@ regions:
     selection: 
         - name: signal_selection
     histograms:
-        - name: jet_plots
-        - name: fatjet_plots
-        - name: MET_plots
-        - name: jetcombo_plots
+        - name: h_nn
+          config:
+              - model_path: nn_models/checkpoint_23-01-26_jitmodel.pt
+                scaler_path: nn_models/checkpoint_23-01-26.pt    
     weights: 
       - name: sign_gen_weight
         sample_spec:

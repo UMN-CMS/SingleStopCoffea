@@ -13,25 +13,12 @@ styles:
       plottype: fill
       color: green
       alpha: 0.3
-
-  - sector_spec:
-      sample_name: 'gghww*'
-    style:
-      yerr: False
-      plottype: fill
-      color: black
-      alpha: 1
-
-  - sector_spec:
-      sample_name: 'hwj*'
-    style:
-      yerr: False
-      plottype: fill
-      color: red
-      alpha: 1
       
   - sector_spec:
       sample_name: 'ggHH*'
     style:
       yerr: False
       plottype: fill
+      color: red
+      alpha: 1
+      y_min: 10e-3
