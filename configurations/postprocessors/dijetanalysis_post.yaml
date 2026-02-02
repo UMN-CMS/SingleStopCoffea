@@ -1,7 +1,7 @@
 PostDefaults:
   style_set: "style.yaml"
   plot_configuration:
-    cms_text: "Preliminary"
+    cms_text: "Simulation"
     image_type: ".pdf"
     cms_text_color: Black
     cms_text_pos: 0
@@ -22,22 +22,25 @@ all_oned: &all_oned
   - fat_jet1_mass
   - fat_jet2_mass
   - fat_jet1_msoftdrop
-  - fat_jet2_msoftdrop
   - fat_jet1_tau1
-  - fat_jet2_tau1
   - fat_jet1_tau2
-  - fat_jet2_tau2
   - fat_jet1_tau3
-  - fat_jet2_tau3
   - fat_jet1_tau32
-  - fat_jet2_tau32
   - fat_jet1_tau31
-  - fat_jet2_tau31
   - fat_jet1_tau21
-  - fat_jet2_tau21
   - HT
   - fat_jet1_bscore
   - fat_jet2_bscore
+  - fat_jet1_bscore_csvv2
+  - fat_jet1_particleNetMD_bbvQCD
+  - fat_jet1_particleNetMD_bb
+  - fat_jet1_particleNetMD_QCD
+  - fat_jet1_particleNet_HbbvsQCD
+  - fat_jet1_particleNet_HbbvsQCD
+  - fat_jet1_particleNet_TvsQCD
+  - fat_jet1_particleNet_WvsQCD
+  - fat_jet1_particleNet_ZvsQCD
+  - fat_jet1_particleNet_mass
 
 Postprocessing:
   - name: Simple 1D Plots
@@ -49,10 +52,10 @@ Postprocessing:
         name: "*"
     scale: log
     plot_configuration:
-      cms_text: "Preliminary\n{region_name}"
+      cms_text: "Simulation"
     grouping: 
       fields: ['dataset.era.name','region_name']
-      axis_options: {variation: central, NJets: 2}
+      axis_options: {variation: central, NJets: Sum}
       style_set: 
         - sector_spec:
             sample_name: 'qcd*'
@@ -60,16 +63,16 @@ Postprocessing:
             plottype: errorbar 
             color: green
             alpha: 0.3
-      rescale: 
-        - sector_spec:
-            sample_spec: 
-                name: 'qcd*'
-          scale: 0.0001
-        - sector_spec:
-            sample_spec: 
-                name: 'signal*'
-          scale: 0.49
-    output_name: "postprocessing/dijet_dec_tau32_order/plots/{region_name}/{histogram_name}"
+      #rescale: 
+      #  - sector_spec:
+      #      sample_spec: 
+      #          name: 'qcd*'
+      #    scale: 0.0001
+      #  - sector_spec:
+      #      sample_spec: 
+      #          name: 'signal*'
+      #    scale: 0.49
+    output_name: "postprocessing/dijet_jan_one_ak4_lep_veto_high_pt/plots/{region_name}/{histogram_name}"
     #normalize: true
   
   - name: Simple 2D Plots
@@ -77,6 +80,11 @@ Postprocessing:
     histogram_names:
       - dijet_v_fatjet1_mass
       - dijet_v_fatjet1_mass_ratio
+      - fat_jet1_tau32_vs_msd
+      - fat_jet1_tau31_vs_msd
+      - fat_jet1_tau32_vs_tau31
+      - dijet_v_fatjet1_mass_softdrop
+      - dijet_v_fatjet1_mass_softdrop_ratio
     color_scale: log
     to_process:
       region_name: 'Signal'
@@ -84,19 +92,19 @@ Postprocessing:
         name: "*"
     grouping: 
       fields: ['dataset.era.name','region_name','dataset.name']
-      axis_options: {variation: central, NJets: 2}
+      axis_options: {variation: central, NJets: Sum}
     plot_configuration:
-      cms_text: "Preliminary"
-    rescale: 
-      - sector_spec:
-          sample_spec: 
-              name: 'qcd*'
-        scale: 0.0001
-      - sector_spec:
-          sample_spec: 
-              name: 'signal*'
-        scale: 0.49
-    output_name: "postprocessing/dijet_dec_tau32_order/plots/{region_name}/{histogram_name}_{dataset.name}"
+      cms_text: "Simulation"
+    #rescale: 
+    #  - sector_spec:
+    #      sample_spec: 
+    #          name: 'qcd*'
+    #    scale: 0.0001
+    #  - sector_spec:
+    #      sample_spec: 
+    #          name: 'signal*'
+    #    scale: 0.49
+    output_name: "postprocessing/dijet_jan_one_ak4_lep_veto_high_pt/plots/{region_name}/{histogram_name}_{dataset.name}"
 
  #- name: Simple Ratio 
  #  action: RatioPlot
@@ -191,19 +199,17 @@ Postprocessing:
   #   plot_configuration:
   #     cms_text_color: white
   # # 
-  # - name: Export
-  #   action: ExportHists
-  #   histogram_names:
-  #     # - uncomp_0p67_m14_vs_mChiRatio
-  #     # - comp_0p67_m14_vs_mChiRatio
-  #     - h_njet
-  #   to_process:
-  #     sample_name: '*'
-  #     region_name: '*'
-  #   grouping: 
-  #     fields: ['dataset.name', 'dataset.era.name', 'region_name']
-  #     axis_options: {variation: central}
-  #   output_name: "postprocessing/export_hists/{dataset.name}/{region_name}/{histogram_name}.pkl"
+  #- name: Export
+  #  action: ExportHists
+  #  histogram_names:
+  #    - dijet_v_fatjet1_mass_softdrop_ratio
+  #  to_process:
+  #    sample_name: '*'
+  #    region_name: '*'
+  #  grouping: 
+  #    fields: ['dataset.name', 'dataset.era.name', 'region_name']
+  #    axis_options: {variation: central}
+  #  output_name: "postprocessing/export_hists/{dataset.name}/{region_name}/{histogram_name}.pkl"
 
   #- name: SigPlot
   #  action: Histogram2DSignificance

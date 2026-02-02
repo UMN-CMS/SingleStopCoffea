@@ -42,7 +42,6 @@ def plot2D(
     addCMSBits(
         ax,
         [sp],
-        extra_text=f"{sp.region_name}",
         text_color="white",
         plot_configuration=pc,
     )

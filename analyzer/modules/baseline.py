@@ -237,17 +237,24 @@ def dijet_selection_exo_22_026(events, params, selector):
 @MODULE_REPO.register(ModuleType.Selection)
 def dijet_selection(events, params, selector):
     good_fat_jets = events.good_fat_jets
-    good_jets = events.good_jets
     t_b = events.good_tight_bs
-     
-    passes_njets = (ak.num(good_jets) >= 2) & (ak.num(good_fat_jets) >= 1)
-    selector.add("njets", passes_njets)
+    good_electrons = events.good_electrons
+    good_muons = events.good_muons
+
+    passes_njets = (ak.num(good_fat_jets) >= 1)
+    selector.add("n_fat_jets", passes_njets)
+
+    passes_0Lep = (ak.num(good_electrons) == 0) & (ak.num(good_muons) == 0)
+    selector.add("0Lep", passes_0Lep)
 
     passes_msd_cut = ak.fill_none(ak.pad_none(good_fat_jets.msoftdrop, 1, axis=1)[:,0] > 50, False)
     selector.add("m_SD", passes_msd_cut)
    
     passes_b_tag = (ak.num(t_b) >= 1)
     selector.add("1b", passes_b_tag)
+
+    passes_highptjet = ak.fill_none(ak.pad_none(t_b.pt, 1, axis=1)[:,0] > 200, False)
+    selector.add("high_pt", passes_highptjet)
 
     passes_ht_cut = (events.HT > 500)
     selector.add("HT500", passes_ht_cut)
@@ -271,13 +278,12 @@ def dijet_selection(events, params, selector):
 def dijet_njet_category(events, params, categories):      
     """Categorization for events with at least 2-6 jets"""
     good_jets = events.good_fat_jets
-    passes_njets = (ak.num(good_jets) >= 2) 
     categories.add(
         name="NJets",
         axis=hist.axis.Integer(
             0, 6, underflow=False, overflow=False, name="NJets"
         ),
-        values=ak.num(good_jets[passes_njets], axis=1),
+        values=ak.num(good_jets, axis=1),
     )
     
 @MODULE_REPO.register(ModuleType.Categorization)

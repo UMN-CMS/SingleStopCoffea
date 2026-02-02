@@ -354,10 +354,12 @@ def dijet_hists(events, params, analyzer):
     """Histograms for dijet analysis"""
     good_fat_jets = events.good_fat_jets
     t_b = events.good_tight_bs
-
+    #subjets = events.subjets
     fatjet_1 = good_fat_jets[:,0]
     fatjet_2 = t_b[:,0]
     dijet = fatjet_1 + fatjet_2
+    #subjet1 = subjets[fatjet_1.subJetIdx1]
+    #subjet2 = subjets[fatjet_1.subJetIdx2]
 
     analyzer.H(
         "dijet_mass",
@@ -514,6 +516,26 @@ def dijet_hists(events, params, analyzer):
         fatjet_1["tau3"]/fatjet_1["tau2"],
         description="Nsubjettiness Tau 3/Tau 2 of FatJet1"
     )
+
+    analyzer.H(
+        "fat_jet1_tau32_vs_msd",
+        [makeAxis(100, 0, 1, "Tau32"), makeAxis(100, 0, 2500, "$m_{j1,SD}$", unit="GeV")],
+        [fatjet_1["tau3"]/fatjet_1["tau2"], fatjet_1["msoftdrop"]],
+        description="Tau32 vs MSD"
+    )
+
+    analyzer.H(
+        "fat_jet1_tau31_vs_msd",
+        [makeAxis(100, 0, 1, "Tau31"), makeAxis(100, 0, 2500, "$m_{j1,SD}$", unit="GeV")],
+        [fatjet_1["tau3"]/fatjet_1["tau1"], fatjet_1["msoftdrop"]],
+        description="Tau31 vs MSD"
+    )
+    analyzer.H(
+        "fat_jet1_tau32_vs_tau31",
+        [makeAxis(100, 0, 1, "Tau32"), makeAxis(100, 0, 1, "Tau31")],
+        [fatjet_1["tau3"]/fatjet_1["tau2"], fatjet_1["tau3"]/fatjet_1["tau1"]],
+        description="Tau32 vs Tau31"
+    )
     #analyzer.H(
     #    "fat_jet2_tau32",
     #    makeAxis(100,0,1, "Tau32"),
@@ -541,12 +563,41 @@ def dijet_hists(events, params, analyzer):
         description="DeepB Score of FatJet1",
     )
     analyzer.H(
+        "fat_jet1_bscore_csvv2",
+        makeAxis(100,0,1,"CSVV2 score"),
+        fatjet_1.btagCSVV2,
+        description="CSVV2 Score of FatJet1",
+    )
+    #analyzer.H(
+    #    "subjet1_bscore",
+    #    makeAxis(100,0,1,"DeepB score"),
+    #    subjet1.btagDeepB,
+    #    description="DeepB Score of Subjet1 of FatJet1",
+    #)
+    #analyzer.H(
+    #    "subjet2_bscore",
+    #    makeAxis(100,0,1,"DeepB score"),
+    #    subjet2.btagDeepB,
+    #    description="DeepB Score of Subjet2 of FatJet1",
+    #)
+    #analyzer.H(
+    #    "subjet1_bscore_csvv2",
+    #    makeAxis(100,0,1,"CSVV2 score"),
+    #    subjet1.btagCSVV2,
+    #    description="CSVV2 Score of Subjet1 of FatJet1",
+    #)
+    #analyzer.H(
+    #    "subjet2_bscore_csvv2",
+    #    makeAxis(100,0,1,"CSVV2 score"),
+    #    subjet2.btagCSVV2,
+    #    description="CSVV2 Score of Subjet2 of FatJet1",
+    #)
+    analyzer.H(
         "fat_jet2_bscore",
         makeAxis(100,0,1,"DeepFlavB score"),
         fatjet_2.btagDeepFlavB,
-        description="DeepB Score of FatJet2",
+        description="DeepFlavB Score of FatJet2",
     )
-
     analyzer.H(
         f"HT",
         makeAxis(120, 0, 3000, "HT", unit="GeV"),
@@ -591,7 +642,60 @@ def dijet_hists(events, params, analyzer):
         description="Softdrop Mass of Dijet vs Mass Ratio of FatJet1/Dijet",
     )
 
+    analyzer.H(
+        'fat_jet1_particleNetMD_bbvQCD',
+        makeAxis(100,0,1,"ParticleNetMD bb/(bb+QCD)"),
+        fatjet_1["particleNetMD_Xbb"]/(fatjet_1["particleNetMD_Xbb"]+fatjet_1["particleNetMD_QCD"]),
+    )
 
+    analyzer.H(
+        'fat_jet1_particleNetMD_bb',
+        makeAxis(100,0,1,"ParticleNetMD bb"),
+        fatjet_1["particleNetMD_Xbb"],
+    )
+
+    analyzer.H(
+        'fat_jet1_particleNetMD_QCD',
+        makeAxis(100,0,1,"ParticleNetMD QCD"),
+        fatjet_1["particleNetMD_QCD"],
+    )
+
+
+    analyzer.H(
+        'fat_jet1_particleNet_HbbvsQCD',
+        makeAxis(100,0,1,"ParticleNet HbbvQCD"),
+        fatjet_1["particleNet_HbbvsQCD"],
+    )
+
+    analyzer.H(
+        'fat_jet1_particleNet_QCD',
+        makeAxis(100,0,1,"ParticleNet QCD"),
+        fatjet_1["particleNet_QCD"],
+    )
+
+    analyzer.H(
+        'fat_jet1_particleNet_TvsQCD',
+        makeAxis(100,0,1,"ParticleNet TvsQCD"),
+        fatjet_1["particleNet_TvsQCD"],
+    )
+
+    analyzer.H(
+        'fat_jet1_particleNet_WvsQCD',
+        makeAxis(100,0,1,"ParticleNet WvsQCD"),
+        fatjet_1["particleNet_WvsQCD"],
+    )
+
+    analyzer.H(
+        'fat_jet1_particleNet_ZvsQCD',
+        makeAxis(100,0,1,"ParticleNet ZvsQCD"),
+        fatjet_1["particleNet_ZvsQCD"],
+    )
+    
+    analyzer.H(
+        'fat_jet1_particleNet_mass',
+        makeAxis(100, 0, 2500, "$m_{PNet}$", unit="GeV"),
+        fatjet_1["particleNet_mass"],
+    )
 
 def dijet_hists_exo_22_026(events, params, analyzer):
     """Histograms for dijet analysis"""

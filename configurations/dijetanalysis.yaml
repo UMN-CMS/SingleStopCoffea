@@ -10,8 +10,9 @@ samples:
   #signal_2018_312_2000_100: [Signal]
   #signal_2018_312_2000_400: [Signal]
   #qcd_inclusive_2018: [Signal]
-  signal_2018_312_*: [Signal]
-  #signal_2018_312_1000_900: [Signal]
+  qcd_inclusive_2018_small: [Signal]
+  #signal_2018_312_*: [Signal]
+  #signal_2018_312_1000_100: [Signal]
 
 executors:
   local:

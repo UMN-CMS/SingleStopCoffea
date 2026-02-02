@@ -201,12 +201,12 @@ class Sample(BaseModel):
             replicas = json.load(f)
         t = list(it.chain.from_iterable(x.items() for x in replicas.values()))
         flat = dict(t)
-        if len(flat) != len(self.files):
-            raise RuntimeError(
-                f"Possible missing files for {self._parent_dataset.name} - {self.name}."
-                f"The number of files in the replica cache is {len(flat)}."
-                f"The number of files in the dateset is {len(self.files)}."
-            )
+        #if len(flat) != len(self.files):
+        #    raise RuntimeError(
+        #        f"Possible missing files for {self._parent_dataset.name} - {self.name}."
+        #        f"The number of files in the replica cache is {len(flat)}."
+        #        f"The number of files in the dateset is {len(self.files)}."
+        #    )
         for f in self.files:
             cms_loc = f.cmsLocation()
             for l, p in flat[cms_loc].items():

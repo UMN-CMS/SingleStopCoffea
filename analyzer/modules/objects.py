@@ -99,10 +99,12 @@ def semilep_objects(columns, params):
 def dijet_objects(columns, params):
     logger = getSectorLogger(params)
     fat_jets = columns.get("FatJet")
-    kinematically_good_fat_jets = fat_jets[(fat_jets.eta < 2.4)]
+    subjets = columns.get("SubJet")
+    kinematically_good_fat_jets = fat_jets[(abs(fat_jets.eta) < 2.4) & (fat_jets.jetId >= 4)]
     jets = columns.get("Jet")
-    good_jets = jets[(jets.pt > 200) & (abs(jets.eta) < 2.4)]
-
+    good_jets = jets[(jets.pt > 50) & (abs(jets.eta) < 2.4)]
+    good_jets = good_jets[good_jets.jetId >= 4]
+    ht = ak.sum(good_jets.pt, axis=1)
     bwps = getBTagWP(params)
     logger.info(f"B-tagging workign points are:\n {bwps}")
 
@@ -112,6 +114,12 @@ def dijet_objects(columns, params):
         [bwps["T"]],
     )[0]
 
+
+    el = columns.get("Electron")
+    mu = columns.get("Muon")
+    good_electrons = el[(el.cutBased == 1) & (el.pt > 10) & (abs(el.eta) < 2.4) & (el.miniPFRelIso_all < 0.1)]
+    good_muons = mu[(mu.looseId) & (mu.pt > 30) & (abs(mu.eta) < 2.4) & (mu.miniPFRelIso_all < 0.1)]
+
     padded_t_b = ak.pad_none(tight_b, 1, axis=1)
     sorted_good_fat_jets = kinematically_good_fat_jets[ak.argsort(kinematically_good_fat_jets.msoftdrop,ascending=False)]
     tau32_full_mask = (sorted_good_fat_jets["tau3"]/sorted_good_fat_jets["tau2"]) < 0.7
@@ -119,14 +127,16 @@ def dijet_objects(columns, params):
     good_fat_jets = sorted_good_fat_jets[tau32_full_mask]
     padded_good_fat_jets = ak.pad_none(good_fat_jets, 1, axis=1)
     dr = ak.fill_none(padded_good_fat_jets[:,0].delta_r(padded_t_b), -1)
-    passes_dr = (dr > 1.2) 
+    passes_dr = (dr > 1.5) 
     good_t_b = tight_b[passes_dr]
-    ht = ak.sum(good_jets.pt, axis=1)
-
+    #ht = ak.sum(good_fat_jets.pt, axis=1)
+    columns.add('subjets', subjets) 
     columns.add('good_fat_jets', good_fat_jets)
-    columns.add('good_jets', good_jets)
+    #columns.add('good_jets', good_jets)
     columns.add('HT', ht)
     columns.add("good_tight_bs", good_t_b)
+    columns.add("good_electrons", good_electrons)
+    columns.add("good_muons", good_muons)
 
 
 @MODULE_REPO.register(ModuleType.Producer)
