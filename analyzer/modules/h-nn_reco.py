@@ -88,20 +88,47 @@ def h_nn(events, params, analyzer, model_path=None, scaler_path=None):
     global_variables += [f"non2b_fourjet_{var}" for var in fourvecvars]
     model = ABCDiHiggsNetwork(model_path)
 
+    def makeNNVariableAxis(var):
+        vecvar, topvar = None, None
+        fourvecvars = ["pt", "eta", "phi", "mass", "btagDeepFlavB"]
+        if any([fourvecvar in var for fourvecvar in fourvecvars]):
+            vecvar, topvar = var.split("_")[-1], "_".join(var.split("_")[:-1])
+        retdict = {
+            "btagDeepFlavB": (25, 0, 1, rf"{topvar} btagDeepFlavB Score", None),
+            "pt": (25, 0, 500, rf"{topvar} $p_T$", "GeV"),
+            "eta": (25, -2.5, 2.5, rf"{topvar} $\eta$", None),
+            "phi": (25, -4, 4, rf"{topvar} $\phi$", None),
+            "mass": (25, 0, 400, rf"{topvar} Mass", "GeV"),
+            "HT": (25, 350, 1250, r"Jet $H_T$", "GeV"),
+            "b_HT": (25, 0, 500, r"b-Jet $H_T$", "GeV"),
+            "b_deltaR": (25, 0, 5, r"b-Jet $\Delta$R", None),
+            "non2b_HT": (25, 0, 800, r"non2b-Jet $H_T$", "GeV"),
+            "w_diff_subleast": (25, 0, 75, r"Subleading $\Delta M_{W}$", "GeV")
+        }
+        bins, start, stop, label, unit = retdict[var] if vecvar is None else retdict[vecvar]
+        return makeAxis(bins, start, stop, label, unit)
+
+    jet_plotting = {}
     jet_features = []
     for var in jet_variables:
         vecvar, topvar = var.split("_")[-1], "_".join(var.split("_")[:-1])
         for jetidx in range(6):
-            jet_var = events[topvar][vecvar][:, jetidx][:, np.newaxis]
-            jet_features.append(jet_var)
+            jet_var = events[topvar][vecvar][:, jetidx]
+            jet_features.append(jet_var[:, np.newaxis])
+            jet_plotting[f"{topvar}_{jetidx}_{vecvar}"] = jet_var
+    global_plotting = {}
     global_features = []
     for var in global_variables:
         if any([fourvecvar in var for fourvecvar in fourvecvars]):
             vecvar, topvar = var.split("_")[-1], "_".join(var.split("_")[:-1])
-            global_var = getattr(events[topvar], vecvar)[:, np.newaxis]
+            global_var = getattr(events[topvar], vecvar)
         else:
-            global_var = events[var][:, np.newaxis]
-        global_features.append(global_var)
+            vecvar, topvar = None, var
+            global_var = events[topvar]
+        global_plotting[var] = global_var
+        global_features.append(global_var[:, np.newaxis])
+        
+    X_plotting = jet_plotting | global_plotting
     X_features = jet_features + global_features
     X = ak.concatenate(X_features, axis=1)
     with open(scaler_path, "rb") as f:
@@ -109,23 +136,45 @@ def h_nn(events, params, analyzer, model_path=None, scaler_path=None):
     X = (X - scaler.mean_) / scaler.scale_
     outputs = model(X)
 
-    disc1 = outputs["Disc1"]
-    disc2 = outputs["Disc2"]
+    disc1, disc2 = outputs["Disc1"], outputs["Disc2"]
     analyzer.H(
         "disc1",
-        makeAxis(100, 0, 1, "Disc. 1 Score"),
+        makeAxis(50, 0, 1, "Disc. 1 Score"),
         disc1,
         description="NN discriminator 1 score"
     )
     analyzer.H(
         "disc2",
-        makeAxis(100, 0, 1, "Disc. 2 Score"),
+        makeAxis(50, 0, 1, "Disc. 2 Score"),
         disc2,
         description="NN discriminator 2 score"
     )
     analyzer.H(
         "abcdplane",
-        [makeAxis(100, 0, 1, "Disc. 1 Score"), makeAxis(101, 0, 1, "Disc. 2 Score")],
+        [makeAxis(50, 0, 1, "Disc. 1 Score"), makeAxis(50, 0, 1, "Disc. 2 Score")],
         [disc1, disc2],
         description="ABCD plane 2d plot"
     )
+    for var, feature in X_plotting.items():
+        analyzer.H(
+            var,
+            makeNNVariableAxis(var),
+            feature,
+            description=f"NN input {var}"
+        )
+        analyzer.H(
+            f"d1_v_{var}",
+            [makeNNVariableAxis(var), makeAxis(50, 0, 1, "Disc. 1 Score")],
+            [feature, disc2],
+            description=f"NN input {var} against disc1"
+        )
+        analyzer.H(
+            f"d2_v_{var}",
+            [makeNNVariableAxis(var), makeAxis(50, 0, 1, "Disc. 2 Score")],
+            [feature, disc2],
+            description=f"NN input {var} against disc2"
+        )
+
+
+
+        

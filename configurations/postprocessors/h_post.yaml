@@ -23,7 +23,26 @@ Postprocessing:
       - style:
           plot_type: step
   
-    output_name: "postprocessing/plots/v0p1-cutflow_{histogram_name}"
+    output_name: "postprocessing/plots/v0p2-cutflow_{histogram_name}"
+
+  - name: Cutflow Log
+    action: PlotCutflow
+    to_process:
+      sample_name: '*'
+      region_name: '*'
+    grouping: 
+      fields: ['dataset.era.name', 'region_name']
+      axis_options: {variation: central}
+    plot_configuration:
+        y_scale: log
+    normalize: True
+  
+    style_set:
+      - style:
+          plot_type: step
+  
+    output_name: "postprocessing/plots/v0p2-cutflow_{histogram_name}_log"
+
   - name: Proof Of Concept Plots
     action: Histogram1D
     histogram_names:
@@ -96,23 +115,23 @@ Postprocessing:
         - fatjet0_pt
         - fatjet1_pt
         - fatjet2_pt
-        - MET_pt
-        - MET_phi
-        - MET_sumEt
-        - MET_significance
-        - pMET_pt
-        - pMET_phi
-        - pMET_sumEt
-        - b_dijet_pt
-        - b_dijet_eta
-        - b_dijet_phi
-        - b_dijet_m
-        - non2b_fourjet_pt
-        - non2b_fourjet_eta
-        - non2b_fourjet_phi
-        - non2b_fourjet_m
-        - b_HT
-        - b_deltaR
+        # - MET_pt
+        # - MET_phi
+        # - MET_sumEt
+        # - MET_significance
+        # - pMET_pt
+        # - pMET_phi
+        # - pMET_sumEt
+        # - b_dijet_pt
+        # - b_dijet_eta
+        # - b_dijet_phi
+        # - b_dijet_m
+        # - non2b_fourjet_pt
+        # - non2b_fourjet_eta
+        # - non2b_fourjet_phi
+        # - non2b_fourjet_m
+        # - b_HT
+        # - b_deltaR
         
     to_process:
       region_name: Signal
@@ -129,4 +148,4 @@ Postprocessing:
     grouping: 
       fields: ['dataset.era.name', 'region_name']
       axis_options: {variation: central}
-    output_name: "postprocessing/plots/v0p1-{histogram_name}"
+    output_name: "postprocessing/plots/v0p2-{histogram_name}"

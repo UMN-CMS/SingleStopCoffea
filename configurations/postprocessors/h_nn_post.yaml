@@ -1,0 +1,206 @@
+PostDefaults:
+  style_set: "style.yaml"
+  plot_configuration:
+    cms_text: "Preliminary"
+    image_type: ".pdf"
+    cms_text_color: Black
+    scale: log
+
+Postprocessing:
+
+  - name: Neural Network 1D Plots
+    action: Histogram1D
+    histogram_names:
+        - disc1
+        - disc2
+        - HT
+        - b_HT
+        - b_deltaR
+        - non2b_HT
+        - w_diff_subleast
+        - b_dijet_pt
+        - b_dijet_eta
+        - b_dijet_phi
+        - b_dijet_mass
+        - b1_trijet_pt
+        - b1_trijet_eta
+        - b1_trijet_phi
+        - b1_trijet_mass
+        - b2_trijet_pt
+        - b2_trijet_eta
+        - b2_trijet_phi
+        - b2_trijet_mass
+        - non2b_fourjet_pt
+        - non2b_fourjet_eta
+        - non2b_fourjet_phi
+        - non2b_fourjet_mass
+
+        - good_jets_0_pt
+        - good_jets_1_pt
+        - good_jets_2_pt
+        - good_jets_3_pt
+        - good_jets_4_pt
+        - good_jets_5_pt
+        - good_jets_0_eta
+        - good_jets_1_eta
+        - good_jets_2_eta
+        - good_jets_3_eta
+        - good_jets_4_eta
+        - good_jets_5_eta
+        - good_jets_0_phi
+        - good_jets_1_phi
+        - good_jets_2_phi
+        - good_jets_3_phi
+        - good_jets_4_phi
+        - good_jets_5_phi
+        - good_jets_0_mass
+        - good_jets_1_mass
+        - good_jets_2_mass
+        - good_jets_3_mass
+        - good_jets_4_mass
+        - good_jets_5_mass
+        - good_jets_0_btagDeepFlavB
+        - good_jets_1_btagDeepFlavB
+        - good_jets_2_btagDeepFlavB
+        - good_jets_3_btagDeepFlavB
+        - good_jets_4_btagDeepFlavB
+        - good_jets_5_btagDeepFlavB
+        
+    to_process:
+      region_name: Signal
+    plot_configuration:
+      cms_text: "Preliminary"
+    stack:
+        - tt_semilepton_2018
+        - tt_had_2018
+        - qcd_2018
+    stackandplot: 
+        - ggHHbbVV_2018
+    scale: log
+
+    grouping: 
+      fields: ['dataset.era.name', 'region_name']
+      axis_options: {variation: central}
+    output_name: "postprocessing/plots/nn/v0p2-{histogram_name}"
+
+  - name: Neural Network 2D Plots
+    action: Histogram2D
+    histogram_names:
+        - abcdplane
+        - d1_v_HT
+        - d2_v_HT
+        - d1_v_b_HT
+        - d2_v_b_HT
+        - d1_v_b_deltaR
+        - d2_v_b_deltaR
+        - d1_v_non2b_HT
+        - d2_v_non2b_HT
+        - d1_v_w_diff_subleast
+        - d2_v_w_diff_subleast
+        - d1_v_b_dijet_pt
+        - d2_v_b_dijet_pt
+        - d1_v_b_dijet_eta
+        - d2_v_b_dijet_eta
+        - d1_v_b_dijet_phi
+        - d2_v_b_dijet_phi
+        - d1_v_b_dijet_mass
+        - d2_v_b_dijet_mass
+        - d1_v_b1_trijet_pt
+        - d2_v_b1_trijet_pt
+        - d1_v_b1_trijet_eta
+        - d2_v_b1_trijet_eta
+        - d1_v_b1_trijet_phi
+        - d2_v_b1_trijet_phi
+        - d1_v_b1_trijet_mass
+        - d2_v_b1_trijet_mass
+        - d1_v_b2_trijet_pt
+        - d2_v_b2_trijet_pt
+        - d1_v_b2_trijet_eta
+        - d2_v_b2_trijet_eta
+        - d1_v_b2_trijet_phi
+        - d2_v_b2_trijet_phi
+        - d1_v_b2_trijet_mass
+        - d2_v_b2_trijet_mass
+        - d1_v_non2b_fourjet_pt
+        - d2_v_non2b_fourjet_pt
+        - d1_v_non2b_fourjet_eta
+        - d2_v_non2b_fourjet_eta
+        - d1_v_non2b_fourjet_phi
+        - d2_v_non2b_fourjet_phi
+        - d1_v_non2b_fourjet_mass
+        - d2_v_non2b_fourjet_mass
+
+        - d1_v_good_jets_0_pt
+        - d2_v_good_jets_0_pt
+        - d1_v_good_jets_1_pt
+        - d2_v_good_jets_1_pt
+        - d1_v_good_jets_2_pt
+        - d2_v_good_jets_2_pt
+        - d1_v_good_jets_3_pt
+        - d2_v_good_jets_3_pt
+        - d1_v_good_jets_4_pt
+        - d2_v_good_jets_4_pt
+        - d1_v_good_jets_5_pt
+        - d2_v_good_jets_5_pt
+        - d1_v_good_jets_0_eta
+        - d2_v_good_jets_0_eta
+        - d1_v_good_jets_1_eta
+        - d2_v_good_jets_1_eta
+        - d1_v_good_jets_2_eta
+        - d2_v_good_jets_2_eta
+        - d1_v_good_jets_3_eta
+        - d2_v_good_jets_3_eta
+        - d1_v_good_jets_4_eta
+        - d2_v_good_jets_4_eta
+        - d1_v_good_jets_5_eta
+        - d2_v_good_jets_5_eta
+        - d1_v_good_jets_0_phi
+        - d2_v_good_jets_0_phi
+        - d1_v_good_jets_1_phi
+        - d2_v_good_jets_1_phi
+        - d1_v_good_jets_2_phi
+        - d2_v_good_jets_2_phi
+        - d1_v_good_jets_3_phi
+        - d2_v_good_jets_3_phi
+        - d1_v_good_jets_4_phi
+        - d2_v_good_jets_4_phi
+        - d1_v_good_jets_5_phi
+        - d2_v_good_jets_5_phi
+        - d1_v_good_jets_0_mass
+        - d2_v_good_jets_0_mass
+        - d1_v_good_jets_1_mass
+        - d2_v_good_jets_1_mass
+        - d1_v_good_jets_2_mass
+        - d2_v_good_jets_2_mass
+        - d1_v_good_jets_3_mass
+        - d2_v_good_jets_3_mass
+        - d1_v_good_jets_4_mass
+        - d2_v_good_jets_4_mass
+        - d1_v_good_jets_5_mass
+        - d2_v_good_jets_5_mass
+        - d1_v_good_jets_0_btagDeepFlavB
+        - d2_v_good_jets_0_btagDeepFlavB
+        - d1_v_good_jets_1_btagDeepFlavB
+        - d2_v_good_jets_1_btagDeepFlavB
+        - d1_v_good_jets_2_btagDeepFlavB
+        - d2_v_good_jets_2_btagDeepFlavB
+        - d1_v_good_jets_3_btagDeepFlavB
+        - d2_v_good_jets_3_btagDeepFlavB
+        - d1_v_good_jets_4_btagDeepFlavB
+        - d2_v_good_jets_4_btagDeepFlavB
+        - d1_v_good_jets_5_btagDeepFlavB
+        - d2_v_good_jets_5_btagDeepFlavB
+
+    to_process:
+      region_name: Signal
+      sample_name:
+        - qcd_2018
+        - ggHHbbVV_2018
+        - "tt_*"
+    scale: log
+    plot_configuration:
+      cms_text: "Preliminary"
+    grouping: 
+      fields: ['dataset.era.name', 'region_name', 'dataset.name']
+      axis_options: {variation: central}
+    output_name: "postprocessing/plots/nn/{histogram_name}/v0p2-{histogram_name}_{dataset.name}"

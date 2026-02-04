@@ -33,13 +33,13 @@ def fatjet_plots(events, params, analyzer):
     )
     analyzer.H(
         "fatjet_phi",
-        makeAxis(50, -4, 4, r"AK8 Jet $\phi$", unit="rad"),
+        makeAxis(50, -4, 4, r"AK8 Jet $\phi$"),
         fatjets.phi,
         description="pt of fatjets",
     )
     analyzer.H(
         "fatjet_msoftdrop",
-        makeAxis(50, 0, 400, r"AK8 Jet Soft-Drop Mass", unit="GeV"),
+        makeAxis(50, 0, 300, r"AK8 Jet Soft-Drop Mass", unit="GeV"),
         fatjets.msoftdrop,
         description="pt of fatjets",
     )
@@ -83,7 +83,7 @@ def MET_plots(events, params, analyzer):
     )
     analyzer.H(
         "MET_phi",
-        makeAxis(50, -4, 4, r"MET $\phi$", unit="rad"),
+        makeAxis(50, -4, 4, r"MET $\phi$"),
         met.phi,
         description=f"phi of met"
     )
@@ -109,7 +109,7 @@ def MET_plots(events, params, analyzer):
     )
     analyzer.H(
         "pMET_phi",
-        makeAxis(50, -4, 4, r"PUPPI MET $\phi$", unit="rad"),
+        makeAxis(50, -4, 4, r"PUPPI MET $\phi$"),
         pmet.phi,
         description=f"phi of puppi met"
     )
@@ -139,13 +139,13 @@ def jet_plots(events, params, analyzer):
     )
     analyzer.H(
         f"jet_phi",
-        makeAxis(50, -4, 4, r"Jet $\phi$", unit="rad"),
+        makeAxis(50, -4, 4, r"Jet $\phi$"),
         jets.phi,
         description="phi of all good jets",
     )
     analyzer.H(
         f"jet_m",
-        makeAxis(50, 0, 400, r"Jet Mass", unit="GeV"),
+        makeAxis(50, 0, 300, r"Jet Mass", unit="GeV"),
         jets.mass,
         description="mass of all good jets"
     )
@@ -184,13 +184,13 @@ def jet_plots(events, params, analyzer):
         )
         analyzer.H(
             f"jet{i}_phi",
-            makeAxis(50, -4, 4, rf"Jet {i} $\phi$", unit="rad"),
+            makeAxis(50, -4, 4, rf"Jet {i} $\phi$"),
             jeti.phi,
             description=f"phi of good jet {i}",
         )
         analyzer.H(
             f"jet{i}_m",
-            makeAxis(50, 0, 400, rf"Jet {i} Mass", unit="GeV"),
+            makeAxis(50, 0, 300, rf"Jet {i} Mass", unit="GeV"),
             jeti.mass,
             description=f"mass of good jet {i}",
         )
@@ -216,13 +216,13 @@ def jet_plots(events, params, analyzer):
     )
     analyzer.H(
         f"b_jet_phi",
-        makeAxis(50, -4, 4, r"b-Jet $\phi$", unit="rad"),
+        makeAxis(50, -4, 4, r"b-Jet $\phi$"),
         bs.phi,
         description="phi of all b jets",
     )
     analyzer.H(
         f"b_jet_m",
-        makeAxis(50, 0, 400, r"b-Jet Mass", unit="GeV"),
+        makeAxis(50, 0, 300, r"b-Jet Mass", unit="GeV"),
         bs.mass,
         description="mass of all b jets"
     )
@@ -242,13 +242,13 @@ def jet_plots(events, params, analyzer):
         )
         analyzer.H(
             f"b_jet{i}_phi",
-            makeAxis(50, -4, 4, rf"b-Jet {i} $\phi$", unit="rad"),
+            makeAxis(50, -4, 4, rf"b-Jet {i} $\phi$"),
             b_jeti.phi,
             description=f"phi of b jet {i}",
         )
         analyzer.H(
             f"b_jet{i}_m",
-            makeAxis(50, 0, 400, rf"b-Jet {i} Mass", unit="GeV"),
+            makeAxis(50, 0, 300, rf"b-Jet {i} Mass", unit="GeV"),
             b_jeti.mass,
             description=f"mass of b jet {i}",
         )
@@ -297,11 +297,11 @@ def jetcombo_plots(events, params, analyzer):
         )
         analyzer.H(
             f"{name}_phi",
-            makeAxis(50, -4, 4, rf"{name} $\phi$", unit="rad"),
+            makeAxis(50, -4, 4, rf"{name} $\phi$"),
             multijet.phi,
             description=f"phi of {name}",
         )
-        mrange = [0, 400] if name=="b_dijet" else [50, 1000]
+        mrange = [0, 300] if name=="b_dijet" else [50, 1000]
         analyzer.H(
             f"{name}_m",
             makeAxis(50, mrange[0], mrange[1], rf"{name} Mass", unit="GeV"),

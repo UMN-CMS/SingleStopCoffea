@@ -53,8 +53,8 @@ regions:
     histograms:
         - name: jet_plots
         - name: fatjet_plots
-        - name: MET_plots
-        - name: jetcombo_plots
+        # - name: MET_plots
+        # - name: jetcombo_plots
     weights: 
       - name: sign_gen_weight
         sample_spec:

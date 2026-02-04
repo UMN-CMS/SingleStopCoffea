@@ -43,5 +43,6 @@ def plot2D(
         text_color="white",
         plot_configuration=plot_configuration,
     )
+    plt.tight_layout
     saveFig(fig, output_path, extension=plot_configuration.image_type)
     plt.close(fig)

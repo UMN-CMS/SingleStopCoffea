@@ -27,10 +27,12 @@ executors:
     max_workers: 100
     min_workers: 8
     use_threads: true
-    parallel_submission: 3
+    parallel_submission: 1
     worker_memory: 2GB
     worker_timeout: 7200
     chunk_size: 100000
+    extra_files:
+        - nn_models/
 
 execution_config:
 
