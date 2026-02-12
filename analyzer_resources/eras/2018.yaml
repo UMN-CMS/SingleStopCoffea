@@ -21,6 +21,13 @@
     EleWPTight: Ele32_WPTight_Gsf
     EleCaloIdVT: Ele115_CaloIdVT_GsfTrkIdT
 
+    dijet_HT: PFHT1050
+    dijet_AK8SingleJetPt: AK8PFJet400_TrimMass30
+    dijet_AK8HT: AK8PFHT800_TrimMass50
+    dijet_AK8B: AK8PFJet330_TrimMass30_PFAK8BTagDeepCSV_p17
+    dijet_DoublePF: DoublePFJets116MaxDeta1p6_DoubleCaloBTagDeepCSV_p71 
+    dijet_DiPF: DiPFJetAve300_HFJEC
+
   trigger_plateaus:
     HT: 1200
     AK8SingleJetPt:
