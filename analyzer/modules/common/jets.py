@@ -362,10 +362,10 @@ class TopVecHistograms(AnalyzerModule):
     r"""
     Produce kinematic histograms for the leading objects in a collection.
 
-    This analyzer creates histograms of $p_T$,$\eta$, and $\phi$ for the first *N* objects
-    in a vector-like collection (e.g. jets), where *N* is configurable.
-    Histograms are produced only for events where the corresponding
-    object exists.
+    This analyzer creates histograms of invariant mass, $p_T$, $\eta$, and 
+    $\phi$ for the first *N* objects in a vector-like collection (e.g. jets), 
+    where *N* is configurable. Histograms are produced only for events where 
+    the corresponding object exists.
 
     Parameters
     ----------
@@ -376,17 +376,35 @@ class TopVecHistograms(AnalyzerModule):
     max_idx : int
         Maximum number of leading objects for which histograms are
         produced.
+    mass_stop: int = 3000
+        Stop value for mass axis histogram.
     """
 
     prefix: str
     input_col: Column
     max_idx: int
+    mass_stop: int = 3000
+    mass_axis: RegularAxis = field(
+        factory=lambda: RegularAxis(50, 0, 3000, "", unit="GeV")
+    )
 
     def run(self, columns, params):
         jets = columns[self.input_col]
         ret = []
         padded = ak.pad_none(jets, self.max_idx, axis=1)
         for i in range(0, self.max_idx):
+            name_suffix = f"$m_{{{i + 1}}}$"
+            axis = self.mass_axis
+            if axis.name:
+                new_name = f"{axis.name} {name_suffix}"
+            else:
+                new_name = name_suffix                
+            axis = evolve(
+                axis,
+                name=new_name,
+                stop=self.mass_stop,
+                )
+
             mask = ak.num(jets, axis=1) > i
             ret.append(
                 makeHistogram(
@@ -400,9 +418,19 @@ class TopVecHistograms(AnalyzerModule):
             )
             ret.append(
                 makeHistogram(
+                    f"{self.prefix}_mass_{i + 1}",
+                    columns,
+                    axis,
+                    padded[:, i].mass,
+                    description=f"invariant mass of jet {i + 1} ",
+                    mask=mask,
+                )
+            )
+            ret.append(
+                makeHistogram(
                     f"{self.prefix}_eta_{i + 1}",
                     columns,
-                    RegularAxis(20, -4, 4, f"$\\eta_{{T, {i + 1}}}$"),
+                    RegularAxis(20, -4, 4, f"$\\eta_{{{i + 1}}}$"),
                     padded[:, i].eta,
                     description=f"$\\eta$ of jet {i + 1} ",
                     mask=mask,
@@ -412,7 +440,7 @@ class TopVecHistograms(AnalyzerModule):
                 makeHistogram(
                     f"{self.prefix}_phi_{i + 1}",
                     columns,
-                    RegularAxis(20, -4, 4, f"$\\phi_{{T, {i + 1}}}$"),
+                    RegularAxis(20, -4, 4, f"$\\phi_{{{i + 1}}}$"),
                     padded[:, i].phi,
                     description=f"$\\phi$ of jet {i + 1} ",
                     mask=mask,
@@ -430,10 +458,10 @@ class TopVecHistograms(AnalyzerModule):
 
 @define
 class JetComboHistograms(AnalyzerModule):
-    """
+    r"""
     Build composite objects from specified combinations
-    of jets (by index) and produces histograms of their invariant mass
-    and transverse momentum. Each combination is treated independently,
+    of jets (by index) and produces histograms of their invariant mass, 
+    $p_T$, $\eta$, and $\phi$. Each combination is treated independently,
     and histograms are filled only for events where all required jets
     are present.
 
@@ -447,6 +475,8 @@ class JetComboHistograms(AnalyzerModule):
         List of jet index combinations. Each inner list specifies the
         indices of jets to be combined (e.g. ``[0, 1]`` for the leading
         two jets).
+    mass_axis: RegularAxis
+        Axis for histogramming the mass of the combination into.
     """
 
     prefix: str
@@ -491,6 +521,24 @@ class JetComboHistograms(AnalyzerModule):
                     columns,
                     RegularAxis(50, 0, 3000, f"$pt_{{{i + 1}{j + 1}}}$", unit="GeV"),
                     summed.pt,
+                    mask=mask,
+                )
+            )
+            ret.append(
+                makeHistogram(
+                    f"{self.prefix}_{i + 1}{j + 1}_eta",
+                    columns,
+                    RegularAxis(20, -4, 4, f"$\\eta_{{{i + 1}{j + 1}}}$"),
+                    summed.eta,
+                    mask=mask,
+                )
+            )
+            ret.append(
+                makeHistogram(
+                    f"{self.prefix}_{i + 1}{j + 1}_phi",
+                    columns,
+                    RegularAxis(20, -4, 4, f"$\\phi_{{{i + 1}{j + 1}}}$"),
+                    summed.phi,
                     mask=mask,
                 )
             )
