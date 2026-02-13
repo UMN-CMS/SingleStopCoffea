@@ -23,12 +23,20 @@ common_objects: &common_objects
     max_abs_eta: 2.4
 
   - module_name: BQuarkMaker
-    input_col: GoodJet
+    input_col: goodJet
     output_col: MedB
     working_point: M
 
   - module_name: HT
     input_col: goodJet
+
+  - module_name: Count
+    input_col: goodJet
+    output_col: NJet 
+
+  - module_name: Count
+    input_col: MedB
+    output_col: NbJet 
 
 common_selection: &common_selection
   - module_name: NObjFilter
@@ -53,6 +61,7 @@ common_histograms: &common_histograms
         prefix: "jet"
         input_col: goodJet
         max_idx: 6
+
   - module_name: SimpleHistogram
     hist_name: HT
     input_cols: [HT]
@@ -63,7 +72,23 @@ common_histograms: &common_histograms
         bins: 60
         unit: GeV
 
+  - module_name: SimpleHistogram
+    hist_name: NJet
+    input_cols: [NJet]
+    axes:
+      - name: r"N_{jets}"
+        start: 0
+        stop: 14
+        bins: 15
 
+  - module_name: SimpleHistogram
+    hist_name: NbJet
+    input_cols: [NbJet]
+    axes:
+      - name: r"N_{b-jets}"
+        start: 0
+        stop: 14
+        bins: 15
 
 
 
@@ -83,18 +108,19 @@ analyzer:
             jet_combos:
               - [0,1]
     NoSelection:
+        *common_objects
         *common_histograms
 
 
     event_collections:
         - dataset: 'ggHHbbVV_2018*'
             pipelines: [SignalRegion, NoSelection]
-        - dataset: 'qcd*2018*'
-            pipelines: [SignalRegion]
-        - dataset: 'tt_to_hadronic*2018*'
-            pipelines: [SignalRegion]
-        - dataset: 'tt_semileptonic*2018'
-            pipelines: [SignalRegion]
+        # - dataset: 'qcd*2018*'
+        #     pipelines: [SignalRegion]
+        # - dataset: 'tt_to_hadronic*2018*'
+        #     pipelines: [SignalRegion]
+        # - dataset: 'tt_to_semilep*2018'
+        #     pipelines: [SignalRegion]
             
     location_priorities: [".*(T0|T1|T2).*","eos"]
     extra_executors:

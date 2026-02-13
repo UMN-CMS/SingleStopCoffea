@@ -376,14 +376,11 @@ class TopVecHistograms(AnalyzerModule):
     max_idx : int
         Maximum number of leading objects for which histograms are
         produced.
-    mass_stop: int = 3000
-        Stop value for mass axis histogram.
     """
 
     prefix: str
     input_col: Column
     max_idx: int
-    mass_stop: int = 3000
     mass_axis: RegularAxis = field(
         factory=lambda: RegularAxis(50, 0, 3000, "", unit="GeV")
     )
@@ -401,8 +398,7 @@ class TopVecHistograms(AnalyzerModule):
                 new_name = name_suffix                
             axis = evolve(
                 axis,
-                name=new_name,
-                stop=self.mass_stop,
+                name=new_name
                 )
 
             mask = ak.num(jets, axis=1) > i
