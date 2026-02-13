@@ -53,7 +53,15 @@ common_histograms: &common_histograms
         prefix: "jet"
         input_col: goodJet
         max_idx: 6
-
+  - module_name: SimpleHistogram
+    hist_name: HT
+    input_cols: [HT]
+    axes:
+      - name: HT
+        start: 0
+        stop: 3000
+        bins: 60
+        unit: GeV
 
 
 
@@ -70,19 +78,17 @@ analyzer:
             sel_name: selection
         *common_histograms
         - module_name: JetComboHistograms
-            input_col: GoodJet
+            input_col: MedB
             prefix: "b_dijet"
             jet_combos:
-              - [0,1,2,3]
-              - [0,1,2]
-              - [1,2,3]
-    UnfilteredSignal:
+              - [0,1]
+    NoSelection:
         *common_histograms
 
 
     event_collections:
         - dataset: 'ggHHbbVV_2018*'
-            pipelines: [SignalRegion]
+            pipelines: [SignalRegion, NoSelection]
         - dataset: 'qcd*2018*'
             pipelines: [SignalRegion]
         - dataset: 'tt_to_hadronic*2018*'
