@@ -8,8 +8,10 @@ from analyzer.core.analysis_modules import ParameterSpec, ModuleParameterSpec
 import awkward as ak
 import itertools as it
 from attrs import define, field, evolve
-from .axis import RegularAxis
-from .histogram_builder import makeHistogram
+from ..common.axis import RegularAxis
+from ..common.histogram_builder import makeHistogram
+from ..common.electrons import CutBasedWPs, cut_mapping as electron_cut_mapping
+from ..common.muons import IdWps, IsoWps, cut_mapping as muon_cut_mapping
 import enum
 
 import correctionlib
@@ -22,6 +24,7 @@ from analyzer.core.analysis_modules import (
     IsRun,
     IsSampleType,
 )
+
 
 logger = logging.getLogger("analyzer.modules")
 
@@ -88,16 +91,6 @@ class HJetFilter(AnalyzerModule):
     def outputs(self, metadata):
         return [self.output_col]
 
-class CutBasedWPs(str, enum.Enum):
-    fail = "fail"
-    veto = "veto"
-    loose = "loose"
-    medium = "medium"
-    tight = "tight"
-
-
-cut_mapping = dict(fail=0, veto=1, loose=2, medium=3, tight=4)
-
 
 @define
 class HElectronMaker(AnalyzerModule):
@@ -135,8 +128,63 @@ class HElectronMaker(AnalyzerModule):
         electrons = columns[self.input_col]
         pass_pt = electrons.pt > self.min_pt
         pass_eta = abs(electrons.eta) < self.max_abs_eta
-        pass_wp = electrons.cutBased >= cut_mapping[self.working_point]
+        pass_wp = electrons.cutBased >= electron_cut_mapping[self.working_point]
         columns[self.output_col] = electrons[pass_pt & pass_eta & pass_wp]
+        return columns, []
+
+    def inputs(self, metadata):
+        return [self.input_col]
+
+    def outputs(self, metadata):
+        return [self.output_col]
+
+
+@define
+class HMuonMaker(AnalyzerModule):
+    """
+    Select muons based on kinematics, ID, and isolation criteria.
+
+    This analyzer filters muons in an event according to minimum transverse
+    momentum, maximum pseudorapidity, a chosen ID working point, and
+    optional isolation requirements.
+
+    Parameters
+    ----------
+    input_col : Column
+        Column containing the input muon collection.
+    output_col : Column
+        Column where the selected muons will be stored.
+    id_working_point : IdWps
+        Muon ID working point (loose, medium, tight).
+    min_pt : float, optional
+        Minimum transverse momentum in GeV, by default 10.
+    max_abs_eta : float, optional
+        Maximum absolute pseudorapidity, by default 2.4.
+    iso_working_point : IsoWps or None, optional
+        Optional isolation working point. If provided, muons must meet
+        the corresponding isolation requirement.
+    """
+
+    input_col: Column
+    output_col: Column
+    id_working_point: IdWps
+    min_pt: float = 10
+    max_abs_eta: float = 2.4
+    iso_working_point: IsoWps | None = None
+
+    __corrections: dict = field(factory=dict)
+
+    def run(self, columns, params):
+        muon = columns[self.input_col]
+        pass_pt = muon.pt > self.min_pt
+        pass_eta = abs(muon.eta) < self.max_abs_eta
+        pass_id_wp = muon[self.id_working_point]
+        passed = pass_pt & pass_eta & pass_id_wp
+        if self.iso_working_point is not None:
+            pass_iso = muon.pfIsoId >= muon_cut_mapping[self.iso_working_point]
+            passed = passed & pass_iso
+
+        columns[self.output_col] = muon[passed]
         return columns, []
 
     def inputs(self, metadata):
