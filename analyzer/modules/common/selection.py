@@ -34,6 +34,7 @@ class SelectOnColumns(AnalyzerModule):
     save_cutflow: bool = True
 
     def run(self, columns, params):
+
         if self.selection_names is not None:
             cuts = self.selection_names
         else:
@@ -45,6 +46,18 @@ class SelectOnColumns(AnalyzerModule):
         if not cuts:
             return columns, []
 
+        def getCol(name):
+            return columns[Column(("Selection", name))]
+
+        def andCuts(all_cuts):
+            if not all_cuts:
+                return ak.ones_like(cuts[0])
+            ret = getCol(all_cuts[0])
+            for cut in all_cuts[1:]:
+                ret = ret & getCol(cut)
+            return ret
+
+
         for s in columns.pipeline_data.get("Selections", {}):
             columns.pipeline_data["Selections"][s] = True
 
@@ -52,15 +65,17 @@ class SelectOnColumns(AnalyzerModule):
 
         ret = columns[Column("Selection") + cuts[0]]
         cutflow = {"initial": initial, cuts[0]: ak.count_nonzero(ret, axis=0)}
-
         for name in cuts[1:]:
-            ret = ret & columns[Column("Selection") + name]
+            ret = ret & getCol(name)
             cutflow[name] = ak.count_nonzero(ret, axis=0)
 
+
+        onecut = {cut : ak.count_nonzero(getCol(cut)) for cut in cuts}
+        n_minus_one = {cut: ak.count_nonzero(andCuts(cuts[:i] + cuts[i+1:]),axis=0) for i,cut in enumerate(cuts)}
         columns.filter(ret)
 
         if self.save_cutflow:
-            return columns, [SelectionFlow(self.sel_name, cuts=cuts, cutflow=cutflow)]
+            return columns, [SelectionFlow(self.sel_name, cuts=cuts, cutflow=cutflow, one_cut=onecut,n_minus_one=n_minus_one)]
         else:
             return columns, []
 
