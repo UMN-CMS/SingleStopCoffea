@@ -1,0 +1,61 @@
+
+analyzer:
+  default_run_builder:
+    strategy_name: NoSystematics
+
+  quad_pipeline:   
+      
+    - module_name: JetFilter # Make a column of the good jets/event
+      input_col: Jet
+      output_col: GoodJet
+
+    - module_name: NObjFilter #Spec that I want at least 4 
+      selection_name: 'FourPlusGoodJets'
+      input_col: GoodJet
+      min_count: 4
+
+    - module_name: NObjFilter # Specify the maximum is 4
+      selection_name: 'FourExactGoodJets'
+      input_col: GoodJet
+      max_count: 4      
+
+    - module_name: SimpleCategory # Pass/Fail Category
+      input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
+      cat_name: PassQuadPFTrigger
+      bins: 2
+      start: 0
+      stop: 2
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: FirstGoodJet
+      index: 0
+
+    - module_name: 
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: SecondGoodJet
+      index: 1
+
+    - module_name: 
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: ThirdGoodJet
+      index: 2
+
+    - module_name: 
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: FourthGoodJet
+      index: 3
+
+    - module_name: 
+
+    - module_name: SelectOnColumns
+      sel_name: 'CorrectJetSel'
+
+    - module_name: ScalarSelection
+      cows: 'Moo'
