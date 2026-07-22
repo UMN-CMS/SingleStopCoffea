@@ -81,6 +81,16 @@ analyzer:
           bins: 50
           unit: GeV
 
+    - module_name: ScalarSelection
+      selection_name: 'PT4GreaterPT4Flat'
+      input_col: FourthGoodJet.pt
+      cut_val: 60
+      above: True
+   
+    - module_name: SelectOnColumns
+      selection_name: 'PT4GreaterPT4Flat'
+
+
     - module_name: BQuarkMaker
       input_col: GoodJet
       output_col: BGoodJet
@@ -92,7 +102,8 @@ analyzer:
       min_count: 2
 
     - module_name: SelectOnColumns
-      selection_name: TwoTightBJets
+      sel_name: 'TwoTightBJets'
+
 
 event_collections:
   - dataset: '*run3hlt*'
@@ -101,51 +112,62 @@ location_priorities: [".*(T0|T1|T2).*","eos"]
 
 Postprocessing: 
   processors:
-#    - name: Histogram1D
-#      inputs: 
-#        - "*/*/*/PTFourth"
-#      structure:
-#        group: {"pipeline": "*"}
-#        transforms: 
-#          - name: SelectAxesValues
-#            select_axes_values: {"variation": "central"}
-#      output_name: "{prefix}/{era.name}/{name}.png"
-#
-#    - name: RatioPlot
-#      inputs: 
-#        - "*/*/*/HTGood"
-#      structure: 
-#        group: 
-#        subgroups: 
-#          numerator: 
-#            transforms: 
-#              - name: SelectAxesValues
-#                select_axes_values: {"variation":["central"],"PassHT":[1]}
-#          denominator: 
-#            transforms: 
-#              - name: SelectAxesValues
-#                select_axes_values: {"variation":["central"]}
-#              - name: MergeAxes
-#                merge_axis_names: {"PassHT"} 
-#      output_name: ""
-#
-#    - name: RatioPlot
-#      inputs:
-#        - "*/*/*/HTGreaterHTFlat"
-#      structure:
-#        group:
-#        subgroups:
-#          numerator: 
-#            transforms:
-#              - name: SelectAxesValues
-#                select_axes_values: {"variation":["central"],"PassHT":[1]}
-#          denominator: 
-#            transforms:
-#              - name: SelectAxesValues
-#                select_axes_values: {"variation":"central"}
-#              - name: MergeAxes
-#                merge_axis_names: {"PassHT"}
-#      output_name: "{prefix}/ratio_{era.name}_{name}.png"
+    - name: RatioPlot
+      inputs: 
+        - "*/*/*/HTGood"
+      ratio_type: "efficiency"
+      structure: 
+        group: {dataset_name: "*"}
+        subgroups:  
+          numerator: 
+            transforms: 
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"],"PassHT":[1]}
+          denominator:
+            transforms: 
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"]}
+              - name: MergeAxes
+                merge_axis_names: ["PassHT"] 
+      output_name: "{prefix}/{dataset_name}/ratio_{era.name}_{name}.png"
+        
+    - name: RatioPlot
+      inputs:
+        - "*/*/*/IDunno"
+      ratio_type: "efficiency"
+      structure:
+        group: {dataset_name: "*"}
+        subgroups:
+          numerator: 
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"],"PassHT":[1]}
+          denominator: 
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":"central"}
+              - name: MergeAxes
+                merge_axis_names: {"PassHT"}
+      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
+
+    - name: RatioPlot
+      inputs:
+        - "*/*/*/PTFourth"
+      ratio_type: "efficiency"
+      structure:
+        group: {dataset_name: "*"}
+        subgroups:
+          numerator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"],"PassHT":[1]}
+          denominator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":"central"}
+              - name: MergeAxes
+                merge_axis_names: {"PassHT"}
+      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
 
 
     - name: Efficiency2D
