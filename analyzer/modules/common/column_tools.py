@@ -87,10 +87,11 @@ class PromoteIndex(AnalyzerModule):
 class Concatenate(AnalyzerModule):
     input_cols: list[Column]
     output_col: Column
+    conc_axis: int = 1
 
     def run(self, columns, params):
         columns[self.output_col] = ak.concatenate(
-            [columns[c] for c in self.input_cols], axis=1
+            [columns[c] for c in self.input_cols], axis=self.conc_axis
         )
         return columns, []
 
@@ -108,5 +109,35 @@ class Concatenate(AnalyzerModule):
                 block_type="object",
                 name=self.output_col.adl_name,
                 statements=[ADLStatement("take", union_expr)]
+            )
+        ]
+
+@define
+class Zip(AnalyzerModule):
+    input_cols: dict[str, Column]
+    output_col: Column
+
+    def run(self, columns, params):
+        columns[self.output_col] = ak.zip(
+            {name: columns[c] for name, c in self.input_cols.items()}
+        )
+        print(self.output_col)
+        return columns, []
+
+    def inputs(self, metadata):
+        return list(self.input_cols.values())
+
+    def outputs(self, metadata):
+        return [self.output_col]
+
+    def adlExport(self, metadata):
+        fields = ", ".join(
+            f"{name}: {c.adl_name}" for name, c in self.input_cols.items()
+        )
+        return [
+            ADLBlock(
+                block_type="object",
+                name=self.output_col.adl_name,
+                statements=[ADLStatement("take", f"record({fields})")]
             )
         ]
