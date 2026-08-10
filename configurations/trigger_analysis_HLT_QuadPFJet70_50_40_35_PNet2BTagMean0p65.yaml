@@ -4,7 +4,14 @@ analyzer:
     strategy_name: NoSystematics
 
   quad_pipeline:   
-      
+        
+    - module_name: SimpleCategory
+      input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
+      cat_name: PassQuad
+      bins: 2
+      start: 0
+      stop: 2
+
     - module_name: JetFilter # Make a column of the good jets/event
       input_col: Jet
       output_col: GoodJet
@@ -12,12 +19,7 @@ analyzer:
     - module_name: NObjFilter #Spec that I want at least 4 
       selection_name: 'FourPlusGoodJets'
       input_col: GoodJet
-      min_count: 4
-
-    - module_name: NObjFilter # Specify the maximum is 4
-      selection_name: 'FourExactGoodJets'
-      input_col: GoodJet
-      max_count: 4      
+      min_count: 4     
 
     - module_name: SimpleCategory # Pass/Fail Category
       input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
@@ -31,31 +33,77 @@ analyzer:
       output_col: FirstGoodJet
       index: 0
 
-    - module_name: 
+    - module_name: ScalarSelection
+      selection_name: 'LeadingJetGreater70GeV'
+      input_col: FirstGoodJet
+      cut_val: 70
 
     - module_name: PromoteIndex
       input_col: GoodJet
       output_col: SecondGoodJet
       index: 1
 
-    - module_name: 
+    - module_name: ScalarSelection
+      selection_name: 'Jet2Greater50GeV'
+      input_col: SecondGoodJet
+      cut_val: 50
 
     - module_name: PromoteIndex
       input_col: GoodJet
       output_col: ThirdGoodJet
       index: 2
 
-    - module_name: 
+    - module_name: ScalarSelection
+      selection_name: 'Jet3Greater40GeV'
+      input_col: ThirdGoodJet
+      cut_val: 40
 
     - module_name: PromoteIndex
       input_col: GoodJet
       output_col: FourthGoodJet
       index: 3
 
-    - module_name: 
+    - module_name: ScalarSelection
+      selection_name: 'Jet4Greater30GeV'
+      input_col: FourthGoodJet
+      cut_val: 30
 
     - module_name: SelectOnColumns
-      sel_name: 'CorrectJetSel'
+      sel_name: 'JetSpecSelection'
 
-    - module_name: ScalarSelection
-      cows: 'Moo'
+    - module_name: SimpleHistogram
+      hist_name: PT4
+      input_cols: [FourthGoodJet]
+      axes:
+        - name: 'PT'
+          start: 25.0
+          stop: 100.0
+          bins: 25
+          unit: GeV
+
+event_collections:
+  - dataset: '*run3hlt*'
+    pipelines: [quad_pipeline]
+location_priorities: [".*(T0|T1|T2).*","eos"]
+
+Postprocessing:
+  processors:
+    - name: RatioPlot
+      inputs:
+        - "*/*/*/PT4"
+      ratio_type: 'efficiency'
+      structure: 
+      group: {dataset_name: "*"}
+      subgroups:
+        numerator: 
+          transforms:
+            - name: SelectAxesValues
+              select_axes_values: {"variation":["central"],"PassQuad":[1]}
+        denominator: 
+          transforms:
+            - name: SelectAxesValues
+              select_axes_values: {"variation":"central"}
+            - name: MergeAxes
+              merge_axis_names: {"PassQuad"}
+      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
+
