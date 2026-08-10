@@ -66,10 +66,33 @@ analyzer:
           bins: 60
           unit: GeV
 
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: FirstGoodJet
+      index: 0
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: SecondGoodJet
+      index: 1
+
+    - module_name: PromoteIndex
+      input_col: GoodJet
+      output_col: ThirdGoodJet
+      index: 2
+
     - module_name: PromoteIndex 
       input_col: GoodJet
       output_col: FourthGoodJet
       index: 3
+
+    - module_name: Zip
+      input_cols: 
+        FirstGoodJet: FirstGoodJet
+        SecondGoodJet: SecondGoodJet
+        ThirdGoodJet: ThirdGoodJet
+        FourthGoodJet: FourthGoodJet
+      output_col: FirstFourGoodJets
 
     - module_name: SimpleHistogram
       hist_name: PTFourth
@@ -88,8 +111,7 @@ analyzer:
       above: True
    
     - module_name: SelectOnColumns
-      selection_name: 'PT4GreaterPT4Flat'
-
+      sel_name: 'PT4GreaterPT4Flat'
 
     - module_name: BQuarkMaker
       input_col: GoodJet
@@ -97,13 +119,58 @@ analyzer:
       working_point: 'T'
 
     - module_name: NObjFilter
-      selection_name: TwoBJets
+      selection_name: TwoBJet
       input_col: BGoodJet
       min_count: 2
+
+    - module_name: SelectTopN
+      input_col: GoodJet        # FIX STARTS HERE - Of the good jets, not just the bjets
+      sort_field: pt
+      n: 4
+      output_col: GoodJet_top4pt
+
+    - module_name: SortByBtagScore
+      input_col: GoodJet_top4pt
+      btag_field: btagDeepFlavB
+      output_col: GoodJet_top4pt_btagsorted
+
+    - module_name: PromoteIndex
+      input_col: GoodJet_top4pt_btagsorted.btagDeepFlavB
+      output_col: GoodJet_Brankone
+      index: 0
+
+    - module_name: PromoteIndex
+      input_col: GoodJet_top4pt_btagsorted.btagDeepFlavB
+      output_col: GoodJet_Branktwo
+      index: 1
+
+    - module_name: BtagDisc
+      input_col_first_rank: GoodJet_Brankone
+      input_col_second_rank: GoodJet_Branktwo
+      output_col: 'btag_discriminant'
+
+    - module_name: SimpleHistogram
+      hist_name: BtagDisc
+      input_cols: ['btag_discriminant']
+      axes:
+        - name: "BtagDisc"
+          start: 0.0
+          stop: 1.0
+          bins: 50
+          unit: score
 
     - module_name: SelectOnColumns
       sel_name: 'TwoTightBJets'
 
+    - module_name: SimpleHistogram
+      hist_name: HT_after_all_sel
+      input_cols: [ht]
+      axes:
+        - name: "HT"
+          start: 0.0
+          stop: 2000.0
+          bins: 60
+          unit: GeV
 
 event_collections:
   - dataset: '*run3hlt*'
@@ -133,25 +200,6 @@ Postprocessing:
         
     - name: RatioPlot
       inputs:
-        - "*/*/*/IDunno"
-      ratio_type: "efficiency"
-      structure:
-        group: {dataset_name: "*"}
-        subgroups:
-          numerator: 
-            transforms:
-              - name: SelectAxesValues
-                select_axes_values: {"variation":["central"],"PassHT":[1]}
-          denominator: 
-            transforms:
-              - name: SelectAxesValues
-                select_axes_values: {"variation":"central"}
-              - name: MergeAxes
-                merge_axis_names: {"PassHT"}
-      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
-
-    - name: RatioPlot
-      inputs:
         - "*/*/*/PTFourth"
       ratio_type: "efficiency"
       structure:
@@ -169,6 +217,24 @@ Postprocessing:
                 merge_axis_names: {"PassHT"}
       output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
 
+    - name: RatioPlot
+      inputs:
+        - "*/*/*/BtagDisc"
+      ratio_type: "efficiency"
+      structure:
+        group: {dataset_name: "*"}
+        subgroups:
+          numerator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"],"PassHT":[1]}
+          denominator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":"central"}
+              - name: MergeAxes
+                merge_axis_names: {"PassHT"}
+      output_name: "{prefix}/btag_plots/{dataset_name}/ratio_{era.name}_{name}.png"
 
     - name: Efficiency2D
       inputs: 
@@ -192,3 +258,26 @@ Postprocessing:
                   - name: MergeAxes
                     merge_axis_names: ["PassHT"]
       output_name: "{prefix}/{pipeline}/{name}.png"
+
+    - name: Efficiency2D
+      inputs:
+        - "*/*/*/HT_after_all_sel"
+      group_xy_patterns: [["other_data","stop_mass"],["other_data","chargino_mass"]]
+      xyz_labels: ["ms", "mx", "efficiencies"]
+      structure:
+        group: {pipeline: "*"}
+        subgroups:
+          name_grouping:
+            group: {dataset_name: "*"}
+            subgroups:
+              passing:
+                transforms:
+                  - name: SelectAxesValues
+                    select_axes_values: {"variation":["central"],"PassHT":[1]}
+              total:
+                transforms:
+                  - name: SelectAxesValues
+                    select_axes_values: {"variation":["central"]}
+                  - name: MergeAxes
+                    merge_axis_names: ["PassHT"]
+      output_name: "{prefix}/Overall_Eff/{pipeline}/{name}.png"
