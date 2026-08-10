@@ -5,13 +5,6 @@ analyzer:
 
   quad_pipeline:   
         
-    - module_name: SimpleCategory
-      input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
-      cat_name: PassQuad
-      bins: 2
-      start: 0
-      stop: 2
-
     - module_name: JetFilter # Make a column of the good jets/event
       input_col: Jet
       output_col: GoodJet
@@ -21,13 +14,6 @@ analyzer:
       input_col: GoodJet
       min_count: 4     
 
-    - module_name: SimpleCategory # Pass/Fail Category
-      input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
-      cat_name: PassQuadPFTrigger
-      bins: 2
-      start: 0
-      stop: 2
-
     - module_name: PromoteIndex
       input_col: GoodJet
       output_col: FirstGoodJet
@@ -35,7 +21,7 @@ analyzer:
 
     - module_name: ScalarSelection
       selection_name: 'LeadingJetGreater70GeV'
-      input_col: FirstGoodJet
+      input_col: FirstGoodJet.pt
       cut_val: 70
 
     - module_name: PromoteIndex
@@ -45,7 +31,7 @@ analyzer:
 
     - module_name: ScalarSelection
       selection_name: 'Jet2Greater50GeV'
-      input_col: SecondGoodJet
+      input_col: SecondGoodJet.pt
       cut_val: 50
 
     - module_name: PromoteIndex
@@ -55,7 +41,7 @@ analyzer:
 
     - module_name: ScalarSelection
       selection_name: 'Jet3Greater40GeV'
-      input_col: ThirdGoodJet
+      input_col: ThirdGoodJet.pt
       cut_val: 40
 
     - module_name: PromoteIndex
@@ -65,11 +51,18 @@ analyzer:
 
     - module_name: ScalarSelection
       selection_name: 'Jet4Greater30GeV'
-      input_col: FourthGoodJet
+      input_col: FourthGoodJet.pt
       cut_val: 30
 
     - module_name: SelectOnColumns
       sel_name: 'JetSpecSelection'
+
+    - module_name: SimpleCategory # Pass/Fail Category
+      input_col: "HLT.QuadPFJet70_50_40_35_PNet2BTagMean0p65"
+      cat_name: PassQuad
+      bins: 2
+      start: 0
+      stop: 2
 
     - module_name: SimpleHistogram
       hist_name: PT4
