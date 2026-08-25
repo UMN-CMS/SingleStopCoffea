@@ -14,6 +14,10 @@ analyzer:
       input_col: GoodJet
       min_count: 4     
 
+    - module_name: SelectOnColumns
+      sel_name: 'FourJetsMinimum'
+
+
     - module_name: PromoteIndex
       input_col: GoodJet
       output_col: FirstGoodJet
@@ -66,18 +70,67 @@ analyzer:
 
     - module_name: SimpleHistogram
       hist_name: PT4
-      input_cols: [FourthGoodJet]
+      input_cols: [FourthGoodJet.pt]
       axes:
         - name: 'PT'
           start: 25.0
           stop: 100.0
           bins: 25
-          unit: GeV
+          unit: GeV   
+     
+    - module_name: BQuarkMaker
+      input_col: GoodJet
+      output_col: BGoodJet
+      working_point: 'T'
+
+    - module_name: NObjFilter
+      selection_name: TwoBJet
+      input_col: BGoodJet
+      min_count: 2
+
+    - module_name: SelectTopN
+      input_col: GoodJet        
+      sort_field: pt
+      n: 4
+      output_col: GoodJet_top4pt
+
+    - module_name: SortByBtagScore
+      input_col: GoodJet_top4pt
+      btag_field: btagDeepFlavB       # Does the PNetB Exist???
+      output_col: GoodJet_top4pt_btagsorted
+
+    - module_name: PromoteIndex
+      input_col: GoodJet_top4pt_btagsorted.btagDeepFlavB
+      output_col: GoodJet_Brankone
+      index: 0
+
+    - module_name: PromoteIndex
+      input_col: GoodJet_top4pt_btagsorted.btagDeepFlavB
+      output_col: GoodJet_Branktwo
+      index: 1
+
+    - module_name: BtagDisc
+      input_col_first_rank: GoodJet_Brankone
+      input_col_second_rank: GoodJet_Branktwo
+      output_col: 'btag_discriminant'
+
+    - module_name: SimpleHistogram
+      hist_name: BtagDisc
+      input_cols: ['btag_discriminant']
+      axes:
+        - name: "BtagDisc"
+          start: 0.0
+          stop: 1.0
+          bins: 50
+          unit: score
+
+    - module_name: SelectOnColumns
+      sel_name: 'TwoTightBJets'
 
 event_collections:
-  - dataset: '*run3hlt*'
+  - dataset: '*signal_2023_postBPix_312*900*official'
     pipelines: [quad_pipeline]
-location_priorities: [".*(T0|T1|T2).*","eos"]
+location_priorities: [".*(T0|T1|T2).*","eos"] 
 
 Postprocessing:
   processors:
@@ -86,17 +139,17 @@ Postprocessing:
         - "*/*/*/PT4"
       ratio_type: 'efficiency'
       structure: 
-      group: {dataset_name: "*"}
-      subgroups:
-        numerator: 
-          transforms:
-            - name: SelectAxesValues
-              select_axes_values: {"variation":["central"],"PassQuad":[1]}
-        denominator: 
-          transforms:
-            - name: SelectAxesValues
-              select_axes_values: {"variation":"central"}
-            - name: MergeAxes
-              merge_axis_names: {"PassQuad"}
-      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
+        group: {dataset_name: "*"}
+        subgroups:
+          numerator: 
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation": ["central"],"PassQuad":[1]}
+          denominator: 
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation": "central"}
+              - name: MergeAxes
+                merge_axis_names: {"PassQuad"}
+      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}.png"
 
