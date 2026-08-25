@@ -9,6 +9,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_100.root
+- name: signal_2023_preBPix_run3hlt_1000_200
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 200\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 200
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_200.root
+- name: signal_2023_preBPix_run3hlt_1000_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_300.root
 - name: signal_2023_preBPix_run3hlt_1000_400
   sample_type: MC
   title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
@@ -20,6 +42,50 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_400.root
+- name: signal_2023_preBPix_run3hlt_1000_500
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 500\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 500
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_500.root
+- name: signal_2023_preBPix_run3hlt_1000_600
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 600\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 600
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_600.root
+- name: signal_2023_preBPix_run3hlt_1000_700
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 700\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 700
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_700.root
+- name: signal_2023_preBPix_run3hlt_1000_800
+  sample_type: MC
+  title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 800\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 480.0
+  other_data:
+    stop_mass: 1000
+    chargino_mass: 800
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-1000_800.root
 - name: signal_2023_preBPix_run3hlt_1000_900
   sample_type: MC
   title: $m_{\tilde{t}} = 1000\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 900\ \mathrm{GeV}$
@@ -119,6 +185,17 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-500_200.root
+- name: signal_2023_preBPix_run3hlt_500_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 500\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 8000.0
+  other_data:
+    stop_mass: 500
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-500_300.root
 - name: signal_2023_preBPix_run3hlt_500_400
   sample_type: MC
   title: $m_{\tilde{t}} = 500\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
@@ -152,6 +229,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-600_200.root
+- name: signal_2023_preBPix_run3hlt_600_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 600\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 3760.0
+  other_data:
+    stop_mass: 600
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-600_300.root
+- name: signal_2023_preBPix_run3hlt_600_400
+  sample_type: MC
+  title: $m_{\tilde{t}} = 600\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 3760.0
+  other_data:
+    stop_mass: 600
+    chargino_mass: 400
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-600_400.root
 - name: signal_2023_preBPix_run3hlt_600_500
   sample_type: MC
   title: $m_{\tilde{t}} = 600\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 500\ \mathrm{GeV}$
@@ -174,6 +273,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-700_100.root
+- name: signal_2023_preBPix_run3hlt_700_200
+  sample_type: MC
+  title: $m_{\tilde{t}} = 700\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 200\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 2200.0
+  other_data:
+    stop_mass: 700
+    chargino_mass: 200
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-700_200.root
+- name: signal_2023_preBPix_run3hlt_700_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 700\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 2200.0
+  other_data:
+    stop_mass: 700
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-700_300.root
 - name: signal_2023_preBPix_run3hlt_700_400
   sample_type: MC
   title: $m_{\tilde{t}} = 700\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
@@ -185,6 +306,17 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-700_400.root
+- name: signal_2023_preBPix_run3hlt_700_500
+  sample_type: MC
+  title: $m_{\tilde{t}} = 700\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 500\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 2200.0
+  other_data:
+    stop_mass: 700
+    chargino_mass: 500
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-700_500.root
 - name: signal_2023_preBPix_run3hlt_700_600
   sample_type: MC
   title: $m_{\tilde{t}} = 700\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 600\ \mathrm{GeV}$
@@ -207,6 +339,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_100.root
+- name: signal_2023_preBPix_run3hlt_800_200
+  sample_type: MC
+  title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 200\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 1300.0
+  other_data:
+    stop_mass: 800
+    chargino_mass: 200
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_200.root
+- name: signal_2023_preBPix_run3hlt_800_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 1300.0
+  other_data:
+    stop_mass: 800
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_300.root
 - name: signal_2023_preBPix_run3hlt_800_400
   sample_type: MC
   title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
@@ -218,6 +372,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_400.root
+- name: signal_2023_preBPix_run3hlt_800_500
+  sample_type: MC
+  title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 500\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 1300.0
+  other_data:
+    stop_mass: 800
+    chargino_mass: 500
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_500.root
+- name: signal_2023_preBPix_run3hlt_800_600
+  sample_type: MC
+  title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 600\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 1300.0
+  other_data:
+    stop_mass: 800
+    chargino_mass: 600
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-800_600.root
 - name: signal_2023_preBPix_run3hlt_800_700
   sample_type: MC
   title: $m_{\tilde{t}} = 800\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 700\ \mathrm{GeV}$
@@ -240,6 +416,28 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_100.root
+- name: signal_2023_preBPix_run3hlt_900_200
+  sample_type: MC
+  title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 200\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 770.0
+  other_data:
+    stop_mass: 900
+    chargino_mass: 200
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_200.root
+- name: signal_2023_preBPix_run3hlt_900_300
+  sample_type: MC
+  title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 300\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 770.0
+  other_data:
+    stop_mass: 900
+    chargino_mass: 300
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_300.root
 - name: signal_2023_preBPix_run3hlt_900_400
   sample_type: MC
   title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 400\ \mathrm{GeV}$
@@ -251,6 +449,39 @@
   era: 2023_preBPix
   files:
   - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_400.root
+- name: signal_2023_preBPix_run3hlt_900_500
+  sample_type: MC
+  title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 500\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 770.0
+  other_data:
+    stop_mass: 900
+    chargino_mass: 500
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_500.root
+- name: signal_2023_preBPix_run3hlt_900_600
+  sample_type: MC
+  title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 600\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 770.0
+  other_data:
+    stop_mass: 900
+    chargino_mass: 600
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_600.root
+- name: signal_2023_preBPix_run3hlt_900_700
+  sample_type: MC
+  title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 700\ \mathrm{GeV}$
+  n_events: 10000
+  x_sec: 770.0
+  other_data:
+    stop_mass: 900
+    chargino_mass: 700
+  era: 2023_preBPix
+  files:
+  - root://cmseos.fnal.gov:1094//store/user/dmahon/condor/RPVSingleStopMCRun3HLT/NANOAOD-ALL/NANOAOD-900_700.root
 - name: signal_2023_preBPix_run3hlt_900_800
   sample_type: MC
   title: $m_{\tilde{t}} = 900\ \mathrm{GeV}, m_{\tilde{\chi}^{\pm}} = 800\ \mathrm{GeV}$
