@@ -94,6 +94,37 @@ analyzer:
         FourthGoodJet: FourthGoodJet
       output_col: FirstFourGoodJets
 
+    
+    - module_name: SimpleHistogram
+      hist_name: PTThird
+      input_cols: [ThirdGoodJet.pt]
+      axes:
+        - name: "PT3"
+          start: 0.0
+          stop: 350.0
+          bins: 50
+          unit: GeV
+
+    - module_name: SimpleHistogram
+      hist_name: PTSecond
+      input_cols: [SecondGoodJet.pt]
+      axes:
+        - name: "PT2"
+          start: 0.0
+          stop: 350.0
+          bins: 50
+          unit: GeV
+
+    - module_name: SimpleHistogram
+      hist_name: PTFirst
+      input_cols: [FirstGoodJet.pt]
+      axes:
+        - name: "PT1"
+          start: 0.0
+          stop: 350.0
+          bins: 50
+          unit: GeV
+
     - module_name: SimpleHistogram
       hist_name: PTFourth
       input_cols: [FourthGoodJet.pt]
@@ -159,6 +190,26 @@ analyzer:
           bins: 50
           unit: score
 
+    - module_name: SimpleHistogram
+      hist_name: Btag_1
+      input_cols: ['GoodJet_Brankone']
+      axes:
+        - name: "BtagDisc"
+          start: 0.0
+          stop: 1.0
+          bins: 50
+          unit: score
+
+    - module_name: SimpleHistogram
+      hist_name: Btag_2
+      input_cols: ['GoodJet_Branktwo']
+      axes:
+        - name: "BtagDisc"
+          start: 0.0
+          stop: 1.0
+          bins: 50
+          unit: score
+
     - module_name: SelectOnColumns
       sel_name: 'TwoTightBJets'
 
@@ -174,6 +225,8 @@ analyzer:
 
 event_collections:
   - dataset: '*run3hlt*'
+    pipelines: [supercool_first_pipeline]
+  - dataset: 'qcd_inclusive_2023_preBPix*'
     pipelines: [supercool_first_pipeline]
 location_priorities: [".*(T0|T1|T2).*","eos"]
 
@@ -196,11 +249,14 @@ Postprocessing:
                 select_axes_values: {"variation":["central"]}
               - name: MergeAxes
                 merge_axis_names: ["PassHT"] 
-      output_name: "{prefix}/{dataset_name}/ratio_{era.name}_{name}.png"
+      output_name: "{prefix}/Ht_plots/{dataset_name}/ratio_{era.name}_{name}.png"
         
     - name: RatioPlot
       inputs:
         - "*/*/*/PTFourth"
+        - "*/*/*/PTThird"
+        - "*/*/*/PTSecond"
+        - "*/*/*/PTFirst"
       ratio_type: "efficiency"
       structure:
         group: {dataset_name: "*"}
@@ -215,7 +271,7 @@ Postprocessing:
                 select_axes_values: {"variation":"central"}
               - name: MergeAxes
                 merge_axis_names: {"PassHT"}
-      output_name: "{prefix}/pt_fourth_jet_plots/{dataset_name}/ratio_{era.name}_{name}.png"
+      output_name: "{prefix}/jet_pt_plots/{dataset_name}/ratio_{era.name}_{name}.png"
 
     - name: RatioPlot
       inputs:
@@ -234,7 +290,28 @@ Postprocessing:
                 select_axes_values: {"variation":"central"}
               - name: MergeAxes
                 merge_axis_names: {"PassHT"}
-      output_name: "{prefix}/btag_plots/{dataset_name}/ratio_{era.name}_{name}.png"
+      output_name: "{prefix}/btag_plots/{dataset_name}/mean_ratio_{era.name}_{name}.png"
+
+    - name: RatioPlot
+      inputs:
+        - "*/*/*/Btag_1"
+        - "*/*/*/Btag_2"
+      ratio_type: "efficiency"
+      structure:
+        group: {dataset_name: "*"}
+        subgroups:
+          numerator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":["central"],"PassHT":[1]}
+          denominator:
+            transforms:
+              - name: SelectAxesValues
+                select_axes_values: {"variation":"central"}
+              - name: MergeAxes
+                merge_axis_names: {"PassHT"}
+      output_name: "{prefix}/btag_rank1_plots/{dataset_name}/rank1_ratio_{era.name}_{name}.png"
+
 
     - name: Efficiency2D
       inputs: 
@@ -257,7 +334,7 @@ Postprocessing:
                     select_axes_values: {"variation":["central"]}
                   - name: MergeAxes
                     merge_axis_names: ["PassHT"]
-      output_name: "{prefix}/{pipeline}/{name}.png"
+      output_name: "{prefix}/presel_overall_Eff/{pipeline}/{name}.png"
 
     - name: Efficiency2D
       inputs:
