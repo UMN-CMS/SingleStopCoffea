@@ -208,7 +208,7 @@ class HistogramBuilder(PureResultModule):
 def makeHistogram(
     product_name: str,
     columns,
-    axes: Axis | list[Axis],
+    axes: Axis | list[Axis] | list[RegularAxis],
     data,
     description=None,
     mask=None,

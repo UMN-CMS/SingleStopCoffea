@@ -68,7 +68,11 @@ class DumpCombined(BasePostprocessor):
         export_hist = group[0][0].histogram
         meta = commonDict(group)
         lumis = set()
+        print(30*"-")
+        print(self.dataset_name)
+        print(self.dataset_title)
         for item, group_meta in group:
+            print(group_meta['dataset_name'])
             lumis.add(float(group_meta["era"]["lumi"]))
             export_hist += item.histogram
         output_path = dotFormat(

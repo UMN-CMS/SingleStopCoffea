@@ -493,6 +493,16 @@ class TopVecHistograms(AnalyzerModule):
                     mask=mask,
                 )
             )
+            ret.append(
+                makeHistogram(
+                    f"{self.prefix}_E_{i + 1}",
+                    columns,
+                    RegularAxis(80, 0, 4000, f"$E_{{{i + 1}}}$", unit="GeV"),
+                    padded[:, i].E,
+                    description=f"E of jet {i + 1} ",
+                    mask=mask,
+                )
+            )
 
         return columns, ret
 
@@ -683,6 +693,7 @@ class JetScaleCorrections(AnalyzerModule):
         )
 
         if systematic == "central":
+            return columns, []
             k_l1 = JetScaleCorrections.getKeyJec('L1FastJet', self.jet_type, metadata)
             k_l2 = JetScaleCorrections.getKeyJec('L2Relative', self.jet_type, metadata)
             k_l2l3res = JetScaleCorrections.getKeyJec('L2L3Residual', self.jet_type, metadata)

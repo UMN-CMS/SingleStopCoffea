@@ -159,6 +159,8 @@ class NNMassPlots(AnalyzerModule):
     ratio_only: bool = False
     bins: int = 60
     y_bins: int | None = None
+    one_d: bool = False
+    two_d: bool = True
 
     def run(self, columns, params):
         chi_m = columns[self.m3_input]
@@ -167,38 +169,78 @@ class NNMassPlots(AnalyzerModule):
         y_bins = self.y_bins or self.bins
 
         ret = []
-        ret.append(
-            makeHistogram(
-                f"{self.prefix}_mChi",
-                columns,
-                RegularAxis(
-                    self.bins,
-                    self.m3_range[0],
-                    self.m3_range[1],
-                    r"$m_{\chi}$",
-                    unit="GeV",
-                ),
-                chi_m,
-            )
-        )
-        ret.append(
-            makeHistogram(
-                f"{self.prefix}_mStop",
-                columns,
-                RegularAxis(
-                    self.bins,
-                    self.m4_range[0],
-                    self.m4_range[1],
-                    r"$m_{\tilde{t}}$",
-                    unit="GeV",
-                ),
-                stop_m,
-            )
-        )
-        if not self.ratio_only:
+        if self.one_d:
+            if not self.ratio_only:
+                ret.append(
+                    makeHistogram(
+                        f"{self.prefix}_mChi",
+                        columns,
+                        RegularAxis(
+                            self.bins,
+                            self.m3_range[0],
+                            self.m3_range[1],
+                            r"$m_{\chi}$",
+                            unit="GeV",
+                        ),
+                        chi_m,
+                    )
+                )
+                ret.append(
+                    makeHistogram(
+                        f"{self.prefix}_mStop",
+                        columns,
+                        RegularAxis(
+                            self.bins,
+                            self.m4_range[0],
+                            self.m4_range[1],
+                            r"$m_{\tilde{t}}$",
+                            unit="GeV",
+                        ),
+                        stop_m,
+                    )
+                )
             ret.append(
                 makeHistogram(
-                    f"{self.prefix}_mStop_vs_mChi",
+                    f"{self.prefix}_mChiRatio",
+                    columns,
+                    RegularAxis(
+                        y_bins,
+                        self.ratio_range[0],
+                        self.ratio_range[1],
+                        r"$m_{\chi} / m_{\tilde{t}}$",
+                        unit="GeV",
+                    ),
+                    chi_m / stop_m,
+                )
+            )
+        if self.two_d:
+            if not self.ratio_only:
+                ret.append(
+                    makeHistogram(
+                        f"{self.prefix}_mStop_vs_mChi",
+                        columns,
+                        [
+                            RegularAxis(
+                                self.bins,
+                                self.m4_range[0],
+                                self.m4_range[1],
+                                r"$m_{\tilde{t}}$",
+                                unit="GeV",
+                            ),
+                            RegularAxis(
+                                y_bins,
+                                self.m3_range[0],
+                                self.m3_range[1],
+                                r"$m_{\chi}$",
+                                unit="GeV",
+                            ),
+                        ],
+                        [stop_m, chi_m],
+                    )
+                )
+            ret.append(
+                makeHistogram(
+                    f"{self.prefix}_mStop_vs_mChiRatio",
                     columns,
                     [
                         RegularAxis(
@@ -210,38 +252,15 @@ class NNMassPlots(AnalyzerModule):
                         ),
                         RegularAxis(
                             y_bins,
-                            self.m3_range[0],
-                            self.m3_range[1],
-                            r"$m_{\chi}$",
+                            self.ratio_range[0],
+                            self.ratio_range[1],
+                            r"$m_{\chi} / m_{\tilde{t}}$",
                             unit="GeV",
                         ),
                     ],
-                    [stop_m, chi_m],
+                    [stop_m, chi_m / stop_m],
                 )
             )
-        ret.append(
-            makeHistogram(
-                f"{self.prefix}_mStop_vs_mChiRatio",
-                columns,
-                [
-                    RegularAxis(
-                        self.bins,
-                        self.m4_range[0],
-                        self.m4_range[1],
-                        r"$m_{\tilde{t}}$",
-                        unit="GeV",
-                    ),
-                    RegularAxis(
-                        y_bins,
-                        self.ratio_range[0],
-                        self.ratio_range[1],
-                        r"$m_{\chi} / m_{\tilde{t}}$",
-                        unit="GeV",
-                    ),
-                ],
-                [stop_m, chi_m / stop_m],
-            )
-        )
         return columns, ret
 
     def outputs(self, metadata):
