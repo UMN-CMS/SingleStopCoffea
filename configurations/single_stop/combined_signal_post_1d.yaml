@@ -1,0 +1,253 @@
+{% import 'postprocessors/combined_2d.yaml' as comb2D %}
+{% import 'postprocessors/combined_1d.yaml' as comb1D %}
+
+Postprocessing:
+  processors:
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2018'
+      era_energy: 13 
+      dataset_name: 'sm_background_2018'
+      dataset_title: 'SM Bkg' 
+      structure:
+        select: {dataset_name: "[!ds]*2018*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2018/sm_bkg/{name}.pklz4"
+
+    - name: Dump
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      structure:
+        group: {dataset_name: "signal*", era.name: "*", pipeline: "*"}
+        transforms: 
+          - name: NormalizeSystematicByProjection
+            normalize_within: ["HT_Cat"]
+            pre_sf_name: "bjetshapesf-variation_disabled"
+            variation_axis: "variation"
+            should_run:
+              dataset_name: "signal*"
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: "MC"
+      output_name: "{prefix}/filtered_signals_1d_verycomp_pt_cuts/{era.name}/{pipeline}/{dataset_name}/{name}.pklz4"
+
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2017'
+      era_energy: 13 
+      dataset_name: 'sm_background_2017'
+      dataset_title: 'SM Bkg'
+      structure:
+        select: {dataset_name: "[!d]*2017*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2017/sm_bkg/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2016'
+      era_energy: 13 
+      dataset_name: 'sm_background_2016'
+      dataset_title: 'SM Bkg' 
+      structure:
+        select: {dataset_name: "[!d]*2016*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2016/sm_bkg/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: 'Run3'
+      era_energy: 13.6
+      dataset_name: 'sm_background_run3'
+      dataset_title: 'SM Bkg' 
+      structure:
+        select: {dataset_name: {"or_exprs": ["[!d]*2022_post*", "[!d]*2023*"]}}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/Run3/sm_bkg/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2022_preEE'
+      era_energy: 13 
+      dataset_name: 'sm_background_2022_preEE'
+      dataset_title: 'SM Bkg' 
+      structure:
+        select: {dataset_name: "[!d]*2022_preEE*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2022_preEE/sm_bkg/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2018'
+      era_energy: 13 
+      dataset_name: 'data_2018'
+      dataset_title: 'Data' 
+      structure:
+        select: {dataset_name: "data*2018*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2018/data/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2017'
+      era_energy: 13 
+      dataset_name: 'data_2017'
+      dataset_title: 'Data'
+      structure:
+        select: {dataset_name: "data*2017*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2017/data/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2016'
+      era_energy: 13 
+      dataset_name: 'data_2016'
+      dataset_title: 'Data' 
+      structure:
+        select: {dataset_name: "data*2016*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2017/data/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2016'
+      era_energy: 13 
+      dataset_name: 'data_2016'
+      dataset_title: 'Data' 
+      structure:
+        select: {dataset_name: "data*2016*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2016/data/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: 'Run3'
+      era_energy: 13.6
+      dataset_name: 'data_run3'
+      dataset_title: 'Data' 
+      structure:
+        select: {dataset_name: {"or_exprs": ["data*2022_post*", "data*2023*"]}}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/Run3/data/{name}.pklz4"
+    - name: DumpCombined
+      inputs: 
+        - "*/*/*/uncomp_mStop" 
+        - "*/*/*/comp_mStop" 
+        - "*/*/*/verycomp_mStop" 
+      era_name: '2022_preEE'
+      era_energy: 13.6
+      dataset_name: 'data_2022_preEE'
+      dataset_title: 'Data' 
+      structure:
+        select: {dataset_name: "data*2022_pre*"}
+        group: {pipeline: "*"}
+        transforms:
+          - name: MergeAxes
+            merge_axis_names: ["HT_Cat"]
+            should_run:
+              sample_type: MC 
+          - name: SelectAxesValues
+            select_axes_values: {"variation": "central"}
+      output_name: "{prefix}/{pipeline}/2022_preEE/data/{name}.pklz4"
+
+
+  default_plot_config:
+    cms_text: ["Preliminary"]
+    image_type: ".png"
+    cms_text_color: 'black'
+    legend_num_cols: 1

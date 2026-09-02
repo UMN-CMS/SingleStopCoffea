@@ -261,9 +261,84 @@
       start: 0
       stop: 10
       bins: 10
+{%- endmacro %}
 
-- module_name: TopVecHistograms
-  prefix: "good_jet"
+{% macro singlestop_verycomp_selection() -%}
+- module_name: NObjFilter
+  input_col: GoodElectron
+  selection_name: zero_electron
+  min_count: 0
+  max_count: 0
+
+- module_name: NObjFilter
+  input_col: GoodMuon
+  selection_name: zero_muon
+  min_count: 0
+  max_count: 0
+
+- module_name: NObjFilter
   input_col: GoodJet
-  max_idx: 4
+  selection_name: njets
+  min_count: 4
+  max_count: 6
+
+- module_name: VecPt
+  input_col: GoodJet
+  selection_name: jetpt1_450
+  min_pt: 450
+
+- module_name: VecPt
+  input_col: GoodJet
+  selection_name: jetpt2_300
+  idx: 1
+  min_pt: 300
+
+- module_name: JetEtaPhiVeto
+  input_col: GoodJet
+  eta_range: [-3.2,-1.2]
+  phi_range: [-1.77,-0.87]
+  should_run:
+    year: "2018"
+
+{%- endmacro %}
+
+{% macro singlestop_one_d_NN_mass_plots() -%}
+
+- module_name: NNMassPlots
+  m3_input: mChi_comp
+  m4_input: mStop_comp
+  prefix: comp
+  ratio_only: True
+  m4_range: [750, 2500]
+  m3_range: [700, 2500]
+  ratio_range: [0.6, 1.0]
+  bins: 250
+  one_d: True
+  two_d: False
+
+- module_name: NNMassPlots
+  m3_input: mChi_comp
+  m4_input: mStop_comp
+  prefix: verycomp
+  ratio_only: True
+  m4_range: [750, 2500]
+  m3_range: [700, 2500]
+  ratio_range: [0.85, 1.0]
+  bins: 250
+  one_d: True
+  two_d: False
+
+- module_name: NNMassPlots
+  m3_input: mChi_uncomp
+  m4_input: mStop_uncomp
+  prefix: uncomp
+  ratio_only: True
+  m4_range: [750, 2500]
+  m3_range: [0, 2000]
+  ratio_range: [0.1, 0.8]
+  bins: 250
+  y_bins: 300
+  one_d: True
+  two_d: False
+
 {%- endmacro %}
