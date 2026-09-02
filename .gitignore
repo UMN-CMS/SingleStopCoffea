@@ -79,3 +79,5 @@ nn_models/
 analyzer_resources/datavmc_sf/
 cutflow_table.csv
 signal_yields/
+
+.vscode/
